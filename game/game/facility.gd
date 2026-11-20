@@ -88,9 +88,16 @@ var stance: int = 0
 ## Nuclear silo state: 0=empty, 1=building ICBM, 2=built(unarmed), 3=armed & ready to launch, 4=arming countdown.
 var nuke_state: int = 0
 var nuke_t: float = 0.0
+var nuke_tt: float = 0.0
 var nuke_prog: float = 0.0
 ## Cooldown in seconds before silo can begin preparing the next ICBM (post-launch bay reset).
 var nuke_cd: float = 0.0
+var nuke_stage_sent: int = 0
+
+## ABM Zaslon sequential charge production queue & active timer.
+var zas_q: int = 0
+var zas_t: float = 0.0
+var zas_tt: float = 0.0
 
 
 

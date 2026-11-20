@@ -392,10 +392,15 @@ func build(kind: int, center: Vector2i, country: Country, parent: Facility = nul
 		Facility.Kind.NUKE_SILO:
 			f.nuke_state = 0
 			f.nuke_t = 0.0
+			f.nuke_tt = 0.0
 			f.nuke_prog = 0.0
+			f.nuke_stage_sent = 0
 			gw.set_obj_frame(f.main_obj, "nuke_silo", 0)
 		Facility.Kind.AD_ZASLON:
-			f.ammo = int(Defense.SPEC[Facility.Kind.AD_ZASLON]["ammo"])
+			f.ammo = 0
+			f.zas_q = 0
+			f.zas_t = 0.0
+			f.zas_tt = 0.0
 			gw.set_obj_frame(f.main_obj, "ad_zaslon", 0)
 		Facility.Kind.MINE, Facility.Kind.OIL_RIG, Facility.Kind.SAWMILL, Facility.Kind.PORT, Facility.Kind.PORT_CRANE, Facility.Kind.URANIUM_MINE:
 			gw.econ.bind_site(f)
@@ -847,11 +852,16 @@ func _restore_tick(f: Facility, dt: float) -> void:
 	if f.kind == Facility.Kind.NUKE_SILO:
 		f.nuke_state = 0
 		f.nuke_t = 0.0
+		f.nuke_tt = 0.0
 		f.nuke_prog = 0.0
 		f.nuke_cd = 0.0
+		f.nuke_stage_sent = 0
 		gw.set_obj_frame(f.main_obj, "nuke_silo", 0)
 	if f.kind == Facility.Kind.AD_ZASLON:
-		f.ammo = int(Defense.SPEC[Facility.Kind.AD_ZASLON]["ammo"])
+		f.ammo = 0
+		f.zas_q = 0
+		f.zas_t = 0.0
+		f.zas_tt = 0.0
 		gw.set_obj_frame(f.main_obj, "ad_zaslon", 0)
 	ruin_hits.erase(f.id)
 	f.ruined_at = -1.0

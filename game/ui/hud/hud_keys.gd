@@ -19,9 +19,9 @@ func open_kind_mass(mode: String) -> void:
 	if p == null or p.eliminated or gw.mil == null or gw.econ == null:
 		return
 	var repair: bool = mode == "repair"
-	var vb: VBoxContainer = _window(Loc.t("РЕМОНТ ПО ТИПАМ") if repair else Loc.t("УЛУЧШЕНИЯ ПО ТИПАМ"), "kind_" + mode)
+	var vb: VBoxContainer = _window(Loc.t("РЕМОНТ ПО ТИПАМ") if repair else Loc.t("МАССОВОЕ УЛУЧШЕНИЕ (5 С)"), "kind_" + mode)
 	panel_kind = "kind_" + mode
-	var hint: Label = UiKit.lbl(Loc.t("Нажмите тип, чтобы отстроить все его разрушенные объекты, пока хватает денег.") if repair else Loc.t("УР.2 или УР.3 поднимает на один шаг все готовые объекты этого типа ниже этого уровня. Дешёвые идут первыми, строящиеся не трогаем."), 10, UiKit.MUTED, 1)
+	var hint: Label = UiKit.lbl(Loc.t("Нажмите тип, чтобы отстроить все его разрушенные объекты, пока хватает денег.") if repair else Loc.t("Удерживайте кнопку 5 секунд для массового улучшения по категории или конкретному типу. Дешёвые объекты улучшаются первыми, строящиеся пропускаются."), 10, UiKit.MUTED, 1)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vb.add_child(hint)
 	if repair:
@@ -37,28 +37,185 @@ func open_kind_mass(mode: String) -> void:
 			vb.add_child(UiKit.lbl("%s ×%d" % [Loc.t(Military.title_of(k)), int(e[0])], 12, UiKit.TEXT, 2))
 			vb.add_child(_small_btn(Loc.t("ЧИНИТЬ · %d") % int(e[1]), "kind_repair:%d" % k, true, "stone"))
 		return
-	var s2: Dictionary = gw.econ.upgrade_kinds_summary(p, 2)
-	var s3: Dictionary = gw.econ.upgrade_kinds_summary(p, 3)
-	var ukinds: Array = s2.keys()
-	for k2: int in s3.keys():
-		if not ukinds.has(k2):
-			ukinds.append(k2)
-	if ukinds.is_empty():
-		vb.add_child(UiKit.lbl(Loc.t("Улучшаемых объектов нет"), 11, UiKit.MUTED, 2))
-		return
-	ukinds.sort_custom(func(a: int, b: int) -> bool: return Military.title_of(a) < Military.title_of(b))
-	for k3: int in ukinds:
-		var a: Dictionary = s2.get(k3, {"owned": 0, "ready": 0, "busy": 0, "cost": {}})
-		var b3: Dictionary = s3.get(k3, {"owned": 0, "ready": 0, "busy": 0, "cost": {}})
-		vb.add_child(UiKit.lbl("%s ×%d" % [Loc.t(Military.title_of(k3)), int(a["owned"])], 12, UiKit.TEXT, 2))
-		var sub: Label = UiKit.lbl(Loc.t("к ур.2: готовы %d, строятся %d") % [int(a["ready"]), int(a["busy"])] + "\n" + Loc.t("к ур.3: готовы %d, строятся %d") % [int(b3["ready"]), int(b3["busy"])], 10, UiKit.MUTED, 1)
+	var any_shown: bool = false
+	vb.add_child(UiKit.lbl(Loc.t("ПО КАТЕГОРИЯМ (УДЕРЖАНИЕ 5 С)"), 11, UiKit.TITLE, 2, 2))
+	for cat: String in Economy.UPG_CAT_ORDER:
+		var cat_title: String = Loc.t(String(Economy.UPG_CAT_TITLES.get(cat, cat)))
+		if cat == "protect":
+			var pn: Dictionary = gw.econ.protect_plan(p, "net")
+			var pc: Dictionary = gw.econ.protect_plan(p, "conc")
+			if int(pn["owned"]) <= 0:
+				continue
+			any_shown = true
+			vb.add_child(UiKit.lbl("%s ×%d" % [cat_title, int(pn["owned"])], 12, UiKit.TEXT, 2))
+			var psub: Label = UiKit.lbl(Loc.t("сетки: готовы %d (доступно %d), строятся %d") % [int(pn["ready"]), int(pn["afford"]), int(pn["busy"])] + "\n" + Loc.t("бетон: готовы %d (доступно %d), строятся %d") % [int(pc["ready"]), int(pc["afford"]), int(pc["busy"])], 10, UiKit.MUTED, 1)
+			psub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			vb.add_child(psub)
+			var prow: = HBoxContainer.new()
+			prow.add_theme_constant_override("separation", 6)
+			vb.add_child(prow)
+			var nb_txt: String = (Loc.t("5С СЕТКИ (%d/%d) · %s") % [int(pn["afford"]), int(pn["ready"]), Economy.cost_text(pn["cost_afford" if int(pn["afford"]) > 0 else "cost_all"])]) if int(pn["ready"]) > 0 else (Loc.t("СЕТКИ · %s") % String(pn["why"]))
+			var cb_txt: String = (Loc.t("5С БЕТОН (%d/%d) · %s") % [int(pc["afford"]), int(pc["ready"]), Economy.cost_text(pc["cost_afford" if int(pc["afford"]) > 0 else "cost_all"])]) if int(pc["ready"]) > 0 else (Loc.t("БЕТОН · %s") % String(pc["why"]))
+			prow.add_child(_hold_5s_btn(nb_txt, "cat_prot:net", int(pn["afford"]) > 0, "gold"))
+			prow.add_child(_hold_5s_btn(cb_txt, "cat_prot:conc", int(pc["afford"]) > 0, "gold"))
+			continue
+		var ckinds: Array = Economy.UPG_CATS.get(cat, [])
+		var cp2: Dictionary = gw.econ.upgrade_plan(p, ckinds, 2)
+		var cp3: Dictionary = gw.econ.upgrade_plan(p, ckinds, 3)
+		if int(cp2["owned"]) <= 0:
+			continue
+		any_shown = true
+		vb.add_child(UiKit.lbl("%s ×%d" % [cat_title, int(cp2["owned"])], 12, UiKit.TEXT, 2))
+		var csub: Label = UiKit.lbl(_upg_plan_line(cp2, 2) + "\n" + _upg_plan_line(cp3, 3), 10, UiKit.MUTED, 1)
+		csub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		vb.add_child(csub)
+		var crow: = HBoxContainer.new()
+		crow.add_theme_constant_override("separation", 6)
+		vb.add_child(crow)
+		crow.add_child(_hold_5s_btn(_upg_btn_text(cp2, 2), "cat_upg:%s:2" % cat, int(cp2["afford"]) > 0, "gold"))
+		crow.add_child(_hold_5s_btn(_upg_btn_text(cp3, 3), "cat_upg:%s:3" % cat, int(cp3["afford"]) > 0, "gold"))
+	vb.add_child(HSeparator.new())
+	vb.add_child(UiKit.lbl(Loc.t("ПО КОНКРЕТНЫМ ТИПАМ (УДЕРЖАНИЕ 5 С)"), 11, UiKit.TITLE, 2, 2))
+	var type_specs: Array = [
+		[Facility.Kind.MINE, "metal", "Металлический рудник"],
+		[Facility.Kind.MINE, "titanium", "Титановый рудник"],
+		[Facility.Kind.MINE, "precious", "Рудник драгметаллов"],
+		[Facility.Kind.OIL_RIG, "", Military.title_of(Facility.Kind.OIL_RIG)],
+		[Facility.Kind.SAWMILL, "", Military.title_of(Facility.Kind.SAWMILL)],
+		[Facility.Kind.REFINERY, "", Military.title_of(Facility.Kind.REFINERY)],
+		[Facility.Kind.CIV_FACTORY, "", Military.title_of(Facility.Kind.CIV_FACTORY)],
+		[Facility.Kind.FARM, "", Military.title_of(Facility.Kind.FARM)],
+	]
+	for sp: Array in type_specs:
+		var k3: int = int(sp[0])
+		var ore: String = String(sp[1])
+		var tname: String = Loc.t(String(sp[2]))
+		var tp2: Dictionary = gw.econ.upgrade_plan(p, [k3], 2, ore)
+		var tp3: Dictionary = gw.econ.upgrade_plan(p, [k3], 3, ore)
+		if int(tp2["owned"]) <= 0:
+			continue
+		any_shown = true
+		vb.add_child(UiKit.lbl("%s ×%d" % [tname, int(tp2["owned"])], 12, UiKit.TEXT, 2))
+		var sub: Label = UiKit.lbl(_upg_plan_line(tp2, 2) + "\n" + _upg_plan_line(tp3, 3), 10, UiKit.MUTED, 1)
 		sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		vb.add_child(sub)
 		var row: = HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
 		vb.add_child(row)
-		row.add_child(_small_btn(Loc.t("→ УР.2 · %s") % Economy.cost_text(a["cost"]) if int(a["ready"]) > 0 else Loc.t("→ УР.2 · нет"), "kind_upg:%d:2" % k3, int(a["ready"]) > 0, "gold"))
-		row.add_child(_small_btn(Loc.t("→ УР.3 · %s") % Economy.cost_text(b3["cost"]) if int(b3["ready"]) > 0 else Loc.t("→ УР.3 · нет"), "kind_upg:%d:3" % k3, int(b3["ready"]) > 0, "gold"))
+		var suf: String = (":" + ore) if ore != "" else ""
+		row.add_child(_hold_5s_btn(_upg_btn_text(tp2, 2), "kind_upg:%d:2%s" % [k3, suf], int(tp2["afford"]) > 0, "gold"))
+		row.add_child(_hold_5s_btn(_upg_btn_text(tp3, 3), "kind_upg:%d:3%s" % [k3, suf], int(tp3["afford"]) > 0, "gold"))
+	if not any_shown:
+		vb.add_child(UiKit.lbl(Loc.t("Улучшаемых объектов нет"), 11, UiKit.MUTED, 2))
+
+
+static func _upg_plan_line(pl: Dictionary, lvl: int) -> String:
+	var rdy: int = int(pl.get("ready", 0))
+	var aff: int = int(pl.get("afford", 0))
+	var bsy: int = int(pl.get("busy", 0))
+	var base: String = Loc.t("к ур.%d: готовы %d (доступно %d), строятся %d") % [lvl, rdy, aff, bsy]
+	var sh: Dictionary = pl.get("short", {})
+	if rdy > 0 and aff < rdy and not sh.is_empty():
+		base += Loc.t(" · не хватает на все: %s") % Economy.cost_text(sh)
+	return base
+
+
+static func _upg_btn_text(pl: Dictionary, lvl: int) -> String:
+	var rdy: int = int(pl.get("ready", 0))
+	var aff: int = int(pl.get("afford", 0))
+	if rdy <= 0:
+		return Loc.t("→ УР.%d · %s") % [lvl, String(pl.get("why", Loc.t("нет")))]
+	if aff <= 0:
+		return Loc.t("→ УР.%d (0/%d) · %s") % [lvl, rdy, Economy.cost_text(pl.get("cost_all", {}))]
+	return Loc.t("5С → УР.%d (%d/%d) · %s") % [lvl, aff, rdy, Economy.cost_text(pl.get("cost_afford", {}))]
+
+
+static func bind_hold_5s_btn(b: Button, on_fire: Callable, on_cancel: Callable = Callable(), hold_sec: float = 5.0) -> void:
+	b.clip_contents = true
+	var fill: = ColorRect.new()
+	fill.color = Color(1.0, 0.72, 0.16, 0.36)
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fill.position = Vector2.ZERO
+	fill.size = Vector2.ZERO
+	fill.visible = false
+	b.add_child(fill)
+	var bar: = ColorRect.new()
+	bar.color = Color(1.0, 0.34, 0.22, 0.9)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.position = Vector2.ZERO
+	bar.size = Vector2.ZERO
+	bar.visible = false
+	b.add_child(bar)
+	var st: Dictionary = {"down": false, "t0": 0, "fired": false, "base": b.text}
+	var cancel_hold := func(notify: bool) -> void:
+		var was_down: bool = bool(st["down"])
+		var was_fired: bool = bool(st["fired"])
+		st["down"] = false
+		if is_instance_valid(fill):
+			fill.visible = false
+			fill.size.x = 0.0
+		if is_instance_valid(bar):
+			bar.visible = false
+			bar.size.x = 0.0
+		if is_instance_valid(b) and String(st.get("base", "")) != "":
+			b.text = String(st["base"])
+		if notify and was_down and not was_fired and on_cancel.is_valid():
+			on_cancel.call()
+	b.button_down.connect(func() -> void:
+		if b.disabled:
+			return
+		if not bool(st["down"]):
+			st["base"] = b.text
+		st["down"] = true
+		st["fired"] = false
+		st["t0"] = Time.get_ticks_msec()
+		fill.visible = true
+		fill.position = Vector2.ZERO
+		fill.size = Vector2(0.0, b.size.y)
+		bar.visible = true
+		bar.position = Vector2(0.0, maxf(0.0, b.size.y - 4.0))
+		bar.size = Vector2(0.0, 4.0)
+		UiKit.snd("ui_select"))
+	b.button_up.connect(func() -> void: cancel_hold.call(true))
+	b.mouse_exited.connect(func() -> void: cancel_hold.call(false))
+	var tick_timer: = Timer.new()
+	tick_timer.wait_time = 0.04
+	tick_timer.one_shot = false
+	tick_timer.autostart = true
+	tick_timer.process_mode = Node.PROCESS_MODE_ALWAYS
+	b.add_child(tick_timer)
+	tick_timer.timeout.connect(func() -> void:
+		if not is_instance_valid(b) or not bool(st["down"]):
+			return
+		if b.disabled or not b.is_visible_in_tree() or Input.is_key_pressed(KEY_ESCAPE):
+			cancel_hold.call(false)
+			return
+		var el: float = float(Time.get_ticks_msec() - int(st["t0"])) / 1000.0
+		var frac: float = clampf(el / maxf(0.1, hold_sec), 0.0, 1.0)
+		var bw: float = maxf(1.0, b.size.x)
+		fill.size = Vector2(bw * frac, b.size.y)
+		fill.color = Color(1.0, 0.68, 0.16, 0.36).lerp(Color(0.32, 0.92, 0.38, 0.45), frac)
+		bar.position = Vector2(0.0, maxf(0.0, b.size.y - 4.0))
+		bar.size = Vector2(bw * frac, 4.0)
+		var left_s: float = maxf(0.0, hold_sec - el)
+		b.text = Loc.t("УДЕРЖИВАЙТЕ %.1f С...") % left_s
+		if frac >= 1.0 and not bool(st["fired"]):
+			st["fired"] = true
+			st["down"] = false
+			fill.visible = false
+			bar.visible = false
+			b.text = String(st["base"])
+			if on_fire.is_valid():
+				on_fire.call())
+
+
+func _hold_5s_btn(text: String, act: String, enabled: bool = true, colour: String = "gold") -> Button:
+	var b: Button = UiKit.big(text, colour, "", 40.0, 10)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.clip_text = true
+	b.disabled = not enabled
+	bind_hold_5s_btn(b, func() -> void: action.emit(act), func() -> void: show_toast(Loc.t("Удерживайте кнопку 5 секунд для массового улучшения")), 5.0)
+	return b
 
 
 func _open_command_old() -> void:

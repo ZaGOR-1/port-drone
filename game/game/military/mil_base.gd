@@ -18,6 +18,7 @@ const COST_TEL: int = 2000
 const COST_DRONE: int = 100
 const COST_MISSILE: int = 550
 const COST_NUKE_MISSILE: int = 25000
+const COST_ZASLON_CHARGE: int = 2500
 const RESTORE_SHARE: float = 0.5
 const RESTORE_TIME: float = 20.0
 

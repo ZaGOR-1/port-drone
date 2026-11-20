@@ -294,6 +294,15 @@ func _marker(f: Facility, bs: float, own: bool, count: int, selected: bool, alph
 		_rrect(br.grow(1.0), o)
 		draw_rect(br, Color(frame, alpha))
 		draw_string(font, Vector2(br.position.x + 2.0, br.end.y - 1.5), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(OUTLINE, alpha))
+	elif own and alive and f.kind == Facility.Kind.AD_ZASLON:
+		var ztxt: String = "⏳" if f.restore_t > 0.0 else (("%d+%d" % [f.ammo, f.zas_q]) if f.zas_q > 0 else ("%d" % f.ammo))
+		var zcol: Color = CAT_ECO if (f.restore_t > 0.0 or f.zas_q > 0) else (CAT_MIL if f.ammo <= 0 else CAT_AD)
+		var bp2: = Vector2(r.end.x - 1.0, r.position.y + 1.0)
+		var tw2: float = font.get_string_size(ztxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+		var br2: = Rect2(bp2 - Vector2(tw2 * 0.5 + 2.0, 4.5), Vector2(tw2 + 4.0, 9.0))
+		_rrect(br2.grow(1.0), o)
+		draw_rect(br2, Color(zcol, alpha))
+		draw_string(font, Vector2(br2.position.x + 2.0, br2.end.y - 1.5), ztxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(OUTLINE, alpha))
 
 
 

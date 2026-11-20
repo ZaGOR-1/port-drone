@@ -9,19 +9,20 @@ const ChronicleViewerS: = preload("res://ui/chronicle_viewer.gd")
 
 signal request(name: String)
 
-const VERSION: String = "v0.34.0"
+const VERSION: String = "v0.35.0"
 
 const WHATS_NEW: Array = [
-	"НОВОЕ: Ядерная программа и ПРО «Заслон» — плутоний с АЭС, шахты МБР с таймерами сборки, взвода и перезарядки, масштабный взрыв с кратером и радиацией",
+	"НОВОЕ: Двухэтапная ядерная программа (2+2 мин) — подготовка МБР (2 мин) и выход на боеготовность (2 мин) с глобальными предупреждениями всем странам и ядерными ультиматумами",
+	"НОВОЕ: ПРО «Заслон» с производством БК — строится 2 мин без зарядов (0/4); противоракеты производятся отдельно в карточке каждого комплекса (2 500 + титан, металл, драгметаллы, 30 с)",
+	"НОВОЕ: Массовое улучшение зданий (удержание 5 с) — двухуровневое меню по категориям (добыча, промышленность, колхозы, защита) и конкретным типам рудников с предварительным расчётом бюджета",
+	"НОВОЕ: Настройки «Интерфейс и ПК» — задержка подсказок, компактная панель ресурсов, фильтр новостей, скорость камеры WASD, прокрутка у края экрана и инверсия колеса мыши",
 	"НОВОЕ: Авианосцы и десант — палубная авиация, ордер эскорта, аэропорты и высадка парашютистов транспортниками",
 	"НОВОЕ: Сезоны, идеологии и флаги — смена времён года, 7 идеологий с монументами, редактор пиксельных флагов и 40 эмблем альянсов",
 	"НОВОЕ: Хроника партии и мирные сделки — плеер повторов матчей (.dfchr), продажа/обмен земель в мирное время и подсветка ультиматумов",
-	"НОВОЕ: Правила и боты — до 11 ботов, переименование городов, групповое размещение добычи, настройки «Без замедления» и «Истощение залежей»",
-	"УЛУЧШЕНО: Интерфейс для ПК — адаптивные широкие окна и панель, хоткеи (WASD/стрелки, Space, Q/E, F1–F7, H, X, [ ], Esc), подсветка и подсказки при наведении",
-	"УЛУЧШЕНО: ПВО и авиация — приоритет целей ПВО (пушки до ЗРК), продажа и перебазирование самолётов, единый масштаб интерфейса",
+	"УЛУЧШЕНО: Управление на ПК — горячие клавиши U (массовое улучшение), R (ремонт), N (действие ядерной шахты), Z (заряд «Заслона»), O (залежи), Tab (перебор объектов того же типа)",
 	"УЛУЧШЕНО: Оптимизация поздней игры — ускорены ПВО, армия, ИИ, ж/д и хроника, добавлен frustum-culling юнитов и эффектов для стабильного FPS",
 	"ИСПР: Сброс фронтов и стабильность — исправлены висячие фронты FrontPlan, масштаб спрайтов пула эффектов, редкие вылеты и ошибки спрайтов",
-	"УДАЛЕНО: Устаревший онлайн-релей и мобильные ограничения — сетевой режим переведён на Steam и LAN, убраны старые отладочные хоткеи камеры",
+	"УДАЛЕНО: Бесплатная автоперезарядка ПРО «Заслон» и устаревший онлайн-релей — боекомплект ПРО теперь требует промышленного производства",
 ]
 
 var gw: GameWorld
@@ -2527,6 +2528,7 @@ func show_settings(from_pause: bool) -> void:
 	_nav_row(vb, LangPicker.row_title(), LangPicker.row_hint(), func() -> void: LangPicker.open_from(self))
 	_nav_row(vb, "ЗВУК", _sound_hint(), show_settings_sub.bind("audio"))
 	_nav_row(vb, "ГРАФИКА", Loc.t("ЭФФЕКТЫ: %s") % Loc.t(String(["НИЗКО", "НОРМА", "ВЫСОКО"][clampi(GameConfig.fx_level, 0, 2)])), show_settings_sub.bind("gfx"))
+	_nav_row(vb, "ИНТЕРФЕЙС И ПК", _ui_pc_hint(), show_settings_sub.bind("ui"))
 	_selector(vb, "ПОДСКАЗКИ", ["ВКЛ", "ВЫКЛ"], func() -> int: return 0 if GameConfig.hints else 1, func(i: int) -> void: GameConfig.hints = i == 0, VW_SHORT)
 	_selector(vb, "ПЛАН РАЗВИТИЯ", ["ВКЛ", "ВЫКЛ"], func() -> int: return 1 if Hud.plan_closed else 0, func(i: int) -> void: Hud.plan_closed = i == 1, VW_SHORT)
 	_selector(vb, "ПОДТВЕРЖДЕНИЕ", ["ВКЛ", "ВЫКЛ"], func() -> int: return 0 if GameConfig.confirm_actions else 1, func(i: int) -> void: GameConfig.confirm_actions = i == 0, VW_SHORT)
@@ -2547,7 +2549,10 @@ func show_settings(from_pause: bool) -> void:
 	_selector(vb, "УВЕДОМЛЕНИЯ", ["ВСЕ", "ВАЖНЫЕ", "СКРЫТЬ"], func() -> int: return GameConfig.notif_mode, func(i: int) -> void:
 		GameConfig.notif_mode = i
 		get_tree().call_group("notif_lane", "refilter"), VW_SHORT)
-	_selector(vb, "НОВОСТИ", ["ВКЛ", "ВЫКЛ"], func() -> int: return 0 if Hud.news_on else 1, func(i: int) -> void: Hud.news_on = i == 0, VW_SHORT)
+	_selector(vb, "НОВОСТИ", ["ВСЕ", "ВАЖНЫЕ", "ВЫКЛ"], func() -> int: return clampi(GameConfig.news_mode if Hud.news_on else 2, 0, 2), func(i: int) -> void:
+		GameConfig.news_mode = i
+		Hud.news_on = i < 2
+		Save.save_prefs(), VW_SHORT)
 	_nav_row(vb, "ЗАСТАВКА", Loc.t("ПРИ ЗАПУСКЕ: ВКЛ") if GameConfig.opening else Loc.t("ПРИ ЗАПУСКЕ: ВЫКЛ"), show_settings_sub.bind("opening"))
 	var back: Button = _button(_bottom_row(), "НАЗАД", "stone", "pause" if from_pause else "main")
 	back.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2561,10 +2566,37 @@ var _dev_taps: int = 0
 
 
 func show_settings_sub(kind: String) -> void:
-	var vb: VBoxContainer = _screen("Графика" if kind == "gfx" else (Loc.t("Заставка") if kind == "opening" else Loc.t("Звук")), 0.45)
+	var title_map: Dictionary = {"gfx": "Графика", "opening": "Заставка", "ui": "Интерфейс и ПК", "audio": "Звук"}
+	var vb: VBoxContainer = _screen(Loc.t(String(title_map.get(kind, "Звук"))), 0.45)
 	current = "settings_" + kind
-	_sheet = kind != "gfx"
-	if kind == "gfx":
+	_sheet = kind != "gfx" and kind != "ui"
+	if kind == "ui":
+		var pc_port_u: Node = get_node_or_null("/root/PcPort")
+		if pc_port_u != null and PcPortS.desktop():
+			_selector(vb, "МАСШТАБ ИНТЕРФЕЙСА", PcPortS.SCALE_NAMES, func() -> int: return int(pc_port_u.get("scale_i")), func(i: int) -> void: pc_port_u.call("set_scale_i", i), VW_SHORT)
+			_selector(vb, "ПОЛНЫЙ ЭКРАН · F11", ["ВЫКЛ", "ВКЛ"], func() -> int: return 0 if get_window().mode == Window.MODE_WINDOWED else 1, func(i: int) -> void: pc_port_u.call("set_fullscreen", i == 1), VW_SHORT)
+			_selector(vb, "НАВЕДЕНИЕ МЫШИ (ТУЛТИПЫ)", ["ВКЛ", "ВЫКЛ"], func() -> int: return 0 if bool(pc_port_u.get("hover_tips")) else 1, func(i: int) -> void: pc_port_u.call("set_hover_tips", i == 0), VW_SHORT)
+			_selector(vb, "ЗАДЕРЖКА ПОДСКАЗОК", PcPortS.TIP_DELAY_NAMES, func() -> int: return int(pc_port_u.get("tip_delay_i")), func(i: int) -> void: pc_port_u.call("set_tip_delay_i", i), VW_SHORT)
+			_selector(vb, "ГОРЯЧИЕ КЛАВИШИ НА КНОПКАХ", ["ВКЛ", "ВЫКЛ"], func() -> int: return 0 if bool(pc_port_u.get("show_hotkeys")) else 1, func(i: int) -> void: pc_port_u.call("set_show_hotkeys", i == 0), VW_SHORT)
+			_selector(vb, "СКОРОСТЬ КАМЕРЫ (WASD)", PcPortS.CAM_SPEED_NAMES, func() -> int: return int(pc_port_u.get("cam_speed_i")), func(i: int) -> void: pc_port_u.call("set_cam_speed_i", i), VW_SHORT)
+			_selector(vb, "ПРОКРУТКА У КРАЯ ЭКРАНА", ["ВЫКЛ", "ВКЛ"], func() -> int: return 1 if bool(pc_port_u.get("edge_pan")) else 0, func(i: int) -> void: pc_port_u.call("set_edge_pan", i == 1), VW_SHORT)
+			_selector(vb, "ИНВЕРСИЯ КОЛЕСА МЫШИ", ["ВЫКЛ", "ВКЛ"], func() -> int: return 1 if bool(pc_port_u.get("wheel_invert")) else 0, func(i: int) -> void: pc_port_u.call("set_wheel_invert", i == 1), VW_SHORT)
+		_selector(vb, "ПАНЕЛЬ РЕСУРСОВ", ["ПОЛНАЯ", "КОМПАКТ"], func() -> int: return 1 if GameConfig.res_compact else 0, func(i: int) -> void:
+			GameConfig.res_compact = i == 1
+			Save.save_prefs(), VW_SHORT)
+		_selector(vb, "ЛЕНТА НОВОСТЕЙ", ["ВСЕ", "ВАЖНЫЕ", "ВЫКЛ"], func() -> int: return clampi(GameConfig.news_mode if Hud.news_on else 2, 0, 2), func(i: int) -> void:
+			GameConfig.news_mode = i
+			Hud.news_on = i < 2
+			Save.save_prefs(), VW_SHORT)
+		_selector(vb, "ЯДЕРНЫЕ ТРЕВОГИ", ["ВСЕ ЭТАПЫ", "ЭТАП 2 И ПУСК"], func() -> int: return clampi(GameConfig.nuke_alert_i, 0, 1), func(i: int) -> void:
+			GameConfig.nuke_alert_i = i
+			Save.save_prefs(), VW_SHORT)
+		_selector(vb, "ЗВУК ТРЕВОГ И СИРЕН", ["ВКЛ", "ВЫКЛ"], func() -> int: return 0 if GameConfig.alert_snd else 1, func(i: int) -> void:
+			GameConfig.alert_snd = i == 0
+			Save.save_prefs(), VW_SHORT)
+		if PcPortS.desktop():
+			_label(vb, Loc.t("Горячие клавиши ПК: Пробел — пауза, X / [ ] — скорость, WASD/Стрелки — камера (Shift — быстрее), Q/E и F1–F7 — вкладки, H — столица, U — массовое улучшение (5 с), R — ремонт всего, N — действие ядерной шахты, Z — заряд «Заслона», O — залежи, Tab — следующий объект того же типа."), 9, UiKit.MUTED)
+	elif kind == "gfx":
 		if not PcPortS.desktop():
 			var uis: Array = []
 			for k347: Variant in GameConfig.UI_SCALES:
@@ -2649,6 +2681,14 @@ func _sound_hint() -> String:
 		return ""
 	var sfx: GDScript = load("res://core/sfx.gd") as GDScript
 	return Loc.t("ЗВУКИ %d%% · МУЗЫКА %d%%") % [roundi(float(sfx.get("sfx_volume")) * 100.0), roundi(float(sfx.get("music_volume")) * 100.0)]
+
+
+func _ui_pc_hint() -> String:
+	var pc_port: Node = get_node_or_null("/root/PcPort")
+	if pc_port != null and PcPortS.desktop():
+		var si: int = clampi(int(pc_port.get("scale_i")), 0, PcPortS.SCALE_NAMES.size() - 1)
+		return Loc.t("МАСШТАБ %s · ТУЛТИПЫ · ХОТКЕИ") % String(PcPortS.SCALE_NAMES[si])
+	return Loc.t("ПАНЕЛЬ РЕСУРСОВ · ОПОВЕЩЕНИЯ")
 
 
 func show_pause() -> void:

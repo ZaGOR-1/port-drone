@@ -1580,12 +1580,16 @@ func upgrade_kinds_summary(c: Country, target: int) -> Dictionary:
 
 
 ## KINDMASS: one upgrade step for every ready facility of `kinds` below `target`, cheapest first, while the treasury holds.
+## When `ore_res` is non-empty, `MINE` facilities are filtered by `String(f.deposit.get("res", "")) == ore_res`.
 ## Returns [done, money spent, failed, first failure reason] like Military.restore_all.
-func upgrade_kinds(c: Country, kinds: Array, target: int) -> Array:
+func upgrade_kinds(c: Country, kinds: Array, target: int, ore_res: String = "") -> Array:
 	var list: Array[Facility] = []
 	for f: Facility in gw.mil.facilities:
-		if f.country_id == c.id and kinds.has(f.kind) and f.level < mini(target, MAX_LEVEL) and can_upgrade(f):
-			list.append(f)
+		if f.country_id != c.id or not kinds.has(f.kind) or f.level >= mini(target, MAX_LEVEL) or not can_upgrade(f):
+			continue
+		if ore_res != "" and f.kind == Facility.Kind.MINE and String(f.deposit.get("res", "")) != ore_res:
+			continue
+		list.append(f)
 	list.sort_custom(func(a: Facility, b: Facility) -> bool:
 		return int(upgrade_cost(a).get("money", 0)) < int(upgrade_cost(b).get("money", 0)))
 	var done: int = 0
@@ -1595,6 +1599,164 @@ func upgrade_kinds(c: Country, kinds: Array, target: int) -> Array:
 	for f: Facility in list:
 		var m0: int = c.money
 		var why: String = upgrade(f, c)
+		if why == "":
+			done += 1
+			spent += m0 - c.money
+		else:
+			fail += 1
+			if reason == "":
+				reason = why
+	return [done, spent, fail, reason]
+
+
+## Preview plan for mass upgrade BEFORE and DURING the 5-second hold confirmation.
+## Simulates the same greedy cheapest-first order as `upgrade_kinds` against a copy of country resources.
+func upgrade_plan(c: Country, kinds: Array, target: int, ore_res: String = "") -> Dictionary:
+	var out: Dictionary = {"owned": 0, "ready": 0, "busy": 0, "afford": 0, "cost_all": {}, "cost_afford": {}, "short": {}, "why": ""}
+	if c == null:
+		return out
+	var list: Array[Facility] = []
+	for f: Facility in gw.mil.facilities:
+		if f.country_id != c.id or not kinds.has(f.kind) or not UPG_RES.has(f.kind) or not gw.mil.alive(f):
+			continue
+		if ore_res != "" and f.kind == Facility.Kind.MINE and String(f.deposit.get("res", "")) != ore_res:
+			continue
+		out["owned"] = int(out["owned"]) + 1
+		if f.level < mini(target, MAX_LEVEL):
+			if f.upg_t > 0.0:
+				out["busy"] = int(out["busy"]) + 1
+			elif can_upgrade(f):
+				out["ready"] = int(out["ready"]) + 1
+				list.append(f)
+	list.sort_custom(func(a: Facility, b: Facility) -> bool:
+		return int(upgrade_cost(a).get("money", 0)) < int(upgrade_cost(b).get("money", 0)))
+	var have: Dictionary = {"money": c.money}
+	for rk: String in ["titanium", "metal", "wood", "oil", "precious", "food", "goods", "uranium", "plutonium"]:
+		have[rk] = int(c.get(rk))
+	var cost_all: Dictionary = {}
+	var cost_aff: Dictionary = {}
+	var short: Dictionary = {}
+	var afford: int = 0
+	var creative_free: bool = GameConfig.creative and c.is_player
+	for f: Facility in list:
+		var cost: Dictionary = upgrade_cost(f)
+		for rk: String in cost:
+			cost_all[rk] = int(cost_all.get(rk, 0)) + int(cost[rk])
+		var ok: bool = true
+		if not creative_free:
+			for rk: String in cost:
+				if int(have.get(rk, 0)) < int(cost[rk]):
+					ok = false
+					break
+		if ok:
+			afford += 1
+			for rk: String in cost:
+				if not creative_free:
+					have[rk] = int(have.get(rk, 0)) - int(cost[rk])
+				cost_aff[rk] = int(cost_aff.get(rk, 0)) + int(cost[rk])
+	if not creative_free:
+		for rk: String in cost_all:
+			var cur: int = c.money if rk == "money" else int(c.get(rk))
+			if int(cost_all[rk]) > cur:
+				short[rk] = int(cost_all[rk]) - cur
+	out["afford"] = afford
+	out["cost_all"] = cost_all
+	out["cost_afford"] = cost_aff
+	out["short"] = short
+	if int(out["ready"]) <= 0:
+		out["why"] = Loc.t("Уже в очереди") if int(out["busy"]) > 0 else Loc.t("Все на уровне")
+	elif afford <= 0:
+		out["why"] = Loc.t("Не хватает ресурсов")
+	return out
+
+
+## Preview plan for mass protection upgrade ("net" or "conc") on all eligible facilities of `c`.
+func protect_plan(c: Country, what: String) -> Dictionary:
+	var out: Dictionary = {"owned": 0, "ready": 0, "busy": 0, "afford": 0, "cost_all": {}, "cost_afford": {}, "short": {}, "why": ""}
+	if c == null or gw.protect == null:
+		return out
+	var net: bool = what == "net"
+	var max_l: int = Protect.NET_MAX if net else Protect.CONC_MAX
+	var list: Array[Dictionary] = []
+	for f: Facility in gw.mil.facilities:
+		if f.country_id != c.id or not gw.protect.eligible(f) or not gw.mil.alive(f):
+			continue
+		out["owned"] = int(out["owned"]) + 1
+		var s: Dictionary = gw.protect.st.get(f.id, {})
+		var lvl: int = int(s.get("nl" if net else "cl", 0))
+		var st_i: int = int(s.get("ns" if net else "cs", Protect.S_NONE))
+		if st_i == Protect.S_BUILDING:
+			out["busy"] = int(out["busy"]) + 1
+		elif lvl < max_l:
+			out["ready"] = int(out["ready"]) + 1
+			var cost: Dictionary = (Protect.NET_COST[lvl + 1] if net else Protect.CONC_COST[lvl + 1]).duplicate()
+			list.append({"f": f, "cost": cost})
+	list.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int((a["cost"] as Dictionary).get("money", 0)) < int((b["cost"] as Dictionary).get("money", 0)))
+	var have: Dictionary = {"money": c.money, "metal": c.metal, "wood": c.wood}
+	var cost_all: Dictionary = {}
+	var cost_aff: Dictionary = {}
+	var short: Dictionary = {}
+	var afford: int = 0
+	var creative_free: bool = GameConfig.creative and c.is_player
+	for item: Dictionary in list:
+		var cost: Dictionary = item["cost"]
+		for rk: String in cost:
+			cost_all[rk] = int(cost_all.get(rk, 0)) + int(cost[rk])
+		var ok: bool = true
+		if not creative_free:
+			for rk: String in cost:
+				if int(have.get(rk, 0)) < int(cost[rk]):
+					ok = false
+					break
+		if ok:
+			afford += 1
+			for rk: String in cost:
+				if not creative_free:
+					have[rk] = int(have.get(rk, 0)) - int(cost[rk])
+				cost_aff[rk] = int(cost_aff.get(rk, 0)) + int(cost[rk])
+	if not creative_free:
+		for rk: String in cost_all:
+			var cur: int = c.money if rk == "money" else int(c.get(rk))
+			if int(cost_all[rk]) > cur:
+				short[rk] = int(cost_all[rk]) - cur
+	out["afford"] = afford
+	out["cost_all"] = cost_all
+	out["cost_afford"] = cost_aff
+	out["short"] = short
+	if int(out["ready"]) <= 0:
+		out["why"] = Loc.t("Уже строится") if int(out["busy"]) > 0 else Loc.t("Все защищены")
+	elif afford <= 0:
+		out["why"] = Loc.t("Не хватает ресурсов")
+	return out
+
+
+## Mass protection upgrade ("net" or "conc") across all eligible facilities of `c`, cheapest first.
+func protect_all(c: Country, what: String) -> Array:
+	if c == null or gw.protect == null:
+		return [0, 0, 0, ""]
+	var net: bool = what == "net"
+	var max_l: int = Protect.NET_MAX if net else Protect.CONC_MAX
+	var list: Array[Dictionary] = []
+	for f: Facility in gw.mil.facilities:
+		if f.country_id != c.id or not gw.protect.eligible(f) or not gw.mil.alive(f):
+			continue
+		var s: Dictionary = gw.protect.st.get(f.id, {})
+		var lvl: int = int(s.get("nl" if net else "cl", 0))
+		var st_i: int = int(s.get("ns" if net else "cs", Protect.S_NONE))
+		if st_i != Protect.S_BUILDING and lvl < max_l:
+			var cost: Dictionary = (Protect.NET_COST[lvl + 1] if net else Protect.CONC_COST[lvl + 1]).duplicate()
+			list.append({"f": f, "cost": cost})
+	list.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int((a["cost"] as Dictionary).get("money", 0)) < int((b["cost"] as Dictionary).get("money", 0)))
+	var done: int = 0
+	var spent: int = 0
+	var fail: int = 0
+	var reason: String = ""
+	for item: Dictionary in list:
+		var f: Facility = item["f"]
+		var m0: int = c.money
+		var why: String = gw.protect.upgrade(f, what, c)
 		if why == "":
 			done += 1
 			spent += m0 - c.money

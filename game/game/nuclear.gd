@@ -39,8 +39,8 @@ const U_MIN_DEP: int = 2
 const U_RESERVE: int = 8
 const PLUTONIUM_S: float = 45.0
 const PLUTONIUM_PER_ICBM: int = 5
-const SILO_BUILD_T: float = 45.0
-const SILO_ARM_T: float = 30.0
+const SILO_BUILD_T: float = 120.0
+const SILO_ARM_T: float = 120.0
 const SILO_RELOAD_CD: float = 90.0
 const NUKE_R_CELLS: int = 34
 const NUKE_CRATER_R: int = 13
@@ -231,28 +231,57 @@ static func refresh_country_ready(gw: GameWorld, c: Country) -> void:
 	c.nuke_ready = armed
 
 
+static func fmt_t(sec: float) -> String:
+	var s: int = maxi(0, ceili(sec))
+	var m: int = s / 60
+	return "%d:%02d" % [m, s % 60]
+
+
 static func silo_status(gw: GameWorld, f: Facility) -> String:
 	if not GameConfig.nukes:
 		return Loc.t("ЯДЕРНОЕ ОРУЖИЕ ОТКЛЮЧЕНО")
 	if f.restore_t > 0.0:
-		return Loc.t("СТРОИТСЯ / РЕМОНТ")
+		return Loc.t("СТРОИТСЯ / РЕМОНТ: %s") % fmt_t(f.restore_t)
 	if not gw.mil.alive(f):
 		return Loc.t("ШАХТА РАЗРУШЕНА")
+	var nopwr: String = Loc.t(" · НЕТ ЭНЕРГИИ ×0.5") if (f.nuke_state == 1 or f.nuke_state == 4) and not gw.mil.has_power(f) else ""
 	match f.nuke_state:
 		0:
 			if f.nuke_cd > 0.0:
-				return Loc.t("ПЕРЕЗАРЯДКА ШАХТЫ: %d С") % ceili(f.nuke_cd)
+				return Loc.t("ПЕРЕЗАРЯДКА ШАХТЫ: %s") % fmt_t(f.nuke_cd)
 		1:
 			var pct: int = clampi(roundi(f.nuke_prog * 100.0), 0, 99)
-			return Loc.t("ПОДГОТОВКА МБР: %d %% (%d С)") % [pct, ceili(f.nuke_t)]
+			return (Loc.t("ЭТАП 1/2 — ПОДГОТОВКА МБР: %d %% (%s)") % [pct, fmt_t(f.nuke_t)]) + nopwr
 		2:
-			return Loc.t("МБР СОБРАНА — ГОТОВА К ВЗВОДУ (%d С)") % int(SILO_ARM_T)
+			return Loc.t("МБР СОБРАНА — ГОТОВА К ВЫХОДУ НА БОЕГОТОВНОСТЬ (%s)") % fmt_t(SILO_ARM_T)
 		4:
 			var apct: int = clampi(roundi(f.nuke_prog * 100.0), 0, 99)
-			return Loc.t("ПРИВЕДЕНИЕ В БОЕГОТОВНОСТЬ: %d %% (%d С)") % [apct, ceili(f.nuke_t)]
+			return (Loc.t("ЭТАП 2/2 — ВЫХОД НА БОЕГОТОВНОСТЬ: %d %% (%s)") % [apct, fmt_t(f.nuke_t)]) + nopwr
 		3:
 			return Loc.t("БОЕГОТОВНОСТЬ — МБР НА ДЕЖУРСТВЕ")
 	return Loc.t("ШАХТА ПУСТА")
+
+
+static func on_stage(gw: GameWorld, f: Facility, c: Country, stage: int) -> void:
+	if f == null or c == null or f.nuke_stage_sent == stage:
+		return
+	f.nuke_stage_sent = stage
+	var cname: String = Loc.name(c.name).to_upper()
+	if stage == 1:
+		gw.news_m(Loc.mk("ЯДЕРНАЯ ПРОГРАММА: %s НАЧАЛА ПОДГОТОВКУ МБР (ЭТАП 1/2 — 2:00)", [cname]), "amber")
+		if GameConfig.alert_snd:
+			Sfx.ui("ui_alert")
+		if gw.player != null and gw.player.id != c.id and GameConfig.nuke_alert_i == 0:
+			gw.say(gw.player, Loc.mk("РАЗВЕДКА: %s начала подготовку МБР (этап 1/2 — 2 мин)", [Loc.name(c.name)]))
+	elif stage == 2:
+		gw.news_m(Loc.mk("ЯДЕРНАЯ УГРОЗА: %s ВЫВОДИТ МБР НА БОЕГОТОВНОСТЬ (ЭТАП 2/2 — 2:00)!", [cname]), "alert_red")
+		if GameConfig.alert_snd:
+			Sfx.ui("ui_alert")
+		if gw.player != null and gw.player.id != c.id:
+			gw.say(gw.player, Loc.mk("ТРЕВОГА: %s выводит МБР на боеготовность (этап 2/2 — 2 мин)!", [Loc.name(c.name)]))
+	var is_cp: bool = GameConfig.creative and c.is_player
+	if gw.diplo != null and gw.diplo.has_method("nuke_alarm") and not is_cp:
+		gw.diplo.nuke_alarm(c.id, stage)
 
 
 static func silo_build(gw: GameWorld, f: Facility, c: Country) -> String:
@@ -280,13 +309,18 @@ static func silo_build(gw: GameWorld, f: Facility, c: Country) -> String:
 		if not (GameConfig.creative and c.is_player):
 			for rk: String in rcost:
 				gw.econ.stat_res(c, rk, "missiles", -int(rcost[rk]))
+	if c.nuke_pledge_until > gw.game_time and gw.diplo != null and gw.diplo.has_method("on_nuke_pledge_broken"):
+		gw.diplo.on_nuke_pledge_broken(c.id)
 	f.nuke_state = 1
 	f.nuke_t = 2.0 if GameConfig.creative and c.is_player else SILO_BUILD_T
+	f.nuke_tt = f.nuke_t
 	f.nuke_prog = 0.0
+	f.nuke_stage_sent = 0
 	gw.fx.spawn("build_spark", f.center_px(), 6)
 	Sfx.play("ui_build", f.center_px())
 	if c.is_player:
-		gw.say(c, Loc.mk("Сборка МБР начата (%d с)", [ceili(f.nuke_t)]))
+		gw.say(c, Loc.mk("Подготовка МБР начата (этап 1/2 — %s)", [fmt_t(f.nuke_t)]))
+	on_stage(gw, f, c, 1)
 	gw.changed.emit()
 	return ""
 
@@ -304,11 +338,13 @@ static func silo_arm(gw: GameWorld, f: Facility, c: Country) -> String:
 		return Loc.t("Сначала соберите МБР")
 	f.nuke_state = 4
 	f.nuke_t = 1.5 if GameConfig.creative and c.is_player else SILO_ARM_T
+	f.nuke_tt = f.nuke_t
 	f.nuke_prog = 0.0
 	gw.fx.spawn("build_spark", f.center_px(), 6)
 	Sfx.play("radar_ping", f.center_px())
 	if c.is_player:
-		gw.say(c, Loc.mk("Приведение МБР в боеготовность: %d с", [ceili(f.nuke_t)]))
+		gw.say(c, Loc.mk("Выход МБР на боеготовность (этап 2/2 — %s)", [fmt_t(f.nuke_t)]))
+	on_stage(gw, f, c, 2)
 	gw.changed.emit()
 	return ""
 
@@ -316,10 +352,12 @@ static func silo_arm(gw: GameWorld, f: Facility, c: Country) -> String:
 static func _finish_arm(gw: GameWorld, f: Facility, c: Country) -> void:
 	f.nuke_state = 3
 	f.nuke_t = 0.0
+	f.nuke_tt = 0.0
 	f.nuke_prog = 1.0
 	refresh_silo_look(gw, f)
 	gw.fx.spawn("spark_burst", f.center_px(), 6)
-	Sfx.ui("ui_alert")
+	if GameConfig.alert_snd:
+		Sfx.ui("ui_alert")
 	if c != null:
 		var first: bool = not c.nuke_ready
 		c.nuke_ready = true
@@ -347,7 +385,9 @@ static func silo_launch(gw: GameWorld, f: Facility, c: Country, target: Vector2)
 			return bw
 	f.nuke_state = 0
 	f.nuke_t = 0.0
+	f.nuke_tt = 0.0
 	f.nuke_prog = 0.0
+	f.nuke_stage_sent = 0
 	f.nuke_cd = 3.0 if GameConfig.creative and c.is_player else SILO_RELOAD_CD
 	refresh_silo_look(gw, f)
 	refresh_country_ready(gw, c)
@@ -355,7 +395,8 @@ static func silo_launch(gw: GameWorld, f: Facility, c: Country, target: Vector2)
 	gw.nuke_warn_until = gw.game_time + 8.0
 	gw.nuke_warn_target = target
 	gw.news_m(Loc.mk("ЗАФИКСИРОВАН ПУСК ЯДЕРНОЙ МБР: %s!", [Loc.name(c.name).to_upper()]), "alert_red")
-	Sfx.ui("ui_alert")
+	if GameConfig.alert_snd:
+		Sfx.ui("ui_alert")
 	if c.is_player and m != null:
 		gw.say(c, Loc.mk("Ядерный пуск: время подлёта %d с", [ceili(m.time_left())]))
 	gw.changed.emit()
@@ -367,32 +408,47 @@ static func update_silos(gw: GameWorld, dt: float) -> void:
 		if f.kind != Facility.Kind.NUKE_SILO:
 			continue
 		if not gw.mil.alive(f):
-			if f.nuke_state == 3 or f.nuke_state == 4:
+			if f.nuke_state != 0:
 				f.nuke_state = 0
 				f.nuke_t = 0.0
+				f.nuke_tt = 0.0
 				f.nuke_prog = 0.0
+				f.nuke_stage_sent = 0
 				refresh_silo_look(gw, f)
-				refresh_country_ready(gw, gw.country_by_id(f.country_id))
+				var dc: Country = gw.country_by_id(f.country_id)
+				refresh_country_ready(gw, dc)
+				if dc != null:
+					gw.news_m(Loc.mk("ЯДЕРНАЯ ПРОГРАММА %s СОРВАНА: ШАХТА МБР УНИЧТОЖЕНА!", [Loc.name(dc.name).to_upper()]), "intercept_cyan")
+				if gw.diplo != null and gw.diplo.has_method("clear_halt_nukes_for"):
+					gw.diplo.clear_halt_nukes_for(f.country_id)
 			continue
 		if f.nuke_cd > 0.0:
 			f.nuke_cd = maxf(0.0, f.nuke_cd - dt)
 		var is_cp: bool = GameConfig.creative and gw.player != null and f.country_id == gw.player.id
 		if f.nuke_state == 1:
-			var spd: float = 1.0 if gw.mil.has_power(f) else 0.4
+			if f.nuke_stage_sent < 1:
+				on_stage(gw, f, gw.country_by_id(f.country_id), 1)
+			var spd: float = 1.0 if gw.mil.has_power(f) else 0.5
+			if f.nuke_tt <= 0.0:
+				f.nuke_tt = maxf(1.0, 2.0 if is_cp else SILO_BUILD_T)
 			f.nuke_t = maxf(0.0, f.nuke_t - dt * spd)
-			var total_t: float = 2.0 if is_cp else SILO_BUILD_T
-			f.nuke_prog = clampf(1.0 - f.nuke_t / maxf(1.0, total_t), 0.0, 1.0)
+			f.nuke_prog = clampf(1.0 - f.nuke_t / maxf(1.0, f.nuke_tt), 0.0, 1.0)
 			if f.nuke_t <= 0.0:
 				f.nuke_state = 2
+				f.nuke_t = 0.0
+				f.nuke_tt = 0.0
 				f.nuke_prog = 1.0
 				var c: Country = gw.country_by_id(f.country_id)
 				if c != null and c.is_player:
-					gw.say(c, Loc.mk("Ядерная шахта: МБР собрана — приведите в боеготовность"))
+					gw.say(c, Loc.mk("Ядерная шахта: МБР собрана — приведите в боеготовность (этап 2/2)"))
 		elif f.nuke_state == 4:
+			if f.nuke_stage_sent < 2:
+				on_stage(gw, f, gw.country_by_id(f.country_id), 2)
 			var aspd: float = 1.0 if gw.mil.has_power(f) else 0.5
+			if f.nuke_tt <= 0.0:
+				f.nuke_tt = maxf(1.0, 1.5 if is_cp else SILO_ARM_T)
 			f.nuke_t = maxf(0.0, f.nuke_t - dt * aspd)
-			var atot: float = 1.5 if is_cp else SILO_ARM_T
-			f.nuke_prog = clampf(1.0 - f.nuke_t / maxf(1.0, atot), 0.0, 1.0)
+			f.nuke_prog = clampf(1.0 - f.nuke_t / maxf(1.0, f.nuke_tt), 0.0, 1.0)
 			if f.nuke_t <= 0.0:
 				_finish_arm(gw, f, gw.country_by_id(f.country_id))
 
@@ -729,14 +785,26 @@ static func _ai_nuke_tick(gw: GameWorld, ai: AiBots, c: Country, P: Dictionary, 
 		if o.id != c.id and not o.eliminated and o.nuke_ready:
 			any_foe_nuke = true
 			break
-	# 1. Strategic ABM «Zaslon» (protect capital/NPPs when wealthy or nuke threat exists).
+	if not any_foe_nuke:
+		for f0: Facility in gw.mil.facilities:
+			if f0.country_id != c.id and f0.kind == Facility.Kind.NUKE_SILO and f0.nuke_state > 0 and gw.mil.alive(f0):
+				any_foe_nuke = true
+				break
+	# 1. Strategic ABM «Zaslon»: charge existing Zaslons first, only build a new one if budget covers building + 2 charges.
 	var zk: int = Facility.Kind.AD_ZASLON
+	var want_stock: int = 4 if (diff >= 2 or any_foe_nuke) else (2 if diff == 1 else 1)
+	for z_own: Facility in gw.mil.facilities:
+		if z_own.country_id == c.id and z_own.kind == zk and gw.mil.alive(z_own) and z_own.restore_t <= 0.0:
+			if z_own.ammo + z_own.zas_q < want_stock:
+				if c.money >= Military.COST_ZASLON_CHARGE + reserve / 2 and c.has_res(Economy.res_cost("zaslon_charge")):
+					if gw.defense.buy_zaslon_ammo(z_own, c, 1) == "":
+						return true
 	var have_z: int = ai._count(c, zk)
 	var want_z: int = (1 if diff >= 1 or any_foe_nuke else 0) + (1 if diff == 2 and any_foe_nuke else 0)
 	if have_z < want_z and now >= float(ai._skip.get("%d:%d" % [c.id, zk], -1.0)):
 		var zcost: Dictionary = Economy.build_cost(zk)
 		var zrc: Dictionary = Economy.res_cost("build_%d" % zk)
-		if c.money >= int(zcost["money"]) + reserve and c.has_res(zrc):
+		if c.money >= int(zcost["money"]) + Military.COST_ZASLON_CHARGE * 2 + reserve and c.has_res(zrc):
 			var cap_c: Vector2i = gw.cities[c.capital_id].center
 			var zf: Facility = gw.mil.auto_place(zk, cap_c, c, gw.cities[c.capital_id].radius + 5, gw.cities[c.capital_id].radius + 70)
 			if zf == null:
@@ -750,19 +818,28 @@ static func _ai_nuke_tick(gw: GameWorld, ai: AiBots, c: Country, P: Dictionary, 
 	# 2. Nuclear Silo construction + ICBM assembly + arming.
 	var sk: int = Facility.Kind.NUKE_SILO
 	var silos: Array[Facility] = []
+	var has_strong_ult: bool = false
+	if gw.diplo != null:
+		for d_ult: Dictionary in gw.diplo.demands:
+			if int(d_ult.get("to", -1)) == c.id and String(d_ult.get("kind", "")) == "halt_nukes":
+				if gw.diplo.strength(int(d_ult["from"])) > gw.diplo.strength(c.id) * 1.15:
+					has_strong_ult = true
+					break
+	var pledge_block: bool = c.nuke_pledge_until > now and c.at_war.is_empty()
 	for f: Facility in gw.mil.facilities:
 		if f.country_id == c.id and f.kind == sk:
 			silos.append(f)
-			if gw.mil.alive(f) and f.nuke_state == 2:
+			if gw.mil.alive(f) and f.nuke_state == 2 and not has_strong_ult and not pledge_block:
 				if silo_arm(gw, f, c) == "":
 					return true
 	if not silos.is_empty():
-		for sf: Facility in silos:
-			if gw.mil.alive(sf) and sf.nuke_state == 0 and sf.nuke_cd <= 0.0 and c.plutonium >= PLUTONIUM_PER_ICBM:
-				if c.money >= Military.COST_NUKE_MISSILE + reserve and c.has_res(Economy.res_cost("nuke_missile")):
-					if silo_build(gw, sf, c) == "":
-						return true
-	elif not npps.is_empty() and (diff >= 1 or float(P["aggr"]) > 0.55) and now >= float(ai._skip.get("%d:%d" % [c.id, sk], -1.0)):
+		if not has_strong_ult and not pledge_block:
+			for sf: Facility in silos:
+				if gw.mil.alive(sf) and sf.nuke_state == 0 and sf.nuke_cd <= 0.0 and c.plutonium >= PLUTONIUM_PER_ICBM:
+					if c.money >= Military.COST_NUKE_MISSILE + reserve and c.has_res(Economy.res_cost("nuke_missile")):
+						if silo_build(gw, sf, c) == "":
+							return true
+	elif not pledge_block and not npps.is_empty() and (diff >= 1 or float(P["aggr"]) > 0.55) and now >= float(ai._skip.get("%d:%d" % [c.id, sk], -1.0)):
 		var scost: Dictionary = Economy.build_cost(sk)
 		var src: Dictionary = Economy.res_cost("build_%d" % sk)
 		if c.money >= int(scost["money"]) + reserve and c.has_res(src):

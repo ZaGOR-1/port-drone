@@ -73,6 +73,7 @@ const RES_COST: Dictionary = {
 	"aircraft_5": {"titanium": 24, "metal": 22, "precious": 1},
 	"paratroop": {"food": 8, "metal": 2},
 	"nuke_missile": {"titanium": 18, "metal": 12, "precious": 6, "plutonium": 5},
+	"zaslon_charge": {"titanium": 6, "metal": 4, "precious": 1},
 }
 const BUILD_COST: Dictionary = {
 	Facility.Kind.DRONE_FACTORY: {"metal": 15, "wood": 10}, Facility.Kind.AIRFIELD: {"metal": 25, "wood": 20},
@@ -317,6 +318,19 @@ const UPG_RES: Dictionary = {
 	Facility.Kind.REFINERY: [{"metal": 25, "oil": 15}, {"metal": 40, "titanium": 8, "precious": 2}],
 	Facility.Kind.FARM: [{"wood": 15}, {"wood": 25, "metal": 10}],
 	Facility.Kind.CIV_FACTORY: [{"metal": 15, "wood": 10}, {"metal": 25, "wood": 15, "precious": 1}],
+}
+
+const UPG_CAT_ORDER: Array[String] = ["extract", "industry", "agro", "protect"]
+const UPG_CATS: Dictionary = {
+	"extract": [Facility.Kind.MINE, Facility.Kind.OIL_RIG, Facility.Kind.SAWMILL],
+	"industry": [Facility.Kind.REFINERY, Facility.Kind.CIV_FACTORY],
+	"agro": [Facility.Kind.FARM],
+}
+const UPG_CAT_TITLES: Dictionary = {
+	"extract": "Добыча (рудники, вышки, лесопилки)",
+	"industry": "Промышленность (НПЗ и заводы)",
+	"agro": "Сельское хозяйство (колхозы)",
+	"protect": "Защита (антидроновые сетки и бетон)",
 }
 
 const UPG_EXTRA: Dictionary = {

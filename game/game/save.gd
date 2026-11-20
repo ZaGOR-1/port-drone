@@ -57,7 +57,7 @@ const GENERIC: Array = ["defense", "diplo", "ai", "session", "seasons"]
 const CFG: Array = ["bots", "difficulty", "aggression", "victory", "target_i", "time_i", "size_i", "tutorial", "fog", "ore_preset", "ore_custom", "creative", "expand_i", "reserves_i", "ai_autodig", "alliances", "limit_i", "nukes", "my_ideology"]
 
 
-const PREFS: Array = ["night", "hints", "econ_fx", "clouds", "fx_level", "ground_detail", "day_grade", "perf_hud", "confirm_actions", "dev_mode", "arch_i", "my_ideology", "opening", "notif_mode", "plan_pos", "power_save", "no_slow", "my_name", "my_flag", "my_land", "cb_on", "cb_list", "my_money", "lang", "pseudo_loc", "fps_i", "ui_scale_i", "reserves_i"]
+const PREFS: Array = ["night", "hints", "econ_fx", "clouds", "fx_level", "ground_detail", "day_grade", "perf_hud", "confirm_actions", "dev_mode", "arch_i", "my_ideology", "opening", "notif_mode", "res_compact", "news_mode", "nuke_alert_i", "alert_snd", "plan_pos", "power_save", "no_slow", "my_name", "my_flag", "my_land", "cb_on", "cb_list", "my_money", "lang", "pseudo_loc", "fps_i", "ui_scale_i", "reserves_i"]
 static var prefs_path: String = "user://settings.cfg"
 
 const DELAY_OK: Array = ["_apply_strike", "_grow_initial"]
@@ -1099,6 +1099,8 @@ static func load_prefs() -> void:
 			(GameConfig as GDScript).set(n, v)
 	GameConfig.fx_level = clampi(GameConfig.fx_level, 0, 2)
 	GameConfig.notif_mode = clampi(GameConfig.notif_mode, 0, 2)
+	GameConfig.news_mode = clampi(GameConfig.news_mode, 0, 2)
+	GameConfig.nuke_alert_i = clampi(GameConfig.nuke_alert_i, 0, 1)
 	apply_power_save()
 	apply_ui_scale()
 	Loc.boot()

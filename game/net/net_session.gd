@@ -72,6 +72,7 @@ const ALLOWED: Dictionary = {
 	"navy.order": -1, "navy.cancel": -1,
 	".cmd_static": -1, ".cmd_strike": -1, ".cmd_refill_all": -1,
 	".cmd_nuke_build": -1, ".cmd_nuke_arm": -1, ".cmd_nuke_launch": -1,
+	".cmd_zaslon_buy": -1, "defense.buy_zaslon_ammo": -1, "econ.protect_all": -1,
 	"hold.occupy": 2, "hold.leave": 1,  # v0.30.14 R314 (twink): soldiers into / out of a city building (game/urban_hold.gd)
 	"econ.trd.set_sanctions": 0, "econ.trd.contract_offer": 0, "econ.trd.contract_answer": 0, "econ.trd.contract_cancel": 0,  # R331 TRADE (game/trade331.gd; the function checks `me` is a party)
 	"rail.set_rail_ok": -1,  # R332b RAIL332: «ЖД: РАЗРЕШЕНО / ЗАПРЕЩЕНО» (args[0] = the author's Country; the barracks are checked to be his)

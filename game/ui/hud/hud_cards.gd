@@ -156,14 +156,15 @@ func _fac_icon(kind: int) -> String:
 
 func show_facility(f: Facility, mil: Military, player: Country) -> void:
 	var alive: bool = mil.alive(f)
-	var show_bars: bool = alive and ((gw.econ.has_method("deep_card") and Economy.is_deep(f.kind) and not f.deposit.is_empty()) or (f.kind == Facility.Kind.NUKE_SILO and (f.nuke_state == 1 or f.nuke_state == 4 or (f.nuke_state == 0 and f.nuke_cd > 0.0))))
+	var zas_bar: bool = f.kind == Facility.Kind.AD_ZASLON and (f.restore_t > 0.0 or f.zas_q > 0)
+	var show_bars: bool = alive and ((gw.econ.has_method("deep_card") and Economy.is_deep(f.kind) and not f.deposit.is_empty()) or (f.kind == Facility.Kind.NUKE_SILO and (f.nuke_state == 1 or f.nuke_state == 4 or (f.nuke_state == 0 and f.nuke_cd > 0.0))) or zas_bar)
 	_card("fac%d" % f.id, _fac_icon(f.kind), (Loc.t("Казармы армии №%d") % f.army_no) if f.kind == Facility.Kind.BARRACKS and f.army_no > 0 else Loc.t(Military.title_of(f.kind)), "" if f.kind == Facility.Kind.BARRACKS else _sentence(String(Military.PURPOSE.get(f.kind, ""))), false,
 		show_bars, true)
 	var info: String = ""
 	var detail: String = ""
 	var acts: Array = []
 	var bar_lite: bool = false
-	if f.restore_t > 0.0:
+	if f.restore_t > 0.0 and f.kind != Facility.Kind.AD_ZASLON:
 		info = (Loc.t("СТРОИТСЯ %s") if mil.get("constructing") is Dictionary and (mil.constructing as Dictionary).has(f.id) else Loc.t("ВОССТАНОВЛЕНИЕ %s")) % _mmss(f.restore_t)
 	elif not alive:
 		info = Loc.t("РАЗРУШЕН")
@@ -232,28 +233,31 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 							var cd_tot: float = 3.0 if GameConfig.creative and player.is_player else Nuclear.SILO_RELOAD_CD
 							_set_bar(0, clampf(1.0 - f.nuke_cd / maxf(1.0, cd_tot), 0.0, 1.0), "icon_nuke_silo")
 							(ops_bars[1][0] as Control).visible = false
-							acts.append(_act(Loc.t("КД ПОДГ.\n%d С") % ceili(f.nuke_cd), "icon_nuke_silo", "nuke_build", false))
+							acts.append(_act(Loc.t("КД ПОДГ.\n%s") % Nuclear.fmt_t(f.nuke_cd), "icon_nuke_silo", "nuke_build", false))
 						else:
 							var can_b: bool = player.money >= Military.COST_NUKE_MISSILE and (GameConfig.creative or player.has_res(rc_m))
-							acts.append(_act(Loc.t("СОБРАТЬ\nМБР"), "icon_nuke_missile", "nuke_build", can_b))
+							var b_act: Dictionary = _act(Loc.t("СОБРАТЬ\nМБР"), "icon_nuke_missile", "nuke_build", can_b)
+							if GameConfig.confirm_actions:
+								b_act["hold"] = true
+							acts.append(b_act)
 					elif f.nuke_state == 1:
 						_set_bar(0, f.nuke_prog, "icon_nuke_missile")
 						(ops_bars[1][0] as Control).visible = false
-						acts.append(_act(Loc.t("СБОРКА\n%d С") % ceili(f.nuke_t), "icon_nuke_missile", "nuke_build", false))
+						acts.append(_act(Loc.t("ЭТАП 1/2\n%s") % Nuclear.fmt_t(f.nuke_t), "icon_nuke_missile", "nuke_build", false))
 					elif f.nuke_state == 2:
-						var arm_a: Dictionary = _act(Loc.t("БОЕГОТ.\n%d С") % int(Nuclear.SILO_ARM_T), "icon_nuke_silo", "nuke_arm", true, 1)
+						var arm_a: Dictionary = _act(Loc.t("БОЕГОТ.\n%s") % Nuclear.fmt_t(Nuclear.SILO_ARM_T), "icon_nuke_silo", "nuke_arm", true, 1)
 						arm_a["hold"] = true
 						acts.append(arm_a)
 					elif f.nuke_state == 4:
 						_set_bar(0, f.nuke_prog, "icon_nuke_silo")
 						(ops_bars[1][0] as Control).visible = false
-						acts.append(_act(Loc.t("ВЗВОД\n%d С") % ceili(f.nuke_t), "icon_nuke_silo", "nuke_arm", false, 1))
+						acts.append(_act(Loc.t("ЭТАП 2/2\n%s") % Nuclear.fmt_t(f.nuke_t), "icon_nuke_silo", "nuke_arm", false, 1))
 					elif f.nuke_state == 3:
 						var ln_a: Dictionary = _act(Loc.t("ЯДЕРНЫЙ\nПУСК"), "icon_nuke_missile", "nuke_launch", true)
 						ln_a["red"] = true
 						ln_a["hold"] = true
 						acts.append(ln_a)
-				detail = Loc.t("Ядерная шахта МБР. Этапы: 1) Собрать МБР (%d с, деньги и 5 плутония от АЭС). 2) Привести в боеготовность (%d с). 3) Пуск на любую дистанцию — после удара шахта перезаряжается %d с. Перехватывает только ПРО «Заслон».") % [int(Nuclear.SILO_BUILD_T), int(Nuclear.SILO_ARM_T), int(Nuclear.SILO_RELOAD_CD)]
+				detail = Loc.t("Ядерная шахта МБР. Двухэтапная подготовка: 1) Подготовка МБР (%s, 25 000 + 5 плутония от АЭС) — мир получает предупреждение. 2) Выход на боеготовность (%s) — тревога для всех стран, возможны ультиматумы. 3) Пуск на любую дистанцию (КД %d с). Перехватывает только ПРО «Заслон».") % [Nuclear.fmt_t(Nuclear.SILO_BUILD_T), Nuclear.fmt_t(Nuclear.SILO_ARM_T), int(Nuclear.SILO_RELOAD_CD)]
 			Facility.Kind.SOLAR:
 				info = Loc.t("РЕЗЕРВ ДЛЯ: %s") % (Loc.t(Military.title_of(f.parent.kind)).to_upper() if f.parent != null else "-")
 			Facility.Kind.AIRFIELD:
@@ -407,15 +411,45 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 				var sp: Dictionary = Defense.SPEC[f.kind]
 				var r: String = Loc.t("РАДИУС %d М") % int(float(sp["range"]))
 				var ms: Dictionary = gw.defense.site_state(f)
-				r += Loc.t(" · ЗАРЯД %d/%d") % [int(ms["left"]), int(ms["cap"])]
-				r += Loc.t(" · ВЫСТРЕЛ: РАКЕТА СО СКЛАДА") if bool(ms["stock"]) else Loc.t(" · ВЫСТРЕЛ %d") % int(ms["shot_cost"])
-				if float(sp["range"]) > float(sp["detect"]) and not gw.defense.covered(f.country_id, f.center_px()):
-					r += Loc.t(" · НУЖНА РЛС")
-				info = r + (Loc.t("\nПЕРЕХВАТ ЯДЕРНЫХ МБР И ГИПЕРЗВУКА") if f.kind == Facility.Kind.AD_ZASLON else Loc.t("\nВ МИРЕ: САМОЛЁТЫ — ПОСЛЕ %d М ВГЛУБЬ") % int(Defense.PEACE_DEPTH))
-				if player != null and f.country_id == player.id and gw.defense.has_method("preset_of"):
-					acts.append(_act(Loc.t("ЦЕЛИ ПВО\n%s") % String(AD_PRESET_SHORT.get(gw.defense.preset_of(player), "")), "u335_ad_rules", "ad_rules", true))
 				if f.kind == Facility.Kind.AD_ZASLON:
-					detail = Loc.t("Стратегическая ПРО «Заслон» — единственная система, способная сбивать ядерные МБР в верхних слоях атмосферы.")
+					var zcap: int = int(ms["cap"])
+					var zleft: int = int(ms["left"])
+					var zq: int = int(ms.get("queued", f.zas_q))
+					var nopwr_z: String = Loc.t(" · НЕТ ЭНЕРГИИ ×0.5") if bool(ms.get("no_power", false)) else ""
+					if f.restore_t > 0.0:
+						var btot: float = float(Military.CRIT_RESTORE.get(Facility.Kind.AD_ZASLON, 120.0))
+						_set_bar(0, clampf(1.0 - f.restore_t / maxf(1.0, btot), 0.0, 1.0), "icon_ad_zaslon")
+						(ops_bars[1][0] as Control).visible = false
+						r += Loc.t(" · СТРОИТСЯ: %s · БК 0/%d") % [_mmss(f.restore_t), zcap]
+					elif zq > 0:
+						_set_bar(0, float(ms.get("prod_prog", 0.0)), "icon_ad_zaslon")
+						(ops_bars[1][0] as Control).visible = false
+						r += Loc.t(" · ЗАРЯД %d/%d · ПРОИЗВОДСТВО БК +%d (%s)%s") % [zleft, zcap, zq, _mmss(float(ms.get("prod_left", f.zas_t))), nopwr_z]
+					elif zleft <= 0:
+						r += Loc.t(" · ПУСТОЙ: ЗАРЯД 0/%d — ТРЕБУЕТСЯ ПРОИЗВОДСТВО БК") % zcap
+					else:
+						r += Loc.t(" · БОЕГОТОВ: ЗАРЯД %d/%d") % [zleft, zcap]
+					if float(sp["range"]) > float(sp["detect"]) and not gw.defense.covered(f.country_id, f.center_px()):
+						r += Loc.t(" · НУЖНА РЛС")
+					var zrc: Dictionary = Economy.res_cost("zaslon_charge")
+					info = r + "\n" + Loc.t("ПЕРЕХВАТ МБР И ГИПЕРЗВУКА · 1 ЗАРЯД: %d + %s (%d С)") % [Military.COST_ZASLON_CHARGE, Economy.cost_text(zrc).to_upper(), int(Defense.ZASLON_CHARGE_T)]
+					if player != null and f.country_id == player.id:
+						var room: int = maxi(0, zcap - zleft - zq)
+						var can_one: bool = f.restore_t <= 0.0 and room > 0 and ((GameConfig.creative and player.is_player) or (player.money >= Military.COST_ZASLON_CHARGE and player.has_res(zrc)))
+						acts.append(_act(Loc.t("+1 ЗАРЯД\n%d") % Military.COST_ZASLON_CHARGE, "icon_ad_zaslon", "zaslon_buy_1", can_one, 1 if zq > 0 else -1, "%d/%d" % [zleft, zcap]))
+						if room > 1:
+							acts.append(_act(Loc.t("ЗАПОЛНИТЬ\n×%d") % room, "icon_ad_zaslon", "zaslon_buy_fill", can_one, -1, ("+%d" % zq) if zq > 0 else ""))
+						if gw.defense.has_method("preset_of"):
+							acts.append(_act(Loc.t("ЦЕЛИ ПВО\n%s") % String(AD_PRESET_SHORT.get(gw.defense.preset_of(player), "")), "u335_ad_rules", "ad_rules", true))
+					detail = Loc.t("Стратегическая ПРО «Заслон» строится 2 мин и сдаётся без боекомплекта (0/%d). Противоракеты производятся отдельно в этом комплексе: %d денег + %s, %d с за каждый заряд.") % [zcap, Military.COST_ZASLON_CHARGE, Economy.cost_text(zrc), int(Defense.ZASLON_CHARGE_T)]
+				else:
+					r += Loc.t(" · ЗАРЯД %d/%d") % [int(ms["left"]), int(ms["cap"])]
+					r += Loc.t(" · ВЫСТРЕЛ: РАКЕТА СО СКЛАДА") if bool(ms["stock"]) else Loc.t(" · ВЫСТРЕЛ %d") % int(ms["shot_cost"])
+					if float(sp["range"]) > float(sp["detect"]) and not gw.defense.covered(f.country_id, f.center_px()):
+						r += Loc.t(" · НУЖНА РЛС")
+					info = r + Loc.t("\nВ МИРЕ: САМОЛЁТЫ — ПОСЛЕ %d М ВГЛУБЬ") % int(Defense.PEACE_DEPTH)
+					if player != null and f.country_id == player.id and gw.defense.has_method("preset_of"):
+						acts.append(_act(Loc.t("ЦЕЛИ ПВО\n%s") % String(AD_PRESET_SHORT.get(gw.defense.preset_of(player), "")), "u335_ad_rules", "ad_rules", true))
 			Facility.Kind.TRENCH_H, Facility.Kind.DUGOUT:
 				var occ: Array[Unit] = gw.army.occupants(f)
 				var cap2: int = gw.army.capacity(f)

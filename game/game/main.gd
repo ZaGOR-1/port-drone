@@ -422,8 +422,23 @@ func _process(delta: float) -> void:
 				pan.x -= 1.0
 			if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 				pan.x += 1.0
+			var pc_n: Node = get_node_or_null("/root/PcPort")
+			if pan == Vector2.ZERO and pc_n != null and bool(pc_n.get("edge_pan")) and DisplayServer.window_is_focused():
+				var vp_r: Rect2 = get_viewport().get_visible_rect()
+				var mp_e: Vector2 = get_viewport().get_mouse_position()
+				if vp_r.has_point(mp_e) and (hud == null or ((hud.panel == null or not is_instance_valid(hud.panel)) and not hud.ui24_open_now())):
+					var em: float = 14.0
+					if mp_e.x <= em:
+						pan.x -= 1.0
+					elif mp_e.x >= vp_r.size.x - em:
+						pan.x += 1.0
+					if mp_e.y <= em:
+						pan.y -= 1.0
+					elif mp_e.y >= vp_r.size.y - em:
+						pan.y += 1.0
 			if pan != Vector2.ZERO:
-				var pan_spd: float = 1150.0 if Input.is_key_pressed(KEY_SHIFT) else 650.0
+				var cmul: float = float(pc_n.call("cam_speed_mul")) if pc_n != null and pc_n.has_method("cam_speed_mul") else 1.0
+				var pan_spd: float = (1150.0 if Input.is_key_pressed(KEY_SHIFT) else 650.0) * cmul
 				cam.pan_screen(-pan.normalized() * pan_spd * delta)
 				if cam_lock:
 					cam_lock = false
@@ -645,6 +660,18 @@ func _on_action(nm: String) -> void:
 				_set_mode(Mode.NUKE_TARGET)
 				nuke_silo = nsf2
 				selected_fac = nsf2
+		"zaslon_buy_1", "zaslon_buy_fill":
+			if selected_fac != null and selected_fac.kind == Facility.Kind.AD_ZASLON and world.player != null:
+				var zcnt: int = Defense.ZASLON_CAP if nm == "zaslon_buy_fill" else 1
+				var zf_sel: Facility = selected_fac
+				_sim("", "cmd_zaslon_buy", [zf_sel, world.player, zcnt], func(r: Variant) -> void:
+					if _why(r) != "":
+						hud.show_toast(_why(r))
+						UiKit.snd("ui_error")
+					else:
+						hud.show_toast(Loc.msg(Loc.mk("ПРО «Заслон»: производство БК в очереди (+%d, БК %d/%d)", [zf_sel.zas_q, zf_sel.ammo, Defense.ZASLON_CAP])))
+						UiKit.snd("ui_build")
+					hud.refresh())
 		"store":
 			if mode == Mode.STORE_S or mode == Mode.STORE_M or mode == Mode.STORE_L:
 				_set_mode(Mode.NONE)
@@ -1149,7 +1176,7 @@ func _on_action(nm: String) -> void:
 				hud.open_kind_mass("upgrade")
 		_ when nm.begins_with("dep_build_all:"):
 			_dep_build_all(nm.get_slice(":", 1))
-		_ when nm.begins_with("kind_repair:") or nm.begins_with("kind_upg:"):
+		_ when nm.begins_with("kind_repair:") or nm.begins_with("kind_upg:") or nm.begins_with("cat_upg:") or nm.begins_with("cat_prot:"):
 			_kind_act(nm)
 		"fac_restore":
 			if selected_fac != null:
@@ -1374,9 +1401,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		if mb.device == InputEvent.DEVICE_ID_EMULATION:
 			return
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
-			cam.step_zoom(1, mb.position)
+			var pc_w: Node = get_node_or_null("/root/PcPort")
+			var wdir: int = -1 if (pc_w != null and bool(pc_w.get("wheel_invert"))) else 1
+			cam.step_zoom(wdir, mb.position)
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
-			cam.step_zoom(-1, mb.position)
+			var pc_w2: Node = get_node_or_null("/root/PcPort")
+			var wdir2: int = 1 if (pc_w2 != null and bool(pc_w2.get("wheel_invert"))) else -1
+			cam.step_zoom(wdir2, mb.position)
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if _pc_army() != null and bool(_pc_army().lmb(mb)):
 				_mouse_down = false
@@ -1481,6 +1512,53 @@ func _pc_hotkey(ev: InputEventKey) -> void:
 		KEY_BRACKETRIGHT:
 			if not (net != null and net.in_match):
 				set_speed_i(_speed_i + 1)
+				get_viewport().set_input_as_handled()
+		KEY_U:
+			if world.player != null and not world.player.eliminated:
+				if hud.panel_kind == "kind_upgrade" and hud.panel != null and is_instance_valid(hud.panel):
+					hud.close_panel()
+				else:
+					hud.open_kind_mass("upgrade")
+				get_viewport().set_input_as_handled()
+		KEY_R:
+			if world.player != null and not world.player.eliminated:
+				if ev.shift_pressed:
+					hud.open_kind_mass("repair")
+				else:
+					_on_action("repair_all")
+				get_viewport().set_input_as_handled()
+		KEY_O:
+			if world.player != null and not world.player.eliminated:
+				hud.toggle_ores()
+				get_viewport().set_input_as_handled()
+		KEY_N:
+			if selected_fac != null and selected_fac.kind == Facility.Kind.NUKE_SILO and world.player != null and selected_fac.country_id == world.player.id:
+				if selected_fac.nuke_state == 0:
+					_on_action("nuke_build")
+				elif selected_fac.nuke_state == 2:
+					_on_action("nuke_arm")
+				elif selected_fac.nuke_state == 3:
+					_on_action("nuke_launch")
+				get_viewport().set_input_as_handled()
+		KEY_Z:
+			if selected_fac != null and selected_fac.kind == Facility.Kind.AD_ZASLON and world.player != null and selected_fac.country_id == world.player.id:
+				_on_action("zaslon_buy_fill" if ev.shift_pressed else "zaslon_buy_1")
+				get_viewport().set_input_as_handled()
+		KEY_TAB:
+			if selected_fac != null and world.player != null and world.mil != null:
+				var same_k: Array[Facility] = []
+				for f_tab: Facility in world.mil.facilities:
+					if f_tab.country_id == world.player.id and f_tab.kind == selected_fac.kind and world.mil.alive(f_tab):
+						same_k.append(f_tab)
+				if same_k.size() > 1:
+					same_k.sort_custom(func(a: Facility, b: Facility) -> bool: return a.id < b.id)
+					var cur_i: int = same_k.find(selected_fac)
+					var nxt_f: Facility = same_k[(cur_i + 1) % same_k.size()]
+					selected_fac = nxt_f
+					cam_lock = false
+					cam.center_on(nxt_f.center_px())
+					hud.refresh()
+					UiKit.snd("ui_select")
 				get_viewport().set_input_as_handled()
 		_:
 			if kc >= KEY_F1 and kc <= KEY_F7:
@@ -1760,8 +1838,8 @@ func _kind_act(nm: String) -> void:
 	var p: Country = world.player
 	if p == null or parts.size() < 2:
 		return
-	var kind: int = int(parts[1])
 	if parts[0] == "kind_repair":
+		var kind: int = int(parts[1])
 		_sim("mil", "restore_kinds", [p, [kind]], func(r: Variant) -> void:
 			var rr: Array = r if r is Array else [0, 0, 0, ""]
 			var rwhy: String = String(rr[3]) if rr.size() > 3 else ""
@@ -1773,20 +1851,44 @@ func _kind_act(nm: String) -> void:
 				UiKit.snd("ui_error")
 			if hud.panel_kind == "kind_repair":
 				hud.open_kind_mass("repair"))
-	else:
-		var target: int = int(parts[2])
-		_sim("econ", "upgrade_kinds", [p, [kind], target], func(r: Variant) -> void:
-			var ur: Array = r if r is Array else [0, 0, 0, ""]
-			var uwhy: String = String(ur[3]) if ur.size() > 3 else ""
-			if int(ur[0]) > 0:
-				hud.show_toast(Loc.msg(Loc.mk("Улучшено: %d объект(ов), −%d%s", [int(ur[0]), int(ur[1]), (Loc.t(" · не начато: ") + uwhy) if uwhy != "" else ""])))
+		return
+	if parts[0] == "cat_prot":
+		var what: String = String(parts[1])
+		_sim("econ", "protect_all", [p, what], func(r: Variant) -> void:
+			var pr: Array = r if r is Array else [0, 0, 0, ""]
+			var pwhy: String = String(pr[3]) if pr.size() > 3 else ""
+			if int(pr[0]) > 0:
+				hud.show_toast(Loc.msg(Loc.mk("Защита: %d объект(ов), −%d%s", [int(pr[0]), int(pr[1]), (Loc.t(" · не начато: ") + pwhy) if pwhy != "" else ""])))
 				UiKit.snd("ui_build")
 			else:
-				hud.show_toast((Loc.t("Улучшать нечего: ") + uwhy) if uwhy != "" else Loc.t("Улучшать нечего"))
+				hud.show_toast((Loc.t("Защита не начата: ") + pwhy) if pwhy != "" else Loc.t("Улучшать нечего"))
 				UiKit.snd("ui_error")
 			if hud.panel_kind == "kind_upgrade":
-				hud.open_kind_mass("upgrade")
-			_refresh_res_sheet())
+				hud.open_kind_mass("upgrade"))
+		return
+	var kinds_arr: Array = []
+	var target: int = 2
+	var ore_res: String = ""
+	if parts[0] == "cat_upg":
+		var cat: String = String(parts[1])
+		kinds_arr = Economy.UPG_CATS.get(cat, [])
+		target = int(parts[2]) if parts.size() > 2 else 2
+	else:
+		kinds_arr = [int(parts[1])]
+		target = int(parts[2]) if parts.size() > 2 else 2
+		ore_res = String(parts[3]) if parts.size() > 3 else ""
+	_sim("econ", "upgrade_kinds", [p, kinds_arr, target, ore_res], func(r: Variant) -> void:
+		var ur: Array = r if r is Array else [0, 0, 0, ""]
+		var uwhy: String = String(ur[3]) if ur.size() > 3 else ""
+		if int(ur[0]) > 0:
+			hud.show_toast(Loc.msg(Loc.mk("Улучшено: %d объект(ов), −%d%s", [int(ur[0]), int(ur[1]), (Loc.t(" · не начато: ") + uwhy) if uwhy != "" else ""])))
+			UiKit.snd("ui_build")
+		else:
+			hud.show_toast((Loc.t("Улучшать нечего: ") + uwhy) if uwhy != "" else Loc.t("Улучшать нечего"))
+			UiKit.snd("ui_error")
+		if hud.panel_kind == "kind_upgrade":
+			hud.open_kind_mass("upgrade")
+		_refresh_res_sheet())
 
 
 func _refresh_res_sheet() -> void:

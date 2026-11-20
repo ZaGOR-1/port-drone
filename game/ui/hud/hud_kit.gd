@@ -124,6 +124,10 @@ func _show_build_tip(nm: String) -> void:
 	if nm == "trench" or nm == "teeth":
 		hint = Loc.t("Цена за клетку. ") + Loc.t(hint)
 	var yl: String = EconRates.build_yield(gw, p, kind)
+	if Military.CRIT_RESTORE.has(kind):
+		var bt: int = int(Military.CRIT_RESTORE[kind])
+		var bstr: String = (Loc.t("СТРОЙКА %d:%02d") % [bt / 60, bt % 60]) if bt >= 60 else (Loc.t("СТРОЙКА %d С") % bt)
+		yl = (yl + " · " + bstr) if yl != "" else bstr
 	var ser: String = ArmyBudget.series_line(gw, kind)
 	if ser != "":
 		bc = bc.duplicate()

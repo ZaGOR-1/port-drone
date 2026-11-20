@@ -12,6 +12,9 @@ const T_JET: int = 8
 const T_BALLISTIC: int = 16
 const T_FPV: int = 32
 
+const ZASLON_CAP: int = 4
+const ZASLON_CHARGE_T: float = 30.0
+
 
 
 static var SPEC: Dictionary = {
@@ -20,7 +23,7 @@ static var SPEC: Dictionary = {
 	Facility.Kind.AD_SAM: {"range": 700.0, "detect": 260.0, "mask": 1 | 2 | 4 | 8 | 16, "cd": 3.0, "hit": 80, "ammo": 4, "reload": 25.0, "speed": 150.0},
 	Facility.Kind.AD_PATRIOT: {"range": 450.0, "detect": 260.0, "mask": 2 | 8 | 16, "cd": 2.0, "hit": 75, "ammo": 4, "reload": 30.0, "speed": 190.0},
 	Facility.Kind.AD_INT: {"range": 650.0, "detect": 220.0, "mask": 1 | 2 | 4, "cd": 2.5, "hit": 85, "ammo": 4, "reload": 18.0, "speed": 70.0},
-	Facility.Kind.AD_ZASLON: {"range": 900.0, "detect": 420.0, "mask": 16, "cd": 4.0, "hit": 90, "ammo": 2, "reload": 40.0, "speed": 260.0},
+	Facility.Kind.AD_ZASLON: {"range": 900.0, "detect": 420.0, "mask": 16, "cd": 4.0, "hit": 90, "ammo": 4, "reload": 40.0, "speed": 260.0},
 }
 
 
@@ -462,7 +465,28 @@ func update(dt: float) -> void:
 			_ew(f, dt)
 			continue
 		var sp: Dictionary = SPEC[f.kind]
-		if sp.has("ammo") and f.ammo < int(sp["ammo"]):
+		if f.kind == Facility.Kind.AD_ZASLON:
+			if f.zas_q > 0 and f.ammo < ZASLON_CAP:
+				var zspd: float = 1.0 if mil.has_power(f) else 0.5
+				if f.zas_tt <= 0.0:
+					f.zas_tt = ZASLON_CHARGE_T
+				if f.zas_t <= 0.0:
+					f.zas_t = f.zas_tt
+				f.zas_t = maxf(0.0, f.zas_t - dt * zspd)
+				if f.zas_t <= 0.0:
+					f.ammo = mini(ZASLON_CAP, f.ammo + 1)
+					f.zas_q = maxi(0, f.zas_q - 1)
+					if f.zas_q > 0 and f.ammo < ZASLON_CAP:
+						f.zas_tt = ZASLON_CHARGE_T
+						f.zas_t = ZASLON_CHARGE_T
+					else:
+						f.zas_q = 0
+						f.zas_t = 0.0
+						f.zas_tt = 0.0
+					var zc: Country = gw.country_by_id(f.country_id)
+					if zc != null and zc.is_player:
+						gw.say(zc, Loc.mk("ПРО «Заслон»: противоракета готова (%d/%d)", [f.ammo, ZASLON_CAP]))
+		elif sp.has("ammo") and f.ammo < int(sp["ammo"]):
 			f.reload_t += dt
 			if f.reload_t >= float(sp["reload"]):
 				f.reload_t = 0.0
@@ -742,6 +766,8 @@ func _kill(t: Object, by: int, at: Vector2) -> void:
 
 
 func rearm(f: Facility, c: Country) -> String:
+	if f != null and f.kind == Facility.Kind.AD_ZASLON:
+		return Loc.t("Боеприпасы «Заслона» производятся отдельно в карточке объекта")
 	if not SPEC.has(f.kind) or not SPEC[f.kind].has("ammo"):
 		return Loc.t("Не требуется")
 	var need: int = int(SPEC[f.kind]["ammo"]) - f.ammo
@@ -752,6 +778,45 @@ func rearm(f: Facility, c: Country) -> String:
 		return Loc.t("Не хватает денег: нужно %d") % cost
 	c.money -= cost
 	f.ammo += need
+	return ""
+
+
+func buy_zaslon_ammo(f: Facility, c: Country, count: int = 1) -> String:
+	if f == null or c == null or f.country_id != c.id or f.kind != Facility.Kind.AD_ZASLON:
+		return Loc.t("Выберите свой «Заслон»")
+	if not gw.mil.alive(f):
+		return Loc.t("Комплекс разрушен")
+	if f.restore_t > 0.0:
+		return Loc.t("Комплекс ещё строится (%d с)") % ceili(f.restore_t)
+	var room: int = ZASLON_CAP - f.ammo - f.zas_q
+	if room <= 0:
+		return Loc.t("Боекомплект и очередь «Заслона» заполнены (4/4)")
+	var want: int = clampi(count, 1, room)
+	var rc: Dictionary = Economy.res_cost("zaslon_charge")
+	var mc: int = Military.COST_ZASLON_CHARGE
+	var bought: int = 0
+	var creative_free: bool = GameConfig.creative and c.is_player
+	for _i in want:
+		if not creative_free:
+			if c.money < mc:
+				if bought == 0:
+					return Loc.t("Не хватает денег: нужно %d") % mc
+				break
+			if not c.has_res(rc):
+				if bought == 0:
+					return Loc.t("Не хватает: %s") % c.missing_res(rc)
+				break
+			c.money -= mc
+			c.pay_res(rc)
+			if gw.econ != null:
+				gw.econ.stat_add(c, "spend", "ad", mc)
+				for rk: String in rc:
+					gw.econ.stat_res(c, rk, "ad", -int(rc[rk]))
+		f.zas_q += 1
+		if f.zas_t <= 0.0:
+			f.zas_tt = 1.0 if creative_free else ZASLON_CHARGE_T
+			f.zas_t = f.zas_tt
+		bought += 1
 	return ""
 
 
@@ -977,10 +1042,22 @@ func site_state(f: Facility) -> Dictionary:
 		var sp: Dictionary = SPEC[f.kind]
 		out["cap"] = int(sp["ammo"])
 		out["left"] = f.ammo
-		out["reloading"] = f.ammo <= 0
-		out["reload_left"] = maxf(0.0, float(sp["reload"]) - f.reload_t) if f.ammo < int(sp["ammo"]) else 0.0
-		var c: Country = gw.country_by_id(f.country_id)
-		out["stock"] = c != null and f.kind != Facility.Kind.AD_INT and c.missile_stock[Military.MT_SAM] > 0
+		if f.kind == Facility.Kind.AD_ZASLON:
+			out["reloading"] = f.zas_q > 0
+			out["reload_left"] = maxf(0.0, f.zas_t)
+			out["queued"] = f.zas_q
+			out["prod_left"] = maxf(0.0, f.zas_t)
+			out["prod_tot"] = maxf(1.0, f.zas_tt) if f.zas_q > 0 else ZASLON_CHARGE_T
+			out["prod_prog"] = clampf(1.0 - f.zas_t / maxf(1.0, f.zas_tt), 0.0, 1.0) if f.zas_q > 0 else 0.0
+			out["building"] = f.restore_t > 0.0
+			out["build_left"] = maxf(0.0, f.restore_t)
+			out["no_power"] = not gw.mil.has_power(f)
+			out["stock"] = false
+		else:
+			out["reloading"] = f.ammo <= 0
+			out["reload_left"] = maxf(0.0, float(sp["reload"]) - f.reload_t) if f.ammo < int(sp["ammo"]) else 0.0
+			var c: Country = gw.country_by_id(f.country_id)
+			out["stock"] = c != null and f.kind != Facility.Kind.AD_INT and c.missile_stock[Military.MT_SAM] > 0
 	return out
 
 

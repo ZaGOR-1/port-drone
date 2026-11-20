@@ -89,6 +89,7 @@ var uranium: int = 0
 var plutonium: int = 0
 var nuke_ready: bool = false
 var nukes_used: int = 0
+var nuke_pledge_until: float = -1.0
 
 ## Drones kept in ammo depots (army tab): [delta, jet]. They go to a drone port as soon as it has room.
 var depot_drones: Array[int] = [0, 0]

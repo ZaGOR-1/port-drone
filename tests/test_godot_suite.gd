@@ -543,21 +543,37 @@ func _test_step2_nukes_and_zaslon() -> void:
 	Nuclear.burn(gw, Nuclear.PLUTONIUM_S * 5.0)
 	check(c1.plutonium == gw.econ.res_cap(c1, "plutonium"), "Nuclear.burn tops plutonium at storage cap (12) without overflowing")
 
-	# 3. Silo build -> update -> arm -> diplomacy deterrence -> launch
+	# 3. Silo two-stage preparation (120s + 120s) -> global stage warnings -> diplomacy deterrence -> launch
+	check(is_equal_approx(Nuclear.SILO_BUILD_T, 120.0) and is_equal_approx(Nuclear.SILO_ARM_T, 120.0), "Two-stage ICBM timers are 120s build + 120s arm")
 	var base_str: float = gw.diplo.strength(c1.id)
 	var silo: Facility = gw.mil.build(Facility.Kind.NUKE_SILO, Vector2i(12, 12), c1, null, true)
 	check(silo != null and gw.mil.alive(silo), "NUKE_SILO built cleanly")
-	check(gw.cmd_nuke_build(silo, c1) == "" and silo.nuke_state == 1, "cmd_nuke_build starts ICBM assembly")
+	check(gw.cmd_nuke_build(silo, c1) == "" and silo.nuke_state == 1 and silo.nuke_stage_sent == 1 and is_equal_approx(silo.nuke_t, 120.0), "cmd_nuke_build starts Stage 1 (120s) and broadcasts stage 1 alarm")
+	check(not gw.diplo.demand_options(c2.id, c1.id).filter(func(o: Dictionary) -> bool: return String(o.get("kind", "")) == "halt_nukes").is_empty(), "halt_nukes ultimatum available already during Stage 1")
 	Nuclear.update_silos(gw, Nuclear.SILO_BUILD_T + 1.0)
 	check(silo.nuke_state == 2, "update_silos transitions silo to built/unarmed (state 2)")
-	check(gw.cmd_nuke_arm(silo, c1) == "" and silo.nuke_state == 4 and not c1.nuke_ready, "cmd_nuke_arm starts arming countdown (state 4) before nuke_ready")
+	check(gw.cmd_nuke_arm(silo, c1) == "" and silo.nuke_state == 4 and silo.nuke_stage_sent == 2 and is_equal_approx(silo.nuke_t, 120.0) and not c1.nuke_ready, "cmd_nuke_arm starts Stage 2 arming countdown (120s, state 4) and broadcasts stage 2 alarm")
 	gw.diplo._set_rel(1, 2, Diplomacy.Rel.WAR)
 	check(gw.cmd_nuke_launch(silo, c1, Vector2(ct2.center * 4)) != "", "cmd_nuke_launch blocked while silo is still arming (state 4)")
 	Nuclear.update_silos(gw, Nuclear.SILO_ARM_T + 0.5)
 	check(silo.nuke_state == 3 and c1.nuke_ready, "update_silos completes arming to state 3 and sets nuke_ready")
 	check(gw.diplo.strength(c1.id) > base_str + 1000.0, "Armed nuclear weapons increase diplomacy deterrence strength")
 
-	# 4. AD_SAM / AD_PATRIOT cannot target nuke ICBM, only AD_ZASLON intercepts it
+	# 4. AD_ZASLON starts with 0 ammo, rejects free rearm/auto-reload, produces paid charges (30s, cap 4), and intercepts ICBM
+	var z_built: Facility = gw.mil.build(Facility.Kind.AD_ZASLON, Vector2i(62, 62), c2, null, true)
+	check(z_built != null and z_built.ammo == 0 and z_built.zas_q == 0, "Newly built AD_ZASLON starts with 0 ammo")
+	check(gw.defense.rearm(z_built, c2) != "" and z_built.ammo == 0, "Defense.rearm rejected for AD_ZASLON")
+	gw.defense.update(45.0)
+	check(z_built.ammo == 0, "AD_ZASLON does not auto-reload for free in Defense.update")
+	var m_before_z: int = c2.money
+	var ti_before_z: int = c2.titanium
+	check(gw.cmd_zaslon_buy(z_built, c2, 2) == "" and z_built.zas_q == 2 and is_equal_approx(z_built.zas_t, Defense.ZASLON_CHARGE_T), "cmd_zaslon_buy queues 2 paid interceptor charges on AD_ZASLON")
+	check(c2.money == m_before_z - Military.COST_ZASLON_CHARGE * 2 and c2.titanium == ti_before_z - 12, "cmd_zaslon_buy deducts money and strategic resources per queued charge")
+	gw.defense.update(Defense.ZASLON_CHARGE_T + 0.5)
+	check(z_built.ammo == 1 and z_built.zas_q == 1, "AD_ZASLON completes 1st interceptor charge after 30s and advances queue")
+	gw.defense.update(Defense.ZASLON_CHARGE_T + 0.5)
+	check(z_built.ammo == 2 and z_built.zas_q == 0, "AD_ZASLON completes 2nd interceptor charge after another 30s")
+
 	var sam: Facility = _make_ad(901, c2.id, Facility.Kind.AD_SAM, Vector2i(70, 70))
 	var pat: Facility = _make_ad(902, c2.id, Facility.Kind.AD_PATRIOT, Vector2i(74, 70))
 	var zas: Facility = _make_ad(903, c2.id, Facility.Kind.AD_ZASLON, Vector2i(72, 72))
@@ -1105,10 +1121,52 @@ func _test_step6_pc_and_perf() -> void:
 	check(bfac != null and gw.chronicle.fac_born.has(bfac.id), "Chronicle records facility birth immediately via on_facility_built")
 	gw.chronicle.record_frame()
 	check(gw.chronicle.frames.size() == 1 and gw.chronicle._sample_idx.size() == ChronicleS.GRID_N * ChronicleS.GRID_N, "Chronicle record_frame populates precomputed _sample_idx cleanly")
+
+	# Patch v0.35: Mass upgrade plan (categories + ore-specific mines + partial budget) & halt_nukes diplomacy
+	gw.protect = Protect.new(gw)
+	for sname2: String in ["farm", "sawmill", "refinery", "civ_factory", "eco_ore_heap", "eco_shed", "eco_logs", "eco_tank_s", "eco_silo", "mine27_l2_fe", "mine27_l2_ti"]:
+		if not gw.spr_index.has(sname2):
+			gw.spr_index[sname2] = gw.spr_name.size()
+			gw.spr_name.append(sname2)
+			gw.spr_fd.append(1)
+			gw.spr_fw.append(1)
+			gw.spr_frames.append(1)
+			gw.spr_rect.append(Rect2(0, 0, 12, 12))
+			gw.spr_anchor.append(Vector2.ZERO)
+			gw.spr_tex.append(null)
+	gw.econ.deposits = [
+		{"res": "metal", "cell": Vector2i(6, 36), "left": 500, "max": 500, "mine": null, "obj": -1},
+		{"res": "titanium", "cell": Vector2i(18, 36), "left": 500, "max": 500, "mine": null, "obj": -1},
+	]
+	var m_met: Facility = gw.mil.build(Facility.Kind.MINE, Vector2i(4, 34), c1, null, true)
+	var m_ti: Facility = gw.mil.build(Facility.Kind.MINE, Vector2i(16, 34), c1, null, true)
+	var f_farm: Facility = gw.mil.build(Facility.Kind.FARM, Vector2i(28, 34), c1, null, true)
+	var f_ref: Facility = gw.mil.build(Facility.Kind.REFINERY, Vector2i(32, 6), c1, null, true)
+	check(m_met != null and m_ti != null and f_farm != null and f_ref != null, "Builds metal mine, titanium mine, farm, and refinery for mass upgrade tests")
+	c1.money = 600 # enough for 1 mine or farm upgrade (farm L1->L2 costs 360 money + 15 wood; mine costs 480 money + 20 wood + 10 metal)
+	c1.metal = 100
+	c1.wood = 100
+	c1.titanium = 100
+	var pl_ext: Dictionary = gw.econ.upgrade_plan(c1, Economy.UPG_CATS["extract"], 2)
+	check(int(pl_ext["ready"]) == 2 and int(pl_ext["afford"]) == 1, "upgrade_plan accurately predicts partial affordability (1 of 2 extraction mines) when money is limited")
+	var pl_ti: Dictionary = gw.econ.upgrade_plan(c1, [Facility.Kind.MINE], 2, "titanium")
+	check(int(pl_ti["owned"]) == 1 and int(pl_ti["ready"]) == 1 and int(pl_ti["afford"]) == 1, "upgrade_plan filters MINE by ore_res='titanium'")
+	var upg_ti: Array = gw.econ.upgrade_kinds(c1, [Facility.Kind.MINE], 2, "titanium")
+	check(int(upg_ti[0]) == 1 and m_ti.upg_t > 0.0 and m_met.upg_t <= 0.0, "upgrade_kinds with ore_res='titanium' upgrades only titanium mine and leaves metal mine untouched")
+	c1.money = 5000
+	var p_plan: Dictionary = gw.econ.protect_plan(c1, "net")
+	check(int(p_plan["ready"]) >= 1 and int(p_plan["afford"]) >= 1, "protect_plan detects eligible unprotected refinery")
+	var p_res: Array = gw.econ.protect_all(c1, "net")
+	check(int(p_res[0]) >= 1, "protect_all starts anti-drone net construction on eligible facilities")
+
+	# Patch v0.35: Save.PREFS & NetSession whitelist
+	for pk: String in ["res_compact", "news_mode", "nuke_alert_i", "alert_snd"]:
+		check(Save.PREFS.has(pk), "Save.PREFS includes v0.35 setting: " + pk)
+	check(NetSession.ALLOWED.has(".cmd_zaslon_buy") and NetSession.ALLOWED.has("econ.protect_all"), "NetSession.ALLOWED whitelists v0.35 commands")
 	gw.free()
 
 	# Menus What's New metadata + Ukrainian i18n entries
-	check(Menus.VERSION == "v0.34.0", "Menus.VERSION updated to v0.34.0")
+	check(Menus.VERSION == "v0.35.0", "Menus.VERSION updated to v0.35.0")
 	var wn_cats: Dictionary = {}
 	for wn_s: String in Menus.WHATS_NEW:
 		for pref: String in ["НОВОЕ:", "УЛУЧШЕНО:", "ИСПР:", "УДАЛЕНО:"]:
@@ -1118,5 +1176,5 @@ func _test_step6_pc_and_perf() -> void:
 	var prev_lang: String = GameConfig.lang
 	Loc.set_lang("uk", false)
 	var first_wn: String = String(Menus.WHATS_NEW[0]).trim_prefix("НОВОЕ:").strip_edges()
-	check(Loc.t("УЛУЧШЕНО") == "ПОКРАЩЕНО" and Loc.t("УДАЛЕНО") == "ВИДАЛЕНО" and Loc.t(first_wn) != first_wn, "Ukrainian translation loads updated What's New headers and entries")
+	check(Loc.t("УЛУЧШЕНО") == "ПОКРАЩЕНО" and Loc.t("УДАЛЕНО") == "ВИДАЛЕНО" and Loc.t(first_wn) != first_wn and Loc.t("ИНТЕРФЕЙС И ПК") == "ІНТЕРФЕЙС І ПК", "Ukrainian translation loads v0.35 What's New and UI entries")
 	Loc.set_lang(prev_lang, false)

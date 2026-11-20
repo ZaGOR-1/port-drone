@@ -9,9 +9,19 @@ const SCALES: Array = [0.7, 0.8, 0.9, 1.0, 1.15, 1.3]
 const SCALE_NAMES: Array = ["70%", "80%", "90%", "100%", "115%", "130%"]
 const DEFAULT_SCALE_I: int = 2
 const MIN_WIN: Vector2i = Vector2i(960, 540)
+const TIP_DELAYS: Array = [0.2, 0.45, 0.9]
+const TIP_DELAY_NAMES: Array = ["0.2 С", "0.45 С", "0.9 С"]
+const CAM_SPEEDS: Array = [0.7, 1.0, 1.45]
+const CAM_SPEED_NAMES: Array = ["МЕДЛЕННО", "НОРМА", "БЫСТРО"]
 
 var scale_i: int = DEFAULT_SCALE_I
 var fullscreen: bool = false
+var hover_tips: bool = true
+var tip_delay_i: int = 1
+var show_hotkeys: bool = true
+var cam_speed_i: int = 1
+var edge_pan: bool = false
+var wheel_invert: bool = false
 var _win_rect: Rect2i = Rect2i()
 
 
@@ -63,9 +73,9 @@ static func sheet_x(vw: float) -> float:
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_load()
 	if not desktop() or DisplayServer.get_name() == "headless":
 		return
-	_load()
 	var win: Window = get_window()
 	win.min_size = MIN_WIN
 	_apply_scale()
@@ -112,6 +122,44 @@ func set_fullscreen(on: bool) -> void:
 func set_scale_i(i: int) -> void:
 	scale_i = clampi(i, 0, SCALES.size() - 1)
 	_apply_scale()
+	_save()
+
+
+func tip_delay() -> float:
+	return float(TIP_DELAYS[clampi(tip_delay_i, 0, TIP_DELAYS.size() - 1)])
+
+
+func cam_speed_mul() -> float:
+	return float(CAM_SPEEDS[clampi(cam_speed_i, 0, CAM_SPEEDS.size() - 1)])
+
+
+func set_hover_tips(on: bool) -> void:
+	hover_tips = on
+	_save()
+
+
+func set_tip_delay_i(i: int) -> void:
+	tip_delay_i = clampi(i, 0, TIP_DELAYS.size() - 1)
+	_save()
+
+
+func set_show_hotkeys(on: bool) -> void:
+	show_hotkeys = on
+	_save()
+
+
+func set_cam_speed_i(i: int) -> void:
+	cam_speed_i = clampi(i, 0, CAM_SPEEDS.size() - 1)
+	_save()
+
+
+func set_edge_pan(on: bool) -> void:
+	edge_pan = on
+	_save()
+
+
+func set_wheel_invert(on: bool) -> void:
+	wheel_invert = on
 	_save()
 
 
@@ -166,6 +214,12 @@ func _load() -> void:
 		return
 	scale_i = clampi(int(c.get_value("pc", "scale_i", DEFAULT_SCALE_I)), 0, SCALES.size() - 1)
 	fullscreen = bool(c.get_value("pc", "fullscreen", false))
+	hover_tips = bool(c.get_value("pc", "hover_tips", true))
+	tip_delay_i = clampi(int(c.get_value("pc", "tip_delay_i", 1)), 0, TIP_DELAYS.size() - 1)
+	show_hotkeys = bool(c.get_value("pc", "show_hotkeys", true))
+	cam_speed_i = clampi(int(c.get_value("pc", "cam_speed_i", 1)), 0, CAM_SPEEDS.size() - 1)
+	edge_pan = bool(c.get_value("pc", "edge_pan", false))
+	wheel_invert = bool(c.get_value("pc", "wheel_invert", false))
 	var r: Variant = c.get_value("pc", "window", Rect2i())
 	if r is Rect2i:
 		_win_rect = r
@@ -175,5 +229,11 @@ func _save() -> void:
 	var c: ConfigFile = ConfigFile.new()
 	c.set_value("pc", "scale_i", scale_i)
 	c.set_value("pc", "fullscreen", fullscreen)
+	c.set_value("pc", "hover_tips", hover_tips)
+	c.set_value("pc", "tip_delay_i", tip_delay_i)
+	c.set_value("pc", "show_hotkeys", show_hotkeys)
+	c.set_value("pc", "cam_speed_i", cam_speed_i)
+	c.set_value("pc", "edge_pan", edge_pan)
+	c.set_value("pc", "wheel_invert", wheel_invert)
 	c.set_value("pc", "window", _win_rect)
 	c.save(CFG_PATH)

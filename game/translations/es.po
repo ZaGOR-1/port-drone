@@ -22568,3 +22568,407 @@ msgstr "Estabilidad y frentes — frentes FrontPlan corregidos, escala de sprite
 #. cat=static zone=ui uses=1
 msgid "Устаревший онлайн-релей и мобильные ограничения — сетевой режим переведён на Steam и LAN, убраны старые отладочные хоткеи камеры"
 msgstr "Relé legado y límites móviles — multijugador migrado a Steam y LAN, atajos antiguos de cámara eliminados"
+
+#. patch v0.35
+msgid "Добыча (рудники, вышки, лесопилки)"
+msgstr "Extracción (minas, pozos, aserraderos)"
+
+#. patch v0.35
+msgid "Промышленность (НПЗ и заводы)"
+msgstr "Industria (refinerías y fábricas)"
+
+#. patch v0.35
+msgid "Сельское хозяйство (колхозы)"
+msgstr "Agricultura (granjas)"
+
+#. patch v0.35
+msgid "Защита (антидроновые сетки и бетон)"
+msgstr "Protección (redes antidrones y hormigón)"
+
+#. patch v0.35
+msgid "Металлический рудник"
+msgstr "Mina de metal"
+
+#. patch v0.35
+msgid "Титановый рудник"
+msgstr "Mina de titanio"
+
+#. patch v0.35
+msgid "Рудник драгметаллов"
+msgstr "Mina de metales preciosos"
+
+#. patch v0.35
+msgid "МАССОВОЕ УЛУЧШЕНИЕ (5 С)"
+msgstr "MEJORA MASIVA (5 S)"
+
+#. patch v0.35
+msgid "Удерживайте кнопку 5 секунд для массового улучшения по категории или конкретному типу. Дешёвые объекты улучшаются первыми, строящиеся пропускаются."
+msgstr "Mantén pulsado 5 segundos para mejorar en masa por categoría o tipo. Los más baratos se mejoran primero; los que están en obras se omiten."
+
+#. patch v0.35
+msgid "ПО КАТЕГОРИЯМ (УДЕРЖАНИЕ 5 С)"
+msgstr "POR CATEGORÍA (MANTENER 5 S)"
+
+#. patch v0.35
+msgid "ПО КОНКРЕТНЫМ ТИПАМ (УДЕРЖАНИЕ 5 С)"
+msgstr "POR TIPO ESPECÍFICO (MANTENER 5 S)"
+
+#. patch v0.35
+msgid "УДЕРЖИВАЙТЕ %.1f С..."
+msgstr "MANTÉN %.1f S..."
+
+#. patch v0.35
+msgid "Удерживайте кнопку 5 секунд для массового улучшения"
+msgstr "Mantén pulsado 5 segundos para confirmar la mejora masiva"
+
+#. patch v0.35
+msgid "к ур.%d: готовы %d (доступно %d), строятся %d"
+msgstr "a niv.%d: listos %d (disponibles %d), en obras %d"
+
+#. patch v0.35
+msgid " · не хватает на все: %s"
+msgstr " · falta para todos: %s"
+
+#. patch v0.35
+msgid "→ УР.%d · %s"
+msgstr "→ NIV.%d · %s"
+
+#. patch v0.35
+msgid "→ УР.%d (0/%d) · %s"
+msgstr "→ NIV.%d (0/%d) · %s"
+
+#. patch v0.35
+msgid "5С → УР.%d (%d/%d) · %s"
+msgstr "5S → NIV.%d (%d/%d) · %s"
+
+#. patch v0.35
+msgid "сетки: готовы %d (доступно %d), строятся %d"
+msgstr "redes: listas %d (disponibles %d), en obras %d"
+
+#. patch v0.35
+msgid "бетон: готовы %d (доступно %d), строятся %d"
+msgstr "hormigón: listos %d (disponibles %d), en obras %d"
+
+#. patch v0.35
+msgid "5С СЕТКИ (%d/%d) · %s"
+msgstr "5S REDES (%d/%d) · %s"
+
+#. patch v0.35
+msgid "5С БЕТОН (%d/%d) · %s"
+msgstr "5S HORMIGÓN (%d/%d) · %s"
+
+#. patch v0.35
+msgid "СЕТКИ · %s"
+msgstr "REDES · %s"
+
+#. patch v0.35
+msgid "БЕТОН · %s"
+msgstr "HORMIGÓN · %s"
+
+#. patch v0.35
+msgid "Уже в очереди"
+msgstr "Ya en cola"
+
+#. patch v0.35
+msgid "Все на уровне"
+msgstr "Todos al nivel"
+
+#. patch v0.35
+msgid "Все защищены"
+msgstr "Todos protegidos"
+
+#. patch v0.35
+msgid "Не хватает ресурсов"
+msgstr "Faltan recursos"
+
+#. patch v0.35
+msgid "Защита: %d объект(ов), −%d%s"
+msgstr "Protección: %d instalación(es), −%d%s"
+
+#. patch v0.35
+msgid "Защита не начата: "
+msgstr "Protección no iniciada: "
+
+#. patch v0.35
+msgid "УДЕРЖ. 5С: УЛУЧШИТЬ ВСЕ (%d/%d) · %s"
+msgstr "MANTÉN 5S: MEJORAR TODOS (%d/%d) · %s"
+
+#. patch v0.35
+msgid "Боеприпасы «Заслона» производятся отдельно в карточке объекта"
+msgstr "La munición de Zaslon se produce por separado en la tarjeta"
+
+#. patch v0.35
+msgid "Выберите свой «Заслон»"
+msgstr "Selecciona tu propio Zaslon"
+
+#. patch v0.35
+msgid "Комплекс разрушен"
+msgstr "Complejo destruido"
+
+#. patch v0.35
+msgid "Комплекс ещё строится (%d с)"
+msgstr "El complejo aún se está construyendo (%d s)"
+
+#. patch v0.35
+msgid "Боекомплект и очередь «Заслона» заполнены (4/4)"
+msgstr "Munición y cola de Zaslon llenas (4/4)"
+
+#. patch v0.35
+msgid "ПРО «Заслон»: противоракета готова (%d/%d)"
+msgstr "ABM Zaslon: interceptor listo (%d/%d)"
+
+#. patch v0.35
+msgid "ПРО «Заслон»: производство БК в очереди (+%d, БК %d/%d)"
+msgstr "ABM Zaslon: producción de munición en cola (+%d, munición %d/%d)"
+
+#. patch v0.35
+msgid " · СТРОИТСЯ: %s · БК 0/%d"
+msgstr " · EN OBRAS: %s · MUN. 0/%d"
+
+#. patch v0.35
+msgid " · ЗАРЯД %d/%d · ПРОИЗВОДСТВО БК +%d (%s)%s"
+msgstr " · MUN. %d/%d · PRODUCIENDO +%d (%s)%s"
+
+#. patch v0.35
+msgid " · ПУСТОЙ: ЗАРЯД 0/%d — ТРЕБУЕТСЯ ПРОИЗВОДСТВО БК"
+msgstr " · VACÍO: MUN. 0/%d — REQUIERE PRODUCCIÓN"
+
+#. patch v0.35
+msgid " · БОЕГОТОВ: ЗАРЯД %d/%d"
+msgstr " · LISTO: MUN. %d/%d"
+
+#. patch v0.35
+msgid "ПЕРЕХВАТ МБР И ГИПЕРЗВУКА · 1 ЗАРЯД: %d + %s (%d С)"
+msgstr "INTERCEPCIÓN ICBM E HIPERSÓNICA · 1 CARGA: %d + %s (%d S)"
+
+#. patch v0.35
+msgid "+1 ЗАРЯД\n%d"
+msgstr "+1 CARGA\n%d"
+
+#. patch v0.35
+msgid "ЗАПОЛНИТЬ\n×%d"
+msgstr "LLENAR\n×%d"
+
+#. patch v0.35
+msgid "Стратегическая ПРО «Заслон» строится 2 мин и сдаётся без боекомплекта (0/%d). Противоракеты производятся отдельно в этом комплексе: %d денег + %s, %d с за каждый заряд."
+msgstr "El ABM estratégico Zaslon tarda 2 min en construirse y empieza sin munición (0/%d). Los interceptores se producen en este complejo: %d de dinero + %s, %d s por carga."
+
+#. patch v0.35
+msgid "+1 ЗАРЯД ПРО"
+msgstr "+1 CARGA ABM"
+
+#. patch v0.35
+msgid "Произвести 1 противоракету в этом «Заслоне» (2 500 денег, титан 6, металл 4, драгметаллы 1 · 30 с)"
+msgstr "Producir 1 interceptor en este Zaslon (2.500 dinero, titanio 6, metal 4, preciosos 1 · 30 s)"
+
+#. patch v0.35
+msgid "ЗАПОЛНИТЬ БК"
+msgstr "LLENAR MUNICIÓN"
+
+#. patch v0.35
+msgid "Поставить в очередь противоракеты до полного боекомплекта (4/4)"
+msgstr "Poner en cola interceptores hasta llenar (4/4)"
+
+#. patch v0.35
+msgid "СТРОИТСЯ / РЕМОНТ: %s"
+msgstr "EN OBRAS / REPARACIÓN: %s"
+
+#. patch v0.35
+msgid " · НЕТ ЭНЕРГИИ ×0.5"
+msgstr " · SIN ENERGÍA ×0.5"
+
+#. patch v0.35
+msgid "ПЕРЕЗАРЯДКА ШАХТЫ: %s"
+msgstr "RECARGA DEL SILO: %s"
+
+#. patch v0.35
+msgid "ЭТАП 1/2 — ПОДГОТОВКА МБР: %d %% (%s)"
+msgstr "FASE 1/2 — PREP. ICBM: %d %% (%s)"
+
+#. patch v0.35
+msgid "МБР СОБРАНА — ГОТОВА К ВЫХОДУ НА БОЕГОТОВНОСТЬ (%s)"
+msgstr "ICBM ENSAMBLADO — LISTO PARA ALERTA DE COMBATE (%s)"
+
+#. patch v0.35
+msgid "ЭТАП 2/2 — ВЫХОД НА БОЕГОТОВНОСТЬ: %d %% (%s)"
+msgstr "FASE 2/2 — ALERTA DE COMBATE: %d %% (%s)"
+
+#. patch v0.35
+msgid "ЯДЕРНАЯ ПРОГРАММА: %s НАЧАЛА ПОДГОТОВКУ МБР (ЭТАП 1/2 — 2:00)"
+msgstr "PROGRAMA NUCLEAR: %s INICIÓ PREPARACIÓN DE ICBM (FASE 1/2 — 2:00)"
+
+#. patch v0.35
+msgid "РАЗВЕДКА: %s начала подготовку МБР (этап 1/2 — 2 мин)"
+msgstr "INTELIGENCIA: %s inició preparación de ICBM (fase 1/2 — 2 min)"
+
+#. patch v0.35
+msgid "ЯДЕРНАЯ УГРОЗА: %s ВЫВОДИТ МБР НА БОЕГОТОВНОСТЬ (ЭТАП 2/2 — 2:00)!"
+msgstr "¡AMENAZA NUCLEAR: %s PONE UN ICBM EN ALERTA DE COMBATE (FASE 2/2 — 2:00)!"
+
+#. patch v0.35
+msgid "ТРЕВОГА: %s выводит МБР на боеготовность (этап 2/2 — 2 мин)!"
+msgstr "¡ALERTA: %s pone un ICBM en alerta de combate (fase 2/2 — 2 min)!"
+
+#. patch v0.35
+msgid "Подготовка МБР начата (этап 1/2 — %s)"
+msgstr "Preparación de ICBM iniciada (fase 1/2 — %s)"
+
+#. patch v0.35
+msgid "Выход МБР на боеготовность (этап 2/2 — %s)"
+msgstr "Puesta de ICBM en alerta de combate (fase 2/2 — %s)"
+
+#. patch v0.35
+msgid "Ядерная шахта: МБР собрана — приведите в боеготовность (этап 2/2)"
+msgstr "Silo nuclear: ICBM ensamblado — ponlo en alerta de combate (fase 2/2)"
+
+#. patch v0.35
+msgid "ЯДЕРНАЯ ПРОГРАММА %s СОРВАНА: ШАХТА МБР УНИЧТОЖЕНА!"
+msgstr "¡PROGRAMA NUCLEAR DE %s FRUSTRADO: SILO ICBM DESTRUIDO!"
+
+#. patch v0.35
+msgid "НАРУШЕН ЯДЕРНЫЙ МЕМОРАНДУМ: %s ВОЗОБНОВИЛА ПРОГРАММУ МБР!"
+msgstr "¡MEMORANDO NUCLEAR ROTO: %s REANUDÓ SU PROGRAMA ICBM!"
+
+#. patch v0.35
+msgid "требует свернуть ядерную программу"
+msgstr "exige detener el programa nuclear"
+
+#. patch v0.35
+msgid "КД ПОДГ.\n%s"
+msgstr "ENFR. PREP.\n%s"
+
+#. patch v0.35
+msgid "ЭТАП 1/2\n%s"
+msgstr "FASE 1/2\n%s"
+
+#. patch v0.35
+msgid "БОЕГОТ.\n%s"
+msgstr "ALERTA\n%s"
+
+#. patch v0.35
+msgid "ЭТАП 2/2\n%s"
+msgstr "FASE 2/2\n%s"
+
+#. patch v0.35
+msgid "Ядерная шахта МБР. Двухэтапная подготовка: 1) Подготовка МБР (%s, 25 000 + 5 плутония от АЭС) — мир получает предупреждение. 2) Выход на боеготовность (%s) — тревога для всех стран, возможны ультиматумы. 3) Пуск на любую дистанцию (КД %d с). Перехватывает только ПРО «Заслон»."
+msgstr "Silo nuclear ICBM. Preparación en 2 fases: 1) Preparación (%s, 25.000 + 5 de plutonio) — aviso global. 2) Alerta de combate (%s) — alerta mundial y posibles ultimátums. 3) Lanzamiento a cualquier distancia (recarga %d s). Solo lo intercepta el ABM Zaslon."
+
+#. patch v0.35
+msgid "ИНТЕРФЕЙС И ПК"
+msgstr "INTERFAZ Y PC"
+
+#. patch v0.35
+msgid "Интерфейс и ПК"
+msgstr "Interfaz y PC"
+
+#. patch v0.35
+msgid "МАСШТАБ %s · ТУЛТИПЫ · ХОТКЕИ"
+msgstr "ESCALA %s · TOOLTIPS · ATAJOS"
+
+#. patch v0.35
+msgid "ПАНЕЛЬ РЕСУРСОВ · ОПОВЕЩЕНИЯ"
+msgstr "BARRA DE RECURSOS · ALERTAS"
+
+#. patch v0.35
+msgid "НАВЕДЕНИЕ МЫШИ (ТУЛТИПЫ)"
+msgstr "TOOLTIPS AL PASAR EL RATÓN"
+
+#. patch v0.35
+msgid "ЗАДЕРЖКА ПОДСКАЗОК"
+msgstr "RETRASO DE TOOLTIPS"
+
+#. patch v0.35
+msgid "0.2 С"
+msgstr "0.2 S"
+
+#. patch v0.35
+msgid "0.45 С"
+msgstr "0.45 S"
+
+#. patch v0.35
+msgid "0.9 С"
+msgstr "0.9 S"
+
+#. patch v0.35
+msgid "ГОРЯЧИЕ КЛАВИШИ НА КНОПКАХ"
+msgstr "ATAJOS EN LOS BOTONES"
+
+#. patch v0.35
+msgid "СКОРОСТЬ КАМЕРЫ (WASD)"
+msgstr "VELOCIDAD DE CÁMARA (WASD)"
+
+#. patch v0.35
+msgid "ПРОКРУТКА У КРАЯ ЭКРАНА"
+msgstr "DESPLAZAMIENTO EN BORDES"
+
+#. patch v0.35
+msgid "ИНВЕРСИЯ КОЛЕСА МЫШИ"
+msgstr "INVERTIR RUEDA DEL RATÓN"
+
+#. patch v0.35
+msgid "ПАНЕЛЬ РЕСУРСОВ"
+msgstr "BARRA DE RECURSOS"
+
+#. patch v0.35
+msgid "ПОЛНАЯ"
+msgstr "COMPLETA"
+
+#. patch v0.35
+msgid "КОМПАКТ"
+msgstr "COMPACTA"
+
+#. patch v0.35
+msgid "ЛЕНТА НОВОСТЕЙ"
+msgstr "CANAL DE NOTICIAS"
+
+#. patch v0.35
+msgid "ЯДЕРНЫЕ ТРЕВОГИ"
+msgstr "ALERTAS NUCLEARES"
+
+#. patch v0.35
+msgid "ВСЕ ЭТАПЫ"
+msgstr "TODAS LAS FASES"
+
+#. patch v0.35
+msgid "ЭТАП 2 И ПУСК"
+msgstr "FASE 2 Y LANZAMIENTO"
+
+#. patch v0.35
+msgid "ЗВУК ТРЕВОГ И СИРЕН"
+msgstr "SONIDO DE ALERTAS Y SIRENAS"
+
+#. patch v0.35
+msgid "СТРОЙКА %d:%02d"
+msgstr "OBRA %d:%02d"
+
+#. patch v0.35
+msgid "СТРОЙКА %d С"
+msgstr "OBRA %d S"
+
+#. patch v0.35
+msgid "Горячие клавиши ПК: Пробел — пауза, X / [ ] — скорость, WASD/Стрелки — камера (Shift — быстрее), Q/E и F1–F7 — вкладки, H — столица, U — массовое улучшение (5 с), R — ремонт всего, N — действие ядерной шахты, Z — заряд «Заслона», O — залежи, Tab — следующий объект того же типа."
+msgstr "Atajos de PC: Espacio — pausa, X / [ ] — velocidad, WASD/Flechas — cámara (Shift — rápido), Q/E y F1–F7 — pestañas, H — capital, U — mejora masiva (5 s), R — reparar todo, N — acción de silo nuclear, Z — carga de Zaslon, O — yacimientos, Tab — siguiente edificio del mismo tipo."
+
+#. patch v0.35
+msgid "Двухэтапная ядерная программа (2+2 мин) — подготовка МБР (2 мин) и выход на боеготовность (2 мин) с глобальными предупреждениями всем странам и ядерными ультиматумами"
+msgstr "Programa nuclear en dos fases (2+2 min) — preparación de ICBM (2 min) y alerta de combate (2 min) con avisos globales y ultimátums nucleares"
+
+#. patch v0.35
+msgid "ПРО «Заслон» с производством БК — строится 2 мин без зарядов (0/4); противоракеты производятся отдельно в карточке каждого комплекса (2 500 + титан, металл, драгметаллы, 30 с)"
+msgstr "ABM Zaslon con producción de munición — se construye en 2 min sin cargas (0/4); los interceptores se producen por separado en cada complejo (2.500 + titanio, metal, preciosos, 30 s)"
+
+#. patch v0.35
+msgid "Массовое улучшение зданий (удержание 5 с) — двухуровневое меню по категориям (добыча, промышленность, колхозы, защита) и конкретным типам рудников с предварительным расчётом бюджета"
+msgstr "Mejora masiva de edificios (mantener 5 s) — menú en dos niveles por categoría y tipos específicos de minas con cálculo previo de presupuesto"
+
+#. patch v0.35
+msgid "Настройки «Интерфейс и ПК» — задержка подсказок, компактная панель ресурсов, фильтр новостей, скорость камеры WASD, прокрутка у края экрана и инверсия колеса мыши"
+msgstr "Ajustes de «Interfaz y PC» — retraso de tooltips, barra compacta de recursos, filtro de noticias, velocidad de cámara WASD, desplazamiento en bordes e inversión de rueda"
+
+#. patch v0.35
+msgid "Управление на ПК — горячие клавиши U (массовое улучшение), R (ремонт), N (действие ядерной шахты), Z (заряд «Заслона»), O (залежи), Tab (перебор объектов того же типа)"
+msgstr "Control en PC — atajos U (mejora masiva), R (reparar), N (acción de silo nuclear), Z (carga de Zaslon), O (yacimientos), Tab (alternar edificios del mismo tipo)"
+
+#. patch v0.35
+msgid "Бесплатная автоперезарядка ПРО «Заслон» и устаревший онлайн-релей — боекомплект ПРО теперь требует промышленного производства"
+msgstr "Autorrecarga gratuita del ABM Zaslon y relé legado — la munición ABM ahora requiere producción industrial"

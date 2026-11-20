@@ -290,13 +290,29 @@ func _cell(nm: String, icon: String, toggle: bool) -> VBoxContainer:
 		action.emit(nm))
 	b.mouse_entered.connect(func() -> void:
 		if _PcPortH.wide() and not OS.has_feature("mobile"):
+			var pc_n: Node = get_node_or_null("/root/PcPort")
+			if pc_n != null and not bool(pc_n.get("hover_tips")):
+				return
 			_tip_hover = true
-			_show_tip_for(nm))
+			var d_sec: float = float(pc_n.call("tip_delay")) if pc_n != null and pc_n.has_method("tip_delay") else 0.2
+			if d_sec <= 0.22:
+				_show_tip_for(nm)
+			else:
+				get_tree().create_timer(d_sec).timeout.connect(func() -> void:
+					if _tip_hover and is_instance_valid(b) and b.is_hovered():
+						_show_tip_for(nm)))
 	b.mouse_exited.connect(func() -> void:
 		if _tip_hover:
 			_tip_hover = false
 			_tip_until = Time.get_ticks_msec() / 1000.0 + 0.2)
 	cell.add_child(b)
+	var hk_map: Dictionary = {"pause": "␣", "speed": "X", "center": "H", "ores": "O"}
+	if _PcPortH.desktop() and hk_map.has(nm):
+		var hk_lbl: Label = UiKit.lbl(String(hk_map[nm]), 8, UiKit.MUTED, 2, 2)
+		hk_lbl.name = "HkBadge"
+		hk_lbl.position = Vector2(3, 1)
+		hk_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(hk_lbl)
 	keys[nm] = b
 	var info: Array = KEY_INFO.get(nm, [nm.to_upper(), "", ""])
 	var l: Label = UiKit.lbl(_key_text(String(info[0])), BuildPanel.KEY_FONT, UiKit.TEXT, 2, 3)
@@ -477,6 +493,18 @@ func _process(delta: float) -> void:
 		_warn_col("power", p.power_use > p.power_cap)
 		_set_res("food", str(p.food), -1)
 		_warn_col("food", p.food <= 0 and gw.army.count_units(p.id) > 0)
+		if res_labels.has("store") and is_instance_valid(res_labels["store"]):
+			(res_labels["store"] as Control).visible = not GameConfig.res_compact
+		if _res_hbox != null and is_instance_valid(_res_hbox):
+			_res_hbox.add_theme_constant_override("separation", (6 if GameConfig.res_compact else 12) if _PcPortH.wide() else (4 if GameConfig.res_compact else 7))
+		if _PcPortH.desktop():
+			var pc_n2: Node = get_node_or_null("/root/PcPort")
+			var show_hk: bool = pc_n2 == null or bool(pc_n2.get("show_hotkeys"))
+			for nm_k: String in ["pause", "speed", "center", "ores"]:
+				var bk: Button = keys.get(nm_k) as Button
+				var hkl: Control = bk.get_node_or_null("HkBadge") as Control if bk != null else null
+				if hkl != null and hkl.visible != show_hk:
+					hkl.visible = show_hk
 		var short: String = _shortage(p)
 		_set_res("store", ((Loc.t("НЕТ ") if short != "" and int(p.get(short)) <= 0 else Loc.t("МАЛО ")) + String({"titanium": Loc.t("ТИТАНА"), "metal": Loc.t("МЕТАЛЛА"), "wood": Loc.t("ДЕРЕВА"), "oil": Loc.t("НЕФТИ"), "precious": Loc.t("ДРАГМЕТ."), "uranium": Loc.t("УРАНА")}.get(short, Loc.t("СЫРЬЯ")))) if short != "" else Loc.t("СКЛАД"), -1)
 		_warn_col("store", short != "")

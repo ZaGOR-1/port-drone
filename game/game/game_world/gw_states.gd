@@ -464,6 +464,10 @@ func cmd_nuke_arm(f: Facility, pl: Country) -> String:
 
 func cmd_nuke_launch(f: Facility, pl: Country, target: Vector2) -> String:
 	return Nuclear.silo_launch(self, f, pl, target)
+
+
+func cmd_zaslon_buy(f: Facility, pl: Country, count: int = 1) -> String:
+	return defense.buy_zaslon_ammo(f, pl, count)
 func cmd_field(o: Object, field: String, v: Variant) -> void:
 	if o == null or not CMD_FIELDS.has(field) or not (field in o):
 		return
