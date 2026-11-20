@@ -76,7 +76,7 @@ func _process(delta: float) -> void:
 		dirty = true
 	_probs_t -= delta
 	if _probs_t <= 0.0:
-		_probs_t = 1.0
+		_probs_t = 2.0
 		_probs = gw.guide.problems(gw.player) + _r335_badges()
 		var sig: int = _probs.size() + _r335_army.size() * 1000
 		for ab0: Dictionary in _r335_army:
@@ -113,11 +113,11 @@ func _on_tick() -> void:
 		return
 	var view: Rect2 = _view().grow(-8.0)
 	var refs: Array = []
-	for f: Facility in gw.mil.facilities:
-		if f.country_id == p.id and f.kind == Facility.Kind.REFINERY and not f.halted and gw.mil.alive(f) and gw.mil.has_power(f):
+	for f: Facility in gw.mil.facs_of_kind(Facility.Kind.REFINERY):
+		if f.country_id == p.id and not f.halted and gw.mil.alive(f) and gw.mil.has_power(f):
 			refs.append(f)
 	var cands: Array = []
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(p.id):
 		if f.country_id != p.id or f.halted or f.parent != null or not view.has_point(f.center_px()) or not gw.mil.alive(f):
 			continue
 		if _now - float(_cool.get(f.id, -100.0)) < FAC_COOLDOWN:
@@ -242,7 +242,7 @@ func _r335_badges() -> Array:
 	if p == null or gw.econ == null or gw.econ.get("upk") == null:
 		return out
 	var upk = gw.econ.upk
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(p.id):
 		if f.country_id != p.id or f.parent != null:
 			continue
 		if f.mb and gw.mil.alive(f):

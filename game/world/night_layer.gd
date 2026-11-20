@@ -635,7 +635,7 @@ func _draw_dark(view: Rect2) -> void:
 	var mc: Color = Color.WHITE.lerp(Color(0.42, 0.44, 0.52), factor)
 	for c: City in gw.cities:
 		var e: Dictionary = _cells.get(c.id, {})
-		if not e.has("sc") or (e["sc"] as Dictionary).get("dark") == null:
+		if not e.has("sc") or (e["sc"] as Dictionary).get("dark") == null or (e["sc"]["dark"] as ArrayMesh).get_surface_count() == 0:
 			continue
 		var rr: float = float(c.radius + 4) * GameWorld.CELL
 		if view.grow(rr).has_point(Vector2(c.center * GameWorld.CELL)):
@@ -829,7 +829,7 @@ func _draw_lights2() -> void:
 			continue
 		if gw.camera.zoom.x >= 0.75:
 			var cl: Dictionary = _city_lights(c, budget)
-			if cl.get("mesh") != null:
+			if cl.get("mesh") != null and (cl["mesh"] as ArrayMesh).get_surface_count() > 0:
 				lights.draw_mesh(cl["mesh"], _glow, Transform2D.IDENTITY, Color(1, 1, 1, a))
 			if bon and cl.has("sc"):
 				for bp: Vector2 in (cl["sc"]["beacons"] as PackedVector2Array):

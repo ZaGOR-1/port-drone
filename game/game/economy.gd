@@ -48,75 +48,82 @@ func update(dt: float) -> void:
 		_audio_tick()
 
 
+const _PRODUCE_KINDS: Array[int] = [
+	Facility.Kind.FARM, Facility.Kind.CIV_FACTORY, Facility.Kind.MINE,
+	Facility.Kind.OIL_RIG, Facility.Kind.URANIUM_MINE, Facility.Kind.SAWMILL,
+]
+
+
 func _produce() -> void:
 	var mil: Military = gw.mil
 	_cap_bonus.clear()
 	drop_spent()
 	_relocate_check()
-	for f: Facility in mil.facilities:
-		if not mil.alive(f):
-			continue
-		var c: Country = gw.country_by_id(f.country_id)
-		if c == null:
-			continue
-		if f.halted:
-			if is_extractor(f.kind) or f.kind == Facility.Kind.FARM or f.kind == Facility.Kind.CIV_FACTORY:
-				_site_of(f)["status"] = "paused"
-				_site_of(f)["rate"] = 0
-			continue
-		if gw.supply != null and gw.supply.cut_off(f):
-			if is_extractor(f.kind) or f.kind == Facility.Kind.FARM or f.kind == Facility.Kind.CIV_FACTORY:
-				var hard: bool = not gw.supply.has_method("cut_level") or int(gw.supply.cut_level(f)) >= 2
-				_site_of(f)["status"] = "bridge_out" if hard else "detour"
-				if hard:
+	for fk: int in _PRODUCE_KINDS:
+		for f: Facility in mil.facs_of_kind(fk):
+			if not mil.alive(f):
+				continue
+			var c: Country = gw.country_by_id(f.country_id)
+			if c == null:
+				continue
+			if f.halted:
+				if is_extractor(f.kind) or f.kind == Facility.Kind.FARM or f.kind == Facility.Kind.CIV_FACTORY:
+					_site_of(f)["status"] = "paused"
 					_site_of(f)["rate"] = 0
-			continue
-		var mul: float = 1.0 if c.is_player else GameConfig.ai_income_mul(c)
-		var w_farm: float = gw.seasons.farm_mul() if gw.seasons != null else 1.0
-		var id_m: float = Ideology.money_mul(c.ideology)
-		match f.kind:
-			Facility.Kind.FARM:
-				var ff: int = maxi(1, roundi(float(FARM_FOOD) * level_mul(f) * w_farm * Ideology.farm_mul(c.ideology)))
-				c.food += ff
-				stat_res(c, "food", "farm", ff)
-				var fm: int = int(FARM_MONEY * mul * level_mul(f) * w_farm * id_m)
-				c.add_money(fm)
-				stat_add(c, "income", "farm", fm)
-				_puff(f)
-			Facility.Kind.CIV_FACTORY:
-				var cpw: float = _prod_power_k(f)
-				if cpw > 0.0:
-					var cg: int = maxi(1, roundi(CIV_GOODS * level_mul(f) * Ideology.civ_mul(c.ideology) * cpw))
-					c.goods += cg
-					stat_res(c, "goods", "civ", cg)
-					var cm: int = int(CIV_MONEY * mul * level_mul(f) * id_m * cpw)
-					c.add_money(cm)
-					stat_add(c, "income", "civ", cm)
+				continue
+			if gw.supply != null and gw.supply.cut_off(f):
+				if is_extractor(f.kind) or f.kind == Facility.Kind.FARM or f.kind == Facility.Kind.CIV_FACTORY:
+					var hard: bool = not gw.supply.has_method("cut_level") or int(gw.supply.cut_level(f)) >= 2
+					_site_of(f)["status"] = "bridge_out" if hard else "detour"
+					if hard:
+						_site_of(f)["rate"] = 0
+				continue
+			var mul: float = 1.0 if c.is_player else GameConfig.ai_income_mul(c)
+			var w_farm: float = gw.seasons.farm_mul() if gw.seasons != null else 1.0
+			var id_m: float = Ideology.money_mul(c.ideology)
+			match f.kind:
+				Facility.Kind.FARM:
+					var ff: int = maxi(1, roundi(float(FARM_FOOD) * level_mul(f) * w_farm * Ideology.farm_mul(c.ideology)))
+					c.food += ff
+					stat_res(c, "food", "farm", ff)
+					var fm: int = int(FARM_MONEY * mul * level_mul(f) * w_farm * id_m)
+					c.add_money(fm)
+					stat_add(c, "income", "farm", fm)
 					_puff(f)
-					_site_of(f)["status"] = "bunker_50" if cpw < 1.0 else ""
-				else:
-					_site_of(f)["status"] = "no_power"
-					_site_of(f)["rate"] = 0
-			Facility.Kind.MINE:
-				var mpw: float = _prod_power_k(f)
-				if mpw > 0.0:
-					_extract(f, c, mul, mpw)
-				else:
-					_site_of(f)["status"] = "no_power"
-					_site_of(f)["rate"] = 0
-			Facility.Kind.OIL_RIG:
-				_extract(f, c, mul, 1.0)
-			Facility.Kind.URANIUM_MINE:
-				var upw: float = _prod_power_k(f)
-				if upw > 0.0:
-					_extract(f, c, mul, upw)
-				else:
-					_site_of(f)["status"] = "no_power"
-					_site_of(f)["rate"] = 0
-			Facility.Kind.SAWMILL:
-				_saw(f, c)
-		if gw.supply != null and gw.supply.has_method("cut_level") and int(gw.supply.cut_level(f)) == 1 and (is_extractor(f.kind) or f.kind == Facility.Kind.FARM or f.kind == Facility.Kind.CIV_FACTORY):
-			_site_of(f)["status"] = "detour"
+				Facility.Kind.CIV_FACTORY:
+					var cpw: float = _prod_power_k(f)
+					if cpw > 0.0:
+						var cg: int = maxi(1, roundi(CIV_GOODS * level_mul(f) * Ideology.civ_mul(c.ideology) * cpw))
+						c.goods += cg
+						stat_res(c, "goods", "civ", cg)
+						var cm: int = int(CIV_MONEY * mul * level_mul(f) * id_m * cpw)
+						c.add_money(cm)
+						stat_add(c, "income", "civ", cm)
+						_puff(f)
+						_site_of(f)["status"] = "bunker_50" if cpw < 1.0 else ""
+					else:
+						_site_of(f)["status"] = "no_power"
+						_site_of(f)["rate"] = 0
+				Facility.Kind.MINE:
+					var mpw: float = _prod_power_k(f)
+					if mpw > 0.0:
+						_extract(f, c, mul, mpw)
+					else:
+						_site_of(f)["status"] = "no_power"
+						_site_of(f)["rate"] = 0
+				Facility.Kind.OIL_RIG:
+					_extract(f, c, mul, 1.0)
+				Facility.Kind.URANIUM_MINE:
+					var upw: float = _prod_power_k(f)
+					if upw > 0.0:
+						_extract(f, c, mul, upw)
+					else:
+						_site_of(f)["status"] = "no_power"
+						_site_of(f)["rate"] = 0
+				Facility.Kind.SAWMILL:
+					_saw(f, c)
+			if gw.supply != null and gw.supply.has_method("cut_level") and int(gw.supply.cut_level(f)) == 1 and (is_extractor(f.kind) or f.kind == Facility.Kind.FARM or f.kind == Facility.Kind.CIV_FACTORY):
+				_site_of(f)["status"] = "detour"
 	_fuel_dispatch_tick()
 
 	var ucounts: Dictionary = {}

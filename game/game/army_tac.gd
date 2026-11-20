@@ -261,9 +261,15 @@ func _free(u: Unit) -> void:
 		u.state = Unit.State.IDLE
 
 
+var _mem_map: Dictionary = {}
+var _mem_map_on: bool = false
+
+
 func _members(op: Dictionary) -> Array[Unit]:
-	var out: Array[Unit] = []
 	var h: Facility = op["home"]
+	if _mem_map_on:
+		return _mem_map.get(h, [] as Array[Unit])
+	var out: Array[Unit] = []
 	for u: Unit in army.units:
 		if u.home == h and u.op_on and u.alive():
 			out.append(u)
@@ -371,8 +377,23 @@ func update(dt: float) -> void:
 		return
 	var step: float = _t
 	_t = 0.0
+	if ops.is_empty():
+		return
+	_mem_map.clear()
+	for u: Unit in army.units:
+		if u.op_on and u.home != null and u.alive():
+			var a: Variant = _mem_map.get(u.home)
+			if a == null:
+				var arr: Array[Unit] = [u]
+				_mem_map[u.home] = arr
+			else:
+				(a as Array[Unit]).append(u)
+	_mem_map_on = true
 	for h: Facility in ops.keys():
-		_tick(ops[h], step)
+		if ops.has(h):
+			_tick(ops[h], step)
+	_mem_map_on = false
+	_mem_map.clear()
 
 
 func _tick(op: Dictionary, dt: float) -> void:

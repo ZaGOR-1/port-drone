@@ -106,6 +106,19 @@ var smokes: Array = []
 var grenades: Array = []
 const GRID_PX: float = 128.0
 var _grid: Dictionary = {}
+var _grid_w: int = 0
+var _grid_h: int = 0
+var _ugrid: Array = []
+var _ugrid_used: PackedInt32Array = PackedInt32Array()
+var _umask: PackedInt64Array = PackedInt64Array()
+var _fgrid_flat: Array = []
+var _fgrid_used: PackedInt32Array = PackedInt32Array()
+var _fmask: PackedInt64Array = PackedInt64Array()
+var _has_smoke: bool = false
+var _scan_foe_mask: PackedInt64Array = PackedInt64Array()
+var _scan_can_acq: PackedByteArray = PackedByteArray()
+var _scan_grd: PackedByteArray = PackedByteArray()
+var _scan_gz: bool = false
 var _fpvs: Array[Unit] = []
 var _fpvs_t: float = -1.0
 var _fgrid: Dictionary = {}
@@ -117,6 +130,7 @@ var _fpv_fly: Dictionary = {}
 var _fpv_b: Dictionary = {}
 var post_fixes: int = 0
 var occupy_why: String = ""
+var _train_idle_t: float = 0.0
 static var occupy_m: Variant = ""
 
 var front_dig: bool = false
@@ -152,18 +166,25 @@ func idle_units(country_id: int) -> Array[Unit]:
 
 func _train(dt: float) -> void:
 	var mil: Military = gw.mil
+	_train_idle_t -= dt
+	var check_idle: bool = _train_idle_t <= 0.0
+	if check_idle:
+		_train_idle_t = 0.2
 	var counts: Dictionary = {}
 	var by_home: Dictionary = {}
+	var have_by_home: Dictionary = {}
 	var c_units: Dictionary = {}
 	var counted: bool = false
-	for f: Facility in mil.facilities:
-		if f.kind == Facility.Kind.BARRACKS and f.army_no == 0:
+	var has_landings: bool = gw.naval != null and not gw.naval.landings.is_empty()
+	for f: Facility in mil.facs_of_kind(Facility.Kind.BARRACKS):
+		if f.army_no == 0:
 			_number(f)
-		if (f.halted or f.mb) and f.kind == Facility.Kind.BARRACKS:
+		if f.halted or f.mb:
 			continue
-		if f.kind != Facility.Kind.BARRACKS or not mil.alive(f) or f.prod_type == 3:
-			if f.kind == Facility.Kind.BARRACKS:
-				f.producing = false
+		if not mil.alive(f) or f.prod_type == 3:
+			f.producing = false
+			continue
+		if not f.producing and not check_idle:
 			continue
 		var c: Country = gw.country_by_id(f.country_id)
 		if not f.producing:
@@ -183,14 +204,24 @@ func _train(dt: float) -> void:
 								hc[1] = int(hc[1]) + 1
 							elif u.type == Unit.Type.ATGM:
 								hc[2] = int(hc[2]) + 1
-				if gw.naval != null:
+							var hm: Variant = have_by_home.get(u.home)
+							if hm == null:
+								hm = {}
+								have_by_home[u.home] = hm
+							(hm as Dictionary)[u.type] = int((hm as Dictionary).get(u.type, 0)) + 1
+				if has_landings:
 					gw.naval.add_counts(counts)
 			var n: int = int(counts.get(f, 0))
 			if n >= BARRACKS_CAP - (0 if c.is_player else GameConfig.ai_cap_cut(gw.game_time)):
 				f.filled = true
 				continue
 			_ensure_build(f, c)
-			var t: int = _next_type(f, by_home, true)
+			var f_have: Dictionary = have_by_home.get(f, {})
+			if has_landings:
+				f_have = f_have.duplicate()
+				for u2: Unit in gw.naval.aboard_of(f):
+					f_have[u2.type] = int(f_have.get(u2.type, 0)) + 1
+			var t: int = _next_type(f, by_home, true, f_have)
 			if t < 0:
 				f.filled = true
 				continue
@@ -199,14 +230,14 @@ func _train(dt: float) -> void:
 				continue
 			var cost: Dictionary = unit_cost(t)
 			if not c.has_res(cost):
-				var t2: int = _affordable_alt(f, c, t)
+				var t2: int = _affordable_alt(f, c, t, f_have)
 				if t2 < 0:
 					wait_reason[f] = Loc.mk("НЕ ХВАТАЕТ: {miss}", {"miss": c.missing_res(cost), "res": c.first_missing(cost)})
 					continue
 				t = t2
 				cost = unit_cost(t)
 
-			var cu: int = int(c_units.get(c.id, 0)) + (gw.naval.aboard_n(c.id) if gw.naval != null else 0)
+			var cu: int = int(c_units.get(c.id, 0)) + (gw.naval.aboard_n(c.id) if has_landings else 0)
 			var buf: int = (cu + 3) / 3 * 3
 			if gw.econ != null:
 				buf = mini(buf, gw.econ.res_cap(c, "food") / 2)
@@ -225,12 +256,13 @@ func _train(dt: float) -> void:
 		if f.prod_t >= float(SPEC[tt]["time"]) * (REFILL_SLOW if f.prod_refill else 1.0):
 			f.producing = false
 			f.prod_t = 0.0
+			_train_idle_t = 0.0
 			_spawn(f, tt)
 
 
-func _next_type(f: Facility, by_home: Dictionary = {}, use_cache: bool = false) -> int:
+func _next_type(f: Facility, by_home: Dictionary = {}, use_cache: bool = false, have_override: Variant = null) -> int:
 	if f.prod_type == 0 and f.army_build != "" and f.army_build != "mix":
-		var need: Array = _shortage(f)
+		var need: Array = _shortage(f, have_override)
 		return int(need[0]) if not need.is_empty() else -1
 	if f.prod_type == 1:
 		return Unit.Type.TANK
@@ -424,13 +456,14 @@ func order_hold(country_id: int) -> void:
 
 
 func update(dt: float) -> void:
-
 	_train(dt)
+	_has_smoke = not smokes.is_empty() or (gw.ops != null and gw.ops.has_smoke_zones())
 	_scan_t -= dt
 	var scan: bool = _scan_t <= 0.0
 	if scan:
 		_scan_t = 0.25
 		_build_grid()
+		_refresh_scan_cache()
 		if pin_until.size() > 48:
 			for k: int in pin_until.keys():
 				if float(pin_until[k]) <= gw.game_time:
@@ -525,34 +558,61 @@ func _valid(u: Unit, t: Object) -> bool:
 func _acquire(u: Unit) -> void:
 	if u.target != null and _valid(u, u.target):
 		return
-	var me: Country = gw.country_by_id(u.country_id)
-	var grd: bool = gw.diplo != null and gw.diplo.rq != null and gw.diplo.rq.guarding(u.country_id)
-	var gz: bool = gw.diplo != null and gw.diplo.in_grey_zone()
-	if me == null or (me.at_war.is_empty() and not grd and not gz):
-		u.target = null
-		return
+	var cid: int = u.country_id
+	var grd: bool = false
+	var gz: bool = false
+	var fm: int = 0
+	var use_fast_mask: bool = cid > 0 and cid < _scan_foe_mask.size()
+	if use_fast_mask:
+		if _scan_can_acq[cid] == 0:
+			u.target = null
+			return
+		grd = _scan_grd[cid] != 0
+		gz = _scan_gz
+		fm = _scan_foe_mask[cid]
+	else:
+		var me: Country = gw.country_by_id(cid)
+		grd = gw.diplo != null and gw.diplo.rq != null and gw.diplo.rq.guarding(cid)
+		gz = gw.diplo != null and gw.diplo.in_grey_zone()
+		if me == null or (me.at_war.is_empty() and not grd and not gz):
+			u.target = null
+			return
+		fm = hostile_mask(cid)
 	var r: float = range_of(u)
 	var best: Object = null
 	var bd: float = r * r
 	var at: bool = u.type == Unit.Type.ATGM
-	var blind: bool = in_smoke(u.pos)
-	for o: Unit in _near_into(u.pos, r, _tmp_near):
-		if not o.alive() or o.type == Unit.Type.FPV or o.country_id == u.country_id:
+	var smoke_check: bool = _has_smoke if use_fast_mask else true
+	var blind_known: bool = false
+	var blind: bool = false
+	var scan_u: Array = _near_hostile_into(cid, fm, u.pos, r, _tmp_near) if (use_fast_mask and not grd and not gz and _grid_w > 0) else _near_into(u.pos, r, _tmp_near)
+	for o: Unit in scan_u:
+		if not o.alive() or o.type == Unit.Type.FPV or o.country_id == cid:
 			continue
 		if at and not o.vehicle():
 			continue
 		var d2: float = o.pos.distance_squared_to(u.pos)
-		if d2 < bd and (_hostile(u.country_id, o.country_id) or (grd and _guard_foe(u, o)) or (gz and _skirmish_foe(u, o.country_id, o.pos))) and (d2 < 784.0 or not (blind or in_smoke(o.pos))):
-			bd = d2
-			best = o
+		if d2 >= bd:
+			continue
+		if not (_hostile(cid, o.country_id) or (grd and _guard_foe(u, o)) or (gz and _skirmish_foe(u, o.country_id, o.pos))):
+			continue
+		if smoke_check and d2 >= 784.0:
+			if not blind_known:
+				blind_known = true
+				blind = in_smoke(u.pos)
+			if blind or in_smoke(o.pos):
+				continue
+		bd = d2
+		best = o
 
 	var storming: bool = u.op_on and (not u.op_hold or u.pi < u.path.size())
 	if best == null and not storming and (u.type == Unit.Type.TANK or u.type == Unit.Type.IFV or at or (u.kit & Unit.KIT_GREN) != 0):
 		bd = r * r * 1.3
-		for f: Facility in _near_fac_into(u.pos, r + 64.0, _tmp_near_fac):
+		var scan_f: Array = _near_hostile_fac_into(fm, u.pos, r + 64.0, _tmp_near_fac) if (use_fast_mask and not gz and _grid_w > 0) else _near_fac_into(u.pos, r + 64.0, _tmp_near_fac)
+		for f: Facility in scan_f:
 			if f.parent != null or f.kind == Facility.Kind.TRENCH_H or not gw.mil.alive(f):
 				continue
-			if not _hostile(u.country_id, f.country_id) and not (gz and Economy.is_extractor(f.kind) and _skirmish_foe(u, f.country_id, f.center_px())):
+			if not _hostile(cid, f.country_id) and not (gz and Economy.is_extractor(f.kind) and _skirmish_foe(u, f.country_id, f.center_px())):
 				continue
 			if f.center_px().distance_squared_to(u.pos) > (r + float(maxi(f.size.x, f.size.y)) * 4.0) * (r + float(maxi(f.size.x, f.size.y)) * 4.0):
 				continue
@@ -755,7 +815,7 @@ func _advance(u: Unit, dt: float) -> void:
 		if u.op_hold:
 
 			u.op_move = false
-			if u.cover >= 1.0:
+			if u.cover >= 1.0 and (u.still_t <= 0.0001 or int(u.still_t + dt) > int(u.still_t)):
 				u.cover = tac.unit_cover(u.pos)
 			if u.state != Unit.State.IDLE:
 				u.state = Unit.State.IDLE
@@ -797,14 +857,15 @@ func _advance(u: Unit, dt: float) -> void:
 		if slow:
 			spd *= 0.4
 	var step: float = spd * dt
-	if not _dry_step(u, q, to, step):
+	var to_len: float = to.length()
+	if not _dry_step(u, q, to, step, to_len):
 		u.still_t = st0
 		u.dug = dug0
 		u.cover = cov0
 		_blocked(u, st0, dt)
 		return
 	_turn(u, to.angle(), PI * 1.5 * dt)
-	if to.length() <= step + 0.5:
+	if to_len <= step + 0.5:
 		u.pos = q
 		u.pi += 1
 		if u.pi < u.path.size() - 1 and u.type == Unit.Type.TANK and gw.econ.point_blocked(u.path[u.pi]):
@@ -816,7 +877,7 @@ func _advance(u: Unit, dt: float) -> void:
 			if u.pos.distance_to(Vector2(city.center * GameWorld.CELL)) < float(city.radius * GameWorld.CELL) + 10.0:
 				u.pi = u.path.size()
 	else:
-		u.pos += to / to.length() * step
+		u.pos += to / to_len * step
 
 
 
@@ -1683,7 +1744,8 @@ func _number(f: Facility) -> void:
 
 
 func _ensure_build(f: Facility, c: Country) -> void:
-	_number(f)
+	if f.army_no <= 0:
+		_number(f)
 	if f.army_build != "" or c.is_player:
 		return
 	var plan: Array = [["motor", "motor", "armor", "support"], ["motor", "support", "assault", "at", "armor"], ["assault", "support", "armor", "at", "support", "motor"]][GameConfig.diff_of(c)]
@@ -1702,8 +1764,8 @@ func _have(f: Facility) -> Dictionary:
 
 
 
-func _shortage(f: Facility) -> Array:
-	var have: Dictionary = _have(f)
+func _shortage(f: Facility, have_override: Variant = null) -> Array:
+	var have: Dictionary = have_override if have_override is Dictionary else _have(f)
 	var out: Array = []
 	var score: Array = []
 	for e: Array in build_of(f)["comp"]:
@@ -1722,7 +1784,7 @@ func _shortage(f: Facility) -> Array:
 
 
 
-func _affordable_alt(f: Facility, c: Country, t: int) -> int:
+func _affordable_alt(f: Facility, c: Country, t: int, have_override: Variant = null) -> int:
 	if f.prod_type == 0 and (f.army_build == "" or f.army_build == "mix"):
 
 
@@ -1732,7 +1794,7 @@ func _affordable_alt(f: Facility, c: Country, t: int) -> int:
 		return -1
 	if f.prod_type != 0:
 		return -1
-	for t2: int in _shortage(f):
+	for t2: int in _shortage(f, have_override):
 		if t2 != t and c.has_res(unit_cost(t2)):
 			return t2
 	return -1
@@ -2185,11 +2247,80 @@ func load_state(d: Dictionary) -> void:
 
 
 
+func _cbit(cid: int) -> int:
+	return (1 << cid) if (cid > 0 and cid < 62) else (1 << 62)
+
+
+func hostile_mask(cid: int) -> int:
+	var c: Country = gw.country_by_id(cid)
+	if c == null:
+		return 0
+	var m: int = 1 << 62
+	for foe: Variant in c.at_war:
+		var fid: int = int(foe)
+		if fid > 0 and fid < 62:
+			m |= (1 << fid)
+	return m
+
+
+func _refresh_scan_cache() -> void:
+	var max_id: int = gw.countries.size() + 2
+	for c: Country in gw.countries:
+		if c.id >= max_id:
+			max_id = c.id + 1
+	_scan_foe_mask.resize(max_id)
+	_scan_can_acq.resize(max_id)
+	_scan_grd.resize(max_id)
+	_scan_foe_mask.fill(0)
+	_scan_can_acq.fill(0)
+	_scan_grd.fill(0)
+	var gz: bool = gw.diplo != null and gw.diplo.in_grey_zone()
+	_scan_gz = gz
+	var rq: Variant = gw.diplo.rq if gw.diplo != null else null
+	for c: Country in gw.countries:
+		var cid: int = c.id
+		if cid <= 0 or cid >= max_id:
+			continue
+		var grd: bool = rq != null and rq.guarding(cid)
+		_scan_grd[cid] = 1 if grd else 0
+		_scan_can_acq[cid] = 1 if (not c.at_war.is_empty() or grd or gz) else 0
+		_scan_foe_mask[cid] = hostile_mask(cid)
+
+
+func _ensure_flat_grid() -> void:
+	var w_px: float = float(gw.data.w * GameWorld.CELL) if gw.data != null else 4096.0
+	var h_px: float = float(gw.data.h * GameWorld.CELL) if gw.data != null else 4096.0
+	var g_w: int = maxi(1, ceili(w_px / GRID_PX))
+	var g_h: int = maxi(1, ceili(h_px / GRID_PX))
+	if g_w == _grid_w and g_h == _grid_h:
+		return
+	_grid_w = g_w
+	_grid_h = g_h
+	var n: int = g_w * g_h
+	_ugrid.resize(n)
+	_fgrid_flat.resize(n)
+	for i in n:
+		_ugrid[i] = []
+		_fgrid_flat[i] = []
+	_umask.resize(n)
+	_umask.fill(0)
+	_fmask.resize(n)
+	_fmask.fill(0)
+	_ugrid_used.resize(0)
+	_fgrid_used.resize(0)
+
+
 func _build_grid() -> void:
-	_grid.clear()
+	_ensure_flat_grid()
+	for idx: int in _ugrid_used:
+		(_ugrid[idx] as Array).clear()
+		_umask[idx] = 0
+	_ugrid_used.resize(0)
 	_fpv_fly.clear()
 	_fpvs.clear()
 	_fpvs_t = gw.game_time
+	var gw_m: int = _grid_w - 1
+	var gh_m: int = _grid_h - 1
 	for u: Unit in units:
 		if not u.alive():
 			continue
@@ -2197,15 +2328,20 @@ func _build_grid() -> void:
 			_fpvs.append(u)
 			_fpv_fly[u.country_id] = int(_fpv_fly.get(u.country_id, 0)) + 1
 			continue
-		var k: = Vector2i(floori(u.pos.x / GRID_PX), floori(u.pos.y / GRID_PX))
-		var a: Array = _grid.get(k, [])
-		if a.is_empty():
-			_grid[k] = a
-		a.append(u)
+		var cx: int = clampi(floori(u.pos.x / GRID_PX), 0, gw_m)
+		var cy: int = clampi(floori(u.pos.y / GRID_PX), 0, gh_m)
+		var idx: int = cy * _grid_w + cx
+		if _umask[idx] == 0:
+			_ugrid_used.append(idx)
+		(_ugrid[idx] as Array).append(u)
+		_umask[idx] |= _cbit(u.country_id)
 	if gw.game_time - _fgrid_t < 1.0 and gw.game_time >= _fgrid_t:
 		return
 	_fgrid_t = gw.game_time
-	_fgrid.clear()
+	for fidx: int in _fgrid_used:
+		(_fgrid_flat[fidx] as Array).clear()
+		_fmask[fidx] = 0
+	_fgrid_used.resize(0)
 	_flines.clear()
 	_fpv_b.clear()
 	for f: Facility in gw.mil.facilities:
@@ -2213,25 +2349,30 @@ func _build_grid() -> void:
 			_fpv_b[f.country_id] = 1
 		if f.parent != null or f.kind == Facility.Kind.TRENCH_H:
 			continue
+		var fb: int = _cbit(f.country_id)
 		if f.is_line():
 			var seen_bk: Dictionary = {}
 			var line_pts: Array = f.cells if not f.cells.is_empty() else [f.cell]
 			for qc: Vector2i in line_pts:
-				var kl := Vector2i(floori(float(qc.x * GameWorld.CELL) / GRID_PX), floori(float(qc.y * GameWorld.CELL) / GRID_PX))
-				if seen_bk.has(kl):
+				var kx: int = clampi(floori(float(qc.x * GameWorld.CELL) / GRID_PX), 0, gw_m)
+				var ky: int = clampi(floori(float(qc.y * GameWorld.CELL) / GRID_PX), 0, gh_m)
+				var lidx: int = ky * _grid_w + kx
+				if seen_bk.has(lidx):
 					continue
-				seen_bk[kl] = true
-				var lb: Array = _fgrid.get(kl, [])
-				if lb.is_empty():
-					_fgrid[kl] = lb
-				lb.append(f)
+				seen_bk[lidx] = true
+				if _fmask[lidx] == 0:
+					_fgrid_used.append(lidx)
+				(_fgrid_flat[lidx] as Array).append(f)
+				_fmask[lidx] |= fb
 			continue
 		var c: Vector2 = f.center_px()
-		var k2: = Vector2i(floori(c.x / GRID_PX), floori(c.y / GRID_PX))
-		var b: Array = _fgrid.get(k2, [])
-		if b.is_empty():
-			_fgrid[k2] = b
-		b.append(f)
+		var fx: int = clampi(floori(c.x / GRID_PX), 0, gw_m)
+		var fy: int = clampi(floori(c.y / GRID_PX), 0, gh_m)
+		var fidx2: int = fy * _grid_w + fx
+		if _fmask[fidx2] == 0:
+			_fgrid_used.append(fidx2)
+		(_fgrid_flat[fidx2] as Array).append(f)
+		_fmask[fidx2] |= fb
 
 
 
@@ -2242,15 +2383,42 @@ var _tmp_near_fac: Array = []
 
 func _near_into(p: Vector2, r: float, out: Array) -> Array:
 	out.clear()
-	var x0: int = floori((p.x - r) / GRID_PX)
-	var x1: int = floori((p.x + r) / GRID_PX)
-	var y0: int = floori((p.y - r) / GRID_PX)
-	var y1: int = floori((p.y + r) / GRID_PX)
+	if not _grid.is_empty():
+		for cy in range(floori((p.y - r) / GRID_PX), floori((p.y + r) / GRID_PX) + 1):
+			for cx in range(floori((p.x - r) / GRID_PX), floori((p.x + r) / GRID_PX) + 1):
+				var bucket: Variant = _grid.get(Vector2i(cx, cy))
+				if bucket is Array:
+					out.append_array(bucket as Array)
+		return out
+	if _grid_w <= 0:
+		return out
+	var x0: int = maxi(0, floori((p.x - r) / GRID_PX))
+	var x1: int = mini(_grid_w - 1, floori((p.x + r) / GRID_PX))
+	var y0: int = maxi(0, floori((p.y - r) / GRID_PX))
+	var y1: int = mini(_grid_h - 1, floori((p.y + r) / GRID_PX))
 	for cy in range(y0, y1 + 1):
+		var row: int = cy * _grid_w
 		for cx in range(x0, x1 + 1):
-			var a: Variant = _grid.get(Vector2i(cx, cy))
-			if a != null:
-				out.append_array(a)
+			var idx: int = row + cx
+			if _umask[idx] != 0:
+				out.append_array(_ugrid[idx] as Array)
+	return out
+
+
+func _near_hostile_into(_cid: int, fm: int, p: Vector2, r: float, out: Array) -> Array:
+	out.clear()
+	if _grid_w <= 0 or fm == 0:
+		return out
+	var x0: int = maxi(0, floori((p.x - r) / GRID_PX))
+	var x1: int = mini(_grid_w - 1, floori((p.x + r) / GRID_PX))
+	var y0: int = maxi(0, floori((p.y - r) / GRID_PX))
+	var y1: int = mini(_grid_h - 1, floori((p.y + r) / GRID_PX))
+	for cy in range(y0, y1 + 1):
+		var row: int = cy * _grid_w
+		for cx in range(x0, x1 + 1):
+			var idx: int = row + cx
+			if (_umask[idx] & fm) != 0:
+				out.append_array(_ugrid[idx] as Array)
 	return out
 
 
@@ -2258,17 +2426,57 @@ func _near_fac_into(p: Vector2, r: float, out: Array) -> Array:
 	out.clear()
 	if not _flines.is_empty():
 		out.append_array(_flines)
+	if not _fgrid.is_empty():
+		for cy in range(floori((p.y - r) / GRID_PX), floori((p.y + r) / GRID_PX) + 1):
+			for cx in range(floori((p.x - r) / GRID_PX), floori((p.x + r) / GRID_PX) + 1):
+				var bucket: Variant = _fgrid.get(Vector2i(cx, cy))
+				if bucket is Array:
+					out.append_array(bucket as Array)
+		return out
+	if _grid_w <= 0:
+		return out
 	_fstamp_seq += 1
-	var x0: int = floori((p.x - r) / GRID_PX)
-	var x1: int = floori((p.x + r) / GRID_PX)
-	var y0: int = floori((p.y - r) / GRID_PX)
-	var y1: int = floori((p.y + r) / GRID_PX)
+	var x0: int = maxi(0, floori((p.x - r) / GRID_PX))
+	var x1: int = mini(_grid_w - 1, floori((p.x + r) / GRID_PX))
+	var y0: int = maxi(0, floori((p.y - r) / GRID_PX))
+	var y1: int = mini(_grid_h - 1, floori((p.y + r) / GRID_PX))
 	for cy in range(y0, y1 + 1):
+		var row: int = cy * _grid_w
 		for cx in range(x0, x1 + 1):
-			var a: Variant = _fgrid.get(Vector2i(cx, cy))
-			if a == null:
+			var idx: int = row + cx
+			if _fmask[idx] == 0:
 				continue
-			for fv: Variant in (a as Array):
+			for fv: Variant in (_fgrid_flat[idx] as Array):
+				if fv is Facility and (fv as Facility).is_line():
+					var fid: int = (fv as Facility).id
+					if fid >= 0:
+						if fid >= _fstamp.size():
+							_fstamp.resize(fid + 64)
+						if _fstamp[fid] == _fstamp_seq:
+							continue
+						_fstamp[fid] = _fstamp_seq
+				out.append(fv)
+	return out
+
+
+func _near_hostile_fac_into(fm: int, p: Vector2, r: float, out: Array) -> Array:
+	out.clear()
+	if not _flines.is_empty():
+		out.append_array(_flines)
+	if _grid_w <= 0 or fm == 0:
+		return out
+	_fstamp_seq += 1
+	var x0: int = maxi(0, floori((p.x - r) / GRID_PX))
+	var x1: int = mini(_grid_w - 1, floori((p.x + r) / GRID_PX))
+	var y0: int = maxi(0, floori((p.y - r) / GRID_PX))
+	var y1: int = mini(_grid_h - 1, floori((p.y + r) / GRID_PX))
+	for cy in range(y0, y1 + 1):
+		var row: int = cy * _grid_w
+		for cx in range(x0, x1 + 1):
+			var idx: int = row + cx
+			if (_fmask[idx] & fm) == 0:
+				continue
+			for fv: Variant in (_fgrid_flat[idx] as Array):
 				if fv is Facility and (fv as Facility).is_line():
 					var fid: int = (fv as Facility).id
 					if fid >= 0:
@@ -2337,10 +2545,16 @@ func ground_at(p: Vector2) -> int:
 
 
 
-func _dry_step(u: Unit, q: Vector2, to: Vector2, step: float) -> bool:
+func _dry_step(u: Unit, q: Vector2, to: Vector2, step: float, to_len: float = -1.0) -> bool:
 	if u.type == Unit.Type.FPV or u.type == Unit.Type.RECON:
 		return true
-	var nxt: Vector2 = q if to.length() <= step + 0.5 else u.pos + to / to.length() * step
+	var tl: float = to.length() if to_len < 0.0 else to_len
+	var nxt: Vector2 = q if tl <= step + 0.5 else u.pos + to / tl * step
+	var d: WorldData = gw.data
+	var cx: int = floori(nxt.x / GameWorld.CELL)
+	var cy: int = floori(nxt.y / GameWorld.CELL)
+	if cx >= 0 and cy >= 0 and cx < d.w and cy < d.h and not Biome.is_water(d.biome[cy * d.w + cx]):
+		return true
 	var gn: int = ground_at(nxt)
 	if gn == 1:
 		return true

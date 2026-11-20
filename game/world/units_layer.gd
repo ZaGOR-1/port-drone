@@ -56,6 +56,18 @@ var _vpts: = PackedVector4Array()
 var _badge_t: float = 0.0
 var _last_z: float = -1.0
 var _last_nf: float = -1.0
+var _last_np_cam: Vector2 = Vector2.INF
+var _p_gt: float = -1.0
+var _p_cam: Vector2 = Vector2.INF
+var _p_z: float = -1.0
+var _p_nf: float = -1.0
+var _p_sd: Object = null
+var _p_sf: Facility = null
+var _p_uc: int = -1
+var _p_fc: int = -1
+var _p_hc: int = -1
+var _p_vv: int = -1
+var _p_ready: bool = false
 var _sel_fid: int = -1
 var _sel_pts: PackedVector2Array = PackedVector2Array()
 var _sel_poly: PackedVector2Array = PackedVector2Array()
@@ -79,24 +91,73 @@ func _ready() -> void:
 	_outline.draw.connect(_draw_outline)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if gw == null or gw.mil == null:
 		return
 	var mil: Military = gw.mil
+	var cam: MapCamera = gw.camera
+	var cam_p: Vector2 = cam.position if cam != null else Vector2.ZERO
+	var cam_z: float = cam.zoom.x if cam != null else 1.0
+	var nf_now: float = gw.night.factor if (night_pass and gw.night != null) else 0.0
+	var sel_d: Object = gw.selected_drone()
+	var sel_f: Facility = gw.selected_facility()
+	var uc: int = gw.army.units.size() if gw.army != null else 0
+	var fc: int = mil.facilities.size()
+	var hc: int = (gw.hold.holds as Dictionary).size() if gw.get("hold") != null else 0
+	var vv: int = gw.vision.ver if gw.vision != null else 0
+	if gw.time_scale <= 0.0 and _p_ready and _p_gt == gw.game_time and _p_cam == cam_p and _p_z == cam_z and _p_nf == nf_now and _p_sd == sel_d and _p_sf == sel_f and _p_uc == uc and _p_fc == fc and _p_hc == hc and _p_vv == vv:
+		return
+	_p_gt = gw.game_time
+	_p_cam = cam_p
+	_p_z = cam_z
+	_p_nf = nf_now
+	_p_sd = sel_d
+	_p_sf = sel_f
+	_p_uc = uc
+	_p_fc = fc
+	_p_hc = hc
+	_p_vv = vv
+	_p_ready = true
+	if night_pass:
+		var ka: float = NIGHT_BOOST * nf_now
+		_km = Color(1, 1, 1, ka)
+		_sync_border(nf_now)
+		if _outline != null and _outline.visible != (ka > 0.02):
+			_outline.visible = ka > 0.02
+		if ka <= 0.02 and cam_z >= BADGE_ZOOM:
+			_last_z = cam_z
+			_last_nf = nf_now
+			_last_np_cam = cam_p
+			if _had:
+				_had = false
+				queue_redraw()
+			return
+		var cam_moved: bool = cam_p != _last_np_cam or cam_z != _last_z or absf(nf_now - _last_nf) > 0.01
+		_last_np_cam = cam_p
+		_badge_t -= delta
+		if ka > 0.02 or cam_moved or _badge_t <= 0.0 or not _had:
+			_pre_frame()
+			queue_redraw()
+			if _outline != null and ka > 0.02:
+				_outline.queue_redraw()
+			_had = true
+		return
 	var busy: bool = not mil.missiles.is_empty() or not mil.trail_t.is_empty() or not mil.air.aams.is_empty() or not mil.air.tracers.is_empty() or gw.army.busy() or not gw.econ.trucks.is_empty() or not gw.defense.shots.is_empty() or not gw.army.shells.is_empty() or not gw.army.rockets.is_empty()
 
 	if not mil.air.kabs.is_empty() or not mil.air.kab_trail.is_empty() or not mil.air.nars.is_empty():
 		busy = true
 	if not air and _sel_army() != null:
 		busy = true
-	for a: Aircraft in mil.air.aircraft:
-		if a.state != Aircraft.State.PARKED or a.service_t > 0.0:
-			busy = true
-			break
-	for d: Drone in mil.drones:
-		if d.state != Drone.State.PARKED:
-			busy = true
-			break
+	if not busy:
+		for a: Aircraft in mil.air.aircraft:
+			if a.state != Aircraft.State.PARKED or a.service_t > 0.0:
+				busy = true
+				break
+	if not busy:
+		for d: Drone in mil.drones:
+			if d.state != Drone.State.PARKED:
+				busy = true
+				break
 	if not busy:
 		for f: Facility in mil.facilities:
 			if f.producing or f.moving or not f.craters.is_empty() or gw.game_time < f.flash_until or f.restore_t > 0.0 or f.reload_t > 0.0 or f.lower_t > 0.0:
@@ -157,18 +218,24 @@ func _draw() -> void:
 	if not air:
 		var gview: Rect2 = _view(40.0)
 		var fview: Rect2 = gview.grow(64.0)
+		var cranes: Array[Facility] = []
 		for f: Facility in mil.facilities:
+			var has_crane: bool = f.restore_t > 0.0 and f.parent == null and f.main_obj >= 0 and not f.is_line()
+			if not f.moving and f.craters.is_empty() and not has_crane:
+				continue
 			if not f.is_line() and not fview.has_point(f.center_px()):
 				continue
 			if not _see_fac(f):
 				continue
+			if has_crane:
+				cranes.append(f)
 			for c: Vector2 in f.craters:
 				if gview.has_point(c):
 					_spr(gw.fx_atlas, "crater_m", 0, c)
 			if f.moving:
 				_vehicle(f)
 		_trips(z)
-		_cranes(mil)
+		_cranes_list(cranes)
 		AD.draw(self, gw, _view(24.0), z)
 		_ground_units(z)
 		for d: Drone in mil.drones:
@@ -614,14 +681,13 @@ func _bar_over(f: Facility, frac: float, flash: int, col: String = "amber") -> v
 
 
 
-func _cranes(mil: Military) -> void:
+func _cranes_list(cranes: Array[Facility]) -> void:
+	if cranes.is_empty():
+		return
 	var a: SpriteAtlas = gw.atlas_crane
 	if a == null or not a.has("crane_s"):
 		return
-	var cview: Rect2 = _view(64.0)
-	for f: Facility in mil.facilities:
-		if f.restore_t <= 0.0 or f.parent != null or f.main_obj < 0 or f.is_line() or not cview.has_point(f.center_px()) or not _see_fac(f):
-			continue
+	for f: Facility in cranes:
 		var sz: = Vector2(f.size * GameWorld.CELL)
 		var big: float = maxf(sz.x, sz.y)
 		var n: String = "crane_s" if big < 24.0 else ("crane_m" if big < 40.0 else "crane_l")
@@ -684,44 +750,80 @@ func _ground_units(z: float) -> void:
 		CD.blit(self, ta.texture, Rect2(ttl, tr.size), tr, _km)
 		CD.end()
 	var sel: Object = gw.selected_drone()
+	var km: Color = _km
+	var c_earth := Palette.c("earth") * km
+	var c_earth_d := Palette.c("earth_dark") * km
+	var c_sand_d := Palette.c("sand_dark") * km
+	var c_amber := Palette.c("amber") * km
+	var c_rub := Palette.c("ui_rubber") * km
+	var meta_a: Array = []
+	var meta_n: Array = []
+	var meta_b: Array = []
+	meta_a.resize(_nv)
+	meta_n.resize(_nv)
+	meta_b.resize(_nv)
+	# Pass 1: dug trenches beneath units + cache sprite selection
+	for i in _nv:
+		var u: Unit = _vu[i]
+		_unit_sprite(u)
+		meta_a[i] = _sa
+		meta_n[i] = _sn
+		meta_b[i] = _big
+		if u.dug and not u.entrenched:
+			var p: Vector2 = u.pos.round()
+			draw_rect(Rect2(p + Vector2(-4, 1), Vector2(8, 3)), c_earth)
+			draw_rect(Rect2(p + Vector2(-3, 2), Vector2(6, 2)), c_earth_d)
+			draw_rect(Rect2(p + Vector2(-4, 4), Vector2(8, 1)), c_sand_d)
+	# Pass 2: unit shadows & sprites grouped by atlas texture so draw calls batch
+	var by_tex: Dictionary = {}
+	for i in _nv:
+		var ua: SpriteAtlas = meta_a[i]
+		if ua == null or ua.texture == null:
+			continue
+		var rid_u: int = ua.texture.get_rid().get_id()
+		var bucket_u: Variant = by_tex.get(rid_u)
+		if bucket_u == null:
+			bucket_u = []
+			by_tex[rid_u] = bucket_u
+		(bucket_u as Array).append(i)
+	for rid_k: Variant in by_tex:
+		for i_s: int in (by_tex[rid_k] as Array):
+			var us: Unit = _vu[i_s]
+			if not us.entrenched and not us.dug:
+				_spr(meta_a[i_s] as SpriteAtlas, String(meta_n[i_s]) + "_shadow", us.frame, us.pos.round() + Vector2(1, 1), km)
+	for rid_k2: Variant in by_tex:
+		for i_b: int in (by_tex[rid_k2] as Array):
+			var ub: Unit = _vu[i_b]
+			_spr(meta_a[i_b] as SpriteAtlas, String(meta_n[i_b]), ub.frame, ub.pos.round(), km)
+	# Pass 3: faction dots, HP bars & selection brackets (all batched together)
+	var sel_p: Vector2 = Vector2.INF
+	var sel_big: int = 0
 	for i in _nv:
 		var u: Unit = _vu[i]
 		var p: Vector2 = u.pos.round()
-		_unit_sprite(u)
-		var ua: SpriteAtlas = _sa
-		var n: String = _sn
-		if u.dug and not u.entrenched:
-
-			draw_rect(Rect2(p + Vector2(-4, 1), Vector2(8, 3)), Palette.c("earth") * _km)
-			draw_rect(Rect2(p + Vector2(-3, 2), Vector2(6, 2)), Palette.c("earth_dark") * _km)
-			draw_rect(Rect2(p + Vector2(-4, 4), Vector2(8, 1)), Palette.c("sand_dark") * _km)
-		if not u.entrenched and not u.dug:
-			_spr(ua, n + "_shadow", u.frame, p + Vector2(1, 1), _km)
-		_spr(ua, n, u.frame, p, _km)
-
+		var bg: int = int(meta_b[i])
 		var oc: Country = gw.country_by_id(u.country_id)
-
-		var my: float = 7.0 if _big == 2 else (6.0 if _big == 1 and u.type == Unit.Type.ARTY else 5.0)
+		var my: float = 7.0 if bg == 2 else (6.0 if bg == 1 and u.type == Unit.Type.ARTY else 5.0)
 		if oc != null:
-			var mw: float = (6.0 if _big == 2 else 4.0) if u.type == Unit.Type.TANK else (4.0 if _big == 2 else 3.0)
-			draw_rect(Rect2(p + Vector2(-floorf(mw * 0.5), my), Vector2(mw, 1)), (Palette.c("amber") if oc == gw.player else oc.color_light) * _km)
-		if z >= 1.0:
-
-			if u.hp < u.max_hp:
-				var c: Country = gw.country_by_id(u.country_id)
-				var w: int = (10 if _big == 2 else 8) if u.type == Unit.Type.TANK else (8 if _big == 2 else 6)
-				var by: float = -11.0 if _big == 2 else -8.0
-				draw_rect(Rect2(p + Vector2(-w / 2, by), Vector2(w, 1)), Palette.c("ui_rubber") * _km)
-				draw_rect(Rect2(p + Vector2(-w / 2, by), Vector2(maxf(1.0, w * u.hp / u.max_hp), 1)), (c.color_light if c != null else Color.WHITE) * _km)
+			var mw: float = (6.0 if bg == 2 else 4.0) if u.type == Unit.Type.TANK else (4.0 if bg == 2 else 3.0)
+			draw_rect(Rect2(p + Vector2(-floorf(mw * 0.5), my), Vector2(mw, 1)), c_amber if oc == gw.player else oc.color_light * km)
+		if z >= 1.0 and u.hp < u.max_hp:
+			var w: int = (10 if bg == 2 else 8) if u.type == Unit.Type.TANK else (8 if bg == 2 else 6)
+			var by: float = -11.0 if bg == 2 else -8.0
+			draw_rect(Rect2(p + Vector2(-w / 2, by), Vector2(w, 1)), c_rub)
+			draw_rect(Rect2(p + Vector2(-w / 2, by), Vector2(maxf(1.0, w * u.hp / u.max_hp), 1)), (oc.color_light if oc != null else Color.WHITE) * km)
 		if u == sel and not night_pass:
-			_brackets(p, 9 if _big == 2 else 7)
+			sel_p = p
+			sel_big = bg
+	if sel_p.is_finite():
+		_brackets(sel_p, 9 if sel_big == 2 else 7)
 	var a6: SpriteAtlas = gw.atlas6
-	for f: Facility in gw.mil.facilities:
-		if f.kind != Facility.Kind.AD_SPAAG or f.main_obj < 0 or not gw.mil.alive(f) or not _see_fac(f):
+	for f: Facility in gw.mil.facs_of_kind(Facility.Kind.AD_SPAAG):
+		if f.main_obj < 0 or not gw.mil.alive(f) or not _see_fac(f):
 			continue
 		var info: Dictionary = a6.info("ad_spaag_hull")
 		var tc: Vector2 = gw.obj_origin(f.main_obj) + Vector2(float(info["turret"][0]), float(info["turret"][1]))
-		_spr(a6, "ad_spaag_turret", posmod(roundi(rad_to_deg(f.turret) / 22.5), 16), tc.round(), _km)
+		_spr(a6, "ad_spaag_turret", posmod(roundi(rad_to_deg(f.turret) / 22.5), 16), tc.round(), km)
 
 
 
@@ -819,7 +921,6 @@ func _pre_frame() -> bool:
 		_vu[_nv] = u
 		_nv += 1
 	if night_pass:
-		_badge_t -= get_process_delta_time()
 		if _badge_t <= 0.0 or want:
 			_badge_t = 0.2 if _nv > 120 else BADGE_DT
 			_cluster(z)
@@ -950,6 +1051,7 @@ func _draw_badges(z: float) -> void:
 	var ba: float = clampf((BADGE_ZOOM - z) / 0.15, 0.0, 1.0)
 	var dark: Color = Palette.c("outline")
 	var txt_col: = Color(0.96, 0.95, 0.9, ba)
+	var b_list: Array = []
 	for j in _nb:
 		if far and _bsel[j] == 1:
 			continue
@@ -972,17 +1074,34 @@ func _draw_badges(z: float) -> void:
 			continue
 		MD.note("badge", bsr)
 		var ba2: float = ba * (MD.QUIET_A if gw.player == null or _bc[j] != gw.player.id else 1.0)
-		txt_col.a = ba2
-		draw_set_transform(Vector2(cx, cy), 0.0, Vector2(k, k))
-		draw_rect(r.grow(1.0), Color(dark, 0.95 * ba2))
-		draw_rect(r, Color(0.06, 0.07, 0.1, 0.9 * ba2))
-		draw_rect(Rect2(r.position.x + 2.0, r.position.y + 2.0, 7.0, h - 4.0), Color(col, ba2))
-		draw_rect(Rect2(r.position.x, r.end.y - 1.0, r.size.x, 1.0), Color(col, ba2))
+		b_list.append([cx, cy, r, col, ba2, txt])
+	if b_list.is_empty():
+		return
+	var dark95: float = 0.95
+	var bg_col := Color(0.06, 0.07, 0.1, 0.9)
+	for b_it: Array in b_list:
+		var bcx: float = float(b_it[0])
+		var bcy: float = float(b_it[1])
+		var br: Rect2 = b_it[2] as Rect2
+		var bcol: Color = b_it[3] as Color
+		var ba2: float = float(b_it[4])
+		var br_w := Rect2(bcx + br.position.x * k, bcy + br.position.y * k, br.size.x * k, br.size.y * k)
+		draw_rect(br_w.grow(k), Color(dark, dark95 * ba2))
+		draw_rect(br_w, Color(bg_col.r, bg_col.g, bg_col.b, bg_col.a * ba2))
+		draw_rect(Rect2(br_w.position.x + 2.0 * k, br_w.position.y + 2.0 * k, 7.0 * k, (br.size.y - 4.0) * k), Color(bcol, ba2))
+		draw_rect(Rect2(br_w.position.x, br_w.end.y - k, br_w.size.x, k), Color(bcol, ba2))
 		if not far:
-			draw_rect(Rect2(-2.0, r.end.y + 1.0, 5.0, 1.0), Color(dark, 0.95 * ba2))
-			draw_rect(Rect2(-1.0, r.end.y + 1.0, 3.0, 1.0), Color(col, ba2))
-			draw_rect(Rect2(0.0, r.end.y + 2.0, 1.0, 1.0), Color(col, ba2))
-		draw_string(font, Vector2(r.position.x + 11.0, r.end.y - 2.0), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, txt_col)
+			draw_rect(Rect2(bcx - 2.0 * k, br_w.end.y + k, 5.0 * k, k), Color(dark, dark95 * ba2))
+			draw_rect(Rect2(bcx - k, br_w.end.y + k, 3.0 * k, k), Color(bcol, ba2))
+			draw_rect(Rect2(bcx, br_w.end.y + 2.0 * k, k, k), Color(bcol, ba2))
+	var inv_k: float = 1.0 / k
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2(k, k))
+	for b_it2: Array in b_list:
+		var bcx2: float = float(b_it2[0]) * inv_k
+		var bcy2: float = float(b_it2[1]) * inv_k
+		var br2: Rect2 = b_it2[2] as Rect2
+		txt_col.a = float(b_it2[4])
+		draw_string(font, Vector2(bcx2 + br2.position.x + 11.0, bcy2 + br2.end.y - 2.0), String(b_it2[5]), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, txt_col)
 	draw_set_transform(Vector2.ZERO)
 
 

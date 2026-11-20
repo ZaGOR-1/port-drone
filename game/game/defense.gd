@@ -406,6 +406,13 @@ func _fire_ready_site(f: Facility, sp: Dictionary, is_gun: bool) -> void:
 		_launch(f, pick, sp)
 
 
+const AD_UPDATE_KINDS: Array[int] = [
+	Facility.Kind.AD_MFG, Facility.Kind.AD_SPAAG, Facility.Kind.AD_SAM,
+	Facility.Kind.AD_PATRIOT, Facility.Kind.AD_INT, Facility.Kind.AD_RADAR,
+	Facility.Kind.AD_EW, Facility.Kind.AD_ZASLON,
+]
+
+
 func update(dt: float) -> void:
 	_anim += dt
 	if floori(gw.game_time / BOT_RULE_S) != floori((gw.game_time - dt) / BOT_RULE_S):
@@ -422,21 +429,19 @@ func update(dt: float) -> void:
 	_air_fpv.clear()
 	var mil: Military = gw.mil
 	var ad_sites: Array[Facility] = []
-	for f: Facility in mil.facilities:
-		var fk: int = f.kind
-		if not is_ad(fk) and fk != Facility.Kind.AD_RADAR and fk != Facility.Kind.AD_EW:
-			continue
-		if not _ready(f):
-			continue
-		f.cd -= dt
-		if fk == Facility.Kind.AD_RADAR:
-			if mil.has_power(f):
-				if anim:
-					f.frame_i = (f.frame_i + 1) % 8
-					gw.set_obj_frame(f.main_obj, "ad_radar", f.frame_i)
-				_radars.append(f)
-			continue
-		ad_sites.append(f)
+	for fk: int in AD_UPDATE_KINDS:
+		for f: Facility in mil.facs_of_kind(fk):
+			if not _ready(f):
+				continue
+			f.cd -= dt
+			if fk == Facility.Kind.AD_RADAR:
+				if mil.has_power(f):
+					if anim:
+						f.frame_i = (f.frame_i + 1) % 8
+						gw.set_obj_frame(f.main_obj, "ad_radar", f.frame_i)
+					_radars.append(f)
+				continue
+			ad_sites.append(f)
 	if ad_sites.is_empty():
 		return
 	for d: Drone in mil.drones:

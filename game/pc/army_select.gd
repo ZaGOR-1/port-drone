@@ -205,7 +205,7 @@ func _process(delta: float) -> void:
 		_last_cam_p = cam.position
 		_last_cam_z = cam.zoom.x
 		_last_sel_sig = ssig
-		_redraw_t = 0.08
+		_redraw_t = 0.25 if gw.time_scale <= 0.0 else 0.08
 		queue_redraw()
 
 
@@ -280,6 +280,7 @@ func _draw() -> void:
 			stacks.append({"p": sp2, "fids": [it[0]], "n": int(it[2])})
 
 	var near: bool = z >= 1.2
+	var cards: Array = []
 	for st2: Dictionary in stacks:
 		var p0: Vector2 = st2["p"]
 		var cp: Vector2 = p0 + (Vector2(0, 14) if near else Vector2.ZERO)
@@ -306,30 +307,78 @@ func _draw() -> void:
 			var g: Dictionary = AG.by_id(gw, gw.player.id, lf.group_id)
 			if not g.is_empty():
 				col = U.color(int(g["color"]))
-		draw_rect(r.grow(1.0), U.DARK)
-		draw_rect(r, Color(0.09, 0.07, 0.05, 0.93))
-		draw_rect(Rect2(r.position, Vector2(4, h)), col)
 		var ic: Texture2D = U.tex(String(a.get("build_icon", "icon_infantry")))
 		if ic == null:
 			ic = U.tex("icon_infantry")
-		if ic != null:
-			draw_texture_rect(ic, Rect2(r.position + Vector2(6, 2), Vector2(15, 15)), false)
-		draw_string(f, r.position + Vector2(24, 14), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
-		draw_rect(Rect2(r.position + Vector2(4, h - 2), Vector2((w - 4) * clampf(hp, 0.0, 1.0), 2)), Color("a2e35f").lerp(Color("ff6a4d"), 1.0 - clampf(hp, 0.0, 1.0)))
+		_hits.append([r.grow(3.0), fids.duplicate()])
+		cards.append([r, w, h, col, hp, nsel, fids.size(), ic, txt, lf])
+	# Pass 1: all card backgrounds, bars, badges & selection borders
+	for cd: Array in cards:
+		var r: Rect2 = cd[0]
+		var w: float = float(cd[1])
+		var h: float = float(cd[2])
+		var hp: float = clampf(float(cd[4]), 0.0, 1.0)
+		var nsel: int = int(cd[5])
+		var fn: int = int(cd[6])
+		draw_rect(r.grow(1.0), U.DARK)
+		draw_rect(r, Color(0.09, 0.07, 0.05, 0.93))
+		draw_rect(Rect2(r.position, Vector2(4, h)), cd[3] as Color)
+		draw_rect(Rect2(r.position + Vector2(4, h - 2), Vector2((w - 4) * hp, 2)), Color("a2e35f").lerp(Color("ff6a4d"), 1.0 - hp))
 		if nsel > 0:
-			draw_rect(r.grow(2.0), UiKit.GOLD if nsel == fids.size() else UiKit.GOLD.darkened(0.35), false, 2.0)
-		if fids.size() > 1:
-			var bt: String = "×%d" % fids.size()
+			var sr2 := r.grow(2.0)
+			var scol: Color = UiKit.GOLD if nsel == fn else UiKit.GOLD.darkened(0.35)
+			draw_rect(Rect2(sr2.position.x, sr2.position.y, sr2.size.x, 2.0), scol)
+			draw_rect(Rect2(sr2.position.x, sr2.end.y - 2.0, sr2.size.x, 2.0), scol)
+			draw_rect(Rect2(sr2.position.x, sr2.position.y + 2.0, 2.0, maxf(0.0, sr2.size.y - 4.0)), scol)
+			draw_rect(Rect2(sr2.end.x - 2.0, sr2.position.y + 2.0, 2.0, maxf(0.0, sr2.size.y - 4.0)), scol)
+		if fn > 1:
+			var bt: String = "×%d" % fn
 			var bw: float = f.get_string_size(bt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x + 6.0
 			var br: = Rect2((r.position + Vector2(w - bw * 0.5, -8)).round(), Vector2(roundf(bw), 12))
 			draw_rect(br.grow(1.0), U.DARK)
 			draw_rect(br, Color(0.35, 0.27, 0.05, 0.95))
-			draw_string(f, br.position + Vector2(3, 10), bt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color.WHITE)
-		elif lf != null and z >= 0.7:
-			var nt: String = Loc.no(lf.army_no)
-			draw_string_outline(f, r.position + Vector2(w + 3, 13), nt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 4, U.DARK)
-			draw_string(f, r.position + Vector2(w + 3, 13), nt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiKit.MUTED)
-		_hits.append([r.grow(3.0), fids.duplicate()])
+			cd.append(br)
+			cd.append(bt)
+	# Pass 2: group unit icons by underlying Atlas Texture2D RID
+	var by_ic: Dictionary = {}
+	for cd2: Array in cards:
+		var ic2: Texture2D = cd2[7]
+		if ic2 != null:
+			var is_at2: bool = ic2 is AtlasTexture and (ic2 as AtlasTexture).atlas != null
+			var base2: Texture2D = (ic2 as AtlasTexture).atlas if is_at2 else ic2
+			var reg2: Rect2 = (ic2 as AtlasTexture).region if is_at2 else Rect2()
+			var rid2: int = base2.get_rid().get_id()
+			var b2: Variant = by_ic.get(rid2)
+			if b2 == null:
+				b2 = []
+				by_ic[rid2] = b2
+			(b2 as Array).append([base2, reg2, Rect2((cd2[0] as Rect2).position + Vector2(6, 2), Vector2(15, 15))])
+	for rk2: Variant in by_ic:
+		for e2: Array in (by_ic[rk2] as Array):
+			var rg2: Rect2 = e2[1] as Rect2
+			if rg2.size.x > 0.0:
+				draw_texture_rect_region(e2[0] as Texture2D, e2[2] as Rect2, rg2)
+			else:
+				draw_texture_rect(e2[0] as Texture2D, e2[2] as Rect2, false)
+	# Pass 3: batch strings by font size and outline pass
+	for cd3: Array in cards:
+		var r3: Rect2 = cd3[0]
+		draw_string(f, r3.position + Vector2(24, 14), String(cd3[8]), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
+	for cd4: Array in cards:
+		if int(cd4[6]) > 1:
+			var br4: Rect2 = cd4[10]
+			draw_string(f, br4.position + Vector2(3, 10), String(cd4[11]), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color.WHITE)
+	if z >= 0.7:
+		for cd5: Array in cards:
+			if int(cd5[6]) <= 1 and cd5[9] != null:
+				var r5: Rect2 = cd5[0]
+				var nt5: String = Loc.no((cd5[9] as Facility).army_no)
+				draw_string_outline(f, r5.position + Vector2(float(cd5[1]) + 3, 13), nt5, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 4, U.DARK)
+		for cd6: Array in cards:
+			if int(cd6[6]) <= 1 and cd6[9] != null:
+				var r6: Rect2 = cd6[0]
+				var nt6: String = Loc.no((cd6[9] as Facility).army_no)
+				draw_string(f, r6.position + Vector2(float(cd6[1]) + 3, 13), nt6, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiKit.MUTED)
 
 	if _box_from.is_finite() and _box_to.is_finite():
 		var br2: Rect2 = Rect2(_box_from, Vector2.ZERO).expand(_box_to)

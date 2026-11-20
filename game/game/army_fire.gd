@@ -48,6 +48,8 @@ var _news_t: Dictionary = {}
 var rng_state: int = 0
 var _spot_u: Array = []
 var _spot_f: Array = []
+var _recon_near: Array = []
+var _recon_task: Dictionary = {}
 
 
 func _init(a: Army) -> void:
@@ -152,19 +154,21 @@ func _spot() -> void:
 		var ey: Array = eyes[cid]
 		if ey.is_empty():
 			continue
+		var fm: int = army.hostile_mask(cid)
 		var list: Array = []
 		var done_u: Dictionary = {}
+		var smoke_on: bool = army._has_smoke
 		for e: Array in ey:
 			var ep: Vector2 = e[0]
 			var r2: float = float(e[1])
 			var er: float = sqrt(r2)
 			var is_rec: bool = bool(e[2])
-			army._near_into(ep, er, _spot_u)
+			army._near_hostile_into(cid, fm, ep, er, _spot_u)
 			for o_var: Variant in _spot_u:
 				var o: Unit = o_var
 				if done_u.has(o):
 					continue
-				if not o.alive() or o.air() or o.country_id == cid or not army._hostile(cid, o.country_id) or army.in_smoke(o.pos):
+				if not o.alive() or o.air() or o.country_id == cid or not army._hostile(cid, o.country_id) or (smoke_on and army.in_smoke(o.pos)):
 					done_u[o] = true
 					continue
 				var lim: float = minf(r2, tr2) if o.entrenched and not is_rec else r2
@@ -180,7 +184,7 @@ func _spot() -> void:
 				var r2f: float = float(e2[1])
 				var erf: float = sqrt(r2f)
 				var is_rec2: bool = bool(e2[2])
-				army._near_fac_into(ep2, erf, _spot_f)
+				army._near_hostile_fac_into(fm, ep2, erf, _spot_f)
 				for f_var: Variant in _spot_f:
 					var f: Facility = f_var
 					if done_f.has(f):
@@ -689,6 +693,7 @@ func _update_recon(dt: float) -> void:
 	var snd: = Vector2.INF
 	var sd: float = INF
 	var lp: Vector2 = Sfx.listener()
+	var now: float = gw.game_time
 	for d: Unit in recon:
 		if not d.alive():
 			continue
@@ -700,7 +705,14 @@ func _update_recon(dt: float) -> void:
 				army._kill(d, 0)
 			continue
 		d.orbit += dt * 0.8
-		var task: Vector2 = _task(d.base, d.country_id) if d.base != null else Vector2.INF
+		var task: Vector2 = Vector2.INF
+		if d.base != null:
+			var te: Array = _recon_task.get(d.id, [])
+			if te.is_empty() or now >= float(te[0]) or now < float(te[0]) - 0.5:
+				task = _task(d.base, d.country_id)
+				_recon_task[d.id] = [now + 0.4, task]
+			else:
+				task = te[1]
 		d.still_t = 0.0 if task.is_finite() else d.still_t + dt
 		var st: Vector2 = (task + Vector2(cos(d.orbit), sin(d.orbit) * 0.6) * 22.0) if task.is_finite() else (_pad(d.base) if d.base != null else d.pos)
 		var to: Vector2 = st - d.pos
@@ -720,10 +732,12 @@ func _update_recon(dt: float) -> void:
 
 
 func _shoot_recon() -> void:
+	var has_grid: bool = army._grid_w > 0
 	for d: Unit in recon:
 		if not d.alive():
 			continue
-		for o: Unit in army.units:
+		var cands: Array = army._near_into(d.pos, 90.0, _recon_near) if has_grid else army.units
+		for o: Unit in cands:
 			if not o.alive() or not (o.foot() or o.type == Unit.Type.IFV) or o.indirect() or not army._hostile(o.country_id, d.country_id):
 				continue
 			var r: float = 90.0 if o.type == Unit.Type.IFV else 50.0

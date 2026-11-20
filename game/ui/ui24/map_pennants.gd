@@ -73,7 +73,7 @@ func _process(delta: float) -> void:
 	var rows_changed: bool = not was_on
 	if _data_t <= 0.0:
 		_data_t = DATA_T
-		var sm: Dictionary = gw.ops.command_summary(gw.player.id)
+		var sm: Dictionary = gw.ops.command_summary(gw.player.id, true)
 		store.scan(sm)
 		_rows = store.armies(sm, -1).filter(func(r: Dictionary) -> bool: return int(r["gid"]) >= 0)
 		rows_changed = true

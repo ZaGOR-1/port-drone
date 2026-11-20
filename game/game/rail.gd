@@ -906,7 +906,12 @@ func _poll_job() -> void:
 	if not _finish_line(job):
 		var x: int = int(job["a"])
 		var y: int = int(job["b"])
-		_fail["%d:%d" % [mini(x, y), maxi(x, y)]] = gw.game_time + FAIL_COOLDOWN
+		var gap_long: bool = false
+		for lg: String in (job.get("log", []) as Array):
+			if lg.find("water gap") >= 0 or lg.find("no station spot") >= 0:
+				gap_long = true
+				break
+		_fail["%d:%d" % [mini(x, y), maxi(x, y)]] = gw.game_time + FAIL_COOLDOWN * (4.0 if gap_long else 1.0)
 	pt("rail_apply", t0)
 
 

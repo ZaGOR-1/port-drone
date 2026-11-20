@@ -42,6 +42,7 @@ func _ready() -> void:
 	ArchStyle.register(self)
 	DmgStages.register(self)
 	BorderPosts.register(self)
+	_merge_world_sprites()
 	terrain = TerrainView.new()
 	terrain.name = "Terrain"
 	if ResourceLoader.exists("res://world/season_terrain.gdshader"):
@@ -165,6 +166,67 @@ func _add_sprites(at: SpriteAtlas) -> void:
 		spr_fw.append(int(s.get("fw", 1)))
 		spr_fd.append(int(s.get("fd", 1)))
 		spr_frames.append(int(s.get("frames", 1)))
+
+
+func _merge_world_sprites() -> void:
+	# Pack all small world object textures (<=512px wide) into one atlas so ObjChunk draws avoid texture switches.
+	var seen_t: Dictionary = {}
+	var items: Array = []
+	for t: Texture2D in spr_tex:
+		if t == null or t is PlaceholderTexture2D:
+			continue
+		var rid: int = t.get_rid().get_id()
+		if seen_t.has(rid):
+			continue
+		var sz: Vector2i = Vector2i(t.get_size())
+		if sz.x <= 0 or sz.y <= 0 or sz.x > 512 or sz.y > 1600:
+			continue
+		var im: Image = t.get_image()
+		if im == null or im.is_empty():
+			continue
+		if im.is_compressed():
+			im.decompress()
+		if im.get_format() != Image.FORMAT_RGBA8:
+			im.convert(Image.FORMAT_RGBA8)
+		seen_t[rid] = true
+		items.append([im.get_height(), im.get_width(), t, im])
+	if items.size() <= 1:
+		return
+	items.sort_custom(func(a: Array, b: Array) -> bool: return int(a[0]) > int(b[0]))
+	var col_x: Array[int] = [0, 513]
+	var col_y: Array[int] = [0, 0]
+	var max_w: int = 0
+	var max_h: int = 0
+	var offs: Dictionary = {}
+	for it: Array in items:
+		var h: int = int(it[0])
+		var w: int = int(it[1])
+		var col: int = 0 if col_y[0] <= col_y[1] else 1
+		var ox: int = col_x[col]
+		var oy: int = col_y[col]
+		if oy + h > 4096:
+			return
+		offs[(it[2] as Texture2D).get_rid().get_id()] = Vector2(ox, oy)
+		col_y[col] = oy + h + 1
+		max_w = maxi(max_w, ox + w)
+		max_h = maxi(max_h, oy + h)
+	var merged := Image.create(max_w, max_h, false, Image.FORMAT_RGBA8)
+	for it2: Array in items:
+		var r_id: int = (it2[2] as Texture2D).get_rid().get_id()
+		var off: Vector2 = offs[r_id]
+		var im2: Image = it2[3]
+		merged.blit_rect(im2, Rect2i(Vector2i.ZERO, im2.get_size()), Vector2i(int(off.x), int(off.y)))
+	var mtex := ImageTexture.create_from_image(merged)
+	for i in spr_tex.size():
+		var tx: Texture2D = spr_tex[i]
+		if tx == null:
+			continue
+		var r_id2: int = tx.get_rid().get_id()
+		if offs.has(r_id2):
+			spr_tex[i] = mtex
+			var rc: Rect2 = spr_rect[i]
+			rc.position += offs[r_id2] as Vector2
+			spr_rect[i] = rc
 
 
 

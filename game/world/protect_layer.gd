@@ -20,6 +20,12 @@ var front: bool = true
 var _t: float = 0.0
 var _sig: int = -1
 static var _cache: Dictionary = {}
+static var _atlas_img: Image = null
+static var _atlas_tex: ImageTexture = null
+static var _ax: int = 0
+static var _ay: int = 0
+static var _row_h: int = 0
+static var _atlas_dirty: bool = false
 
 
 static func ensure(world: GameWorld) -> void:
@@ -121,14 +127,19 @@ func _draw() -> void:
 			if dmg == 0 and int(s["cc"]) == 0 and bool(s["ch"]):
 				dmg = 2
 			var bh: int = int(BLOCK_H[cl])
-			draw_texture(_conc_tex(fw, fh, cl, dmg, front), o + Vector2(-7, -bh - 3))
+			var ce: Array = _conc_entry(fw, fh, cl, dmg, front)
+			draw_texture_rect_region(ce[0] as Texture2D, Rect2(o + Vector2(-7, -bh - 3), (ce[1] as Rect2).size), ce[1] as Rect2)
 		elif cs == Protect.S_BUILDING and front:
 			_draw_conc_build(o, fw, fh, cl, 1.0 - float(s["ct"]) / maxf(0.01, float(s["cT"])))
 		var ns: int = int(s["ns"])
 		if ns == Protect.S_OK or ns == Protect.S_BROKEN:
-			draw_texture(_net_tex(fw, fh, hh, int(s["nl"]), ns == Protect.S_BROKEN, front), o + Vector2(-1, -hh - 1))
+			var ne: Array = _net_entry(fw, fh, hh, int(s["nl"]), ns == Protect.S_BROKEN, front)
+			draw_texture_rect_region(ne[0] as Texture2D, Rect2(o + Vector2(-1, -hh - 1), (ne[1] as Rect2).size), ne[1] as Rect2)
 		elif ns == Protect.S_BUILDING and front:
 			_draw_net_build(o, fw, fh, hh, 1.0 - float(s["nt"]) / maxf(0.01, float(s["nT"])))
+	if _atlas_dirty and _atlas_tex != null and _atlas_img != null:
+		_atlas_tex.update(_atlas_img)
+		_atlas_dirty = false
 
 
 
@@ -223,7 +234,31 @@ static func _put(im: Image, x: int, y: int, c: Color) -> void:
 
 
 
-static func _net_tex(fw: int, fh: int, h: int, lvl: int, torn: bool, fr: bool) -> Texture2D:
+static func _pack_tex(key: String, im: Image) -> Array:
+	var w: int = im.get_width()
+	var ht: int = im.get_height()
+	if _atlas_img == null:
+		_atlas_img = Image.create(1024, 1024, false, Image.FORMAT_RGBA8)
+		_atlas_tex = ImageTexture.create_from_image(_atlas_img)
+	if _ax + w + 1 > _atlas_img.get_width():
+		_ax = 0
+		_ay += _row_h + 1
+		_row_h = 0
+	if _ay + ht + 1 <= _atlas_img.get_height() and w + 1 <= _atlas_img.get_width():
+		_atlas_img.blit_rect(im, Rect2i(0, 0, w, ht), Vector2i(_ax, _ay))
+		var ent: Array = [_atlas_tex, Rect2(_ax, _ay, w, ht)]
+		_ax += w + 1
+		_row_h = maxi(_row_h, ht)
+		_atlas_dirty = true
+		_cache[key] = ent
+		return ent
+	var ftex := ImageTexture.create_from_image(im)
+	var fent: Array = [ftex, Rect2(0, 0, w, ht)]
+	_cache[key] = fent
+	return fent
+
+
+static func _net_entry(fw: int, fh: int, h: int, lvl: int, torn: bool, fr: bool) -> Array:
 	var key: String = "n:%d:%d:%d:%d:%s:%s" % [fw, fh, h, lvl, torn, fr]
 	if _cache.has(key):
 		return _cache[key]
@@ -249,9 +284,7 @@ static func _net_tex(fw: int, fh: int, h: int, lvl: int, torn: bool, fr: bool) -
 			for y in range(top, h + 2):
 				_put(im, px, y, pole)
 				_put(im, px + 1, y, Color(shade, 0.45))
-		var tex0: = ImageTexture.create_from_image(im)
-		_cache[key] = tex0
-		return tex0
+		return _pack_tex(key, im)
 
 	for y in range(1, fh + 1):
 		for x in range(x0, x1 + 1):
@@ -311,14 +344,12 @@ static func _net_tex(fw: int, fh: int, h: int, lvl: int, torn: bool, fr: bool) -
 			_put(im, px, y, pole)
 		_put(im, px, top2, Palette.c("white"))
 		_put(im, px + 1, fh + h + 1, Color(shade, 0.5))
-	var tex: = ImageTexture.create_from_image(im)
-	_cache[key] = tex
-	return tex
+	return _pack_tex(key, im)
 
 
 
 
-static func _conc_tex(fw: int, fh: int, lvl: int, dmg: int, fr: bool) -> Texture2D:
+static func _conc_entry(fw: int, fh: int, lvl: int, dmg: int, fr: bool) -> Array:
 	var key: String = "c:%d:%d:%d:%d:%s" % [fw, fh, lvl, dmg, fr]
 	if _cache.has(key):
 		return _cache[key]
@@ -340,9 +371,7 @@ static func _conc_tex(fw: int, fh: int, lvl: int, dmg: int, fr: bool) -> Texture
 	for b: Array in blocks:
 		i += 1
 		_block(im, int(b[0]), int(b[1]), bh, lvl, dmg, _h(int(b[0]), int(b[1]), fw * 7 + fh))
-	var tex: = ImageTexture.create_from_image(im)
-	_cache[key] = tex
-	return tex
+	return _pack_tex(key, im)
 
 
 static func _block(im: Image, x: int, yb: int, bh: int, lvl: int, dmg: int, hs: int) -> void:
