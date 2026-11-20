@@ -93,11 +93,22 @@ var nuke_prog: float = 0.0
 ## Cooldown in seconds before silo can begin preparing the next ICBM (post-launch bay reset).
 var nuke_cd: float = 0.0
 var nuke_stage_sent: int = 0
+## ICBM warhead: 0=Monoblock, 1=MIRV Decoys, 2=High-Altitude EMP.
+var nuke_warhead: int = 0
 
 ## ABM Zaslon sequential charge production queue & active timer.
 var zas_q: int = 0
 var zas_t: float = 0.0
 var zas_tt: float = 0.0
+
+## T3 specialization (0=default, 1=Overclock, 2=Bunker).
+var t3_spec: int = 0
+## NPP overheat crisis countdown (>=0 when reactor damaged to 2 hits).
+var npp_overheat_t: float = -1.0
+## Temporary EMP shutdown expiry game_time.
+var emp_until: float = -1.0
+## Physical fuel buffer refined at REFINERY awaiting convoy dispatch.
+var ref_fuel: int = 0
 
 
 

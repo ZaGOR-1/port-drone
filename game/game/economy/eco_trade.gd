@@ -178,6 +178,9 @@ func _update_trucks(dt: float) -> void:
 				continue
 		var path: PackedVector2Array = t["path"]
 		var i: int = t["i"]
+		if bool(t.get("fuel_sale", false)) and path.is_empty():
+			trucks.remove_at(k)
+			continue
 		if i >= path.size():
 			complete(t)
 			trucks.remove_at(k)
@@ -352,6 +355,16 @@ func complete(t: Dictionary) -> void:
 	var res: String = t["res"]
 	var n: int = int(t["n"])
 	var pay: int = int(t["price"])
+	if bool(t.get("fuel_sale", false)):
+		s.add_money(pay)
+		s.fuel_sold += pay
+		stat_add(s, "income", "fuel_sale", pay)
+		stat_res(s, "fuel", "fuel_sale", -n)
+		if upk != null:
+			upk.note_trade(s.id, "fuel", n, maxi(1, pay / maxi(1, n)))
+		if s.is_player:
+			gw.say(s, Loc.mk("Топливный конвой доставлен (%d ед.): +%d", [n, pay]))
+		return
 	if gw.kpp != null:
 		gw.kpp.note_trade(s.id, r.id, pay)
 	s.add_money(pay)
@@ -1055,7 +1068,7 @@ func pay_substituted(c: Country, cost: Dictionary, stat_key: String = "build") -
 
 
 
-func upgrade(f: Facility, c: Country) -> String:
+func upgrade(f: Facility, c: Country, spec: int = 0) -> String:
 	if f == null or c == null or not UPG_RES.has(f.kind):
 		return Loc.t("Это здание не улучшается")
 	if f.country_id != c.id:
@@ -1074,6 +1087,8 @@ func upgrade(f: Facility, c: Country) -> String:
 	for r: String in cost:
 		if r != "money":
 			stat_res(c, r, "upgrade", -int(cost[r]))
+	if f.level + 1 >= MAX_LEVEL and (spec == 1 or spec == 2):
+		f.t3_spec = spec
 	if is_deep(f.kind):
 		f.upg_t = float(DEEP_T[f.level + 1])
 		draw_ver += 1
@@ -1083,6 +1098,8 @@ func upgrade(f: Facility, c: Country) -> String:
 		gw.changed.emit()
 		return ""
 	f.level += 1
+	if f.level >= MAX_LEVEL and f.t3_spec == 2 and gw.protect != null:
+		gw.protect.ensure_bunker(f)
 	_place_extra(f)
 	_cap_bonus.erase(c.id)
 	draw_ver += 1
@@ -1091,6 +1108,119 @@ func upgrade(f: Facility, c: Country) -> String:
 		Sfx.play("ui_build", f.center_px())
 	gw.changed.emit()
 	return ""
+
+
+func set_t3_spec(f: Facility, c: Country, spec: int) -> String:
+	if f == null or c == null or f.country_id != c.id:
+		return Loc.t("Это не ваше здание")
+	if not UPG_RES.has(f.kind):
+		return Loc.t("Это здание не поддерживает специализацию")
+	if f.level < MAX_LEVEL and not (f.level == MAX_LEVEL - 1 and f.upg_t > 0.0):
+		return Loc.t("Доступно на уровне 3")
+	if spec != 1 and spec != 2:
+		return Loc.t("Неверная специализация")
+	if f.t3_spec == spec:
+		return ""
+	var fee: int = 0 if f.t3_spec == 0 or (GameConfig.creative and c.is_player) else 300
+	if c.money < fee:
+		return Loc.t("Не хватает денег: %d") % fee
+	if fee > 0:
+		c.money -= fee
+		stat_add(c, "spend", "upgrade", fee)
+	f.t3_spec = spec
+	if spec == 2 and f.level >= MAX_LEVEL and gw.protect != null:
+		gw.protect.ensure_bunker(f)
+	if f.level >= MAX_LEVEL and gw.mil != null:
+		gw.mil._update_power()
+	if c.is_player:
+		gw.say(c, Loc.mk("Т3 профиль: %s", [Loc.t("Форсаж (×2.6, +1 кВт)") if spec == 1 else Loc.t("Бункер (×1.85, бетон Т1, 50%% без сети)")]))
+	gw.changed.emit()
+	return ""
+
+
+func _fuel_convoys_of(cid: int) -> int:
+	var n: int = 0
+	for t: Dictionary in trucks:
+		if int(t.get("from", 0)) == cid and bool(t.get("fuel_sale", false)):
+			n += 1
+	return n
+
+
+func _dispatch_refinery(f: Facility, c: Country, min_batch: int = 10) -> String:
+	if f == null or c == null or f.kind != Facility.Kind.REFINERY or f.country_id != c.id:
+		return Loc.t("Нет НПЗ")
+	if not gw.mil.alive(f):
+		return Loc.t("НПЗ разрушен")
+	if f.ref_fuel < min_batch:
+		return Loc.t("Мало топлива в буфере")
+	if gw.supply != null and gw.supply.cut_off(f):
+		return Loc.t("НПЗ отрезан от логистики (мост/дорога)")
+	if _fuel_convoys_of(c.id) >= 3:
+		return Loc.t("Все топливозаправщики в пути")
+	var batch: int = mini(f.ref_fuel, Military.FUEL_CONVOY_MAX)
+	# 1. Sea port export if unblockaded & land-connected from refinery
+	var p: Facility = ports.port_of(c) if ports != null else null
+	if p != null and gw.mil.alive(p) and ports.ocean(p) and not ports.blocked(c) and ports.active(p) < ports.capacity(p):
+		var to_port: PackedVector2Array = land_path(f.center_px(), p.center_px())
+		if not to_port.is_empty():
+			var pbatch: int = mini(batch, ports.load_of(p))
+			if pbatch >= min_batch:
+				f.ref_fuel -= pbatch
+				c.fuel += pbatch
+				var perr: String = ports.export_order(c, "fuel", pbatch)
+				if perr == "":
+					if c.is_player:
+						gw.say(c, Loc.mk("Танкер вышел из порта: %d топлива на экспорт", [pbatch]))
+					return ""
+				c.fuel -= pbatch
+				f.ref_fuel += pbatch
+	# 2. Land fuel tanker convoy from refinery to capital / farthest intact hub city
+	if c.capital_id < 0 or c.capital_id >= gw.cities.size():
+		return Loc.t("Нет столицы для сбыта")
+	var from_p: Vector2 = land_point(f.center_px())
+	var dest_c: City = gw.cities[c.capital_id]
+	var dest_p: Vector2 = Vector2(dest_c.entrance * GameWorld.CELL)
+	if from_p.distance_to(dest_p) < 24.0:
+		for cid_alt in c.city_ids:
+			var ca2: City = gw.cities[cid_alt]
+			if ca2 != dest_c and land_path(from_p, Vector2(ca2.entrance * GameWorld.CELL)).size() > 0:
+				dest_p = Vector2(ca2.entrance * GameWorld.CELL)
+				break
+	var path: PackedVector2Array = land_path(from_p, dest_p)
+	if path.is_empty():
+		return Loc.t("Нет дороги до столицы (мост разрушен)")
+	var fp: int = maxi(1, roundi(float(market_price("fuel")) * (upk.sell_k(c.id, "fuel") if upk != null else 1.0)))
+	f.ref_fuel -= batch
+	trucks.append({"from": c.id, "to": c.id, "res": "fuel", "n": batch, "path": path, "i": 0, "pos": from_p, "heading": 0.0, "frame": 0, "id": _truck_id, "price": batch * fp, "fuel_sale": true})
+	_truck_id += 1
+	Sfx.play("truck_pass", from_p)
+	return ""
+
+
+func dispatch_fuel_cmd(f_var: Variant, c: Country) -> String:
+	if c == null:
+		return Loc.t("Нет страны")
+	if f_var is Facility:
+		return _dispatch_refinery(f_var as Facility, c, 1)
+	var sent: int = 0
+	var last_err: String = Loc.t("Буферы НПЗ пусты")
+	for f: Facility in gw.mil.facs_of(c.id):
+		if f.kind == Facility.Kind.REFINERY and f.ref_fuel > 0:
+			var err: String = _dispatch_refinery(f, c, 1)
+			if err == "":
+				sent += 1
+			else:
+				last_err = err
+	return "" if sent > 0 else last_err
+
+
+func _fuel_dispatch_tick() -> void:
+	for f: Facility in gw.mil.facs_of_kind(Facility.Kind.REFINERY):
+		if f.ref_fuel < Military.FUEL_CONVOY_MIN:
+			continue
+		var c: Country = gw.country_by_id(f.country_id)
+		if c != null and not c.eliminated:
+			_dispatch_refinery(f, c, Military.FUEL_CONVOY_MIN)
 
 
 func _place_extra(f: Facility) -> void:
@@ -1582,7 +1712,7 @@ func upgrade_kinds_summary(c: Country, target: int) -> Dictionary:
 ## KINDMASS: one upgrade step for every ready facility of `kinds` below `target`, cheapest first, while the treasury holds.
 ## When `ore_res` is non-empty, `MINE` facilities are filtered by `String(f.deposit.get("res", "")) == ore_res`.
 ## Returns [done, money spent, failed, first failure reason] like Military.restore_all.
-func upgrade_kinds(c: Country, kinds: Array, target: int, ore_res: String = "") -> Array:
+func upgrade_kinds(c: Country, kinds: Array, target: int, ore_res: String = "", spec: int = 0) -> Array:
 	var list: Array[Facility] = []
 	for f: Facility in gw.mil.facilities:
 		if f.country_id != c.id or not kinds.has(f.kind) or f.level >= mini(target, MAX_LEVEL) or not can_upgrade(f):
@@ -1598,7 +1728,7 @@ func upgrade_kinds(c: Country, kinds: Array, target: int, ore_res: String = "") 
 	var reason: String = ""
 	for f: Facility in list:
 		var m0: int = c.money
-		var why: String = upgrade(f, c)
+		var why: String = upgrade(f, c, spec)
 		if why == "":
 			done += 1
 			spent += m0 - c.money

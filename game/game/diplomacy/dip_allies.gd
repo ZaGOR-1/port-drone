@@ -125,10 +125,18 @@ func ai_accepts(ai: int, other: int, want: int) -> bool:
 
 
 
-func on_attack(attacker: int, owner: int) -> void:
+func on_attack(attacker: int, owner: int, at_pos: Vector2 = Vector2.INF) -> void:
 	if rq != null and attacker > 0 and owner > 0 and attacker != owner and rq.on_hit(attacker, owner):
 		return
 	if attacker <= 0 or owner <= 0 or attacker == owner or at_war(attacker, owner) or allied(attacker, owner):
+		return
+	if in_grey_zone() and (at_pos == Vector2.INF or is_skirmish_target(attacker, owner, at_pos)):
+		_count("grey_skirmishes")
+		add_opinion(owner, attacker, -3)
+		var gkey: String = "%d>%d" % [attacker, owner]
+		if gw.game_time - float(_sb_said.get("gz:" + gkey, -1e9)) >= 25.0:
+			_sb_said["gz:" + gkey] = gw.game_time
+			gw.say2(attacker, owner, Loc.mk("Серая зона: пограничная стычка у залежи/границы (%s — %s)", [_cname(attacker), _cname(owner)]))
 		return
 	if truce_on(attacker, owner):
 

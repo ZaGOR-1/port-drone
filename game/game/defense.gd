@@ -151,7 +151,7 @@ static func is_ad(kind: int) -> bool:
 
 
 func _ready(f: Facility) -> bool:
-	return gw.mil.alive(f) and not f.moving and not f.mb
+	return gw.mil.alive(f) and not f.moving and not f.mb and f.emp_until <= gw.game_time
 
 
 func covered(country_id: int, p: Vector2) -> bool:
@@ -744,7 +744,7 @@ func _kill(t: Object, by: int, at: Vector2) -> void:
 			return
 		m.state = Missile.State.DONE
 		gw.mil.missiles.erase(m)
-		var sc3: bool = _intruder_down(by, m.country_id, Loc.t("ракету"), m)
+		var sc3: bool = _intruder_down(by, m.country_id, Loc.t("ложную цель ББ") if m.decoy else Loc.t("ракету"), m)
 		if gw.battle_watch != null:
 			gw.battle_watch.note(at, 5.0, "Перехват ракеты", m.country_id)
 		gw.fx.spawn("intercept_flash", at.round(), 6)

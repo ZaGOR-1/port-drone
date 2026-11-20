@@ -1110,6 +1110,39 @@ func war_block_why(a: int, b: int) -> String:
 	return String(war_block(a, b).get("why", ""))
 
 
+func in_grey_zone(t: float = -1.0) -> bool:
+	var now: float = gw.game_time if t < 0.0 else t
+	return GameConfig.aggression > 0 and now >= GREY_ZONE_T and now < maxf(GRACE, GameConfig.player_grace())
+
+
+func is_skirmish_target(a: int, b: int, p: Vector2) -> bool:
+	if gw == null or gw.data == null or a <= 0 or b < 0 or a == b:
+		return false
+	if not in_grey_zone():
+		return false
+	if b > 0 and (at_war(a, b) or allied(a, b) or truce_on(a, b) or is_subject(a) or subject_of(a) == b or subject_of(b) == a or (ally != null and ally.same(a, b))):
+		return false
+	var cell: = Vector2i(floori(p.x / GameWorld.CELL), floori(p.y / GameWorld.CELL))
+	if not gw.data.inside(cell.x, cell.y):
+		return false
+	var own: int = gw.data.get_owner_id(cell.x, cell.y)
+	for ct: City in gw.cities:
+		if ct.country_id == own and own > 0 and own != a:
+			if Vector2(ct.center * GameWorld.CELL).distance_to(p) <= float(ct.radius + 4) * GameWorld.CELL:
+				return false
+	if own == 0:
+		return true
+	if gw.econ != null:
+		for dep: Dictionary in gw.econ.deposits:
+			if Vector2((dep["cell"] as Vector2i) * GameWorld.CELL).distance_to(p) <= 16.0 * GameWorld.CELL:
+				return true
+	for dir_off: Vector2i in [Vector2i(14, 0), Vector2i(-14, 0), Vector2i(0, 14), Vector2i(0, -14)]:
+		var qc: Vector2i = cell + dir_off
+		if gw.data.inside(qc.x, qc.y) and gw.data.get_owner_id(qc.x, qc.y) != own:
+			return true
+	return false
+
+
 func strike_block(a: int, o: int) -> String:
 	if a <= 0 or o <= 0 or a == o or at_war(a, o):
 		return ""
@@ -1124,6 +1157,9 @@ func strike_block_at(a: int, p: Vector2, tell: bool = true) -> String:
 		return ""
 	var o: int = gw.ops._owner_at(p)
 	var why: String = strike_block(a, o)
+	if why == "" and o > 0 and o != a and not at_war(a, o) and in_grey_zone():
+		if not is_skirmish_target(a, o, p):
+			why = Loc.t("Серая зона: до %d мин допустимы лишь стычки у границы и залежей") % roundi(maxf(GRACE, GameConfig.player_grace()) / 60.0)
 	if why != "" and tell:
 		_count("strike_blocked")
 		var k: String = "%d>%d" % [a, o]

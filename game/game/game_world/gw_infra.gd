@@ -733,11 +733,12 @@ func strike(cell: Vector2i, by: int = 0) -> void:
 	_delay(0.14, _apply_strike.bind(cell, 3, "crater_m", 14.0, by))
 
 
-func strike_nuke(cell: Vector2i, by: int = 0) -> void:
+func strike_nuke(cell: Vector2i, by: int = 0, r_override: int = -1, cr_override: int = -1) -> void:
 	if not data.inside(cell.x, cell.y):
 		return
 	var p: = Vector2(cell.x * CELL + 2, cell.y * CELL + 2)
-	var r_px: float = float(Nuclear.NUKE_R_CELLS * CELL)
+	var r_use: int = r_override if r_override > 0 else Nuclear.NUKE_R_CELLS
+	var r_px: float = float(r_use * CELL)
 	if fx != null:
 		if fx.frames != null and fx.frames.has_animation("nuke_blast"):
 			var nb: AnimatedSprite2D = fx.spawn("nuke_blast", p, 8)
@@ -767,7 +768,49 @@ func strike_nuke(cell: Vector2i, by: int = 0) -> void:
 			seq.append(Vector2(cos(ang), sin(ang)) * amp)
 		seq.append(Vector2.ZERO)
 		camera.shake_pattern(seq, 0.055)
-	_apply_nuke_strike(cell, by)
+	_apply_nuke_strike(cell, by, r_override, cr_override)
+
+
+func strike_emp(cell: Vector2i, by: int = 0) -> void:
+	if not data.inside(cell.x, cell.y):
+		return
+	var p: = Vector2(cell.x * CELL + 2, cell.y * CELL + 2)
+	var r: int = Nuclear.EMP_R_CELLS
+	var r_px: float = float(r * CELL)
+	var victim: int = data.get_owner_id(cell.x, cell.y)
+	if fx != null:
+		var sw: AnimatedSprite2D = fx.spawn("shockwave", p, 8)
+		if sw != null:
+			sw.scale = Vector2(3.6, 3.6)
+			sw.modulate = Color(0.55, 0.92, 1.0, 0.9)
+		fx.spawn("spark_burst", p, 8)
+	Sfx.play("expl_big", p, 1.0)
+	var until: float = game_time + Nuclear.EMP_DUR
+	if mil != null:
+		for f: Facility in mil.facilities:
+			if f.country_id <= 0 or f.center_px().distance_to(p) > r_px:
+				continue
+			f.emp_until = maxf(f.emp_until, until)
+			f.powered = false
+			if f.zas_q > 0:
+				f.zas_t = maxf(f.zas_t, f.zas_tt if f.zas_tt > 0.0 else Defense.ZASLON_CHARGE_T)
+			if f.reload_t > 0.0:
+				f.reload_t = 0.0
+			if f.kind == Facility.Kind.AD_MFG or f.kind == Facility.Kind.AD_SPAAG:
+				f.mag = 0
+	for ct: City in cities:
+		if Vector2(ct.center * CELL).distance_to(p) <= r_px + float(ct.radius * CELL):
+			ct.emp_until = maxf(ct.emp_until, until)
+			ct.powered = false
+			if night != null:
+				night._cells.erase(ct.id)
+	if labels != null:
+		labels.force()
+	if chronicle != null:
+		var nby: Country = country_by_id(by)
+		chronicle.log_event("nuke", by, cell, Loc.msg(Loc.mk("Высотный ЭМИ: %s", [nby.name if nby != null else "?"])))
+	Nuclear.on_nuke_impact(self, cell, by, victim, 0, true)
+	changed.emit()
 
 
 func _nuke_wave_fx(p: Vector2, r_px: float, stage: int) -> void:
@@ -788,11 +831,11 @@ func _nuke_wave_fx(p: Vector2, r_px: float, stage: int) -> void:
 			sp.scale = Vector2(1.4, 1.4) if stage == 0 else Vector2(1.15, 1.15)
 
 
-func _apply_nuke_strike(cell: Vector2i, by: int = 0) -> void:
+func _apply_nuke_strike(cell: Vector2i, by: int = 0, r_override: int = -1, cr_override: int = -1) -> void:
 	if not data.inside(cell.x, cell.y):
 		return
-	var r: int = Nuclear.NUKE_R_CELLS
-	var cr: int = Nuclear.NUKE_CRATER_R
+	var r: int = r_override if r_override > 0 else Nuclear.NUKE_R_CELLS
+	var cr: int = cr_override if cr_override > 0 else Nuclear.NUKE_CRATER_R
 	var r_px: float = float(r * CELL)
 	var victim: int = data.get_owner_id(cell.x, cell.y)
 	if data.has_flag(cell.x, cell.y, WorldData.F_CITY):
@@ -931,12 +974,19 @@ func _apply_strike(cell: Vector2i, r: int = 3, crater: String = "crater_m", r_px
 	if supply != null:
 		supply.strike_by = by
 	if by > 0 and victim > 0 and victim != by and diplo != null:
-		diplo.on_attack(by, victim)
+		diplo.on_attack(by, victim, Vector2(cell * CELL + Vector2i(2, 2)))
 	var value: int = 0
 	var spare: PackedInt32Array = protect.take_spare(cell) if protect != null else PackedInt32Array()
-	var box: = Rect2i(cell - Vector2i(r + 8, r + 8), Vector2i(2 * r + 16, 2 * r + 16))
+	var r_oc: int = ceili(float(r) * 1.25)
+	var box: = Rect2i(cell - Vector2i(r_oc + 8, r_oc + 8), Vector2i(2 * r_oc + 16, 2 * r_oc + 16))
 	var fo: Dictionary = {}
 	var fo_ok: bool = false
+	var oc_obj: Dictionary = {}
+	if mil != null:
+		for ff: Facility in mil.facilities:
+			if ff.level >= 3 and ff.t3_spec == 1:
+				for oid in ff.obj_ids:
+					oc_obj[oid] = true
 	for ck: ObjChunk in objects.chunks_in_rect(box):
 		for id in ck.ids:
 			if obj_state[id] != 0:
@@ -944,7 +994,8 @@ func _apply_strike(cell: Vector2i, r: int = 3, crater: String = "crater_m", r_px
 			var rr: Rect2i = object_rect(id)
 			var qx: int = clampi(cell.x, rr.position.x, rr.end.x - 1)
 			var qy: int = clampi(cell.y, rr.position.y, rr.end.y - 1)
-			if (qx - cell.x) * (qx - cell.x) + (qy - cell.y) * (qy - cell.y) > r * r:
+			var r_lim: int = r_oc if oc_obj.has(id) else r
+			if (qx - cell.x) * (qx - cell.x) + (qy - cell.y) * (qy - cell.y) > r_lim * r_lim:
 				continue
 			var kind: int = obj_kind[id]
 			if kind == KIND_PROP:

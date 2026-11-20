@@ -233,6 +233,9 @@ const FUEL_DT: float = 2.0
 const FUEL_CAP_PER_REFINERY: int = 60
 const FUEL_RESERVE: int = 30
 const FUEL_PRICE: int = 8
+const REFINERY_TANK_CAP: int = 50
+const FUEL_CONVOY_MIN: int = 10
+const FUEL_CONVOY_MAX: int = 25
 const BLACKOUT_FLICKER: float = 3.0
 const REFINERY_BURN: float = 45.0
 

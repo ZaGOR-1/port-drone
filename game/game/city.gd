@@ -43,6 +43,7 @@ var war_t: float = -999.0
 var war_by: int = 0
 
 var claim_v: int = 0
+var emp_until: float = -1.0
 
 
 func garrison_cap() -> float:

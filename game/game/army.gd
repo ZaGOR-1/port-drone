@@ -353,6 +353,11 @@ func order_attack(country_id: int, city: City, only: Facility = null) -> int:
 		sel.append(u)
 	if sel.is_empty():
 		return 0
+	if city.country_id != country_id and gw.diplo != null and not gw.diplo.at_war(country_id, city.country_id) and gw.diplo.in_grey_zone():
+		var ca_gz: Country = gw.country_by_id(country_id)
+		if ca_gz != null and ca_gz.is_player:
+			gw.say(ca_gz, Loc.mk("Серая зона: штурм городов открывается после %d мин", [roundi(maxf(Diplomacy.GRACE, GameConfig.player_grace()) / 60.0)]))
+		return 0
 	if city.country_id != country_id and gw.diplo != null and not gw.diplo.at_war(country_id, city.country_id) and not gw.diplo.war_block(country_id, city.country_id).is_empty():
 
 		gw.diplo.declare_war(country_id, city.country_id, "наступление на %s" % [city.name])
@@ -495,6 +500,12 @@ func _hostile(a: int, b: int) -> bool:
 	return c != null and c.at_war.has(b)
 
 
+func _skirmish_foe(u: Unit, cid: int, pos: Vector2) -> bool:
+	if u.country_id == cid or cid <= 0 or gw.diplo == null:
+		return false
+	return gw.diplo.is_skirmish_target(u.country_id, cid, pos)
+
+
 func range_of(u: Unit) -> float:
 	return float(SPEC[u.type]["range"]) * (TRENCH_RANGE if u.entrenched else 1.0)
 
@@ -504,9 +515,9 @@ func _valid(u: Unit, t: Object) -> bool:
 		var tu: Unit = t
 		var td: float = tu.pos.distance_to(u.pos)
 
-		return tu.alive() and (_hostile(u.country_id, tu.country_id) or _guard_foe(u, tu)) and td <= range_of(u) * 1.15 and (td < 28.0 or not in_smoke(tu.pos))
+		return tu.alive() and (_hostile(u.country_id, tu.country_id) or _guard_foe(u, tu) or _skirmish_foe(u, tu.country_id, tu.pos)) and td <= range_of(u) * 1.15 and (td < 28.0 or not in_smoke(tu.pos))
 	if t is Facility:
-		return gw.mil.alive(t as Facility) and _hostile(u.country_id, (t as Facility).country_id) and _target_pos(t, u.pos).distance_to(u.pos) <= float(SPEC[u.type]["range"]) * 1.3
+		return gw.mil.alive(t as Facility) and (_hostile(u.country_id, (t as Facility).country_id) or _skirmish_foe(u, (t as Facility).country_id, (t as Facility).center_px())) and _target_pos(t, u.pos).distance_to(u.pos) <= float(SPEC[u.type]["range"]) * 1.3
 	return false
 
 
@@ -516,7 +527,8 @@ func _acquire(u: Unit) -> void:
 		return
 	var me: Country = gw.country_by_id(u.country_id)
 	var grd: bool = gw.diplo != null and gw.diplo.rq != null and gw.diplo.rq.guarding(u.country_id)
-	if me == null or (me.at_war.is_empty() and not grd):
+	var gz: bool = gw.diplo != null and gw.diplo.in_grey_zone()
+	if me == null or (me.at_war.is_empty() and not grd and not gz):
 		u.target = null
 		return
 	var r: float = range_of(u)
@@ -530,7 +542,7 @@ func _acquire(u: Unit) -> void:
 		if at and not o.vehicle():
 			continue
 		var d2: float = o.pos.distance_squared_to(u.pos)
-		if d2 < bd and (_hostile(u.country_id, o.country_id) or (grd and _guard_foe(u, o))) and (d2 < 784.0 or not (blind or in_smoke(o.pos))):
+		if d2 < bd and (_hostile(u.country_id, o.country_id) or (grd and _guard_foe(u, o)) or (gz and _skirmish_foe(u, o.country_id, o.pos))) and (d2 < 784.0 or not (blind or in_smoke(o.pos))):
 			bd = d2
 			best = o
 
@@ -538,7 +550,9 @@ func _acquire(u: Unit) -> void:
 	if best == null and not storming and (u.type == Unit.Type.TANK or u.type == Unit.Type.IFV or at or (u.kit & Unit.KIT_GREN) != 0):
 		bd = r * r * 1.3
 		for f: Facility in _near_fac_into(u.pos, r + 64.0, _tmp_near_fac):
-			if f.parent != null or f.kind == Facility.Kind.TRENCH_H or not _hostile(u.country_id, f.country_id) or not gw.mil.alive(f):
+			if f.parent != null or f.kind == Facility.Kind.TRENCH_H or not gw.mil.alive(f):
+				continue
+			if not _hostile(u.country_id, f.country_id) and not (gz and Economy.is_extractor(f.kind) and _skirmish_foe(u, f.country_id, f.center_px())):
 				continue
 			if f.center_px().distance_squared_to(u.pos) > (r + float(maxi(f.size.x, f.size.y)) * 4.0) * (r + float(maxi(f.size.x, f.size.y)) * 4.0):
 				continue

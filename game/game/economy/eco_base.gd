@@ -142,6 +142,7 @@ var _site: Dictionary = {}
 
 
 const LOC_SITE: Dictionary = {"paused": "ПАУЗА", "bridge_out": "МОСТ РАЗРУШЕН", "detour": "ОБЪЕЗД: −50%", "no_power": "НЕТ ПИТАНИЯ",
+	"bunker_50": "БУНКЕР 50% (БЕЗ СЕТИ)",
 	"no_deposit": "НЕТ МЕСТОРОЖДЕНИЯ", "depleted": "ИСЧЕРПАНО", "store_full": "СКЛАД ПОЛОН", "forest_cut": "ЛЕС ВЫРУБЛЕН"}
 var _stumps: Array = []
 var _stats: Dictionary = {}

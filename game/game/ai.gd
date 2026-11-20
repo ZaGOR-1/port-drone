@@ -595,6 +595,7 @@ func _think_part(c: Country, ph: int, split: bool = false) -> void:
 				gw.naval.ai_think(c, P)
 			_spend_surplus(c, P)
 			_missile_mix(c, P)
+			_ai_power_prio(c)
 			for f: Facility in gw.mil.facs_of(c.id):
 				if f.country_id == c.id and (f.halted or f.stance != 0):
 					f.halted = false
@@ -616,6 +617,8 @@ func _think_part(c: Country, ph: int, split: bool = false) -> void:
 				var foe: Country = _tension_foe(c, P5)
 				if foe != null:
 					_fortify(c, foe, false)
+				if gw.diplo != null and gw.diplo.in_grey_zone():
+					_grey_skirmish(c, P5)
 		6:
 			if split and gw.cad344.war_br.has(c.id):
 				gw.cad344.war_br.erase(c.id)
@@ -660,6 +663,70 @@ func _tension_foe(c: Country, P: Dictionary) -> Country:
 	if best != null:
 		_stat(c, "r22b_tense")
 	return best
+
+
+func _ai_power_prio(c: Country) -> void:
+	if c == null or c.eliminated:
+		return
+	var want: int = 0
+	if c.power_use > c.power_cap:
+		var war_alert: bool = not c.at_war.is_empty() or int(_tens.get(c.id, [-1.0, -1])[1]) >= 0
+		if not war_alert and gw.diplo != null:
+			for o: Country in gw.countries:
+				if o.id != c.id and not o.eliminated and o.nuke_ready and not gw.diplo.allied(c.id, o.id):
+					war_alert = true
+					break
+		if war_alert:
+			want = 1
+		elif c.money < 600 or c.oil >= 8:
+			want = 2
+	gw.mil.set_power_prio(c, want)
+
+
+var _grey_t: Dictionary = {}
+func _grey_skirmish(c: Country, P: Dictionary) -> void:
+	var dp: Diplomacy = gw.diplo
+	if c == null or dp == null or not dp.in_grey_zone() or c.capital_id < 0:
+		return
+	var now: float = gw.game_time
+	if now < float(_grey_t.get(c.id, 190.0 + float(c.id % 5) * 5.0)):
+		return
+	var min_aggr: float = 0.65 if GameConfig.diff_of(c) == 0 else 0.45
+	if float(P.get("aggr", 0.5)) < min_aggr:
+		return
+	if gw.mil.parked_count(c.id) < 2:
+		return
+	var port: Facility = gw.mil.best_port(c, Vector2(gw.cities[c.capital_id].center * GameWorld.CELL))
+	if port == null:
+		return
+	var from: Vector2 = gw.mil.launch_point(port)
+	var best_tp: Vector2 = Vector2.INF
+	var best_d: float = INF
+	for f: Facility in gw.mil.facilities:
+		if f.country_id <= 0 or f.country_id == c.id or not gw.mil.alive(f):
+			continue
+		if not (f.kind in [Facility.Kind.MINE, Facility.Kind.REFINERY, Facility.Kind.FARM, Facility.Kind.SAWMILL, Facility.Kind.POWER_PLANT, Facility.Kind.BARRACKS]):
+			continue
+		var oc: Country = gw.country_by_id(f.country_id)
+		if oc == null or oc.eliminated:
+			continue
+		if dp.allied(c.id, oc.id) or (dp.ally != null and dp.ally.same(c.id, oc.id)) or dp.relation(c.id, oc.id) > 15:
+			continue
+		var tp: Vector2 = f.center_px()
+		var d: float = from.distance_to(tp)
+		if d > Military.RANGE_PX * 0.85 or d >= best_d:
+			continue
+		if not dp.is_skirmish_target(c.id, oc.id, tp) or dp.strike_block_at(c.id, tp, false) != "":
+			continue
+		if dp.path_block(c.id, PackedVector2Array([from, tp])) > 0:
+			continue
+		best_d = d
+		best_tp = tp
+	if best_tp != Vector2.INF:
+		_grey_t[c.id] = now + 45.0 + float(c.id % 4) * 5.0
+		var wps: Array[Vector2] = []
+		if gw.mil.launch(c, wps, best_tp, 1).size() > 0:
+			_stat(c, "grey_skirmish")
 
 
 func _repair(c: Country) -> void:

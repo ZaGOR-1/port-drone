@@ -83,6 +83,7 @@ const CANCEL_PENALTY: Dictionary = {"trade": 5, "visa": 6, "nap": 12, "defense":
 const DEMAND_ICON: String = "icon_ultimatum"
 const DEMAND_KINDS: Array[String] = ["money", "res", "deposit", "break_alliance", "cancel_visa", "vassal", "puppet", "halt_nukes"]
 const GRACE: float = 600.0
+const GREY_ZONE_T: float = 180.0
 const BOT_WAR_T: float = 600.0
 const WAR_EDGE: float = 1.0
 const PRESSURE_T: float = 1500.0
