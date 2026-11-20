@@ -1117,6 +1117,8 @@ func _set_city_power(city: City, on: bool) -> void:
 	if city.powered == on:
 		return
 	city.powered = on
+	if gw != null and gw.labels != null:
+		gw.labels.force()
 	if not on:
 		city.flicker_until = gw.game_time + BLACKOUT_FLICKER
 		city.dark_since = gw.game_time

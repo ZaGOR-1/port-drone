@@ -238,6 +238,51 @@ const REFINERY_BURN: float = 45.0
 
 var gw: GameWorld
 var facilities: Array[Facility] = []
+const _EMPTY_FACS: Array[Facility] = []
+var _fac_by_c: Dictionary = {}
+var _fac_by_k: Dictionary = {}
+var _fac_idx_n: int = 0
+var _fac_c_dirty: bool = false
+
+
+func invalidate_fac_owners() -> void:
+	_fac_c_dirty = true
+
+
+func _sync_fac_index() -> void:
+	var n: int = facilities.size()
+	if _fac_c_dirty or n < _fac_idx_n:
+		_fac_by_c.clear()
+		_fac_by_k.clear()
+		_fac_idx_n = 0
+		_fac_c_dirty = false
+	while _fac_idx_n < n:
+		var f: Facility = facilities[_fac_idx_n]
+		var clist: Variant = _fac_by_c.get(f.country_id)
+		if clist == null:
+			var arr: Array[Facility] = []
+			arr.append(f)
+			_fac_by_c[f.country_id] = arr
+		else:
+			(clist as Array[Facility]).append(f)
+		var klist: Variant = _fac_by_k.get(f.kind)
+		if klist == null:
+			var karr: Array[Facility] = []
+			karr.append(f)
+			_fac_by_k[f.kind] = karr
+		else:
+			(klist as Array[Facility]).append(f)
+		_fac_idx_n += 1
+
+
+func facs_of(cid: int) -> Array[Facility]:
+	_sync_fac_index()
+	return _fac_by_c.get(cid, _EMPTY_FACS)
+
+
+func facs_of_kind(kind: int) -> Array[Facility]:
+	_sync_fac_index()
+	return _fac_by_k.get(kind, _EMPTY_FACS)
 var drones: Array[Drone] = []
 var missiles: Array[Missile] = []
 var _income_t: float = 0.0

@@ -254,7 +254,6 @@ func _layout_top_stack() -> void:
 			prompt_panel.visible = true
 	var has_lane: bool = lane != null and is_instance_valid(lane)
 	if has_lane:
-
 		if dip_chip != null and dip_chip.visible:
 			dip_chip.visible = false
 		y = _win_top()
@@ -262,12 +261,30 @@ func _layout_top_stack() -> void:
 			y = maxf(y, float(lane.call("bottom")) + 4.0)
 	elif win and toast_panel.visible:
 		toast_panel.move_to_front()
-		toast_panel.position = Vector2(roundf((root.size.x - toast_panel.size.x) * 0.5), roundf(holder.position.y - toast_panel.size.y - 6.0))
+		var tpos := Vector2(roundf((root.size.x - toast_panel.size.x) * 0.5), roundf(holder.position.y - toast_panel.size.y - 6.0))
+		if toast_panel.position.distance_to(tpos) > 0.5:
+			toast_panel.position = tpos
+	var pr_txt: String = prompt_lbl.text if prompt_lbl != null else ""
+	var ur: Rect2 = _ui29_pill_rect()
+	var sig: String = "%d,%d|%.1f|%s|%s|%s|%d,%d|%d|%s|%d|%s|%d,%s,%d|%d|%s|%.0f,%.0f,%.0f,%.0f" % [
+		int(root.size.x), int(root.size.y), y, str(win), str(has_lane), str(armies_open),
+		int(holder.position.y), int(ops_panel != null and ops_panel.visible),
+		int(map_chip != null and map_chip.visible), map_chip.text if map_chip != null else "",
+		int(dip_chip != null and dip_chip.visible), dip_chip.text if dip_chip != null else "",
+		int(toast_panel != null and toast_panel.visible), toast_label.text if toast_label != null else "", int(toast_panel.size.x) if toast_panel != null else 0,
+		int(prompt_panel != null and prompt_panel.visible), pr_txt,
+		ur.position.x, ur.position.y, ur.size.x, ur.size.y]
+	if sig == _top_stack_sig:
+		return
+	_top_stack_sig = sig
 	for ch: Control in [map_chip, dip_chip, toast_panel, prompt_panel]:
 		if ch == null or not ch.visible or (win and ch == toast_panel):
 			continue
 		if ch is Button:
-			ch.reset_size()
+			var btxt: String = (ch as Button).text
+			if String(ch.get_meta("_last_rs_txt", "")) != btxt:
+				ch.set_meta("_last_rs_txt", btxt)
+				ch.reset_size()
 
 
 		var pl: float = _ui29_pill_x(ch, y)
@@ -724,7 +741,12 @@ func set_hint(text: String) -> void:
 
 func set_key_pressed(nm: String, on: bool) -> void:
 	if keys.has(nm):
-		(keys[nm] as Button).set_pressed_no_signal(on)
+		var b := keys[nm] as Button
+		b.set_pressed_no_signal(on)
+		if not on:
+			var ic: TextureRect = UiKit.slot_icon(b)
+			if ic != null:
+				ic.modulate = Color.WHITE
 
 
 

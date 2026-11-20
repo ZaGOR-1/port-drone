@@ -481,3 +481,7 @@ const STAT_NAMES: Dictionary = {
 
 
 var _chat_lane_t: Dictionary = {}
+var _last_clock: String = ""
+var _last_season_sig: String = ""
+var _pulse_active: bool = false
+var _top_stack_sig: String = ""

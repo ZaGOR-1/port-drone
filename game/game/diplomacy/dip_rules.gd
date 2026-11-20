@@ -626,6 +626,7 @@ func cede_area(giver: int, taker: int, cell: Vector2i, r: int) -> void:
 		if d.inside(hc.x, hc.y) and d.get_owner_id(hc.x, hc.y) == taker:
 			f.country_id = taker
 			f.queued.clear()
+			gw.mil.invalidate_fac_owners()
 	if gw.econ != null:
 		gw.econ.draw_ver += 1
 	_count("land_ceded")

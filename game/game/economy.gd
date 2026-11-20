@@ -267,8 +267,8 @@ func _audio_tick() -> void:
 	var best: = Vector2.INF
 	if lp.is_finite() and gw.camera != null and gw.camera.zoom.x >= 1.0:
 		var bd: float = 260.0 * 260.0
-		for f: Facility in gw.mil.facilities:
-			if f.kind == Facility.Kind.OIL_RIG and site_working(f):
+		for f: Facility in gw.mil.facs_of_kind(Facility.Kind.OIL_RIG):
+			if site_working(f):
 				var p: Vector2 = f.center_px()
 				if p.distance_squared_to(lp) < bd:
 					bd = p.distance_squared_to(lp)
@@ -340,7 +340,7 @@ func _ai_upgrade(c: Country) -> void:
 		return
 	var best: Facility = null
 	var bs: float = 0.0
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id != c.id or not UPG_RES.has(f.kind) or f.level >= MAX_LEVEL or not gw.mil.alive(f):
 			continue
 		if f.upg_t > 0.0 or (not f.deposit.is_empty() and int(f.deposit["left"]) < 150 and not deep_low(f) and not GameConfig.infinite_res()):

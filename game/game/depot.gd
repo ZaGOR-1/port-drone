@@ -335,6 +335,7 @@ static func check_owners(mil: Object) -> void:
 		snap[old_id] = shares(mil, old_id)
 	for f: Facility in moved:
 		f.country_id = int(now_id[f.id])
+	mil.invalidate_fac_owners()
 	var done: Array = []
 	for f: Facility in moved:
 		var sh: Dictionary = (snap[f.depot_owner] as Dictionary).get(f.id, {})

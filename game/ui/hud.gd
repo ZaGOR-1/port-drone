@@ -557,14 +557,21 @@ func _process(delta: float) -> void:
 			var pct: float = float(ri.get("pct", 0.0))
 			race_lbl.add_theme_color_override("font_color", UiKit.GREEN if bool(ri.get("leader_is_player", false)) else (UiKit.RED if pct >= 0.8 else (UiKit.GOLD if pct >= 0.6 else UiKit.MUTED)))
 	if gw != null and gw.night != null:
-		clock_lbl.text = gw.night.clock_text()
+		var ck_txt: String = gw.night.clock_text()
+		if ck_txt != _last_clock:
+			_last_clock = ck_txt
+			clock_lbl.text = ck_txt
 	if gw != null and gw.seasons != null and season_lbl != null and is_instance_valid(season_lbl):
 		var sname: String = gw.seasons.name_text()
-		var s_col: Color = UiKit.BLUE if gw.seasons.is_winter() else (UiKit.TITLE if gw.seasons.season == Seasons.Season.AUTUMN else UiKit.MUTED)
-		season_lbl.text = ("%s −50%%" % sname) if gw.seasons.is_winter() else sname
-		season_lbl.add_theme_color_override("font_color", s_col)
-		if season_icon != null and is_instance_valid(season_icon):
-			UiKit.set_icon(season_icon, gw.seasons.icon_name(), 16.0)
+		var s_icon: String = gw.seasons.icon_name()
+		var s_sig: String = "%s|%d|%s" % [sname, int(gw.seasons.season), s_icon]
+		if s_sig != _last_season_sig:
+			_last_season_sig = s_sig
+			var s_col: Color = UiKit.BLUE if gw.seasons.is_winter() else (UiKit.TITLE if gw.seasons.season == Seasons.Season.AUTUMN else UiKit.MUTED)
+			season_lbl.text = ("%s −50%%" % sname) if gw.seasons.is_winter() else sname
+			season_lbl.add_theme_color_override("font_color", s_col)
+			if season_icon != null and is_instance_valid(season_icon):
+				UiKit.set_icon(season_icon, s_icon, 16.0)
 	_news_tick()
 	if war_banner.visible and now > war_until:
 		var tw: Tween = war_banner.create_tween()
@@ -590,13 +597,28 @@ func _process(delta: float) -> void:
 			var col: Color = Color(1.0, 0.99, 0.94, a) if fu < 0.22 else Color(1.0, 0.72, 0.32, a)
 			_nuke_flash_rect.color = col
 
-	var k: float = 1.0 + 0.18 * sin(_t * 5.0)
+	var any_pressed: bool = false
 	for nm: String in keys:
 		var b: Button = keys[nm]
-		if b.toggle_mode and b.is_visible_in_tree():
+		if b.toggle_mode and b.button_pressed and b.is_visible_in_tree():
+			any_pressed = true
+			break
+	if any_pressed:
+		var k: float = 1.0 + 0.18 * sin(_t * 5.0)
+		for nm: String in keys:
+			var b: Button = keys[nm]
+			if b.toggle_mode and b.is_visible_in_tree():
+				var ic: TextureRect = UiKit.slot_icon(b)
+				if ic != null:
+					ic.modulate = Color(k, k, k) if b.button_pressed else Color.WHITE
+		_pulse_active = true
+	elif _pulse_active:
+		for nm: String in keys:
+			var b: Button = keys[nm]
 			var ic: TextureRect = UiKit.slot_icon(b)
 			if ic != null:
-				ic.modulate = Color(k, k, k) if b.button_pressed else Color.WHITE
+				ic.modulate = Color.WHITE
+		_pulse_active = false
 	if panel != null and is_instance_valid(panel) and panel.has_meta("scroll"):
 		var sc: ScrollContainer = panel.get_meta("scroll")
 		var room: float = holder.position.y - win_reserve - (_win_top() - 4.0) - 96.0

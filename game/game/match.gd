@@ -317,6 +317,7 @@ func _cleanup(c: Country) -> void:
 				best = city
 		if best != null:
 			f.country_id = best.country_id
+			gw.mil.invalidate_fac_owners()
 	for d: Drone in gw.mil.drones:
 		if d.country_id == c.id and not d.airborne():
 			d.state = Drone.State.DONE

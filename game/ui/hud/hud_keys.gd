@@ -147,10 +147,18 @@ static func bind_hold_5s_btn(b: Button, on_fire: Callable, on_cancel: Callable =
 	bar.visible = false
 	b.add_child(bar)
 	var st: Dictionary = {"down": false, "t0": 0, "fired": false, "base": b.text}
+	var tick_timer: = Timer.new()
+	tick_timer.wait_time = 0.04
+	tick_timer.one_shot = false
+	tick_timer.autostart = false
+	tick_timer.process_mode = Node.PROCESS_MODE_ALWAYS
+	b.add_child(tick_timer)
 	var cancel_hold := func(notify: bool) -> void:
 		var was_down: bool = bool(st["down"])
 		var was_fired: bool = bool(st["fired"])
 		st["down"] = false
+		if is_instance_valid(tick_timer):
+			tick_timer.stop()
 		if is_instance_valid(fill):
 			fill.visible = false
 			fill.size.x = 0.0
@@ -175,17 +183,14 @@ static func bind_hold_5s_btn(b: Button, on_fire: Callable, on_cancel: Callable =
 		bar.visible = true
 		bar.position = Vector2(0.0, maxf(0.0, b.size.y - 4.0))
 		bar.size = Vector2(0.0, 4.0)
+		tick_timer.start()
 		UiKit.snd("ui_select"))
 	b.button_up.connect(func() -> void: cancel_hold.call(true))
 	b.mouse_exited.connect(func() -> void: cancel_hold.call(false))
-	var tick_timer: = Timer.new()
-	tick_timer.wait_time = 0.04
-	tick_timer.one_shot = false
-	tick_timer.autostart = true
-	tick_timer.process_mode = Node.PROCESS_MODE_ALWAYS
-	b.add_child(tick_timer)
 	tick_timer.timeout.connect(func() -> void:
 		if not is_instance_valid(b) or not bool(st["down"]):
+			if is_instance_valid(tick_timer):
+				tick_timer.stop()
 			return
 		if b.disabled or not b.is_visible_in_tree() or Input.is_key_pressed(KEY_ESCAPE):
 			cancel_hold.call(false)
@@ -202,6 +207,7 @@ static func bind_hold_5s_btn(b: Button, on_fire: Callable, on_cancel: Callable =
 		if frac >= 1.0 and not bool(st["fired"]):
 			st["fired"] = true
 			st["down"] = false
+			tick_timer.stop()
 			fill.visible = false
 			bar.visible = false
 			b.text = String(st["base"])

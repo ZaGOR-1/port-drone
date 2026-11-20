@@ -111,6 +111,8 @@ var _fpvs_t: float = -1.0
 var _fgrid: Dictionary = {}
 var _flines: Array = []
 var _fgrid_t: float = -99.0
+var _fstamp: PackedInt32Array = PackedInt32Array()
+var _fstamp_seq: int = 0
 var _fpv_fly: Dictionary = {}
 var _fpv_b: Dictionary = {}
 var post_fixes: int = 0
@@ -2198,7 +2200,17 @@ func _build_grid() -> void:
 		if f.parent != null or f.kind == Facility.Kind.TRENCH_H:
 			continue
 		if f.is_line():
-			_flines.append(f)
+			var seen_bk: Dictionary = {}
+			var line_pts: Array = f.cells if not f.cells.is_empty() else [f.cell]
+			for qc: Vector2i in line_pts:
+				var kl := Vector2i(floori(float(qc.x * GameWorld.CELL) / GRID_PX), floori(float(qc.y * GameWorld.CELL) / GRID_PX))
+				if seen_bk.has(kl):
+					continue
+				seen_bk[kl] = true
+				var lb: Array = _fgrid.get(kl, [])
+				if lb.is_empty():
+					_fgrid[kl] = lb
+				lb.append(f)
 			continue
 		var c: Vector2 = f.center_px()
 		var k2: = Vector2i(floori(c.x / GRID_PX), floori(c.y / GRID_PX))
@@ -2230,7 +2242,9 @@ func _near_into(p: Vector2, r: float, out: Array) -> Array:
 
 func _near_fac_into(p: Vector2, r: float, out: Array) -> Array:
 	out.clear()
-	out.append_array(_flines)
+	if not _flines.is_empty():
+		out.append_array(_flines)
+	_fstamp_seq += 1
 	var x0: int = floori((p.x - r) / GRID_PX)
 	var x1: int = floori((p.x + r) / GRID_PX)
 	var y0: int = floori((p.y - r) / GRID_PX)
@@ -2238,8 +2252,18 @@ func _near_fac_into(p: Vector2, r: float, out: Array) -> Array:
 	for cy in range(y0, y1 + 1):
 		for cx in range(x0, x1 + 1):
 			var a: Variant = _fgrid.get(Vector2i(cx, cy))
-			if a != null:
-				out.append_array(a)
+			if a == null:
+				continue
+			for fv: Variant in (a as Array):
+				if fv is Facility and (fv as Facility).is_line():
+					var fid: int = (fv as Facility).id
+					if fid >= 0:
+						if fid >= _fstamp.size():
+							_fstamp.resize(fid + 64)
+						if _fstamp[fid] == _fstamp_seq:
+							continue
+						_fstamp[fid] = _fstamp_seq
+				out.append(fv)
 	return out
 
 

@@ -511,9 +511,10 @@ func _dev_tick() -> void:
 	var t_lv: int = Time.get_ticks_usec()
 	var up: Array = []
 	var ent_by_c: Dictionary = {}
-	for f: Facility in gw.mil.facilities:
-		if Economy.is_enterprise(f.kind) and gw.mil.alive(f):
-			ent_by_c[f.country_id] = int(ent_by_c.get(f.country_id, 0)) + 1
+	for ek: int in [Facility.Kind.FARM, Facility.Kind.CIV_FACTORY, Facility.Kind.MINE, Facility.Kind.SAWMILL, Facility.Kind.OIL_RIG, Facility.Kind.URANIUM_MINE]:
+		for f: Facility in gw.mil.facs_of_kind(ek):
+			if gw.mil.alive(f):
+				ent_by_c[f.country_id] = int(ent_by_c.get(f.country_id, 0)) + 1
 	for c: Country in gw.countries:
 		if c.eliminated:
 			continue
@@ -681,8 +682,8 @@ func _own_linked(ct: City) -> bool:
 func _prio_towns(c: Country, want: Array[City]) -> Dictionary:
 	var out: Dictionary = {}
 	var bar: Array[Vector2] = []
-	for f: Facility in gw.mil.facilities:
-		if f.kind == Facility.Kind.BARRACKS and f.country_id == c.id and gw.mil.alive(f):
+	for f: Facility in gw.mil.facs_of_kind(Facility.Kind.BARRACKS):
+		if f.country_id == c.id and gw.mil.alive(f):
 			bar.append(Vector2(f.cell))
 	var foe: Array[Vector2] = []
 	for ct: City in gw.cities:
@@ -740,6 +741,16 @@ func _station_country(sid: int) -> int:
 
 
 
+static func _crop_b(src: PackedByteArray, sw: int, rx0: int, ry0: int, cw: int, ch: int) -> PackedByteArray:
+	if rx0 == 0 and ry0 == 0 and cw == sw and cw * ch == src.size():
+		return src.duplicate()
+	var out := PackedByteArray()
+	for y in ch:
+		var s0: int = (ry0 + y) * sw + rx0
+		out.append_array(src.slice(s0, s0 + cw))
+	return out
+
+
 func _link(a: City, b: City, async: bool = false) -> bool:
 	var sa: int = int(city_station.get(a.id, -1))
 	var sb: int = int(city_station.get(b.id, -1))
@@ -751,10 +762,21 @@ func _link(a: City, b: City, async: bool = false) -> bool:
 	var t0: int = Time.get_ticks_usec()
 	var d: WorldData = gw.data
 
-	var job: Dictionary = {"w": d.w, "h": d.h, "biome": d.biome.duplicate(), "flags": d.flags.duplicate(), "owners": d.owners.duplicate(), "mask": mask.duplicate(),
+	var pad_a: int = a.radius + 118
+	var pad_b: int = b.radius + 118
+	var rx0: int = maxi(0, mini(a.center.x - pad_a, b.center.x - pad_b))
+	var ry0: int = maxi(0, mini(a.center.y - pad_a, b.center.y - pad_b))
+	var rx1: int = mini(d.w - 1, maxi(a.center.x + pad_a, b.center.x + pad_b))
+	var ry1: int = mini(d.h - 1, maxi(a.center.y + pad_a, b.center.y + pad_b))
+	var cw: int = rx1 - rx0 + 1
+	var ch: int = ry1 - ry0 + 1
+	var org: = Vector2i(rx0, ry0)
+	var ca0: Vector2i = (stations[sa]["cell"] as Vector2i) - org if sa >= 0 else Vector2i(-1, -1)
+	var cb0: Vector2i = (stations[sb]["cell"] as Vector2i) - org if sb >= 0 else Vector2i(-1, -1)
+	var job: Dictionary = {"w": cw, "h": ch, "org": org, "biome": _crop_b(d.biome, d.w, rx0, ry0, cw, ch), "flags": _crop_b(d.flags, d.w, rx0, ry0, cw, ch), "owners": _crop_b(d.owners, d.w, rx0, ry0, cw, ch), "mask": _crop_b(mask, d.w, rx0, ry0, cw, ch),
 		"allowed": [a.country_id, b.country_id], "a": a.id, "b": b.id, "sa": sa, "sb": sb,
-		"cell_a": stations[sa]["cell"] if sa >= 0 else Vector2i(-1, -1), "cell_b": stations[sb]["cell"] if sb >= 0 else Vector2i(-1, -1),
-		"city_a": [a.center, a.radius, a.country_id], "city_b": [b.center, b.radius, b.country_id],
+		"cell_a": ca0, "cell_b": cb0,
+		"city_a": [a.center - org, a.radius, a.country_id], "city_b": [b.center - org, b.radius, b.country_id],
 		"log": [], "pts": PackedVector2Array(), "data_id": d.get_instance_id(), "task": -1}
 	pt("link_start", t0)
 	if async:
@@ -806,6 +828,15 @@ func _line_worker(job: Dictionary) -> void:
 			pts = _resample(raw, 1.0)
 			if not _man_ok(pts, job):
 				pts = PackedVector2Array()
+	if not pts.is_empty() and job.has("org"):
+		var org2: Vector2i = job["org"]
+		if (job["cell_a"] as Vector2i).x >= 0:
+			job["cell_a"] = (job["cell_a"] as Vector2i) + org2
+		if (job["cell_b"] as Vector2i).x >= 0:
+			job["cell_b"] = (job["cell_b"] as Vector2i) + org2
+		var off_px := Vector2(org2 * GameWorld.CELL)
+		for pi in pts.size():
+			pts[pi] += off_px
 	job["pts"] = pts
 	job["ms"] = Time.get_ticks_msec() - t0
 

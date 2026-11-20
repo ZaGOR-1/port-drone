@@ -776,6 +776,7 @@ func capture_city(city: City, new_id: int) -> void:
 		if data.inside(hc.x, hc.y) and data.get_owner_id(hc.x, hc.y) == new_id and on_own.has(f.id):
 			f.country_id = new_id
 			f.queued.clear()
+			mil.invalidate_fac_owners()
 			if f.kind == Facility.Kind.BARRACKS:
 				bars.append(f)
 			if data.inside(fc.x, fc.y):

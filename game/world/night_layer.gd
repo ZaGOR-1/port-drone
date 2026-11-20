@@ -27,12 +27,57 @@ const AREA_MAX_N: int = 8
 const LIFT_MAX: float = 0.6
 const LIFT_TINT: = Color(1.0, 0.95, 0.84)
 const LIGHT_SCREEN_R: float = 0.09
+const LIFT_SHADER_CODE: String = """shader_type canvas_item;
+render_mode blend_mul;
+uniform vec2 rect_pos;
+uniform vec2 rect_size;
+uniform vec4 base_tint;
+uniform vec4 lift_tint;
+uniform float lift_max = 0.6;
+uniform int light_n = 0;
+uniform vec4 area_lights[8];
+void fragment() {
+	vec2 wp = rect_pos + UV * rect_size;
+	float lift = 0.0;
+	for (int i = 0; i < 8; i++) {
+		if (i >= light_n) {
+			break;
+		}
+		vec4 al = area_lights[i];
+		vec2 d = wp - al.xy;
+		float d2 = dot(d, d) * al.z;
+		if (d2 < 1.0) {
+			float q = 1.0 - d2;
+			lift += q * q * al.w;
+		}
+	}
+	vec3 rgb = mix(base_tint.rgb, lift_tint.rgb, clamp(lift, 0.0, 1.0) * lift_max);
+	COLOR = vec4(rgb, 1.0);
+}
+"""
+static var _lift_shader: Shader = null
+var _lift_rect: ColorRect = null
+var _lift_mat: ShaderMaterial = null
+var _lift_arr: Array[Vector4] = []
 
 
 func _ready() -> void:
 	var m: = CanvasItemMaterial.new()
 	m.blend_mode = CanvasItemMaterial.BLEND_MODE_MUL
 	material = m
+	if _lift_shader == null:
+		_lift_shader = Shader.new()
+		_lift_shader.code = LIFT_SHADER_CODE
+	_lift_mat = ShaderMaterial.new()
+	_lift_mat.shader = _lift_shader
+	_lift_arr.resize(AREA_MAX_N)
+	_lift_rect = ColorRect.new()
+	_lift_rect.name = "LiftRect"
+	_lift_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lift_rect.show_behind_parent = true
+	_lift_rect.visible = false
+	_lift_rect.material = _lift_mat
+	add_child(_lift_rect)
 	lights = Node2D.new()
 	lights.name = "Lights"
 	var am: = CanvasItemMaterial.new()
@@ -115,10 +160,14 @@ func _view() -> Rect2:
 
 func _draw() -> void:
 	if (factor <= 0.01 and grade == Color.WHITE) or gw.camera == null:
+		if _lift_rect != null:
+			_lift_rect.visible = false
 		return
 	var view: Rect2 = _view()
 	var tint: Color = grade.lerp(NIGHT_TINT, factor)
 	if _area.is_empty():
+		if _lift_rect != null:
+			_lift_rect.visible = false
 		draw_rect(view, tint)
 		_draw_dark(view)
 		return
@@ -128,6 +177,8 @@ func _draw() -> void:
 		b = b.merge(Rect2((l[0] as Vector2) - Vector2(r, r), Vector2(r, r) * 2.0))
 	b = b.intersection(view)
 	if b.size.x < 1.0 or b.size.y < 1.0:
+		if _lift_rect != null:
+			_lift_rect.visible = false
 		draw_rect(view, tint)
 		_draw_dark(view)
 		return
@@ -148,47 +199,25 @@ func _strip(r: Rect2, col: Color) -> void:
 
 
 func _lift_grid(b: Rect2, tint: Color) -> void:
-	var min_r: float = INF
-	for l: Array in _area:
-		min_r = minf(min_r, float(l[1]))
-	var s: float = maxf(min_r / 3.5, 0.5)
-	var nx: int = clampi(ceili(b.size.x / s), 1, 40)
-	var ny: int = clampi(ceili(b.size.y / s), 1, 40)
-	var pts: = PackedVector2Array()
-	var cols: = PackedColorArray()
-	pts.resize((nx + 1) * (ny + 1))
-	cols.resize((nx + 1) * (ny + 1))
-	var lit: Color = tint * LIFT_TINT
-	lit.a = 1.0
-	var k: int = 0
-	for j in ny + 1:
-		var y: float = b.position.y + b.size.y * float(j) / float(ny)
-		for i in nx + 1:
-			var p: = Vector2(b.position.x + b.size.x * float(i) / float(nx), y)
-			var lift: float = 0.0
-			for l: Array in _area:
-				var rr: float = float(l[1])
-				var d2: float = p.distance_squared_to(l[0]) / (rr * rr)
-				if d2 < 1.0:
-					var q: float = 1.0 - d2
-					lift += q * q * float(l[2])
-			pts[k] = p
-			cols[k] = tint.lerp(LIFT_TINT, minf(lift, 1.0) * LIFT_MAX) if lift > 0.0 else tint
-			k += 1
-	var idx: = PackedInt32Array()
-	idx.resize(nx * ny * 6)
-	var n: int = 0
-	for j in ny:
-		for i in nx:
-			var a: int = j * (nx + 1) + i
-			idx[n] = a
-			idx[n + 1] = a + 1
-			idx[n + 2] = a + nx + 1
-			idx[n + 3] = a + 1
-			idx[n + 4] = a + nx + 2
-			idx[n + 5] = a + nx + 1
-			n += 6
-	RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), idx, pts, cols)
+	if _lift_rect == null or _lift_mat == null:
+		draw_rect(b, tint)
+		return
+	var ln: int = mini(_area.size(), AREA_MAX_N)
+	for i in ln:
+		var l: Array = _area[i]
+		var lp: Vector2 = l[0]
+		var rr: float = maxf(1.0, float(l[1]))
+		_lift_arr[i] = Vector4(lp.x, lp.y, 1.0 / (rr * rr), float(l[2]))
+	_lift_rect.position = b.position
+	_lift_rect.size = b.size
+	_lift_rect.visible = true
+	_lift_mat.set_shader_parameter("rect_pos", b.position)
+	_lift_mat.set_shader_parameter("rect_size", b.size)
+	_lift_mat.set_shader_parameter("base_tint", tint)
+	_lift_mat.set_shader_parameter("lift_tint", LIFT_TINT)
+	_lift_mat.set_shader_parameter("lift_max", LIFT_MAX)
+	_lift_mat.set_shader_parameter("light_n", ln)
+	_lift_mat.set_shader_parameter("area_lights", _lift_arr)
 
 
 

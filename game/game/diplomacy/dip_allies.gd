@@ -1034,6 +1034,7 @@ func _ally_fac_tick() -> void:
 				cw.money += pay
 		f.country_id = o
 		f.queued.clear()
+		gw.mil.invalidate_fac_owners()
 		ally_fac.erase(fid)
 		_count("ally_fac_handed")
 		var hk: String = "%d>%d" % [was, o]

@@ -39,9 +39,19 @@ var _scrubber: HSlider
 var _play_btn: Button
 var _spd_btn: Button
 var _info_lbl: Label
-var _ev_list: VBoxContainer
+var _ev_scroll: ScrollContainer
+var _ev_list: Control
+var _ev_filtered: Array = []
+var _ev_pool: Array = []
+var _ev_sb_norm: StyleBox = null
+var _ev_sb_hov: StyleBox = null
 var _filter_row: HBoxContainer
 var _syncing_slider: bool = false
+var _map_img: Image = null
+var _map_tex: ImageTexture = null
+var _map_fi: int = -1
+var _map_gn: int = -1
+const EV_ROW_H: float = 31.0
 
 
 static func open_replay(m: Menus, rec: Dictionary, return_to: String = "") -> void:
@@ -164,6 +174,10 @@ func _setup(m: Menus, rec: Dictionary, return_to: String = "") -> void:
 	_max_t = maxf(_min_t, float((frames.back() as Dictionary).get("t", _min_t))) if not frames.is_empty() else 0.0
 	cur_time = _min_t
 	cur_idx = 0.0
+	_map_img = null
+	_map_tex = null
+	_map_fi = -1
+	_map_gn = -1
 	resized.connect(_update_layout)
 	_build_ui()
 
@@ -388,14 +402,17 @@ func _build_ui() -> void:
 	fsc.add_child(_filter_row)
 	_build_filter_chips()
 
-	var esc := ScrollContainer.new()
-	esc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	esc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	fvb.add_child(esc)
-	_ev_list = VBoxContainer.new()
+	_ev_scroll = ScrollContainer.new()
+	_ev_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_ev_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_ev_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	fvb.add_child(_ev_scroll)
+	_ev_list = Control.new()
 	_ev_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_ev_list.add_theme_constant_override("separation", 3)
-	esc.add_child(_ev_list)
+	_ev_scroll.add_child(_ev_list)
+	_ev_pool.clear()
+	_ev_scroll.get_v_scroll_bar().value_changed.connect(func(_v: float) -> void: _render_visible_events())
+	_ev_scroll.resized.connect(_render_visible_events)
 	_rebuild_events()
 	_sync_time_ui()
 
@@ -441,19 +458,28 @@ func _build_filter_chips() -> void:
 func _rebuild_events() -> void:
 	if _ev_list == null or not is_instance_valid(_ev_list):
 		return
-	for ch: Node in _ev_list.get_children():
-		ch.queue_free()
-	var sb_norm: StyleBox = UiKit.sb("wb_slot", 4)
-	var sb_hov: StyleBox = UiKit.sb("wb_slot_active", 4)
+	_ev_filtered.clear()
 	for ev: Dictionary in events:
 		var ecid: int = int(ev.get("c", 0))
 		if filter_cid != 0 and ecid != filter_cid:
 			continue
+		_ev_filtered.append(ev)
+	_ev_list.custom_minimum_size = Vector2(0.0, float(_ev_filtered.size()) * EV_ROW_H)
+	if _ev_scroll != null and is_instance_valid(_ev_scroll):
+		_ev_scroll.scroll_vertical = 0
+	_render_visible_events()
+
+
+func _ensure_ev_pool(count: int) -> void:
+	if _ev_sb_norm == null:
+		_ev_sb_norm = UiKit.sb("wb_slot", 4)
+		_ev_sb_hov = UiKit.sb("wb_slot_active", 4)
+	while _ev_pool.size() < count:
 		var row_b := Button.new()
 		row_b.focus_mode = Control.FOCUS_NONE
 		row_b.custom_minimum_size.y = 28
-		row_b.add_theme_stylebox_override("normal", sb_norm)
-		row_b.add_theme_stylebox_override("hover", sb_hov)
+		row_b.add_theme_stylebox_override("normal", _ev_sb_norm)
+		row_b.add_theme_stylebox_override("hover", _ev_sb_hov)
 		var hb := HBoxContainer.new()
 		hb.set_anchors_preset(Control.PRESET_FULL_RECT)
 		hb.offset_left = 6
@@ -461,16 +487,49 @@ func _rebuild_events() -> void:
 		hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hb.add_theme_constant_override("separation", 6)
 		row_b.add_child(hb)
-		var et: float = float(ev.get("t", 0.0))
-		hb.add_child(UiKit.lbl("%d:%02d" % [int(et) / 60, int(et) % 60], 9, _color_of(ecid, Color("cfc6a8")), 1))
-		var tl: Label = UiKit.lbl(String(ev.get("text", "")), 10, UiKit.TEXT, 1)
-		tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		tl.clip_text = true
-		hb.add_child(tl)
+		var time_l: Label = UiKit.lbl("0:00", 9, Color("cfc6a8"), 1)
+		hb.add_child(time_l)
+		var text_l: Label = UiKit.lbl("", 10, UiKit.TEXT, 1)
+		text_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		text_l.clip_text = true
+		hb.add_child(text_l)
 		hb.add_child(UiKit.icon_rect("icon_locate", 14.0))
+		var st := {"ev": {}}
 		row_b.pressed.connect(func() -> void:
-			_jump_to_event(ev))
+			var ev_d: Variant = st.get("ev")
+			if ev_d is Dictionary and not (ev_d as Dictionary).is_empty():
+				_jump_to_event(ev_d as Dictionary))
 		_ev_list.add_child(row_b)
+		_ev_pool.append({"btn": row_b, "time": time_l, "text": text_l, "st": st})
+
+
+func _render_visible_events() -> void:
+	if _ev_list == null or not is_instance_valid(_ev_list) or _ev_scroll == null or not is_instance_valid(_ev_scroll):
+		return
+	var vis_h: float = _ev_scroll.size.y if _ev_scroll.size.y > 4.0 else 360.0
+	var sv: float = float(_ev_scroll.scroll_vertical)
+	var first_i: int = clampi(int(floorf(sv / EV_ROW_H)), 0, maxi(0, _ev_filtered.size() - 1))
+	var need: int = mini(_ev_filtered.size(), clampi(ceili(vis_h / EV_ROW_H) + 2, 12, 28))
+	_ensure_ev_pool(need)
+	var rw: float = maxf(140.0, _ev_scroll.size.x - 10.0)
+	for k in _ev_pool.size():
+		var slot: Dictionary = _ev_pool[k]
+		var btn: Button = slot["btn"]
+		var idx: int = first_i + k
+		if idx >= _ev_filtered.size() or k >= need:
+			btn.visible = false
+			continue
+		var ev: Dictionary = _ev_filtered[idx]
+		var ecid: int = int(ev.get("c", 0))
+		var et: float = float(ev.get("t", 0.0))
+		btn.visible = true
+		btn.position = Vector2(0.0, float(idx) * EV_ROW_H)
+		btn.size = Vector2(rw, 28.0)
+		var tl: Label = slot["time"]
+		tl.text = "%d:%02d" % [int(et) / 60, int(et) % 60]
+		tl.add_theme_color_override("font_color", _color_of(ecid, Color("cfc6a8")))
+		(slot["text"] as Label).text = String(ev.get("text", ""))
+		(slot["st"] as Dictionary)["ev"] = ev
 
 
 func _jump_to_event(ev: Dictionary) -> void:
@@ -513,25 +572,34 @@ func _draw_canvas() -> void:
 	if r.size.x < 4.0 or r.size.y < 4.0:
 		return
 	var gn: int = maxi(1, int(meta.get("grid", 64)))
-	var cw: float = r.size.x / float(gn)
-	var ch: float = r.size.y / float(gn)
-	var wat_raw: Variant = meta.get("water", PackedByteArray())
-	var wat: PackedByteArray = (wat_raw as PackedByteArray) if wat_raw is PackedByteArray else PackedByteArray()
-	var own_raw: Variant = fr.get("own", PackedByteArray())
-	var own: PackedByteArray = (own_raw as PackedByteArray) if own_raw is PackedByteArray else PackedByteArray()
-	var land_col := Color("3b4c28")
-	var water_col := Color("193664")
-
-	# 1. Base territory & ocean grid
-	for gy in gn:
-		for gx in gn:
-			var i: int = gy * gn + gx
-			var is_w: bool = i < wat.size() and wat[i] != 0
-			var colv: Color = water_col if is_w else land_col
-			var cid: int = own[i] if i < own.size() else 0
-			if cid > 0 and _country_cols.has(cid):
-				colv = (_water_tint[cid] if is_w else _land_tint[cid]) as Color
-			_canvas.draw_rect(Rect2(r.position.x + float(gx) * cw, r.position.y + float(gy) * ch, cw + 0.6, ch + 0.6), colv)
+	if _map_tex == null or _map_fi != fi or _map_gn != gn:
+		_map_fi = fi
+		_map_gn = gn
+		if _map_img == null or _map_img.get_width() != gn or _map_img.get_height() != gn:
+			_map_img = Image.create(gn, gn, false, Image.FORMAT_RGBA8)
+			_map_tex = null
+		var wat_raw: Variant = meta.get("water", PackedByteArray())
+		var wat: PackedByteArray = (wat_raw as PackedByteArray) if wat_raw is PackedByteArray else PackedByteArray()
+		var own_raw: Variant = fr.get("own", PackedByteArray())
+		var own: PackedByteArray = (own_raw as PackedByteArray) if own_raw is PackedByteArray else PackedByteArray()
+		var land_col := Color("3b4c28")
+		var water_col := Color("193664")
+		for gy in gn:
+			for gx in gn:
+				var i: int = gy * gn + gx
+				var is_w: bool = i < wat.size() and wat[i] != 0
+				var colv: Color = water_col if is_w else land_col
+				var cid: int = own[i] if i < own.size() else 0
+				if cid > 0 and _country_cols.has(cid):
+					colv = (_water_tint[cid] if is_w else _land_tint[cid]) as Color
+				_map_img.set_pixel(gx, gy, colv)
+		if _map_tex == null:
+			_map_tex = ImageTexture.create_from_image(_map_img)
+		else:
+			_map_tex.update(_map_img)
+	# 1. Base territory & ocean grid (cached pixel ImageTexture)
+	_canvas.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_canvas.draw_texture_rect(_map_tex, r, false)
 
 	var mw: float = maxf(1.0, float(meta.get("w", 256)))
 	var mh: float = maxf(1.0, float(meta.get("h", 256)))

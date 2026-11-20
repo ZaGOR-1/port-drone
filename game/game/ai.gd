@@ -433,6 +433,9 @@ func load_state(d: Dictionary) -> void:
 
 
 func update(_dt: float) -> void:
+	if gw.game_time >= _ttl_clean_t:
+		_ttl_clean_t = gw.game_time + 30.0
+		_prune_caches()
 	for c: Country in gw.countries:
 		if c.is_player or c.eliminated or c.capital_id < 0:
 			continue
@@ -547,7 +550,7 @@ func _attack_next(c: Country) -> void:
 
 func _kind_counts(c: Country) -> Dictionary:
 	var counts: Dictionary = {}
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id == c.id:
 			counts[f.kind] = int(counts.get(f.kind, 0)) + 1
 	return counts
@@ -557,7 +560,7 @@ func _count(c: Country, kind: int, counts: Dictionary = {}) -> int:
 	if not counts.is_empty():
 		return int(counts.get(kind, 0))
 	var n: int = 0
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id == c.id and f.kind == kind:
 			n += 1
 	return n
@@ -592,7 +595,7 @@ func _think_part(c: Country, ph: int, split: bool = false) -> void:
 				gw.naval.ai_think(c, P)
 			_spend_surplus(c, P)
 			_missile_mix(c, P)
-			for f: Facility in gw.mil.facilities:
+			for f: Facility in gw.mil.facs_of(c.id):
 				if f.country_id == c.id and (f.halted or f.stance != 0):
 					f.halted = false
 					f.stance = 0
@@ -974,6 +977,27 @@ const AI_RESTRIKE: float = 60.0
 const CITY_SPOT_T: float = 600.0
 const CITY_GAP: float = 45.0
 var _hit_f: Dictionary = {}
+var _ttl_clean_t: float = 30.0
+
+
+func _prune_caches() -> void:
+	var now: float = gw.game_time
+	for k: Variant in _spend_cd.keys():
+		if now >= float(_spend_cd[k]):
+			_spend_cd.erase(k)
+	for hk: Variant in _hit_f.keys():
+		if now - float(_hit_f[hk]) >= AI_RESTRIKE:
+			_hit_f.erase(hk)
+	for c: Country in gw.countries:
+		if c.eliminated:
+			_t.erase(c.id)
+			_take_t.erase(c.id)
+			_cr_t.erase(c.id)
+			_off_t.erase(c.id)
+			_cont_b.erase(c.id)
+			_cont_s.erase(c.id)
+			_cont_a.erase(c.id)
+			_saving.erase(c.id)
 var _hit_spots: Dictionary = {}
 var _pick_cls: String = ""
 var _pick_pt: Vector2 = Vector2.INF
@@ -999,7 +1023,20 @@ func _pick_target(c: Country, foe: Country, from: Vector2, max_d: float, cls: St
 	var v_dup: int = 0
 	var strike: bool = cls != "" and sense != null
 	var assault: Dictionary = _assault_cities(c) if strike else {}
-	for f: Facility in gw.mil.facilities:
+	var cand_facs: Array = gw.mil.facs_of(foe.id)
+	if gw.diplo != null and gw.diplo.get("sky") != null and not (gw.diplo.sky.fac as Dictionary).is_empty():
+		var extra: Array = []
+		for fid_v: Variant in gw.diplo.sky.fac:
+			var fid: int = int(fid_v)
+			if fid >= 0 and fid < gw.mil.facilities.size():
+				var sf: Facility = gw.mil.facilities[fid]
+				if sf.country_id != foe.id and gw.diplo.sky_target(c.id, sf) == foe.id:
+					extra.append(sf)
+		if not extra.is_empty():
+			cand_facs = cand_facs.duplicate()
+			cand_facs.append_array(extra)
+			cand_facs.sort_custom(func(fa: Facility, fb: Facility) -> bool: return fa.id < fb.id)
+	for f: Facility in cand_facs:
 		if (f.country_id != foe.id and gw.diplo.sky_target(c.id, f) != foe.id) or f.parent != null or not gw.mil.alive(f) or f.moving:
 			continue
 		var p: Vector2 = f.center_px()
@@ -1875,7 +1912,7 @@ func _fortify(c: Country, foe: Country, war: bool = true) -> void:
 	var tr_all: int = 0
 	var te_all: int = 0
 	var per: Dictionary = {}
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id != c.id or not Military.is_field_work(f.kind):
 			continue
 		var teeth: bool = Military.is_teeth(f.kind)
@@ -1923,6 +1960,9 @@ func _fortify(c: Country, foe: Country, war: bool = true) -> void:
 
 
 const FORT_MASS: int = 4
+var _tmp_front: Array = []
+
+
 func _front_cities(c: Country, foe: Country, war: bool) -> Array:
 	var lst: Array = []
 	for cid in c.city_ids:
@@ -1937,7 +1977,7 @@ func _front_cities(c: Country, foe: Country, war: bool) -> Array:
 		var cen: = Vector2.ZERO
 		var nm: int = 0
 		var cp: Vector2 = Vector2(city.center * GameWorld.CELL)
-		for o: Variant in gw.army._near(cp, float(maxi(city.radius, city.claim_max) * GameWorld.CELL) + 700.0):
+		for o: Variant in gw.army._near_into(cp, float(maxi(city.radius, city.claim_max) * GameWorld.CELL) + 700.0, _tmp_front):
 			var u: Unit = o
 			if u.country_id == foe.id and u.alive() and u.ground():
 				cen += u.pos
@@ -2261,7 +2301,7 @@ func _spent(c: Country, what: String, n: int) -> void:
 
 func _ad_n(c: Country) -> int:
 	var n: int = 0
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id == c.id and f.kind >= Facility.Kind.AD_SPAAG and f.kind <= Facility.Kind.AD_INT and not guard.placed.has(f.id):
 			n += 1
 	return n

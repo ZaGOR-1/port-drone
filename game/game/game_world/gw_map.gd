@@ -385,15 +385,35 @@ func _expand_tick(part: int = -1, slices: int = EXP_SLICES) -> void:
 		_fill_tick()
 
 
-func _flush_territory() -> void:
-	if data.owners_dirty or _own_rect.has_area():
+func _flush_territory(force: bool = true, dt: float = 0.0) -> void:
+	if not data.owners_dirty and not _own_rect.has_area():
+		_terr_flush_t = 0.0
+		return
+	if not force and not data.owners_dirty:
+		_terr_flush_t += dt
+		if _terr_flush_t < 0.08:
+			return
+	_terr_flush_t = 0.0
+	if not data.owners_dirty and _own_rect.has_area() and territory_img != null and _own_rect.size.x * _own_rect.size.y <= 512:
+		var rx0: int = clampi(_own_rect.position.x, 0, data.w - 1)
+		var ry0: int = clampi(_own_rect.position.y, 0, data.h - 1)
+		var rx1: int = clampi(_own_rect.end.x - 1, 0, data.w - 1)
+		var ry1: int = clampi(_own_rect.end.y - 1, 0, data.h - 1)
+		var owners: PackedByteArray = data.owners
+		var w: int = data.w
+		for y in range(ry0, ry1 + 1):
+			var row: int = y * w
+			for x in range(rx0, rx1 + 1):
+				var v: float = float(owners[row + x]) / 255.0
+				territory_img.set_pixel(x, y, Color(v, v, v, 1.0))
+	else:
 		territory_img.set_data(data.w, data.h, false, Image.FORMAT_L8, data.owners)
-		territory_tex.update(territory_img)
-		var part: Rect2i = Rect2i() if data.owners_dirty else _own_rect
-		data.owners_dirty = false
-		_own_rect = Rect2i()
-		if map_layer != null:
-			map_layer.territory_changed(part)
+	territory_tex.update(territory_img)
+	var part: Rect2i = Rect2i() if data.owners_dirty else _own_rect
+	data.owners_dirty = false
+	_own_rect = Rect2i()
+	if map_layer != null:
+		map_layer.territory_changed(part)
 
 
 

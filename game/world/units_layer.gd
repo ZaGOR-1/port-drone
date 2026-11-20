@@ -56,6 +56,11 @@ var _vpts: = PackedVector4Array()
 var _badge_t: float = 0.0
 var _last_z: float = -1.0
 var _last_nf: float = -1.0
+var _sel_fid: int = -1
+var _sel_pts: PackedVector2Array = PackedVector2Array()
+var _sel_poly: PackedVector2Array = PackedVector2Array()
+var _sel_poly_top: float = INF
+var _sel_has_poly: bool = false
 
 
 func _ready() -> void:
@@ -553,11 +558,15 @@ func _fx(a: SpriteAtlas, n: String, center: Vector2) -> void:
 
 func _outlined(a: SpriteAtlas, n: String, shadow: String, fr: int, c: Vector2) -> void:
 	var info: Dictionary = a.info(shadow)
-	var r: Rect2 = a.rect(shadow, fr)
 	var tl: Vector2 = c - Vector2(float(info["ax"]), float(info["ay"]))
 	var dark: = Color(0.35, 0.38, 0.5)
-	for o: Vector2 in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
-		draw_texture_rect_region(a.texture, Rect2(tl + o, r.size), r, dark)
+	var or_r: Rect2 = a.outline_rect(shadow, fr)
+	if or_r.size.x > 0.0 and a.outline_tex != null:
+		draw_texture_rect_region(a.outline_tex, Rect2(tl - Vector2.ONE, or_r.size), or_r, dark)
+	else:
+		var r: Rect2 = a.rect(shadow, fr)
+		for o: Vector2 in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
+			draw_texture_rect_region(a.texture, Rect2(tl + o, r.size), r, dark)
 	_spr(a, n, fr, c)
 
 
@@ -918,11 +927,15 @@ func _draw_outline() -> void:
 			continue
 		_unit_sprite(u2)
 		var info: Dictionary = _sa.info(_sn)
-		var r: Rect2 = _sa.rect(_sn, u2.frame)
 		var tl: Vector2 = u2.pos.round() - Vector2(float(info["ax"]), float(info["ay"]))
 		var col: = Color(oc.color_light, ka)
-		for o: Vector2 in OUTLINE_OFFS:
-			_outline.draw_texture_rect_region(_sa.texture, Rect2(tl + o, r.size), r, col)
+		var or_r: Rect2 = _sa.outline_rect(_sn, u2.frame)
+		if or_r.size.x > 0.0 and _sa.outline_tex != null:
+			_outline.draw_texture_rect_region(_sa.outline_tex, Rect2(tl - Vector2.ONE, or_r.size), or_r, col)
+		else:
+			var r: Rect2 = _sa.rect(_sn, u2.frame)
+			for o: Vector2 in OUTLINE_OFFS:
+				_outline.draw_texture_rect_region(_sa.texture, Rect2(tl + o, r.size), r, col)
 
 
 
@@ -1106,26 +1119,35 @@ func _army_sel(z: float, _unused: bool) -> void:
 	for p: Vector2 in pts:
 		top = minf(top, p.y)
 	if pts.size() >= 3:
-		var hull: PackedVector2Array = Geometry2D.convex_hull(pts)
-		var grown: Array = Geometry2D.offset_polygon(hull, 9.0, Geometry2D.JOIN_ROUND)
-		if grown.size() == 1:
-			var poly: PackedVector2Array = grown[0]
-			var bb: = Rect2(poly[0], Vector2.ZERO)
-			for q: Vector2 in poly:
-				bb = bb.expand(q)
-			if bb.size.x < 420.0 and bb.size.y < 420.0:
-				top = bb.position.y + 9.0
-				draw_colored_polygon(poly, Color(col, 0.07))
-				var n: int = poly.size()
-				for i in n:
-					var a: Vector2 = poly[i]
-					var b: Vector2 = poly[(i + 1) % n]
-					var L: float = a.distance_to(b)
-					var s: float = 0.0
-					while s < L:
-						var e: float = minf(L, s + 4.0 * k)
-						draw_line(a.lerp(b, s / L), a.lerp(b, e / L), Color(col, 0.55), 1.0 * k)
-						s += 7.0 * k
+		if _sel_fid != sa.id or _sel_pts != pts:
+			_sel_fid = sa.id
+			_sel_pts = pts.duplicate()
+			_sel_has_poly = false
+			var hull: PackedVector2Array = Geometry2D.convex_hull(pts)
+			var grown: Array = Geometry2D.offset_polygon(hull, 9.0, Geometry2D.JOIN_ROUND)
+			if grown.size() == 1:
+				var gp: PackedVector2Array = grown[0]
+				var bb: = Rect2(gp[0], Vector2.ZERO)
+				for q: Vector2 in gp:
+					bb = bb.expand(q)
+				if bb.size.x < 420.0 and bb.size.y < 420.0:
+					_sel_poly = gp
+					_sel_poly_top = bb.position.y + 9.0
+					_sel_has_poly = true
+		if _sel_has_poly and not _sel_poly.is_empty():
+			var poly: PackedVector2Array = _sel_poly
+			top = _sel_poly_top
+			draw_colored_polygon(poly, Color(col, 0.07))
+			var n: int = poly.size()
+			for i in n:
+				var a: Vector2 = poly[i]
+				var b: Vector2 = poly[(i + 1) % n]
+				var L: float = a.distance_to(b)
+				var s: float = 0.0
+				while s < L:
+					var e: float = minf(L, s + 4.0 * k)
+					draw_line(a.lerp(b, s / L), a.lerp(b, e / L), Color(col, 0.55), 1.0 * k)
+					s += 7.0 * k
 
 	var hd: Variant = gw.get("hold")
 	var pin: Dictionary = {}

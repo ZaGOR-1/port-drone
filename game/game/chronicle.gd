@@ -29,11 +29,11 @@ func _init(world = null) -> void:
 
 
 func reset() -> void:
-	frames.clear()
-	events.clear()
-	meta.clear()
-	fac_born.clear()
-	_fac_seen.clear()
+	frames = []
+	events = []
+	meta = {}
+	fac_born = {}
+	_fac_seen = {}
 	_sample_dt = KEYFRAME_DT
 	_sample_t = KEYFRAME_DT
 	_initialized = false
@@ -139,10 +139,26 @@ func _compact_frames() -> void:
 	if frames.size() < 4:
 		return
 	var kept: Array = []
+	var keep_fids: Dictionary = {}
 	var last_i: int = frames.size() - 1
 	for i in frames.size():
 		if i == 0 or (i % 2 == 0) or i == last_i:
-			kept.append(frames[i])
+			var fr_v: Variant = frames[i]
+			kept.append(fr_v)
+			if fr_v is Dictionary:
+				var facs_v: Variant = (fr_v as Dictionary).get("facs", [])
+				if facs_v is Array:
+					for fv: Variant in (facs_v as Array):
+						if fv is Array and (fv as Array).size() >= 1:
+							keep_fids[int((fv as Array)[0])] = true
+	if gw != null and gw.mil != null:
+		for f: Facility in gw.mil.facilities:
+			if gw.mil.alive(f):
+				keep_fids[f.id] = true
+	for fk: Variant in fac_born.keys():
+		if not keep_fids.has(int(fk)):
+			fac_born.erase(fk)
+			_fac_seen.erase(fk)
 	frames = kept
 	_sample_dt = minf(_sample_dt * 2.0, 64.0)
 

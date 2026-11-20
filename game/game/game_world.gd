@@ -169,7 +169,7 @@ func _add_sprites(at: SpriteAtlas) -> void:
 
 
 
-func new_world(s: WorldSettings) -> void:
+func new_world(s: WorldSettings, skip_populate: bool = false) -> void:
 	settings = s
 	rng = Rng.new(s.world_seed + 99)
 	countries.clear()
@@ -267,7 +267,8 @@ func new_world(s: WorldSettings) -> void:
 	(territory_border.material as ShaderMaterial).set_shader_parameter("owner_tex", territory_tex)
 	_update_territory_colors()
 	objects.setup(self)
-	_spawn_trees()
+	if not skip_populate:
+		_spawn_trees()
 	rail = null
 	econ.generate_deposits()
 	econ.build_nav()
@@ -416,7 +417,7 @@ func _process(delta: float) -> void:
 	if vision != null:
 		vision.update(delta)
 	terrain.flush()
-	_flush_territory()
+	_flush_territory(false, delta)
 	if _checkpoints_dirty:
 		_update_checkpoints()
 

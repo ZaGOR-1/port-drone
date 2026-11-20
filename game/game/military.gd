@@ -1132,6 +1132,7 @@ func load_state(d: Dictionary) -> void:
 	_roam_jobs = {}
 	Save.fill(air, d.get("air", {}))
 	brain.load_state(d.get("brain", {}))
+	invalidate_fac_owners()
 	_plan_cache_key = ""
 	for f: Facility in facilities:
 		f.fx = []
