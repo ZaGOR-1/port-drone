@@ -10,6 +10,9 @@ func push_news(text: String, col: String) -> void:
 	if GameConfig.news_mode == 1 and col not in ["alert_red", "intercept_cyan"] and lvl > 1:
 		return
 	if lane != null and is_instance_valid(lane):
+		if gw != null and gw.nuke_warn_target != Vector2.ZERO and gw.game_time <= gw.nuke_warn_until and (col == "alert_red" or Loc.src_of(text).contains("МБР") or Loc.src_of(text).contains("ЯДЕРН")):
+			lane.call("push", "alert", {"title": text, "sub": Loc.t("Тап — камера к угрозе"), "colour": Color("ffb8a8"), "icon": "icon_nuke_missile", "act": "nuke_focus"})
+			return
 		lane.call("ambient", text, lvl, Palette.c(col).lightened(0.15))
 		return
 	news_queue.append([text, col])
@@ -127,6 +130,8 @@ func _on_lane_action(nm: String) -> void:
 				open_diplomacy()
 		"war_focus":
 			action.emit("battle_cam")
+		"nuke_focus":
+			action.emit("nuke_focus")
 		"inbox":
 			open_inbox()
 		"mystate":

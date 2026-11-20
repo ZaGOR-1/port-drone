@@ -18,6 +18,7 @@ var cur_time: float = 0.0
 var _min_t: float = 0.0
 var _max_t: float = 0.0
 var filter_cid: int = 0
+var filter_cat: int = 0
 var _return_to: String = ""
 var _closed: bool = false
 var _country_cols: Dictionary = {}
@@ -45,6 +46,7 @@ var _ev_filtered: Array = []
 var _ev_pool: Array = []
 var _ev_sb_norm: StyleBox = null
 var _ev_sb_hov: StyleBox = null
+var _cat_row: HBoxContainer
 var _filter_row: HBoxContainer
 var _syncing_slider: bool = false
 var _map_img: Image = null
@@ -216,6 +218,26 @@ func _input(event: InputEvent) -> void:
 			elif ek.keycode == KEY_SPACE:
 				get_viewport().set_input_as_handled()
 				_toggle_play()
+			elif ek.keycode == KEY_LEFT or ek.keycode == KEY_RIGHT:
+				var step_t: float = 60.0 if ek.shift_pressed else 15.0
+				cur_time = clampf(cur_time + (-step_t if ek.keycode == KEY_LEFT else step_t), _min_t, _max_t)
+				cur_idx = float(_frame_index_for_time(cur_time))
+				_sync_time_ui()
+				if _canvas != null and is_instance_valid(_canvas):
+					_canvas.queue_redraw()
+				get_viewport().set_input_as_handled()
+			elif ek.keycode == KEY_HOME or ek.keycode == KEY_END:
+				cur_time = _min_t if ek.keycode == KEY_HOME else _max_t
+				cur_idx = float(_frame_index_for_time(cur_time))
+				_sync_time_ui()
+				if _canvas != null and is_instance_valid(_canvas):
+					_canvas.queue_redraw()
+				get_viewport().set_input_as_handled()
+			elif ek.keycode >= KEY_1 and ek.keycode <= KEY_4:
+				speed_i = clampi(ek.keycode - KEY_1, 0, SPEEDS.size() - 1)
+				if _spd_btn != null and is_instance_valid(_spd_btn):
+					_spd_btn.text = "x%d" % int(SPEEDS[speed_i])
+				get_viewport().set_input_as_handled()
 
 
 func _frame_index_for_time(t: float) -> int:
@@ -392,6 +414,9 @@ func _build_ui() -> void:
 	fvb.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	fvb.add_theme_constant_override("separation", 4)
 	_fp.add_child(fvb)
+	_cat_row = HBoxContainer.new()
+	_cat_row.add_theme_constant_override("separation", 4)
+	fvb.add_child(_cat_row)
 	var fsc := ScrollContainer.new()
 	fsc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	fsc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -436,6 +461,20 @@ func _sync_time_ui() -> void:
 
 
 func _build_filter_chips() -> void:
+	if _cat_row != null and is_instance_valid(_cat_row):
+		for cc_n: Node in _cat_row.get_children():
+			cc_n.queue_free()
+		var cats: Array = [[0, Loc.t("ВСЕ")], [1, Loc.t("ВОЙНЫ И ЯО")], [2, Loc.t("СТРОЙКА")]]
+		for cp: Array in cats:
+			var ci: int = int(cp[0])
+			var cb: Button = UiKit.big(String(cp[1]), "gold" if filter_cat == ci else "stone", "", 26.0, 9)
+			cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			cb.focus_mode = Control.FOCUS_NONE
+			cb.pressed.connect(func() -> void:
+				filter_cat = ci
+				_build_filter_chips()
+				_rebuild_events())
+			_cat_row.add_child(cb)
 	if _filter_row == null or not is_instance_valid(_filter_row):
 		return
 	for ch: Node in _filter_row.get_children():
@@ -445,9 +484,22 @@ func _build_filter_chips() -> void:
 		ids.append(int(k))
 	ids.sort()
 	for cid: int in ids:
-		var cname: String = Loc.t("ВСЕ") if cid == 0 else String((countries[cid] as Dictionary).get("name", "?")).left(10)
+		var cname: String = Loc.t("ВСЕ") if cid == 0 else ("   " + String((countries[cid] as Dictionary).get("name", "?")).left(10))
 		var b: Button = UiKit.big(cname, "gold" if filter_cid == cid else "stone", "", 28.0, 9)
 		b.focus_mode = Control.FOCUS_NONE
+		if cid > 0:
+			var sw_o: = ColorRect.new()
+			sw_o.color = UiKit.OUTLINE
+			sw_o.position = Vector2(5, 9)
+			sw_o.size = Vector2(10, 10)
+			sw_o.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var sw_i: = ColorRect.new()
+			sw_i.color = _color_of(cid, Color.WHITE)
+			sw_i.position = Vector2(1, 1)
+			sw_i.size = Vector2(8, 8)
+			sw_i.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			sw_o.add_child(sw_i)
+			b.add_child(sw_o)
 		b.pressed.connect(func() -> void:
 			filter_cid = cid
 			_build_filter_chips()
@@ -462,6 +514,11 @@ func _rebuild_events() -> void:
 	for ev: Dictionary in events:
 		var ecid: int = int(ev.get("c", 0))
 		if filter_cid != 0 and ecid != filter_cid:
+			continue
+		var ekind: String = String(ev.get("k", ""))
+		if filter_cat == 1 and not (ekind in ["war", "nuke", "ultimatum", "city"]):
+			continue
+		if filter_cat == 2 and not (ekind in ["build", "land"]):
 			continue
 		_ev_filtered.append(ev)
 	_ev_list.custom_minimum_size = Vector2(0.0, float(_ev_filtered.size()) * EV_ROW_H)
@@ -487,6 +544,18 @@ func _ensure_ev_pool(count: int) -> void:
 		hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hb.add_theme_constant_override("separation", 6)
 		row_b.add_child(hb)
+		var sw_bg := ColorRect.new()
+		sw_bg.color = UiKit.OUTLINE
+		sw_bg.custom_minimum_size = Vector2(10, 10)
+		sw_bg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		sw_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var sw_in := ColorRect.new()
+		sw_in.color = Color.WHITE
+		sw_in.position = Vector2(1, 1)
+		sw_in.size = Vector2(8, 8)
+		sw_in.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		sw_bg.add_child(sw_in)
+		hb.add_child(sw_bg)
 		var time_l: Label = UiKit.lbl("0:00", 9, Color("cfc6a8"), 1)
 		hb.add_child(time_l)
 		var text_l: Label = UiKit.lbl("", 10, UiKit.TEXT, 1)
@@ -500,7 +569,7 @@ func _ensure_ev_pool(count: int) -> void:
 			if ev_d is Dictionary and not (ev_d as Dictionary).is_empty():
 				_jump_to_event(ev_d as Dictionary))
 		_ev_list.add_child(row_b)
-		_ev_pool.append({"btn": row_b, "time": time_l, "text": text_l, "st": st})
+		_ev_pool.append({"btn": row_b, "sw_bg": sw_bg, "sw_in": sw_in, "time": time_l, "text": text_l, "st": st})
 
 
 func _render_visible_events() -> void:
@@ -525,6 +594,10 @@ func _render_visible_events() -> void:
 		btn.visible = true
 		btn.position = Vector2(0.0, float(idx) * EV_ROW_H)
 		btn.size = Vector2(rw, 28.0)
+		var sw_bg: ColorRect = slot["sw_bg"]
+		sw_bg.visible = ecid > 0
+		if ecid > 0:
+			(slot["sw_in"] as ColorRect).color = _color_of(ecid, Color.WHITE)
 		var tl: Label = slot["time"]
 		tl.text = "%d:%02d" % [int(et) / 60, int(et) % 60]
 		tl.add_theme_color_override("font_color", _color_of(ecid, Color("cfc6a8")))

@@ -177,6 +177,7 @@ func _build_ores() -> void:
 	ore_btn = UiKit.slot("icon_mine", true, 44.0)
 	ore_btn.tooltip_text = ""
 	ore_btn.set_meta("rail_rank", 2)
+	set_hk_badge(ore_btn, "O", true, false)
 	ore_btn.pressed.connect(func() -> void: toggle_ores())
 	HoldTip.tip(ore_btn, HoldTip.act_line("ores"))
 	root.add_child(ore_btn)

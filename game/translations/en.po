@@ -34821,3 +34821,587 @@ msgstr "PC controls — hotkeys U (mass upgrade), R (repair), N (nuclear silo ac
 #. patch v0.35
 msgid "Бесплатная автоперезарядка ПРО «Заслон» и устаревший онлайн-релей — боекомплект ПРО теперь требует промышленного производства"
 msgstr "Free Zaslon ABM auto-reload & legacy relay — ABM interceptors now require industrial production"
+#. patch v0.36
+msgid " · БЧ: %s"
+msgstr " · WH: %s"
+
+#. patch v0.36
+msgid " · НЕТ ЭНЕРГИИ — ПАУЗА"
+msgstr " · NO POWER — PAUSED"
+
+#. patch v0.36
+msgid " · ПЛУТОНИЙ %d/%d"
+msgstr " · PLUTONIUM %d/%d"
+
+#. patch v0.36
+msgid "%s · ПРОДАНО НА %d\nБУФЕР ТОПЛИВА: %d/%d"
+msgstr "%s · SOLD FOR %d\nFUEL BUFFER: %d/%d"
+
+#. patch v0.36
+msgid "%s\nСЕТЬ %d / %d · УРАН %d (НА %d МИН)%s\nПРИОРИТЕТ: %s"
+msgstr "%s\nGRID %d / %d · URANIUM %d (FOR %d MIN)%s\nPRIORITY: %s"
+
+#. patch v0.36
+msgid "3 режима приоритета электросети при дефиците («Баланс» / «Военные и ПВО» / «Экономика»); при полном блек-ауте ядерная шахта встаёт на паузу"
+msgstr "3 power grid priority modes during shortage (Balanced / Military & AD / Economy); full blackout pauses nuclear silo preparation"
+
+#. patch v0.36
+msgid "Tab · след."
+msgstr "Tab · next"
+
+#. patch v0.36
+msgid "[Война]"
+msgstr "[War]"
+
+#. patch v0.36
+msgid "[Союз]"
+msgstr "[Ally]"
+
+#. patch v0.36
+msgid "×1.85 выпуск, 50% без сети и врождённый бетон (смена 300)"
+msgstr "×1.85 output, 50% off-grid output and innate concrete (switch 300)"
+
+#. patch v0.36
+msgid "×2.6 выпуск, +1 ед. электричества и +25% крит-уязвимости (смена 300)"
+msgstr "×2.6 output, +1 power draw and +25% crit vulnerability (switch 300)"
+
+#. patch v0.36
+msgid "АВАРИЙНОЕ ГЛУШЕНИЕ"
+msgstr "EMERGENCY SCRAM"
+
+#. patch v0.36
+msgid "АВАРИЯ НА АЭС %s: РАСПЛАВЛЕНИЕ АКТИВНОЙ ЗОНЫ!"
+msgstr "NPP ACCIDENT IN %s: CORE MELTDOWN!"
+
+#. patch v0.36
+msgid "АЭС заглушена: перегрев снят"
+msgstr "NPP scrammed: overheat cleared"
+
+#. patch v0.36
+msgid "АЭС разрушена"
+msgstr "NPP destroyed"
+
+#. patch v0.36
+msgid "АЭС: КРИТИЧЕСКИЙ ПЕРЕГРЕВ (%d с)! Сделайте аварийный стоп (1 500) или ремонт"
+msgstr "NPP CRITICAL OVERHEAT (%d s)! Perform emergency scram (1,500) or repair"
+
+#. patch v0.36
+msgid "АЭС: аварийная остановка выполнена — угроза расплавления снята"
+msgstr "NPP emergency scram complete — meltdown averted"
+
+#. patch v0.36
+msgid "Б"
+msgstr "B"
+
+#. patch v0.36
+msgid "Ба"
+msgstr "Ba"
+
+#. patch v0.36
+msgid "БОЕГОТОВНОСТЬ — МБР НА ДЕЖУРСТВЕ"
+msgstr "COMBAT READY — ICBM ON STANDBY"
+
+#. patch v0.36
+msgid "БУНКЕР 50% (БЕЗ СЕТИ)"
+msgstr "BUNKER 50% (NO POWER)"
+
+#. patch v0.36
+msgid "Базовая боеголовка МБР без доплаты титаном"
+msgstr "Standard ICBM warhead with no titanium surcharge"
+
+#. patch v0.36
+msgid "Боеголовки МБР и физическая логистика топлива — выбор Моно / РГЧ с ложными целями (+6 титана против «Заслона») / Высотный ЭМИ (блек-аут на 90 с); НПЗ копят топливо в буфер и отправляют бензовозы к столице/порту"
+msgstr "ICBM warheads & physical fuel logistics — choose Mono / MIRV decoys (+6 titanium vs Zaslon) / High-Altitude EMP (90 s blackout); refineries buffer fuel and dispatch tanker trucks to capital/port"
+
+#. patch v0.36
+msgid "Бункер (×1.85, бетон Т1, 50%% без сети)"
+msgstr "Bunker (×1.85, T1 concrete, 50%% off-grid)"
+
+#. patch v0.36
+msgid "Буферы НПЗ пусты"
+msgstr "Refinery buffers are empty"
+
+#. patch v0.36
+msgid "В ячейке %d армий не осталось"
+msgstr "No armies left in group %d"
+
+#. patch v0.36
+msgid "ВОЕН.+ПВО"
+msgstr "MIL.+AD"
+
+#. patch v0.36
+msgid "ВОЙНЫ И ЯО"
+msgstr "WARS & NUKES"
+
+#. patch v0.36
+msgid "ВСЕ ТИПЫ"
+msgstr "ALL TYPES"
+
+#. patch v0.36
+msgid "ВЫСОТНЫЙ ЭМИ"
+msgstr "HIGH-ALT EMP"
+
+#. patch v0.36
+msgid "ВЫСОТНЫЙ ЭМИ-ВЗРЫВ: %s ОТКЛЮЧИЛА СЕТИ %s!"
+msgstr "HIGH-ALT EMP DETONATION: %s BLACKED OUT %s!"
+
+#. patch v0.36
+msgid "Во"
+msgstr "Mi"
+
+#. patch v0.36
+msgid "Вода"
+msgstr "Water"
+
+#. patch v0.36
+msgid "Военные и ПВО"
+msgstr "Military & AD"
+
+#. patch v0.36
+msgid "Все топливозаправщики в пути"
+msgstr "All fuel tankers are en route"
+
+#. patch v0.36
+msgid "Выпустить бензовоз с накопленным топливом прямо сейчас"
+msgstr "Dispatch a fuel tanker carrying buffered fuel right now"
+
+#. patch v0.36
+msgid "Высотный ЭМИ: %s"
+msgstr "High-Altitude EMP: %s"
+
+#. patch v0.36
+msgid "Высотный подрыв без кратера: отключает ПВО, РЛС, РЭБ и электросети в большом радиусе на 90 с"
+msgstr "High-altitude detonation with no crater: disables AD, radar, EW and power grids over a wide radius for 90 s"
+
+#. patch v0.36
+msgid "ГЛУШЕНИЕ\n%d"
+msgstr "SCRAM\n%d"
+
+#. patch v0.36
+msgid "Город %s"
+msgstr "City %s"
+
+#. patch v0.36
+msgid "Города и баланс"
+msgstr "Cities & balance"
+
+#. patch v0.36
+msgid "Группа %d (%d бойцов): ЛКМ — выбрать · 2×ЛКМ — камера · ПКМ — очистить"
+msgstr "Group %d (%d troops): LMB select · 2×LMB focus camera · RMB clear"
+
+#. patch v0.36
+msgid "Дорога"
+msgstr "Road"
+
+#. patch v0.36
+msgid "Доступно на уровне 3"
+msgstr "Available at level 3"
+
+#. patch v0.36
+msgid "ЗАФИКСИРОВАН ПУСК ЯДЕРНОЙ МБР%s: %s!"
+msgstr "NUCLEAR ICBM LAUNCH DETECTED%s: %s!"
+
+#. patch v0.36
+msgid "Зависание автопродажи топлива в обход дорог и стабильность пространственных/спрайтовых проверок в поздней игре"
+msgstr "Instant fuel auto-sell bypassing roads and late-game spatial/sprite stability issues"
+
+#. patch v0.36
+msgid "Интерфейс ПК — тактический призрак с ценой/запретом у курсора, инспектор карты (150 мс), матрица бейджей клавиш (F1–F7, R, U, O, N, Z, Tab), кликабельная тревога МБР, панель групп Ctrl+1–9, доработанное удержание 5 с, фильтры и цвета стран в Хронике"
+msgstr "PC UX — tactical placement ghost with cursor validation, 150 ms map inspector, hotkey badge matrix (F1–F7, R, U, O, N, Z, Tab), clickable nuke alert, Ctrl+1–9 group bar, smoother 5s hold, and Chronicle filters & country swatches"
+
+#. patch v0.36
+msgid "КОНВОЙ\n%d/%d"
+msgstr "CONVOY\n%d/%d"
+
+#. patch v0.36
+msgid "Конвой топлива отправлен"
+msgstr "Fuel convoy dispatched"
+
+#. patch v0.36
+msgid "МОНО"
+msgstr "MONO"
+
+#. patch v0.36
+msgid "МОНОБЛОК"
+msgstr "MONO"
+
+#. patch v0.36
+msgid "МОНОБЛОЧНАЯ БЧ"
+msgstr "MONOBLOCK WARHEAD"
+
+#. patch v0.36
+msgid "Мало топлива в буфере"
+msgstr "Not enough fuel in buffer"
+
+#. patch v0.36
+msgid "НПЗ отрезан от логистики (мост/дорога)"
+msgstr "Refinery cut off from logistics (bridge/road)"
+
+#. patch v0.36
+msgid "НПЗ разрушен"
+msgstr "Refinery destroyed"
+
+#. patch v0.36
+msgid "Не хватает денег: %d"
+msgstr "Not enough money: %d"
+
+#. patch v0.36
+msgid "Не хватает титана: нужно %d"
+msgstr "Not enough titanium: need %d"
+
+#. patch v0.36
+msgid "Неверная специализация"
+msgstr "Invalid specialization"
+
+#. patch v0.36
+msgid "Неизвестный тип БЧ"
+msgstr "Unknown warhead type"
+
+#. patch v0.36
+msgid "Нейтр."
+msgstr "Neutral"
+
+#. patch v0.36
+msgid "Нет АЭС"
+msgstr "No NPP"
+
+#. patch v0.36
+msgid "Нет НПЗ"
+msgstr "No refinery"
+
+#. patch v0.36
+msgid "Нет дороги до столицы (мост разрушен)"
+msgstr "No road to capital (bridge destroyed)"
+
+#. patch v0.36
+msgid "Нет столицы для сбыта"
+msgstr "No capital for delivery"
+
+#. patch v0.36
+msgid "Нет шахты"
+msgstr "No silo"
+
+#. patch v0.36
+msgid "Нужно %d для экстренного заглушения"
+msgstr "Need %d for emergency scram"
+
+#. patch v0.36
+msgid "ОТПРАВИТЬ КОНВОЙ"
+msgstr "DISPATCH CONVOY"
+
+#. patch v0.36
+msgid "Оптимизация движка — батчинг дорог/огня/дыма, frustum-culling и троттлинг HUD, кеш-наследственность, сжатие хроники и асинхронные автосохранения для плавного позднего этапа"
+msgstr "Engine optimization — batched roads/fire/smoke, frustum culling, HUD throttling, owner lookup caching, compressed chronicle & async autosaves for smooth late-game FPS"
+
+#. patch v0.36
+msgid "ПЕРЕГРЕВ %dс"
+msgstr "OVERHEAT %ds"
+
+#. patch v0.36
+msgid "ПЕРЕГРЕВ %s"
+msgstr "OVERHEAT %s"
+
+#. patch v0.36
+msgid "ПРИОРИТЕТ ЭЛЕКТРОСЕТИ"
+msgstr "POWER GRID PRIORITY"
+
+#. patch v0.36
+msgid "ПРИОРИТЕТ\nСЕТИ"
+msgstr "GRID\nPRIO"
+
+#. patch v0.36
+msgid "Переключить порядок питания при дефиците: Баланс / Военные и ПВО / Экономика"
+msgstr "Cycle power order during shortage: Balanced / Military & AD / Economy"
+
+#. patch v0.36
+msgid "Перерабатывает нефть в топливо; при ≥%d т танкер везёт партию в столицу или порт. "
+msgstr "Refines oil into fuel; at ≥%d t a tanker delivers to capital or port. "
+
+#. patch v0.36
+msgid "Приоритет электросети: %s"
+msgstr "Power grid priority: %s"
+
+#. patch v0.36
+msgid "РГЧ + ЛОЖНЫЕ ЦЕЛИ"
+msgstr "MIRV + DECOYS"
+
+#. patch v0.36
+msgid "РГЧ +%d Ti"
+msgstr "MIRV +%d Ti"
+
+#. patch v0.36
+msgid "Разделение Т3 экономики — при улучшении до 3 уровня выберите ⚡ Форсаж (×2.6 выпуск, +1 сеть, +25% крит-уязвимости) или 🛡 Бункер (×1.85 выпуск, 50% работы без сети и врождённый бетон)"
+msgstr "T3 economy specialization — at level 3 choose ⚡ Overclock (×2.6 output, +1 power, +25% crit vuln.) or 🛡 Bunker (×1.85 output, 50% off-grid output & innate concrete)"
+
+#. patch v0.36
+msgid "Расплавление АЭС: %s"
+msgstr "NPP Meltdown: %s"
+
+#. patch v0.36
+msgid "Реактор не перегревается"
+msgstr "Reactor is not overheating"
+
+#. patch v0.36
+msgid "СЕТЬ: %d / %d (+%d ОТ %s)\nПРИОРИТЕТ: %s"
+msgstr "GRID: %d / %d (+%d FROM %s)\nPRIORITY: %s"
+
+#. patch v0.36
+msgid "СПЕЦИАЛИЗАЦИЯ: БУНКЕР"
+msgstr "SPECIALIZATION: BUNKER"
+
+#. patch v0.36
+msgid "СПЕЦИАЛИЗАЦИЯ: ФОРСАЖ"
+msgstr "SPECIALIZATION: OVERCLOCK"
+
+#. patch v0.36
+msgid "СТРОЙКА"
+msgstr "BUILD"
+
+#. patch v0.36
+msgid "Сектор (%d, %d)"
+msgstr "Sector (%d, %d)"
+
+#. patch v0.36
+msgid "Серая зона в начале партии — до 10:00 (12:00 на 8 странах) запрещены полномасштабная война и штурмы городов; с 3:00 возможны пограничные стычки за рудники и спорные залежи"
+msgstr "Early-game Grey Zone — before 10:00 (12:00 with 8 nations) full war & city assaults are locked; from 3:00 border/deposit skirmishes are allowed"
+
+#. patch v0.36
+msgid "Серая зона: до %d мин допустимы лишь стычки у границы и залежей"
+msgstr "Grey Zone: before %d min only border and deposit skirmishes are allowed"
+
+#. patch v0.36
+msgid "Серая зона: пограничная стычка у залежи/границы (%s — %s)"
+msgstr "Grey Zone: border/deposit skirmish (%s vs %s)"
+
+#. patch v0.36
+msgid "Серая зона: штурм городов открывается после %d мин"
+msgstr "Grey Zone: city assaults unlock after %d min"
+
+#. patch v0.36
+msgid "Сначала соберите МБР"
+msgstr "Assemble ICBM first"
+
+#. patch v0.36
+msgid "Снять перегрев АЭС за 1 500 и остановить таймер расплавления (60 с)"
+msgstr "Clear NPP overheat for 1,500 and halt meltdown timer (60 s)"
+
+#. patch v0.36
+msgid "Специализация Т3: ×1.85 выпуск, работает на 50% без сети и получает врождённый бетон"
+msgstr "T3 Spec: ×1.85 output, operates at 50% without power and gains innate concrete"
+
+#. patch v0.36
+msgid "Специализация Т3: ×2.6 выпуск, +1 ед. электричества и +25% крит-уязвимости"
+msgstr "T3 Spec: ×2.6 output, +1 power draw and +25% crit vulnerability"
+
+#. patch v0.36
+msgid "Стоит +6 титана: выпускает 3 ложные цели на подлёте, чтобы прорвать ПРО «Заслон»"
+msgstr "Costs +6 titanium: deploys decoys mid-flight to saturate ABM Zaslon"
+
+#. patch v0.36
+msgid "Столица %s"
+msgstr "Capital %s"
+
+#. patch v0.36
+msgid "Стратегическая защита и кризис АЭС — сетки и бетон теперь защищают АЭС, ядерные шахты и «Заслоны»; 2-й удар по АЭС запускает 60 с перегрев (платное глушение за 1 500 или взрыв и заражение)"
+msgstr "Strategic protection & NPP crisis — nets/concrete now protect NPPs, silos & Zaslons; 2nd hit on NPP starts 60 s overheat (paid 1,500 scram or meltdown & fallout)"
+
+#. patch v0.36
+msgid "Стратегическая защита: сетки и бетон работают. Вырабатывает +%d энергии и плутоний для ядерных МБР (1 за %d с, лимит %d). 2-й удар дрона/КР запускает 60 с перегрев (глушение %d или расплавление). Без урана АЭС стоит."
+msgstr "Strategic armor: nets and concrete supported. Produces +%d power and plutonium for ICBMs (1 per %d s, cap %d). 2nd drone/CM hit triggers 60 s overheat (scram %d or meltdown). Halts without uranium."
+
+#. patch v0.36
+msgid "Суша"
+msgstr "Land"
+
+#. patch v0.36
+msgid "Т3 (%s): ⚡ Форсаж (×2.6 вып., +1 сеть, +25%% крит) или 🛡 Бункер (×1.85 вып., 50%% без сети, врожд. бетон).%s"
+msgstr "T3 (%s): ⚡ Overclock (×2.6 out, +1 pwr, +25%% crit) or 🛡 Bunker (×1.85 out, 50%% off-grid, concrete).%s"
+
+#. patch v0.36
+msgid "Т3 профиль: %s"
+msgstr "T3 profile: %s"
+
+#. patch v0.36
+msgid "Т3 спец.: [⚡ Форсаж: ×2.6 вып., +1 сеть, +25%% крит] / [🛡 Бункер: ×1.85 вып., 50%% без сети, бетон]."
+msgstr "T3 spec: [⚡ Overclock: ×2.6 out, +1 pwr, +25%% crit] / [🛡 Bunker: ×1.85 out, 50%% off-grid, concrete]."
+
+#. patch v0.36
+msgid "ТОЛЬКО ДОСТУПНЫЕ"
+msgstr "AFFORDABLE ONLY"
+
+#. patch v0.36
+msgid "Танкер вышел из порта: %d топлива на экспорт"
+msgstr "Tanker sailed from port: %d fuel exported"
+
+#. patch v0.36
+msgid "Тап — камера к угрозе"
+msgstr "Click — focus camera on threat"
+
+#. patch v0.36
+msgid "Топливный конвой доставлен (%d ед.): +%d"
+msgstr "Fuel convoy delivered (%d t): +%d"
+
+#. patch v0.36
+msgid "Туман войны"
+msgstr "Fog of war"
+
+#. patch v0.36
+msgid "УР %d→%d\n%d"
+msgstr "LV %d→%d\n%d"
+
+#. patch v0.36
+msgid "УР 2→3⚡\n%d"
+msgstr "LV 2→3⚡\n%d"
+
+#. patch v0.36
+msgid "УР 2→3🛡\n%d"
+msgstr "LV 2→3🛡\n%d"
+
+#. patch v0.36
+msgid "УР. 3 · БУНКЕР"
+msgstr "LV. 3 · BUNKER"
+
+#. patch v0.36
+msgid "УР. 3 · ФОРСАЖ"
+msgstr "LV. 3 · OVERCLOCK"
+
+#. patch v0.36
+msgid "УР.3: БАЛАНС"
+msgstr "LV.3: BALANCED"
+
+#. patch v0.36
+msgid "УР.3: ⚡ ФОРСАЖ"
+msgstr "LV.3: ⚡ OVERCLOCK"
+
+#. patch v0.36
+msgid "УР.3: 🛡 БУНКЕР"
+msgstr "LV.3: 🛡 BUNKER"
+
+#. patch v0.36
+msgid "Удерживайте кнопку (или Enter/Space при наведении) 5 секунд для массового улучшения. Дешёвые объекты улучшаются первыми, строящиеся пропускаются."
+msgstr "Hold button (or Enter/Space while hovering) for 5 seconds to bulk-upgrade. Cheapest buildings upgrade first; busy ones are skipped."
+
+#. patch v0.36
+msgid "Ф"
+msgstr "O"
+
+#. patch v0.36
+msgid "Форсаж (×2.6, +1 кВт)"
+msgstr "Overclock (×2.6, +1 pwr)"
+
+#. patch v0.36
+msgid "Цели: %s%s"
+msgstr "Targets: %s%s"
+
+#. patch v0.36
+msgid "Шахта МБР: выбрана БЧ «%s»"
+msgstr "ICBM silo: warhead set to «%s»"
+
+#. patch v0.36
+msgid "Шахта повреждена"
+msgstr "Silo is damaged"
+
+#. patch v0.36
+msgid "ЭКОН."
+msgstr "ECON."
+
+#. patch v0.36
+msgid "ЭМИ %dс"
+msgstr "EMP %ds"
+
+#. patch v0.36
+msgid "ЭМИ-БЧ"
+msgstr "EMP WH"
+
+#. patch v0.36
+msgid "ЭТОЙ СЭС"
+msgstr "THIS SOLAR"
+
+#. patch v0.36
+msgid "ЭТОЙ ТЭЦ"
+msgstr "THIS PLANT"
+
+#. patch v0.36
+msgid "Это здание не поддерживает специализацию"
+msgstr "This building does not support specialization"
+
+#. patch v0.36
+msgid "Эк"
+msgstr "Ec"
+
+#. patch v0.36
+msgid "Ядерная шахта МБР (сетки/бетон поддерживаются). 1) Сборка МБР (%s, 25 000 + 5 плутония) — мир видит старт. 2) Боеготовность (%s, без электричества на паузе!). БЧ: Моно / РГЧ+ложные (+%d титана против ПРО) / ЭМИ (блек-аут ПВО и сетей на 90 с)."
+msgstr "Nuclear ICBM Silo (nets/concrete supported). 1) Assemble ICBM (%s, 25,000 + 5 plutonium) — visible globally. 2) Arming (%s, paused without power!). Warheads: Mono / MIRV+decoys (+%d titanium vs ABM) / EMP (90 s grid & AD blackout)."
+
+#. patch v0.36
+msgid "Ядерное оружие отключено"
+msgstr "Nuclear weapons are disabled"
+
+#. patch v0.36
+msgid "Ядерные шахты и ПРО «Заслон» (клик — перейти)"
+msgstr "Nuclear silos & ABM Zaslon (click to cycle)"
+
+#. patch v0.36
+msgid "Ячейка %d очищена"
+msgstr "Group %d cleared"
+
+#. patch v0.36
+msgid "ложную цель ББ"
+msgstr "a warhead decoy"
+
+#. patch v0.36
+msgid "можно"
+msgstr "valid"
+
+#. patch v0.36
+msgid "строит. %dс"
+msgstr "build %ds"
+
+#. patch v0.36
+msgid "ур."
+msgstr "lv."
+
+#. patch v0.36
+msgid "☢ %d ГОТ."
+msgstr "☢ %d RDY"
+
+#. patch v0.36
+msgid "☢ ×%d"
+msgstr "☢ ×%d"
+
+#. patch v0.36
+msgid "⚠ ПЕРЕГРЕВ! ВЗРЫВ ЧЕРЕЗ %s — ГЛУШИТЕ!"
+msgstr "⚠ OVERHEAT! MELTDOWN IN %s — SCRAM NOW!"
+
+#. patch v0.36
+msgid "⚡ ФОРСАЖ"
+msgstr "⚡ OVERCLOCK"
+
+#. patch v0.36
+msgid "⚡ ФОРСАЖ\n%d"
+msgstr "⚡ OVERCLOCK\n%d"
+
+#. patch v0.36
+msgid "⚡ ФОРСАЖ\nБЕСПЛ."
+msgstr "⚡ OVERCLOCK\nFREE"
+
+#. patch v0.36
+msgid "🛡 %d/%d"
+msgstr "🛡 %d/%d"
+
+#. patch v0.36
+msgid "🛡 БУНКЕР"
+msgstr "🛡 BUNKER"
+
+#. patch v0.36
+msgid "🛡 БУНКЕР\n%d"
+msgstr "🛡 BUNKER\n%d"
+
+#. patch v0.36
+msgid "🛡 БУНКЕР\nБЕСПЛ."
+msgstr "🛡 BUNKER\nFREE"
+
+
+#. patch v0.36
+msgid "Мгновенная автопродажа топлива из НПЗ в обход логистики и старый безвыборный Т3 апгрейд"
+msgstr "Instant refinery fuel auto-sell bypassing logistics and uniform T3 upgrade without specialization"

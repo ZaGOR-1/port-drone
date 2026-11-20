@@ -45,6 +45,9 @@ var _last_sel_sig: String = ""
 
 var card: PanelContainer
 var _card_title: Label
+var _grp_bar: PanelContainer
+var _grp_row: HBoxContainer
+var _grp_sig: String = ""
 var _card_sig: String = ""
 
 
@@ -180,6 +183,8 @@ func _process(delta: float) -> void:
 	_per_t -= delta
 	_redraw_t -= delta
 	if gw != null and gw.player != _player:
+		_hot.clear()
+		_grp_sig = ""
 		_player = gw.player
 		clear()
 		_hot.clear()
@@ -193,6 +198,7 @@ func _process(delta: float) -> void:
 		return
 	_mirror()
 	_card_tick()
+	_grp_tick()
 	var cam: MapCamera = _cam()
 	var ssig: String = str(sel.keys())
 	if _redraw_t <= 0.0 or _box_from.is_finite() or cam.position != _last_cam_p or cam.zoom.x != _last_cam_z or ssig != _last_sel_sig:
@@ -471,6 +477,62 @@ func rmb_click(pos: Vector2) -> bool:
 	return true
 
 
+func _recall_hit(d: int, force_center: bool = false) -> void:
+	if not _hot.has(d) or not _mode_none():
+		return
+	var keep: PackedInt32Array = PackedInt32Array()
+	for fid: int in _hot[d]:
+		var f: Facility = AG.fac(gw, fid)
+		if f != null and AG.army_alive(gw, f):
+			keep.append(fid)
+	_hot[d] = keep
+	if keep.is_empty():
+		_say(Loc.t("В ячейке %d армий не осталось") % d)
+		return
+	var now: int = Time.get_ticks_msec()
+	var dbl: bool = force_center or (_recall_k == d and now - _recall_ms < RECALL_DBL_MS)
+	_recall_k = d
+	_recall_ms = now
+	_set_sel(Array(keep), false)
+	UiKit.snd("ui_select")
+	if dbl:
+		_center_on_sel()
+
+
+func bound_groups() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if gw == null or gw.player == null or gw.army == null:
+		return out
+	var ks: Array = _hot.keys()
+	ks.sort()
+	for kv: Variant in ks:
+		var d: int = int(kv)
+		var keep: PackedInt32Array = PackedInt32Array()
+		var men: int = 0
+		var active: bool = true
+		for fid: int in _hot[d]:
+			var f: Facility = AG.fac(gw, fid)
+			if f != null and f.country_id == gw.player.id and AG.army_alive(gw, f):
+				keep.append(fid)
+				men += int(gw.army.units_of(f).size())
+				if not sel.has(fid):
+					active = false
+		if keep.is_empty():
+			_hot.erase(d)
+			continue
+		if keep.size() != (_hot[d] as PackedInt32Array).size():
+			_hot[d] = keep
+		out.append({"k": d, "n": keep.size(), "soldiers": men, "active": active})
+	return out
+
+
+func clear_group(d: int) -> void:
+	if _hot.erase(d):
+		UiKit.snd("ui_close")
+		_say(Loc.t("Ячейка %d очищена") % d)
+		_grp_sig = ""
+
+
 ## Keys: Esc, Ctrl+digit, digit. True = handled.
 func key(k: InputEventKey) -> bool:
 	if not ok():
@@ -491,26 +553,11 @@ func key(k: InputEventKey) -> bool:
 			_hot[d] = fids
 			_say(Loc.t("Выделение → %d (%s). Нажмите %d, чтобы выбрать снова") % [d, Loc.n(fids.size(), "%d армия", "%d армии", "%d армий") % fids.size(), d])
 		UiKit.snd("ui_select")
+		_grp_sig = ""
 		return true
 	if not _hot.has(d) or not _mode_none():
 		return false
-	var keep: PackedInt32Array = PackedInt32Array()
-	for fid: int in _hot[d]:
-		var f: Facility = AG.fac(gw, fid)
-		if f != null and AG.army_alive(gw, f):
-			keep.append(fid)
-	_hot[d] = keep
-	if keep.is_empty():
-		_say(Loc.t("В ячейке %d армий не осталось") % d)
-		return true
-	var now: int = Time.get_ticks_msec()
-	var dbl: bool = _recall_k == d and now - _recall_ms < RECALL_DBL_MS
-	_recall_k = d
-	_recall_ms = now
-	_set_sel(Array(keep), false)
-	UiKit.snd("ui_select")
-	if dbl:
-		_center_on_sel()
+	_recall_hit(d, false)
 	return true
 
 
@@ -706,3 +753,60 @@ func _card_tick() -> void:
 	card.size.x = w
 	var bot: float = hud.holder.get_global_rect().position.y if hud.holder != null else vs.y
 	card.position = Vector2(roundf((vs.x - w) * 0.5), roundf(bot - card.size.y - 8.0))
+
+
+func _ensure_grp_bar() -> void:
+	if _grp_bar != null and is_instance_valid(_grp_bar):
+		return
+	_grp_bar = PanelContainer.new()
+	_grp_bar.name = "PcGroupBar"
+	_grp_bar.add_theme_stylebox_override("panel", UiKit.sb("wb_pill", 5, 3))
+	_grp_bar.mouse_filter = Control.MOUSE_FILTER_STOP
+	_grp_bar.visible = false
+	add_child(_grp_bar)
+	_grp_row = HBoxContainer.new()
+	_grp_row.add_theme_constant_override("separation", 4)
+	_grp_bar.add_child(_grp_row)
+
+
+func _grp_tick() -> void:
+	_ensure_grp_bar()
+	if _grp_bar == null or hud == null or not ok() or not _mode_none():
+		if _grp_bar != null:
+			_grp_bar.visible = false
+		return
+	var busy: bool = (hud.panel != null and is_instance_valid(hud.panel)) or (hud.ops_panel != null and hud.ops_panel.visible) or (hud.ui24_open_now() if hud.has_method("ui24_open_now") else false)
+	var grps: Array[Dictionary] = bound_groups()
+	if busy or grps.is_empty():
+		_grp_bar.visible = false
+		return
+	var sig: String = ""
+	for g: Dictionary in grps:
+		sig += "%d:%d:%s|" % [int(g["k"]), int(g["soldiers"]), str(bool(g["active"]))]
+	if sig != _grp_sig:
+		_grp_sig = sig
+		for ch: Node in _grp_row.get_children():
+			ch.queue_free()
+		for g2: Dictionary in grps:
+			var k: int = int(g2["k"])
+			var men: int = int(g2["soldiers"])
+			var actv: bool = bool(g2["active"])
+			var b: Button = UiKit.big("%d · %d" % [k, men], "gold" if actv else "stone", "", 24.0, 9)
+			b.tooltip_text = Loc.t("Группа %d (%d бойцов): ЛКМ — выбрать · 2×ЛКМ — камера · ПКМ — очистить") % [k, men]
+			b.gui_input.connect(func(ev: InputEvent) -> void:
+				var mb: = ev as InputEventMouseButton
+				if mb != null and mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+					clear_group(k)
+					accept_event())
+			b.pressed.connect(func() -> void:
+				_recall_hit(k, false))
+			_grp_row.add_child(b)
+	_grp_bar.reset_size()
+	var vs: Vector2 = get_viewport_rect().size
+	var bot: float = hud.holder.get_global_rect().position.y if hud.holder != null else vs.y
+	if hud.get("armies_bar") != null and hud.armies_bar.visible:
+		bot = minf(bot, hud.armies_bar.global_position.y)
+	if card != null and card.visible:
+		bot = minf(bot, card.position.y)
+	_grp_bar.position = Vector2(roundf((vs.x - _grp_bar.size.x) * 0.5), roundf(bot - _grp_bar.size.y - 6.0))
+	_grp_bar.visible = true

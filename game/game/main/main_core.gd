@@ -802,7 +802,7 @@ func _draw_ghost() -> void:
 			cell = _navy_snap(cell)
 		var nw: Vector2i = Military.nw_for(kind, cell)
 		var sz: Vector2i = Military.size_of(kind)
-		var why: String = _ghost_why(kind, nw) if m != Mode.MODULE and Military.detours(kind) else world.mil.check_place(kind, nw, world.player, module_port if m == Mode.MODULE else null, false)
+		var why: String = ghost_place_why(kind, nw, module_port if m == Mode.MODULE else null)
 		var r: = Rect2(Vector2(nw) * C, Vector2(sz) * C)
 		var spr_ok: bool = false
 		if kind == Facility.Kind.NAVAL_BASE and world.get("atlas_navy1") is SpriteAtlas:
@@ -841,10 +841,25 @@ func _draw_ghost() -> void:
 		Mode.NUKE_TARGET:
 			rad = float(Nuclear.NUKE_R_CELLS * GameWorld.CELL)
 			_ghost.draw_circle(wp, rad, Color("e8402a", 0.16))
+		Mode.MISSILE, Mode.CR_TARGET, Mode.HYP_TARGET, Mode.SHIP_CR:
+			rad = 30.0
+			_ghost.draw_circle(wp, rad, Color(1.0, 0.55, 0.2, 0.14))
 	_ghost.draw_arc(wp, rad, 0.0, TAU, 48, Color(1.0, 0.85, 0.3, 0.9), 2.0 / cam.zoom.x)
 	var k: float = 10.0 / cam.zoom.x
 	_ghost.draw_line(wp - Vector2(k, 0), wp + Vector2(k, 0), Color(1, 0.85, 0.3), 2.0 / cam.zoom.x)
 	_ghost.draw_line(wp - Vector2(0, k), wp + Vector2(0, k), Color(1, 0.85, 0.3), 2.0 / cam.zoom.x)
+
+
+var _ghost_place_cache: Dictionary = {}
+func ghost_place_why(kind: int, nw: Vector2i, mod_port: Facility = null) -> String:
+	var now_ms: int = Time.get_ticks_msec()
+	var mid_id: int = mod_port.id if mod_port != null else -1
+	if not _ghost_place_cache.is_empty():
+		if int(_ghost_place_cache.get("k", -1)) == kind and (_ghost_place_cache.get("nw") as Vector2i) == nw and int(_ghost_place_cache.get("m", -2)) == mid_id and now_ms - int(_ghost_place_cache.get("ms", 0)) < 250:
+			return String(_ghost_place_cache.get("why", ""))
+	var why: String = _ghost_why(kind, nw) if mod_port == null and Military.detours(kind) else world.mil.check_place(kind, nw, world.player, mod_port, false)
+	_ghost_place_cache = {"k": kind, "nw": nw, "m": mid_id, "ms": now_ms, "why": why}
+	return why
 
 
 

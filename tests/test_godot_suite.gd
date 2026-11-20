@@ -79,6 +79,7 @@ func _run() -> void:
 	_test_step5_chronicle_and_territory()
 	_test_step6_pc_and_perf()
 	await _test_replay_stability_and_exit()
+	_test_patch_v036_mechanics()
 	var result: Dictionary = {"passed": failures.is_empty(), "checks": checks, "failures": failures}
 	for a: String in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
@@ -1167,7 +1168,7 @@ func _test_step6_pc_and_perf() -> void:
 	gw.free()
 
 	# Menus What's New metadata + Ukrainian i18n entries
-	check(Menus.VERSION == "v0.35.0", "Menus.VERSION updated to v0.35.0")
+	check(Menus.VERSION == "v0.36.0", "Menus.VERSION updated to v0.36.0")
 	var wn_cats: Dictionary = {}
 	for wn_s: String in Menus.WHATS_NEW:
 		for pref: String in ["НОВОЕ:", "УЛУЧШЕНО:", "ИСПР:", "УДАЛЕНО:"]:
@@ -1286,4 +1287,206 @@ func _test_replay_stability_and_exit() -> void:
 	m.queue_free()
 	await process_frame
 	await process_frame
+	gw.free()
+
+
+func _test_patch_v036_mechanics() -> void:
+	# Patch v0.36: Grey Zone, T3 spec (Overclock vs Bunker), Strategic Protect & NPP Overheat Crisis,
+	# ICBM Warheads (Mono/MIRV/EMP), Blackout Silo Pause, Physical Fuel Convoys, 3-way Grid Power Priority, PC UI
+	var gw := _step1_world(128)
+	for y in 128:
+		for x in 128:
+			gw.data.set_owner_id(x, y, 1 if x < 64 else 2)
+	gw.ground = GroundLayer.new()
+	gw.add_child(gw.ground)
+	gw.protect = Protect.new(gw)
+	gw.supply = Supply.new(gw)
+	gw.ops = Operations.new(gw)
+	gw.econ.ports = Ports.new(gw, gw.econ)
+	for sname: String in ["npp_core", "npp_tower", "nuke_silo", "nuke_silo_arm", "ad_zaslon", "ad_zaslon_open", "barracks",
+		"farm", "sawmill", "refinery", "civ_factory", "power_plant", "drone_port", "ad_radar",
+		"eco_ore_heap", "eco_shed", "eco_logs", "eco_tank_s", "eco_silo"]:
+		if not gw.spr_index.has(sname):
+			gw.spr_index[sname] = gw.spr_name.size()
+			gw.spr_name.append(sname)
+			gw.spr_fd.append(1)
+			gw.spr_fw.append(1)
+			gw.spr_frames.append(1)
+			gw.spr_rect.append(Rect2(0, 0, 16, 16))
+			gw.spr_anchor.append(Vector2.ZERO)
+			gw.spr_tex.append(null)
+	var c1: Country = gw.countries[0]
+	var c2: Country = gw.countries[1]
+	c1.is_player = true
+	c2.is_player = false
+	var ct1 := City.new()
+	ct1.id = 0
+	ct1.name = "Capital1"
+	ct1.kind = City.Kind.CAPITAL
+	ct1.country_id = c1.id
+	ct1.center = Vector2i(20, 64)
+	ct1.radius = 10
+	var ct2 := City.new()
+	ct2.id = 1
+	ct2.name = "Capital2"
+	ct2.kind = City.Kind.CAPITAL
+	ct2.country_id = c2.id
+	ct2.center = Vector2i(108, 64)
+	ct2.radius = 12
+	gw.cities = [ct1, ct2]
+	c1.capital_id = 0
+	c1.city_ids = [0]
+	c2.capital_id = 1
+	c2.city_ids = [1]
+	gw.mil._no_construct = true
+
+	# 1. Grey Zone (180s..600s default, 720s on large 8-player preset size_i==0): border/deposit skirmishes ok, interior blocked
+	const EconRatesS = preload("res://game/econ_rates.gd")
+	const Upkeep335S = preload("res://game/upkeep335.gd")
+	var prev_size_i: int = GameConfig.size_i
+	GameConfig.size_i = 1
+	gw.game_time = 60.0
+	check(not gw.diplo.in_grey_zone() and not gw.diplo.war_allowed(c1.id, c2.id, false), "Before 180s neither full war nor Grey Zone skirmishes are active")
+	gw.game_time = 240.0
+	check(gw.diplo.in_grey_zone() and not gw.diplo.war_allowed(c1.id, c2.id, false), "At 240s Grey Zone is active while full war stays locked")
+	var border_pos: Vector2 = Vector2(65 * GameWorld.CELL, 64 * GameWorld.CELL)
+	var interior_pos: Vector2 = Vector2(ct2.center * GameWorld.CELL)
+	check(gw.diplo.is_skirmish_target(c1.id, c2.id, border_pos), "Border zone near x=64 qualifies as Grey Zone skirmish target")
+	check(gw.diplo.strike_block_at(c1.id, border_pos, false) == "", "Grey Zone allows strike on rival border target")
+	check(gw.diplo.strike_block_at(c1.id, interior_pos, false) != "", "Grey Zone blocks strike deep inside rival capital interior")
+	gw.diplo.on_attack(c1.id, c2.id, border_pos)
+	check(not gw.diplo.at_war(c1.id, c2.id), "Border skirmish incident in Grey Zone does not trigger full war")
+	GameConfig.size_i = 0
+	gw.game_time = 650.0
+	check(gw.diplo.in_grey_zone(), "8-country / large preset extends Grey Zone ceiling to 720s")
+	GameConfig.size_i = prev_size_i
+	gw.game_time = 750.0
+	check(not gw.diplo.in_grey_zone() and gw.diplo.war_allowed(c1.id, c2.id, false), "Full war unlocks after Grey Zone ends")
+
+	# 2. T3 Economy Specialization (Overclock 1 vs Bunker 2)
+	var f_oc: Facility = gw.mil.build(Facility.Kind.CIV_FACTORY, Vector2i(14, 40), c1, null, true)
+	var f_bk: Facility = gw.mil.build(Facility.Kind.CIV_FACTORY, Vector2i(26, 40), c1, null, true)
+	check(f_oc != null and f_bk != null, "Built two civ factories for T3 Overclock vs Bunker test")
+	f_oc.level = 2
+	f_bk.level = 2
+	var oc_res: String = gw.econ.upgrade(f_oc, c1, 1)
+	var bk_res: String = gw.econ.upgrade(f_bk, c1, 2)
+	check(oc_res == "" and bk_res == "", "T3 upgrades start cleanly with explicit Overclock(1) and Bunker(2) specs")
+	check(f_oc.level == 3 and f_oc.t3_spec == 1 and is_equal_approx(EconRatesS.level_mul(f_oc), 2.6), "Overclock completes at L3 with 2.6x yield multiplier")
+	check(Military.need_power(f_oc) == 2, "Overclock increases power draw to 2 units")
+	check(f_bk.level == 3 and f_bk.t3_spec == 2 and is_equal_approx(EconRatesS.level_mul(f_bk), 1.85), "Bunker completes at L3 with 1.85x yield multiplier")
+	check(Military.need_power(f_bk) == 1, "Bunker keeps standard 1 power draw")
+	var bk_st: Dictionary = gw.protect.st.get(f_bk.id, {})
+	check(bool(bk_st.get("bunker", false)) and int(bk_st.get("cs", Protect.S_NONE)) == Protect.S_OK, "Bunker T3 automatically grants innate Tier 1 concrete protection")
+	f_bk.powered = false
+	check(is_equal_approx(gw.econ._prod_power_k(f_bk), 0.5), "Bunker T3 operates at 50% capacity when unpowered")
+	f_bk.powered = true
+	check(gw.cmd_t3_spec(f_bk, c1, 1) == "" and f_bk.t3_spec == 1, "cmd_t3_spec switches L3 specialization cleanly")
+
+	# 3. Strategic Protection eligibility & NPP Overheat Crisis (60s timer + scram + meltdown)
+	var npp: Facility = gw.mil.build(Facility.Kind.NUCLEAR_PLANT, Vector2i(14, 18), c1, null, true)
+	var silo: Facility = gw.mil.build(Facility.Kind.NUKE_SILO, Vector2i(26, 18), c1, null, true)
+	var zas: Facility = gw.mil.build(Facility.Kind.AD_ZASLON, Vector2i(36, 18), c1, null, true)
+	check(npp != null and silo != null and zas != null, "Built NUCLEAR_PLANT, NUKE_SILO, AD_ZASLON")
+	check(gw.protect.eligible(npp) and gw.protect.eligible(silo) and gw.protect.eligible(zas), "Protect allows net/concrete on NUCLEAR_PLANT, NUKE_SILO, and AD_ZASLON")
+	c1.uranium = 50
+	npp.u_hits = 1
+	gw.protect.on_impact(Vector2(npp.cell) * GameWorld.CELL + Vector2(2, 2), Protect.HIT_DRONE, c2.id)
+	check(npp.u_hits == 2 and npp.npp_overheat_t > 0.0 and gw.mil.alive(npp), "2nd drone hit on NPP starts 60s overheat crisis instead of instant explosion")
+	var money_before_scram: int = c1.money
+	check(gw.cmd_npp_scram(npp, c1) == "" and npp.npp_overheat_t < 0.0 and c1.money == money_before_scram - Nuclear.NPP_SCRAM_COST, "cmd_npp_scram pays 1,500 and clears NPP overheat crisis")
+	npp.u_hits = 2
+	npp.npp_overheat_t = 0.05
+	gw.game_time += 1.0
+	Nuclear.burn(gw, 0.1)
+	check(not gw.mil.alive(npp) and gw.nuke_zones.size() >= 1, "Unstopped NPP overheat meltdown destroys reactor and creates radiation fallout zone")
+
+	# 4. ICBM Warheads (MIRV decoy split & EMP blackout) + Blackout Silo Pause + Upkeep335
+	check(Upkeep335S.PCT.has(Facility.Kind.NUKE_SILO) and Upkeep335S.PCT.has(Facility.Kind.AD_ZASLON), "Upkeep335 includes NUKE_SILO and AD_ZASLON")
+	GameConfig.nukes = true
+	silo.nuke_state = 2
+	var ti_before: int = c1.titanium
+	check(gw.cmd_nuke_warhead(silo, c1, Nuclear.Warhead.MIRV) == "" and silo.nuke_warhead == Nuclear.Warhead.MIRV and c1.titanium == ti_before - Nuclear.MIRV_TI_EXTRA, "Selecting MIRV warhead deducts extra titanium")
+	silo.nuke_state = 4
+	silo.nuke_t = 100.0
+	silo.powered = false
+	Nuclear.update_silos(gw, 10.0)
+	check(is_equal_approx(silo.nuke_t, 100.0), "Unpowered/blackout silo pauses ICBM arming timer")
+	silo.powered = true
+	silo.nuke_state = 3
+	var launch_err: String = Nuclear.silo_launch(gw, silo, c1, Vector2(96 * GameWorld.CELL, 64 * GameWorld.CELL))
+	check(launch_err == "", "Silo launches MIRV ICBM")
+	var mirv_m: Missile = gw.mil.missiles.back() as Missile
+	mirv_m.state = Missile.State.FLIGHT
+	mirv_m.t = Missile.IGNITE_TIME + mirv_m.flight_time * 0.5
+	var m_cnt0: int = gw.mil.missiles.size()
+	gw.mil._update_missiles(0.1)
+	check(mirv_m.mirv_split and gw.mil.missiles.size() > m_cnt0, "MIRV warhead splits mid-flight into decoys")
+	var foe_rad: Facility = gw.mil.build(Facility.Kind.AD_RADAR, Vector2i(100, 64), c2, null, true)
+	gw.game_time = 800.0
+	var nz_before: int = gw.nuke_zones.size()
+	gw.strike_emp(Vector2i(100, 64), c1.id)
+	check(foe_rad != null and foe_rad.emp_until > gw.game_time and gw.nuke_zones.size() == nz_before, "High-altitude EMP blacks out nearby facilities without creating crater/radiation zone")
+	check(not gw.mil.has_power(foe_rad), "EMP'd facility loses power during blackout window")
+
+	# 5. Physical Fuel Convoys & 3-Way Grid Power Priority under real deficit
+	var ref: Facility = gw.mil.build(Facility.Kind.REFINERY, Vector2i(18, 52), c1, null, true)
+	check(ref != null, "Built Refinery for fuel convoy test")
+	var sold0: int = c1.fuel_sold
+	ref.ref_fuel = 16
+	var trucks_before: int = gw.econ.trucks.size()
+	check(gw.cmd_fuel_dispatch(ref, c1) == "" and ref.ref_fuel == 0 and gw.econ.trucks.size() > trucks_before, "cmd_fuel_dispatch empties refinery buffer and spawns fuel tanker convoy")
+	var fk_truck: Dictionary = gw.econ.trucks.back()
+	gw.econ.complete(fk_truck)
+	check(c1.fuel_sold > sold0, "Fuel tanker delivery awards fuel revenue via physical logistics")
+	# Sever logistics around refinery with deep water moat + rebuild nav -> dispatch refuses cleanly instead of teleporting money
+	ref.ref_fuel = 16
+	for wy in range(46, 60):
+		for wx in range(12, 26):
+			if wx <= 14 or wx >= 23 or wy <= 48 or wy >= 57:
+				gw.data.set_biome(wx, wy, Biome.DEEP)
+	gw.econ.build_nav()
+	check(gw.cmd_fuel_dispatch(ref, c1) != "" and ref.ref_fuel == 16, "Cut-off refinery blocks fuel convoy dispatch instead of teleporting money")
+
+	# Power priority rationing check under deficit on a clean country c3
+	var c3: Country = gw.countries[2]
+	var ct3 := City.new()
+	ct3.id = 2
+	ct3.name = "Capital3"
+	ct3.kind = City.Kind.CAPITAL
+	ct3.country_id = c3.id
+	ct3.center = Vector2i(20, 100)
+	ct3.radius = 6
+	gw.cities.append(ct3)
+	c3.capital_id = 2
+	c3.city_ids = [2]
+	for ay in range(85, 126):
+		for ax in range(5, 110):
+			gw.data.set_owner_id(ax, ay, c3.id)
+	var pp3: Facility = gw.mil.build(Facility.Kind.POWER_PLANT, Vector2i(10, 94), c3, null, true)
+	var eco_ex: Array[Facility] = []
+	for ei in range(6):
+		eco_ex.append(gw.mil.build(Facility.Kind.REFINERY, Vector2i(10 + ei * 10, 120), c3, null, true))
+	var mil_r: Facility = gw.mil.build(Facility.Kind.AD_RADAR, Vector2i(10, 110), c3, null, true)
+	check(pp3 != null and mil_r != null and eco_ex.all(func(x: Facility) -> bool: return x != null), "Built power deficit grid for c3 rationing test")
+	gw.cmd_power_prio(c3, 1)
+	check(c3.power_prio == 1 and mil_r.powered and not eco_ex[5].powered, "Grid priority 1 powers Military & AD ahead of excess Economy consumers during deficit")
+	gw.cmd_power_prio(c3, 2)
+	check(c3.power_prio == 2 and eco_ex[0].powered and not mil_r.powered, "Grid priority 2 powers Economy ahead of Military consumers during deficit")
+
+	# 6. NetSession whitelist + ChronicleViewer class load/filter
+	for cmd_nm: String in [".cmd_nuke_warhead", ".cmd_npp_scram", ".cmd_t3_spec", ".cmd_power_prio", ".cmd_fuel_dispatch"]:
+		check(NetSession.ALLOWED.has(cmd_nm), "NetSession.ALLOWED includes v0.36 command: " + cmd_nm)
+	var cv_s := load("res://ui/chronicle_viewer.gd") as GDScript
+	check(cv_s != null, "ChronicleViewer script compiles cleanly")
+	if cv_s != null:
+		var cv = cv_s.new()
+		cv.countries = {1: {"name": "A", "color": "#40a0ff"}}
+		cv.events = [
+			{"t": 10.0, "k": "build", "c": 1, "x": 10, "y": 10, "text": "Mine"},
+			{"t": 20.0, "k": "war", "c": 1, "x": 20, "y": 20, "text": "War"},
+		]
+		cv.filter_cat = 1
+		check(cv._parse_html_color("#40a0ff", Color.WHITE).b > 0.9, "ChronicleViewer parses country colors for swatches")
+		cv.free()
 	gw.free()

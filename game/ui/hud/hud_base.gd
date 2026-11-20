@@ -19,6 +19,15 @@ var season_lbl: Label
 var res_panel: PanelContainer
 var res_labels: Dictionary = {}
 var _res_prev: Dictionary = {}
+var strat_pill: Button = null
+var _flow_t: float = 0.0
+var _net_money: int = 0
+var _net_food: int = 0
+var _last_show_hk: int = -1
+var map_tip: PanelContainer = null
+var map_tip_lbl: Label = null
+var ghost_tip: PanelContainer = null
+var ghost_tip_lbl: Label = null
 var news_panel: PanelContainer
 var news_label: Label
 var hint_panel: PanelContainer

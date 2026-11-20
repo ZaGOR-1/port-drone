@@ -209,6 +209,36 @@ func _warn_col(key: String, warn: bool) -> void:
 		l.add_theme_color_override("font_color", UiKit.RED if warn else UiKit.TEXT)
 
 
+static func set_hk_badge(b: Control, key_txt: String, align_right: bool = true, bottom_y: bool = false) -> void:
+	if b == null or not is_instance_valid(b) or key_txt == "":
+		return
+	var pc_script: GDScript = load("res://pc/pc_port.gd") as GDScript
+	if pc_script == null or not bool(pc_script.call("desktop")):
+		return
+	var prev: Control = b.get_node_or_null("HkBadge") as Control
+	if prev != null:
+		if prev is Label:
+			(prev as Label).text = key_txt
+		return
+	var lbl: Label = UiKit.lbl(key_txt, 9, Color("ffe27a"), 2, 2)
+	lbl.name = "HkBadge"
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.add_to_group("hk_badge")
+	if align_right:
+		lbl.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT if bottom_y else Control.PRESET_TOP_RIGHT)
+		lbl.offset_left = -30.0
+		lbl.offset_right = -3.0
+		lbl.offset_top = -13.0 if bottom_y else 1.0
+		lbl.offset_bottom = -1.0 if bottom_y else 14.0
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	else:
+		lbl.position = Vector2(3, 1)
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var pc_n: Node = tree.root.get_node_or_null("PcPort") if tree != null and tree.root != null else null
+	lbl.visible = pc_n == null or bool(pc_n.get("show_hotkeys"))
+	b.add_child(lbl)
+
+
 func _slider(parent: Control, title: String, prop: String, mn: int, mx: int) -> void:
 	var row: = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)

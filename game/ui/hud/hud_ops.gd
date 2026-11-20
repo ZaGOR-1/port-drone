@@ -224,6 +224,15 @@ func _fill_acts(sig_base: String, acts: Array) -> void:
 				var bd: Label = UiKit.lbl(String(a["badge"]), 10, UiKit.GOLD, 3, 3)
 				bd.position = Vector2(30, 26)
 				b.add_child(bd)
+			var ctx_hk: String = ""
+			if act in ["nuke_build", "nuke_arm", "nuke_launch"] and bool(a["on"]):
+				ctx_hk = "N"
+			elif act == "zaslon_buy_1":
+				ctx_hk = "Z"
+			elif act == "zaslon_buy_fill":
+				ctx_hk = "⇧Z"
+			if ctx_hk != "":
+				set_hk_badge(b, ctx_hk, true, false)
 			var txt: String = String(a["t"])
 			var l: Label = UiKit.lbl(txt, 9, (UiKit.RED if bool(a.get("red", false)) else UiKit.TEXT) if bool(a["on"]) else UiKit.DIM, 2, 3)
 			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
