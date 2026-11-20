@@ -1,0 +1,209 @@
+{
+ "cell_px": 4,
+ "image": "atlas_nuke2.png",
+ "light": "top-left",
+ "note": "Step 2: nuclear silo, Zaslon A-135 ABM complex, ICBM, interceptor, scorched nuke crater & mushroom blast",
+ "palette": "palettes/main_named.json",
+ "size": [
+  2048,
+  256
+ ],
+ "sprites": {
+  "ad_zaslon": {
+   "ax": 3,
+   "ay": 26,
+   "fd": 5,
+   "fps": 0,
+   "frames": 1,
+   "fw": 5,
+   "h": 28,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 26,
+   "x": 76,
+   "y": 1
+  },
+  "ad_zaslon_open": {
+   "ax": 3,
+   "ay": 26,
+   "fd": 5,
+   "fps": 0,
+   "frames": 1,
+   "fw": 5,
+   "h": 28,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 26,
+   "x": 103,
+   "y": 1
+  },
+  "ad_zaslon_ruin": {
+   "ax": 3,
+   "ay": 26,
+   "fd": 5,
+   "fire": [
+    [
+     10,
+     12
+    ],
+    [
+     17,
+     20
+    ]
+   ],
+   "fps": 0,
+   "frames": 1,
+   "fw": 5,
+   "h": 28,
+   "kind": "ruin",
+   "ruin_of": "ad_zaslon",
+   "shadow": "rock_deep",
+   "w": 26,
+   "x": 130,
+   "y": 1
+  },
+  "crater_nuke": {
+   "ax": 22,
+   "ay": 16,
+   "fps": 0,
+   "frames": 1,
+   "h": 32,
+   "kind": "fx",
+   "w": 44,
+   "x": 178,
+   "y": 46
+  },
+  "missile_nuke": {
+   "anchor": "center",
+   "ax": 7,
+   "ay": 7,
+   "clockwise": true,
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "fd": 1,
+   "fps": 0,
+   "frames": 16,
+   "fw": 1,
+   "h": 15,
+   "kind": "unit",
+   "w": 15,
+   "x": 157,
+   "y": 1
+  },
+  "missile_nuke_shadow": {
+   "anchor": "center",
+   "ax": 7,
+   "ay": 7,
+   "clockwise": true,
+   "color": "rock_deep",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "fd": 1,
+   "fps": 0,
+   "frames": 16,
+   "fw": 1,
+   "h": 15,
+   "kind": "unit_shadow",
+   "shadow_of": "missile_nuke",
+   "w": 15,
+   "x": 1,
+   "y": 30
+  },
+  "nuke_blast": {
+   "ax": 48,
+   "ay": 68,
+   "fps": 10,
+   "frames": 16,
+   "h": 96,
+   "kind": "fx",
+   "w": 96,
+   "x": 1,
+   "y": 79
+  },
+  "nuke_silo": {
+   "ax": 2,
+   "ay": 22,
+   "fd": 5,
+   "fps": 0,
+   "frames": 1,
+   "fw": 5,
+   "h": 24,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 24,
+   "x": 1,
+   "y": 1
+  },
+  "nuke_silo_arm": {
+   "ax": 2,
+   "ay": 22,
+   "fd": 5,
+   "fps": 0,
+   "frames": 1,
+   "fw": 5,
+   "h": 24,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 24,
+   "x": 26,
+   "y": 1
+  },
+  "nuke_silo_ruin": {
+   "ax": 2,
+   "ay": 22,
+   "fd": 5,
+   "fire": [
+    [
+     12,
+     13
+    ]
+   ],
+   "fps": 0,
+   "frames": 1,
+   "fw": 5,
+   "h": 24,
+   "kind": "ruin",
+   "ruin_of": "nuke_silo",
+   "shadow": "rock_deep",
+   "w": 24,
+   "x": 51,
+   "y": 1
+  },
+  "zaslon_int": {
+   "anchor": "center",
+   "ax": 5,
+   "ay": 5,
+   "clockwise": true,
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "fd": 1,
+   "fps": 0,
+   "frames": 16,
+   "fw": 1,
+   "h": 11,
+   "kind": "unit",
+   "w": 11,
+   "x": 242,
+   "y": 30
+  },
+  "zaslon_int_shadow": {
+   "anchor": "center",
+   "ax": 5,
+   "ay": 5,
+   "clockwise": true,
+   "color": "rock_deep",
+   "dir0": "east",
+   "dir_step_deg": 22.5,
+   "fd": 1,
+   "fps": 0,
+   "frames": 16,
+   "fw": 1,
+   "h": 11,
+   "kind": "unit_shadow",
+   "shadow_of": "zaslon_int",
+   "w": 11,
+   "x": 1,
+   "y": 46
+  }
+ }
+}

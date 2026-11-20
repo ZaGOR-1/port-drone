@@ -1,0 +1,110 @@
+{
+ "cell_px": 4,
+ "image": "atlas_step4.png",
+ "light": "top-left",
+ "palette": "palettes/main_named.json",
+ "size": [
+  256,
+  64
+ ],
+ "sprites": {
+  "monument_0": {
+   "ax": 2,
+   "ay": 19,
+   "fd": 3,
+   "fps": 0,
+   "frames": 1,
+   "fw": 3,
+   "h": 22,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 16,
+   "x": 1,
+   "y": 1
+  },
+  "monument_1": {
+   "ax": 2,
+   "ay": 19,
+   "fd": 3,
+   "fps": 0,
+   "frames": 1,
+   "fw": 3,
+   "h": 22,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 16,
+   "x": 19,
+   "y": 1
+  },
+  "monument_2": {
+   "ax": 2,
+   "ay": 19,
+   "fd": 3,
+   "fps": 0,
+   "frames": 1,
+   "fw": 3,
+   "h": 22,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 16,
+   "x": 37,
+   "y": 1
+  },
+  "monument_3": {
+   "ax": 2,
+   "ay": 19,
+   "fd": 3,
+   "fps": 0,
+   "frames": 1,
+   "fw": 3,
+   "h": 22,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 16,
+   "x": 55,
+   "y": 1
+  },
+  "monument_4": {
+   "ax": 2,
+   "ay": 19,
+   "fd": 3,
+   "fps": 0,
+   "frames": 1,
+   "fw": 3,
+   "h": 22,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 16,
+   "x": 73,
+   "y": 1
+  },
+  "monument_5": {
+   "ax": 2,
+   "ay": 19,
+   "fd": 3,
+   "fps": 0,
+   "frames": 1,
+   "fw": 3,
+   "h": 22,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 16,
+   "x": 91,
+   "y": 1
+  },
+  "monument_6": {
+   "ax": 2,
+   "ay": 19,
+   "fd": 3,
+   "fps": 0,
+   "frames": 1,
+   "fw": 3,
+   "h": 22,
+   "kind": "building",
+   "shadow": "rock_deep",
+   "w": 16,
+   "x": 109,
+   "y": 1
+  }
+ }
+}

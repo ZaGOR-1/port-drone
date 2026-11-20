@@ -1,0 +1,440 @@
+{
+ "image": "atlas_step4ui.png",
+ "palette": "palettes/main_named.json",
+ "size": [
+  640,
+  96
+ ],
+ "sprites": {
+  "ally_logo_10": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 1,
+   "y": 1
+  },
+  "ally_logo_11": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 19,
+   "y": 1
+  },
+  "ally_logo_12": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 37,
+   "y": 1
+  },
+  "ally_logo_13": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 55,
+   "y": 1
+  },
+  "ally_logo_14": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 73,
+   "y": 1
+  },
+  "ally_logo_15": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 91,
+   "y": 1
+  },
+  "ally_logo_16": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 109,
+   "y": 1
+  },
+  "ally_logo_17": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 127,
+   "y": 1
+  },
+  "ally_logo_18": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 145,
+   "y": 1
+  },
+  "ally_logo_19": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 163,
+   "y": 1
+  },
+  "ally_logo_20": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 181,
+   "y": 1
+  },
+  "ally_logo_21": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 199,
+   "y": 1
+  },
+  "ally_logo_22": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 217,
+   "y": 1
+  },
+  "ally_logo_23": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 235,
+   "y": 1
+  },
+  "ally_logo_24": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 253,
+   "y": 1
+  },
+  "ally_logo_25": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 271,
+   "y": 1
+  },
+  "ally_logo_26": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 289,
+   "y": 1
+  },
+  "ally_logo_27": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 307,
+   "y": 1
+  },
+  "ally_logo_28": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 325,
+   "y": 1
+  },
+  "ally_logo_29": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 343,
+   "y": 1
+  },
+  "ally_logo_30": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 361,
+   "y": 1
+  },
+  "ally_logo_31": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 379,
+   "y": 1
+  },
+  "ally_logo_32": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 397,
+   "y": 1
+  },
+  "ally_logo_33": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 415,
+   "y": 1
+  },
+  "ally_logo_34": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 433,
+   "y": 1
+  },
+  "ally_logo_35": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 451,
+   "y": 1
+  },
+  "ally_logo_36": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 469,
+   "y": 1
+  },
+  "ally_logo_37": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 487,
+   "y": 1
+  },
+  "ally_logo_38": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 505,
+   "y": 1
+  },
+  "ally_logo_39": {
+   "fps": 0,
+   "frames": 1,
+   "h": 17,
+   "kind": "ui",
+   "size": 17,
+   "w": 17,
+   "x": 523,
+   "y": 1
+  },
+  "icon_brush": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 287,
+   "y": 24
+  },
+  "icon_bucket": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 313,
+   "y": 24
+  },
+  "icon_ideo_0": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 105,
+   "y": 24
+  },
+  "icon_ideo_1": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 131,
+   "y": 24
+  },
+  "icon_ideo_2": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 157,
+   "y": 24
+  },
+  "icon_ideo_3": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 183,
+   "y": 24
+  },
+  "icon_ideo_4": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 209,
+   "y": 24
+  },
+  "icon_ideo_5": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 235,
+   "y": 24
+  },
+  "icon_ideo_6": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 261,
+   "y": 24
+  },
+  "icon_season_0": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 1,
+   "y": 24
+  },
+  "icon_season_1": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 27,
+   "y": 24
+  },
+  "icon_season_2": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 53,
+   "y": 24
+  },
+  "icon_season_3": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 79,
+   "y": 24
+  }
+ }
+}

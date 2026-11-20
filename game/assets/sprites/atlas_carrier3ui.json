@@ -1,0 +1,90 @@
+{
+ "image": "atlas_carrier3ui.png",
+ "palette": "palettes/main_named.json",
+ "size": [
+  256,
+  64
+ ],
+ "sprites": {
+  "icon_airdrop": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 167,
+   "y": 1
+  },
+  "icon_airport": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 141,
+   "y": 1
+  },
+  "icon_deck_jet": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 89,
+   "y": 1
+  },
+  "icon_hull_carrier": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 1,
+   "y": 1
+  },
+  "icon_hull_carrier_16": {
+   "fps": 0,
+   "frames": 1,
+   "h": 16,
+   "kind": "ui",
+   "size": 16,
+   "w": 16,
+   "x": 27,
+   "y": 1
+  },
+  "icon_mod_hangar": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 45,
+   "y": 1
+  },
+  "icon_mod_hangar_16": {
+   "fps": 0,
+   "frames": 1,
+   "h": 16,
+   "kind": "ui",
+   "size": 16,
+   "w": 16,
+   "x": 71,
+   "y": 1
+  },
+  "icon_transport": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 115,
+   "y": 1
+  }
+ }
+}

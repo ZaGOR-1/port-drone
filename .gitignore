@@ -1,0 +1,13 @@
+dist/
+godot_dl/
+__pycache__/
+*.pck
+
+# Local tools and regenerable caches only; tracked imported resources stay.
+/.serena/
+/game/.godot/editor/
+/game/.godot/shader_cache/
+/tools/packproj/.godot/
+*.py[cod]
+/.venv/
+.DS_Store

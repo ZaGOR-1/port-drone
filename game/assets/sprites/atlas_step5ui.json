@@ -1,0 +1,90 @@
+{
+ "image": "atlas_step5ui.png",
+ "palette": "palettes/main_named.json",
+ "size": [
+  256,
+  32
+ ],
+ "sprites": {
+  "icon_chronicle": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 1,
+   "y": 2
+  },
+  "icon_land_buy": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 79,
+   "y": 2
+  },
+  "icon_land_deal": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 27,
+   "y": 2
+  },
+  "icon_land_gift": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 53,
+   "y": 2
+  },
+  "icon_land_swap": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 105,
+   "y": 2
+  },
+  "icon_locate": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 131,
+   "y": 2
+  },
+  "icon_replay_pause": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 183,
+   "y": 2
+  },
+  "icon_replay_play": {
+   "fps": 0,
+   "frames": 1,
+   "h": 24,
+   "kind": "ui",
+   "size": 24,
+   "w": 24,
+   "x": 157,
+   "y": 2
+  }
+ }
+}

@@ -1,0 +1,96 @@
+<mxGraphModel adaptiveColors="auto" grid="1" gridSize="10" page="1" pageWidth="900" pageHeight="1600">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="B" value="main = beta = migration&lt;br&gt;af1b4c9" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="40" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P1" value="PR 1&lt;br&gt;d638306" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="40" y="160" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P2" value="PR 2&lt;br&gt;50efdba" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="220" y="160" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P3" value="PR 3&lt;br&gt;0a6225c" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="160" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P4" value="PR 4&lt;br&gt;bb77603" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="580" y="160" width="140" height="60" />
+    </mxCell>
+    <mxCell id="M" value="Octopus merge&lt;br&gt;43477a5" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="280" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P5" value="PR 5&lt;br&gt;1806831" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="400" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P6" value="PR 6&lt;br&gt;f8e4297" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="520" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P7" value="PR 7&lt;br&gt;8773551" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="640" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P8" value="PR 8&lt;br&gt;299800d" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="760" width="140" height="60" />
+    </mxCell>
+    <mxCell id="F9" value="Step 5&lt;br&gt;4484a53" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="880" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P9" value="PR 9 + виправлення&lt;br&gt;84f95c9" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="1000" width="140" height="60" />
+    </mxCell>
+    <mxCell id="F10" value="Step 6&lt;br&gt;508ea94" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="1120" width="140" height="60" />
+    </mxCell>
+    <mxCell id="P10" value="PR 10 + UI/переклади&lt;br&gt;96053d6" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;">
+      <mxGeometry as="geometry" x="400" y="1240" width="140" height="60" />
+    </mxCell>
+    <mxCell id="edge0" source="B" target="P1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge1" source="B" target="P2" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge2" source="B" target="P3" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge3" source="B" target="P4" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge4" source="P1" target="M" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge5" source="P2" target="M" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge6" source="P3" target="M" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge7" source="P4" target="M" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge8" source="M" target="P5" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge9" source="P5" target="P6" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge10" source="P6" target="P7" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge11" source="P7" target="P8" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge12" source="P8" target="F9" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge13" source="F9" target="P9" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge14" source="P9" target="F10" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+    <mxCell id="edge15" source="F10" target="P10" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;defaultLabelBackgroundColor=page;">
+      <mxGeometry as="geometry" relative="1" />
+    </mxCell>
+  </root>
+</mxGraphModel>
