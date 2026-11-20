@@ -78,6 +78,7 @@ func _run() -> void:
 	_test_step4_seasons_ideology_flags()
 	_test_step5_chronicle_and_territory()
 	_test_step6_pc_and_perf()
+	await _test_replay_stability_and_exit()
 	var result: Dictionary = {"passed": failures.is_empty(), "checks": checks, "failures": failures}
 	for a: String in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
@@ -1178,3 +1179,111 @@ func _test_step6_pc_and_perf() -> void:
 	var first_wn: String = String(Menus.WHATS_NEW[0]).trim_prefix("НОВОЕ:").strip_edges()
 	check(Loc.t("УЛУЧШЕНО") == "ПОКРАЩЕНО" and Loc.t("УДАЛЕНО") == "ВИДАЛЕНО" and Loc.t(first_wn) != first_wn and Loc.t("ИНТЕРФЕЙС И ПК") == "ІНТЕРФЕЙС І ПК", "Ukrainian translation loads v0.35 What's New and UI entries")
 	Loc.set_lang(prev_lang, false)
+
+
+func _test_replay_stability_and_exit() -> void:
+	var gw := _make_world()
+	gw.player = gw.countries[0]
+	gw.player.is_player = true
+	gw.countries[0].name = "Northia"
+	gw.countries[0].color = Color("40a0ff")
+	gw.countries[1].name = "Southia"
+	gw.countries[1].color = Color("ff5040")
+	gw.chronicle = ChronicleS.new(gw)
+	gw.chronicle.reset()
+	gw.chronicle.log_event("war", 1, Vector2i(10, 10), "Early war")
+
+	# 1. Long match (> 30 min / > MAX_FRAMES) must compact older keyframes and capture the exact end-of-match frame
+	var total_steps: int = ChronicleS.MAX_FRAMES + 60
+	for i in total_steps:
+		gw.game_time += ChronicleS.KEYFRAME_DT
+		gw.chronicle.step(ChronicleS.KEYFRAME_DT)
+	check(gw.chronicle.frames.size() > 1 and gw.chronicle.frames.size() <= ChronicleS.MAX_FRAMES, "Long match compacts chronicle frames within MAX_FRAMES budget")
+	check(gw.chronicle._sample_dt > ChronicleS.KEYFRAME_DT, "Chronicle raises adaptive sample_dt after exceeding initial MAX_FRAMES window")
+
+	# Strategic events must not be evicted by build spam
+	for bi in (ChronicleS.MAX_EVENTS + 30):
+		gw.chronicle.log_event("build", 1, Vector2i(4, 4), "Mine %d" % bi)
+	var has_early_war: bool = false
+	for ev: Variant in gw.chronicle.events:
+		if ev is Dictionary and String((ev as Dictionary).get("k", "")) == "war":
+			has_early_war = true
+			break
+	check(has_early_war, "Chronicle keeps strategic war/nuke/city events despite build event spam")
+
+	# End match shortly after last keyframe: finalize_and_save must force-append the exact end frame & preserve metadata
+	gw.game_time += 1.3
+	gw.session.start()
+	gw.session._finish(1)
+	gw.chronicle._saved_match = true  # avoid polluting host user://chronicles during headless unit tests
+	gw.chronicle.finalize_and_save(1)
+	var last_fr: Dictionary = gw.chronicle.frames.back()
+	check(absf(float(last_fr.get("t", 0.0)) - snappedf(gw.game_time, 0.1)) < 0.15, "finalize_and_save captures exact end-of-match timestamp even on >30m matches")
+	var rec: Dictionary = gw.chronicle.build_record()
+	check(int((rec.get("meta", {}) as Dictionary).get("winner", 0)) == 1 and float((rec.get("meta", {}) as Dictionary).get("duration", 0.0)) >= float(last_fr.get("t", 0.0)) - 0.1, "build_record preserves winner and duration metadata")
+
+	# Save/load state round-trips adaptive sample_dt and sample_t
+	var c_state: Dictionary = gw.chronicle.save_state()
+	var c_restored := ChronicleS.new(gw)
+	c_restored.load_state(c_state)
+	check(absf(c_restored._sample_dt - gw.chronicle._sample_dt) < 0.01 and c_restored.frames.size() == gw.chronicle.frames.size(), "Chronicle save_state/load_state preserves adaptive sample_dt and all frames")
+
+	# 2. Live SceneTree Menus + ChronicleViewer exit & playback stability (no winner_id crash, no detached tree error)
+	var ViewerC := preload("res://ui/chronicle_viewer.gd")
+	var MenusC := preload("res://ui/menus.gd")
+	var m: Menus = MenusC.new()
+	get_root().add_child(m)
+	m.setup(gw)
+	m.show_end(1)
+	check(m.current == "end", "Menus opens end screen cleanly")
+
+	# Open replay from end screen (passing corrupted color in a country meta entry as robustness check too)
+	var bad_rec: Dictionary = rec.duplicate(true)
+	(bad_rec["meta"]["countries"] as Array).append({"id": 99, "name": "BadHex", "color": "##not_hex"})
+	ViewerC.open_replay(m, bad_rec, "end")
+	check(m.current == "chronicle_view" and m.screen != null, "ChronicleViewer opens cleanly in SceneTree")
+	var viewer: Control = null
+	for ch: Node in m.screen.get_children():
+		if ch.has_method("close_viewer"):
+			viewer = ch as Control
+			break
+	check(viewer != null and viewer.is_inside_tree(), "ChronicleViewer is inside SceneTree before setup completes")
+	check(absf(float(viewer.get("_max_t")) - float(last_fr.get("t", 0.0))) < 0.2, "ChronicleViewer _max_t reaches full end-of-match time")
+
+	# Play all the way to the end using _process and verify clean stop at _max_t
+	viewer.call("_toggle_play")
+	check(bool(viewer.get("playing")), "ChronicleViewer starts playback when multiple frames exist")
+	viewer.set("cur_time", maxf(0.0, float(viewer.get("_max_t")) - 1.0))
+	for _s in 30:
+		viewer.call("_process", 0.05)
+	check(not bool(viewer.get("playing")) and absf(float(viewer.get("cur_time")) - float(viewer.get("_max_t"))) < 0.01, "ChronicleViewer plays cleanly to exact match end and stops")
+
+	# Exiting replay from post-match must return to end screen cleanly without winner_id crash
+	viewer.call("close_viewer")
+	check(m.current == "end", "Closing post-match replay returns cleanly to end screen")
+
+	# Test browser -> open_replay (legacy 2-arg path too when Match.ended == false) -> Esc/handle_back
+	gw.session.ended = false
+	ViewerC.open_replay(m, rec)
+	check(m.current == "chronicle_view", "ChronicleViewer opens via 2-arg compatibility call")
+	check(m.handle_back() and (m.current == "chronicles" or m.current == "pause"), "Menus.handle_back exits replay viewer without trap")
+
+	# Single-frame safety: toggling play on 1-frame record must never wedge playing=true
+	ViewerC.open_replay(m, {"meta": {"w": 64, "h": 64, "countries": []}, "frames": [last_fr], "events": []}, "browser")
+	var single_v: Control = null
+	for ch: Node in m.screen.get_children():
+		if ch.has_method("close_viewer"):
+			single_v = ch as Control
+			break
+	check(single_v != null, "Opens 1-frame replay cleanly")
+	single_v.call("_toggle_play")
+	check(not bool(single_v.get("playing")), "1-frame replay refuses stuck playing=true state")
+	single_v.call("close_viewer")
+	check(m.current == "chronicles", "Closing browser replay returns to chronicles list")
+	check(m.handle_back() and m.current == "main", "Menus.handle_back exits chronicles browser to main menu")
+
+	m.close()
+	m.queue_free()
+	await process_frame
+	await process_frame
+	gw.free()

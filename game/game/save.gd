@@ -145,7 +145,7 @@ static func match_over(win: bool) -> void:
 
 
 static func can_save(m: Node) -> bool:
-	if m == null or bool(m.get("in_menu")):
+	if m == null or m.get("in_menu") == true:
 		return false
 	var gw: GameWorld = m.get("world")
 	return why_not(m) == ""
@@ -155,7 +155,7 @@ static func can_save(m: Node) -> bool:
 
 
 static func why_not(m: Node) -> String:
-	if m == null or bool(m.get("in_menu")):
+	if m == null or m.get("in_menu") == true:
 		return "Сохранять пока нечего"
 	var gw: GameWorld = m.get("world")
 	if gw == null or gw.data == null or gw.player == null or gw.session == null:

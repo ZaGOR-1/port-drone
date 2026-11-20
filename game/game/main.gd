@@ -276,6 +276,10 @@ func _notification(what: int) -> void:
 		if (menus == null or not menus.is_open()) and _army_back():
 			return
 		if menus != null and menus.is_open():
+			if menus.handle_back():
+				return
+			if menus.current == "end" or menus.current == "end_ranked":
+				return
 			if not in_menu:
 				_on_menu("resume")
 		else:
@@ -1320,6 +1324,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				UiKit.snd("ui_close")
 				return
 			if menus.is_open():
+				if menus.handle_back():
+					return
+				if menus.current == "end" or menus.current == "end_ranked":
+					return
 				_on_menu("resume")
 			else:
 				_open_pause()

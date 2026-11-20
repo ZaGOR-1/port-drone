@@ -110,6 +110,18 @@ func close() -> void:
 	_sparks.clear()
 
 
+func handle_back() -> bool:
+	if current == "chronicle_view" and screen != null and is_instance_valid(screen):
+		for ch: Node in screen.get_children():
+			if ch.has_method("close_viewer"):
+				ch.call("close_viewer")
+				return true
+	if current == "chronicles":
+		show_main()
+		return true
+	return false
+
+
 func _process(delta: float) -> void:
 	_t += delta
 	if _pv_task >= 0 and WorkerThreadPool.is_task_completed(_pv_task):
@@ -702,6 +714,12 @@ func _nav_row(parent: Control, title: String, hint: String, open: Callable) -> B
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var ek := event as InputEventKey
+		if ek.pressed and not ek.echo and (ek.keycode == KEY_ESCAPE or ek.keycode == KEY_BACK):
+			if handle_back():
+				get_viewport().set_input_as_handled()
+				return
 
 	if event is InputEventMouseButton and (event as InputEventMouseButton).device != InputEvent.DEVICE_ID_EMULATION and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
 
@@ -2830,9 +2848,7 @@ func show_end(winner: int) -> void:
 	if gw != null and gw.get("chronicle") != null and gw.chronicle != null and not gw.chronicle.frames.is_empty():
 		var chr_b: Button = _ibutton(vb, "ХРОНИКА ПАРТИИ", "gold", "", "icon_chronicle", 44.0)
 		chr_b.pressed.connect(func() -> void:
-			gw.chronicle.init_meta()
-			var rec := {"meta": gw.chronicle.meta.duplicate(true), "frames": gw.chronicle.frames, "events": gw.chronicle.events}
-			ChronicleViewerS.open_replay(self, rec))
+			ChronicleViewerS.open_replay(self, gw.chronicle.build_record(), "end"))
 	_button(vb, Loc.t("СМОТРЕТЬ ДАЛЬШЕ") if gone else Loc.t("ИГРАТЬ ДАЛЬШЕ"), "stone" if gone else "green", "continue")
 	var row: = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
