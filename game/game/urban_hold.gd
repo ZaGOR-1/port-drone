@@ -1009,7 +1009,7 @@ func save_state() -> Dictionary:
 	var hot: = PackedInt32Array()
 	for hc: int in _hot:
 		hot.append(hc)
-	return {"ids": ids, "h": hs, "ck": ck, "cv": cv, "ok": ok, "ov": ov, "t1": _t1, "t5": _t5, "hot": hot, "bhit": _hit.duplicate(true)}
+	return {"ids": ids, "h": hs, "ck": ck, "cv": cv, "ok": ok, "ov": ov, "t1": _t1, "t5": _t5, "hot": hot, "bhit": _hit.duplicate(true), "far_fail": _far_fail.duplicate()}
 
 
 func load_state(d: Dictionary) -> void:
@@ -1021,6 +1021,14 @@ func load_state(d: Dictionary) -> void:
 	_hit.clear()
 	_spots.clear()
 	_aims.clear()
+	_far_fail.clear()
+	_far_trunk.clear()
+	_far_trunk_from = Vector2.INF
+	_far_trunk_city = -1
+	_hold_near_u.clear()
+	var ff: Variant = d.get("far_fail", {})
+	if valid_far_fail(ff):
+		_far_fail = (ff as Dictionary).duplicate()
 	var bh: Variant = d.get("bhit", {})
 	if bh is Dictionary:
 		for k: Variant in bh:
@@ -1067,3 +1075,22 @@ func load_state(d: Dictionary) -> void:
 	if ok is PackedInt32Array and ov is PackedFloat64Array and (ok as PackedInt32Array).size() == (ov as PackedFloat64Array).size():
 		for i in (ok as PackedInt32Array).size():
 			_off[int(ok[i])] = float(ov[i])
+
+
+## Optional FORMAT1 state. Old saves start without a failed-dispatch cooldown.
+static func valid_far_fail(value: Variant) -> bool:
+	if not (value is Dictionary):
+		return false
+	for key: Variant in value:
+		if not (key is String):
+			return false
+		var ids: PackedStringArray = key.split(":")
+		if ids.size() != 2:
+			return false
+		for id: String in ids:
+			if not id.is_valid_int() or int(id) < 0 or str(int(id)) != id:
+				return false
+		var until: Variant = value[key]
+		if not (until is int or until is float) or not is_finite(float(until)) or float(until) < 0.0:
+			return false
+	return true

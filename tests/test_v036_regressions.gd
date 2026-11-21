@@ -24,6 +24,7 @@ func _run() -> void:
 	match name:
 		"autosave": _autosave()
 		"navy": _navy()
+		"hold": _hold()
 		_: check(false, "Unknown case: " + name)
 	var result: Dictionary = {"passed": failures.is_empty(), "checks": checks, "failures": failures}
 	FileAccess.open(out, FileAccess.WRITE).store_string(JSON.stringify(result))
@@ -156,4 +157,57 @@ func _navy() -> void:
 	check(host.navy.sea_path(a, b, 1) == peer.navy.sea_path(a, b, 1), "navy replay routes agree")
 	host.free()
 	peer.free()
+
+class CountingEconomy:
+	extends Economy
+	var paths: int = 0
+	func nav_path(_a: Vector2, _b: Vector2) -> PackedVector2Array:
+		paths += 1
+		nav_last_ok = false
+		return PackedVector2Array()
+
+func _hold() -> void:
+	var gw := _make_world()
+	gw.econ = CountingEconomy.new(gw)
+	var source = load("res://game/urban_hold.gd").new(gw)
+	gw.hold = source
+	gw.game_time = 100.0
+	var city := City.new()
+	city.id = 2
+	city.center = Vector2i(1, 1)
+	var home := Facility.new()
+	home.id = 1
+	home.country_id = 1
+	for i in 2:
+		var u := Unit.new()
+		u.id = i
+		u.country_id = 1
+		u.type = Unit.Type.INFANTRY
+		u.home = home
+		u.pos = Vector2(800 + i, 0)
+		gw.army.units.append(u)
+	source._far_fail = {"1:2": 120.0}
+	var saved: Dictionary = bytes_to_var(var_to_bytes(Save.enc(source.save_state())))
+	var restored = load("res://game/urban_hold.gd").new(gw)
+	gw.hold = restored
+	for round_i in 2:
+		restored._far_fail = {"99:99": 999.0}
+		Save._load_systems(gw, {"hold": saved})
+		check(restored._far_fail == source._far_fail, "hold replaces stale cooldown round %d" % round_i)
+		var calls: int = gw.econ.paths
+		restored._auto_city(gw.countries[0], city)
+		check(gw.econ.paths == calls, "restored cooldown prevents dispatch path search round %d" % round_i)
+	var legacy: Dictionary = saved.duplicate(true)
+	legacy.erase("far_fail")
+	Save._load_systems(gw, {"hold": legacy})
+	check(restored._far_fail.is_empty(), "legacy save clears old local cooldown")
+	restored._auto_city(gw.countries[0], city)
+	check(gw.econ.paths > 0, "legacy default permits a fresh dispatch attempt")
+	check(restored._far_fail.get("1:2") == 130.0, "failed dispatch creates deterministic cooldown")
+	var body: Dictionary = {"core": {"countries": [], "cities": [], "bridges": [], "game_time": 100.0}, "ents": [], "sys": {"hold": saved}}
+	check(Save._sound(body), "valid optional hold cooldown accepted")
+	for bad: Variant in [{"1:2": NAN}, {"1:2": "bad"}, {"bad": 120.0}, {"-1:2": 120.0}, []]:
+		body["sys"]["hold"]["far_fail"] = bad
+		check(not Save._sound(body), "malformed hold cooldown rejected before mutation: " + str(bad))
+	gw.free()
 

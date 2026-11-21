@@ -1030,6 +1030,10 @@ static func _sound(body: Dictionary) -> bool:
 		return false
 	# Optional FORMAT1 extension: validate before either disk or network load mutates the world.
 	var systems: Variant = body.get("sys", {})
+	if systems is Dictionary and systems.get("hold") is Dictionary:
+		var hold: Dictionary = systems["hold"]
+		if hold.has("far_fail") and not preload("res://game/urban_hold.gd").valid_far_fail(hold["far_fail"]):
+			return false
 	if systems is Dictionary and systems.get("diplo") is Dictionary:
 		var diplomacy: Dictionary = systems["diplo"]
 		if diplomacy.has("land_cooldowns"):

@@ -57,3 +57,6 @@ class V036RegressionTests(unittest.TestCase):
     def test_navy_restore_determinism(self):
         self.run_case('navy')
 
+    def test_urban_hold_restore(self):
+        self.run_case('hold')
+
