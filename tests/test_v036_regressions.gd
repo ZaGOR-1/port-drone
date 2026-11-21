@@ -26,6 +26,7 @@ func _run() -> void:
 		"navy": _navy()
 		"hold": _hold()
 		"power": _power()
+		"hash": _hash_state()
 		_: check(false, "Unknown case: " + name)
 	var result: Dictionary = {"passed": failures.is_empty(), "checks": checks, "failures": failures}
 	FileAccess.open(out, FileAccess.WRITE).store_string(JSON.stringify(result))
@@ -254,3 +255,48 @@ func _power() -> void:
 	pn.free()
 	gw.free()
 	peer.free()
+
+func _hash_state() -> void:
+	var gw := _make_world()
+	gw.hold = load("res://game/urban_hold.gd").new(gw)
+	var f := Facility.new()
+	gw.mil.facilities.append(f)
+	var city := City.new()
+	gw.cities.append(city)
+	var missile := Missile.new()
+	gw.mil.missiles.append(missile)
+	for obj: Object in [gw.countries[0], f, city, missile]:
+		var fields: Array = []
+		if obj is Country:
+			fields = ["power_prio", "nuke_pledge_until"]
+		elif obj is Facility:
+			fields = ["nuke_state", "nuke_t", "nuke_tt", "nuke_prog", "nuke_cd", "nuke_stage_sent", "nuke_warhead", "zas_q", "zas_t", "zas_tt", "t3_spec", "npp_overheat_t", "emp_until", "ref_fuel"]
+		elif obj is City:
+			fields = ["emp_until"]
+		else:
+			fields = ["warhead", "decoy", "mirv_split"]
+		for field: String in fields:
+			var before: String = NetHash.of(gw)
+			var old: Variant = obj.get(field)
+			obj.set(field, not old if old is bool else old + 1)
+			check(NetHash.of(gw) != before, "hash detects " + String(obj.get_script().get_global_name()) + "." + field)
+			obj.set(field, old)
+	var before: String = NetHash.of(gw)
+	gw.hold._far_fail = {"1:2": 120.0, "3:4": 130.0}
+	check(NetHash.of(gw) != before, "hash detects hold cooldown")
+	var canonical: String = NetHash.of(gw)
+	gw.hold._far_fail = {"3:4": 130.0, "1:2": 120.0}
+	check(NetHash.of(gw) == canonical, "cooldown dictionary insertion order does not affect hash")
+	gw.econ.trucks = [{"id": 1, "from": 1, "to": 1, "fuel_sale": true, "n": 10, "price": 100, "path": PackedVector2Array([Vector2.ZERO, Vector2.ONE]), "i": 0, "pos": Vector2.ZERO}]
+	for field: String in ["n", "price", "i", "pos", "path"]:
+		before = NetHash.of(gw)
+		var old: Variant = gw.econ.trucks[0][field]
+		gw.econ.trucks[0][field] = PackedVector2Array([Vector2.ONE]) if field == "path" else (Vector2.ONE if field == "pos" else old + 1)
+		check(NetHash.of(gw) != before, "hash detects convoy " + field)
+		gw.econ.trucks[0][field] = old
+	var sh := Ship.new()
+	gw.navy.ships.append(sh)
+	before = NetHash.of(gw)
+	sh.path = PackedVector2Array([Vector2.ONE])
+	check(NetHash.of(gw) != before, "hash detects navy route before positions diverge")
+	gw.free()

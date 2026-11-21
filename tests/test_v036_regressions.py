@@ -62,3 +62,6 @@ class V036RegressionTests(unittest.TestCase):
 
     def test_power_priority_authorization(self):
         self.run_case('power')
+
+    def test_simulation_hash_coverage(self):
+        self.run_case('hash')
