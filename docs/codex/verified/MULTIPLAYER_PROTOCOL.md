@@ -1,3 +1,5 @@
+> **PARTIALLY OUTDATED, 2026-11-21.** PROTO7/SIM_REV pr10-phase5b2-1 підтверджено; старі SHA/results/permissions нижче HISTORICAL. Поточні command/admission/restore/host-change boundaries: [ARCHITECTURE_AND_FLOWS](ARCHITECTURE_AND_FLOWS.md). Live two-peer NOT RUN.
+
 # Phase 5B.2 — command validation і compatibility boundary
 
 PROTO7/RPC signatures/packet types/command ordering/native DLL/Steam code незмінні. Targeted _exec schema guards до ownership/callv: mil.build(valid enum/cell/Country/optional parent, free=true заборонено для network caller); mil.air.rebase/entity3args; order_airdrop/entity/finiteVector2/optionalCountry. Valid UI commands не змінюють кодування. Internal free spawn/build через прямі calls збережено. Загальне ALLOWED hardening R07 окремо.

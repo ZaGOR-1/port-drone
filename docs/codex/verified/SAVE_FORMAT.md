@@ -1,3 +1,5 @@
+> **PARTIALLY OUTDATED, 2026-11-21.** FORMAT1 підтверджено; поточні optional cooldown/preflight/restore і durability limits: [ARCHITECTURE_AND_FLOWS](ARCHITECTURE_AND_FLOWS.md). Старі checkpoints/results нижче HISTORICAL, поточні Godot tests SKIP.
+
 # Phase 5B.2 — явне optional розширення FORMAT1
 
 Число FORMAT=1 і контейнер/entity/reference layout незмінні. Додано `sys.diplo.land_cooldowns: Dictionary[String, float|int]` (directional from:to → simulation game_time успішної угоди), копіювання save/load; відсутнє поле дає empty history і очищає попередній світ. Shared Save._sound перевіряє тип/ключі/finite/nonnegative timestamp<=savedclock до mutation disk/network.

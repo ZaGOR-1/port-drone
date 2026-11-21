@@ -1,3 +1,15 @@
+# Decision update — 2026-11-21, нова Git-історія
+
+- Завершення документаційного етапу: окрема команда власника дозволила commit/push docs/codex-reonboarding і один PR у beta. Merge дозволений лише за успішних checks/review без bypass. GitHub inspection: workflows=0, beta unprotected, active branch rules=[]; через missing CI/FAIL policy tests залишити PR відкритим. Production/main/releases не входять у дозвіл; наступне завдання CI/build лише підготовлене документально.
+- За явною інструкцією ZaGOR-1 актуальний snapshot має нову історію; main/beta на момент перевірки172df65. Попередні PR/SHA/Phase5–7 збережені як історичні документи, не є поточними Git requirements.
+- Чинні branches: main accepted, beta development; feature/fix/docs від actual beta. На первинному етапі re-onboarding Git publication не дозволяли; виняток для завершення цього документаційного PR наведено вище. Старі Phase7 task-specific дозволи не діють, releases/dispatch не дозволені.
+- Re-onboarding — документація й safe checks; код/DLL/gameplay/PROTO7/FORMAT1/SIM_REV/version не змінюються. Actual version mismatch і відсутність CI зафіксовані без fixes.
+- Наступний Windows/two-peer stage лише підготовлений: exact build/SHA, updater off, isolated data. Повного source semantic coverage/runtime PASS не заявляємо; продовжувати за SOURCE_COVERAGE.
+
+Це фіксує рішення поточного завдання, не нову release policy. Нижче попередні рішення **HISTORICAL**, а не поточні task-specific authorizations.
+
+---
+
 # Нові рішення Phase 5 — 2026-11-20
 
 ## D006 — Independent Development Policy

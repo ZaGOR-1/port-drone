@@ -1,3 +1,26 @@
+# Поточний backlog нового snapshot — 2026-11-21
+
+Докази, priority, reproduction і блокери: [реєстр ризиків](REONBOARDING_AUDIT.md#risk-register). Це план, не дозволи на fixes.
+
+| Наступна робота | Статус |
+|---|---|
+| Підготувати pinned Godot4.7.2/template, rerun regression/build | OPEN; dependencies відсутні, зараз не завантажували |
+| Розібрати missing CI workflow/PR template | CONFIRMED; full unittest FAIL; окрема tooling задача |
+| Windows18 cases +2 independent peers, однакові EXE/DLL SHA | NOT RUN; [план](WINDOWS_TWO_PEER_QA_PLAN.md) |
+| Доказовий збір turn/hash/RNG на peers | OPEN; launcher не має trace option |
+| Updater integrity/atomicity і save durability fault fixtures | OPEN; updater disabled для QA |
+| General command schemas/auth/rate limits; Steam admission negatives | OPEN; не всі методи reviewed |
+| Shutdown/p99 повторити на нинішньому build | HISTORICAL findings, поточний runtime UNVERIFIED |
+| Дочитати INDEXED/PARTIAL sources і великий historical coverage table | OPEN; [точні діапазони](SOURCE_COVERAGE.md), не повторювати весь аудит |
+
+0.41 migration ON HOLD; старі PR не відновлювати. Main/release — лише окреме owner decision.
+
+---
+
+## HISTORICAL backlog попередньої Git-історії
+
+Старі OPEN/FIXED/permissions нижче мають лише свій checkpoint scope; current risk status — у re-onboarding audit.
+
 # Phase 7 → Phase 8 — beta QA backlog
 
 За рішенням власника Windows GUI і full multiplayer виконуються **після** інтеграції в development beta. Вони NOT RUN, не блокують дозволений Phase7 merge самі по собі. Updater download/replacement не використовувати у тестовій beta: DF_NO_UPDATE=1 та repo-empty build. [QA plan](PHASE8_BETA_QA_PLAN.md).

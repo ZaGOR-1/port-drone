@@ -4,7 +4,7 @@
 
 **DroneFlames** is a real-time strategy game about running a country, building an economy, negotiating agreements and fighting wars on a generated map. Develop cities and production, supply your armed forces, and expand your influence through diplomacy and military action.
 
-This repository develops an independent PC port using **Godot 4.7.2**. The target platform is **Windows 11 x64**; development and the verified build process use **Ubuntu under WSL2**.
+This repository develops an independent PC port using **Godot 4.7.2**. The target platform is **Windows 11 x64**; development uses **Ubuntu under WSL2**; earlier build results are historical.
 
 > The current beta is for development and testing. The original code and artwork remain the property of their authors; see the usage terms below.
 
@@ -21,17 +21,17 @@ The current beta implements the following systems. Their presence in the code do
 - **Seasons and presentation:** seasonal changes, weather, snow, visual effects, flags and alliance emblems.
 - **Saves:** save, load and continue a match; a Chronicle of recorded snapshots rather than a full command replay.
 
-**Multiplayer:** LAN and Steam transports are implemented. Automated checks cover build admission and selected network scenarios, but a full match between two independent peers, reconnect/resync and real Steam/LAN acceptance testing are still **NOT RUN**. Both test peers must use the same exact EXE/DLL set with matching SHA256 hashes. Steam integration uses the Spacewar test AppID 480.
+**Multiplayer:** LAN and Steam transports are implemented. Earlier automated admission results are historical; current Godot suites are skipped because the engine is unavailable. A full match between two independent peers, reconnect/resync and real Steam/LAN acceptance testing are still **NOT RUN**. Both test peers must use the same exact EXE/DLL set with matching SHA256 hashes. Steam integration uses the Spacewar test AppID 480.
 
-For evidence and coverage limits, see [gameplay systems](docs/codex/verified/GAMEPLAY_SYSTEMS.md) and [Phase 5C results](docs/codex/verified/PHASE5C_INTEGRATION_RESULTS.md).
+For current evidence and coverage limits, see the [re-onboarding audit](docs/codex/verified/REONBOARDING_AUDIT.md) and [architecture and mechanics](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md). [Phase 5C results](docs/codex/verified/PHASE5C_INTEGRATION_RESULTS.md) are historical.
 
 ## Development status
 
 - **`main`** holds the last accepted stable baseline and is kept separate from experimental development.
-- **`beta`** is the active development and testing branch. [PR #11](https://github.com/ZaGOR-1/port-drone/pull/11) integrated PR #1–#10 and the Phase 5–5C fixes into it.
+- **`beta`** is the active development and testing branch. The owner imported the current snapshot into a new Git history; PR #1–#11 belong to the earlier history. Verified branch state is recorded in [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md).
 - The beta is **not a stable release**. Windows GUI and full multiplayer QA are still pending, and some features may contain bugs.
 
-Open work includes update integrity and atomicity, save durability, general network command validation, resource leaks at shutdown and simulation tail latency. See the [backlog](docs/codex/verified/BACKLOG.md) and [Beta QA plan](docs/codex/verified/PHASE8_BETA_QA_PLAN.md).
+Open work includes update integrity and atomicity, save durability, general network command validation, historical shutdown leak reports and simulation tail latency requiring fresh measurements. See the [backlog](docs/codex/verified/BACKLOG.md) and [Beta QA plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 
 ## Running on Windows
 
@@ -47,7 +47,7 @@ The launcher disables the updater, bypasses Steam initialization, and keeps test
 
 **Do not use the updater to download or replace files in this test beta.** Keep `DF_NO_UPDATE=1` and an empty updater repository in the build. Use copies of saves; loading new saves in older builds is unsupported.
 
-Manual acceptance uses the [18 Windows scenarios](docs/codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) and [LAN/Steam QA instructions](docs/codex/verified/PHASE8_BETA_QA_PLAN.md), with a separate [multiplayer launcher](tools/qa/Run-MultiplayerQA.ps1).
+Manual acceptance uses the [18 Windows scenarios](docs/codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) and [LAN/Steam QA instructions](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md), with a separate [multiplayer launcher](tools/qa/Run-MultiplayerQA.ps1).
 
 ## Building from source
 
@@ -75,23 +75,23 @@ Here, `0.34.0` is the beta's existing interface version label, not an announceme
 
 [tools/build.py](tools/build.py) packs `game/` into a PCK and embeds it in the Windows EXE. The output in `dist/beta/` contains the **EXE with its embedded PCK**, the DLL ZIP, checksums and copied launchers. Follow the Windows launch steps next. Keep the tracked `game/.godot/` files: the current build depends on these imported resources.
 
-Windows x64 builds and native headless startup passed earlier checks. This does not establish Windows GUI, audio or full multiplayer correctness. See the [detailed build and QA plan](docs/codex/verified/PHASE8_BETA_QA_PLAN.md).
+Windows x64 builds and native headless startup passed checks in the earlier Git history. They are **NOT RUN** for the new snapshot; the current checkout lacks the engine and export template. This does not establish Windows GUI, audio or full multiplayer correctness. See the [detailed build and QA plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 
 ## Development and contributions
 
 1. Update your local `beta` and create a task branch: `feature/*`, `fix/*` or `docs/*` as appropriate.
 2. Make a focused change and preserve attribution for earlier work.
 3. Run the relevant [checks](docs/codex/verified/TEST_MATRIX.md); for documentation, check links and the Markdown diff. Mark tests you have not run as `NOT RUN`, and unrelated checks as `N/A` with a reason.
-4. Open a Pull Request targeting **`beta`**, using the [PR template](.github/pull_request_template.md).
+4. After authorization to publish, open a Pull Request targeting **`beta`**. This snapshot lacks the PR template and CI workflow; full Python discovery currently fails because the workflow is missing.
 5. Complete review. Promoting changes to `main` or making a stable release requires a separate decision by the repository owner.
 
-Read [AGENTS.md](AGENTS.md) before working on the project. The [architecture](docs/codex/verified/ARCHITECTURE.md) and [collaboration workflow](docs/codex/verified/COLLABORATION_WORKFLOW.md) provide further context. Protocol, save and deterministic simulation changes need a separate compatibility assessment.
+Read [AGENTS.md](AGENTS.md) before working on the project. The [architecture](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md) and [collaboration workflow](docs/codex/verified/COLLABORATION_WORKFLOW.md) provide further context. Protocol, save and deterministic simulation changes need a separate compatibility assessment.
 
 ## Credits and origins
 
 The port derives from a DroneFlames Android closed-beta APK; the repository contains recovered GDScript and a PC adaptation. **The original game, code and artwork belong to their original authors.** The available documentation does not establish a complete list of their names.
 
-Current independent development of the port is led by [ZaGOR-1](https://github.com/ZaGOR-1), the repository owner, and [OKREDU](https://github.com/OKREDU), a co-developer. Their work on the PC port and new mechanics does not imply authorship of the original game. Earlier contributions remain credited in Git history.
+Current independent development of the port is led by [ZaGOR-1](https://github.com/ZaGOR-1), the repository owner, and [OKREDU](https://github.com/OKREDU), a co-developer. Their work on the PC port and new mechanics does not imply authorship of the original game. The new Git history preserves the snapshot. Earlier contributions and decisions are documented in historical reports under docs/codex/verified/; old commits were deliberately not imported.
 
 ## License and usage rights
 

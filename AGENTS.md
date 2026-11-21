@@ -1,92 +1,62 @@
 # AGENTS.md — DroneFlames PC port
 
-> Працюй як відповідальний співрозробник Godot/GDScript-проєкту. Пояснення — українською, назви змінних/коментарі — за існуючим стилем конкретного файла. Не стверджуй, що це Pygame.
+Працюй як відповідальний співрозробник Godot/GDScript-проєкту. Пояснюй українською; назви й коментарі — за стилем конкретного файла.
 
-## DroneFlames Independent Development Policy
+## Проєкт і джерело істини
 
-- За рішенням ZaGOR-1 від 2026-11-20 розвиваємо власний PC-порт на доступній Godot-кодовій базі. Відповідність сторонній 0.41.x не є метою або acceptance criterion.
-- ZaGOR-1 — власник і приймає рішення про stable releases; OKREDU — довірений співавтор. Codex допомагає з реалізацією, review, тестами й документацією та зберігає авторство й обґрунтовані механіки людей.
-- `main` — остання прийнята stable версія. Не використовувати для експериментів; перенесення з beta — тільки після стабілізації й прямого дозволу власника. Локально підготовлений workflow Phase5C дозволяє release лише explicit manual main+publish_release+version; remote policy перевіряти перед дією.
-- `beta` — integration/development. Звичайні PR спрямовувати сюди після review та необхідних checks. Merge, commit, push, tags, release і workflow dispatch потребують окремої явної команди; дозвіл редагувати код не є дозволом на ці дії.
-- Незалежні задачі: `feature/*` або `fix/*` від актуальної beta. Виняток Phase5: `codex/fix-pr10-critical` від PR10 head96053d66, який уже містить PR1–9. Не застосовувати cumulative PR окремими squash/cherry-pick; attribution та ancestry зберігати.
-- Не переписувати й не пересувати спільні гілки або гілки OKREDU без узгодження. Конфлікти вирішувати явним review, без автоматичних reset/rebase/force-push. Узгоджувати ownership спільних великих файлів.
-- Оригінальна міграція 0.41.4.1 — **DEFERRED / ON HOLD**. Історичні документи й rollback зберігати; не повторювати source discovery без нової прямої задачі та matching materials/прав.
-- Перевіряти deterministic simulation, network authorization, compatibility і save/load наслідки змін. Не змінювати protocol7, FORMAT1 або native DLL без окремого погодження. Нові командні semantics/state hash документувати й відділяти несумісні builds.
-- Не підвищувати version number без фактичної зміни продукту та рішення власника. Права на сторонній код/ресурси залишаються обов’язковими незалежно від власної назви чи стратегії.
-- Phase5 дозволяє production edits лише в ізольованому worktree робочої гілки; primary/main/beta/migration і backups зберігати. Тести й fixtures використовують окремі user paths, не реальні saves/accounts.
+- Власний PC-порт DroneFlames; відповідність сторонній 0.41.x не є метою. Міграція 0.41.x — DEFERRED; не відновлювати пошук без нової прямої задачі та належних матеріалів/прав.
+- ZaGOR-1 — власник, координатор і приймає stable release рішення; OKREDU — довірений співавтор. Codex допомагає з аналізом, реалізацією, review і тестами; Gemini — ізольованими задачами. Зберігай людське авторство й обґрунтовані механіки.
+- Репозиторій `https://github.com/ZaGOR-1/port-drone` має навмисно створену власником нову Git-історію зі snapshot. Старі PR/SHA/worktrees не є поточними залежностями. Не вимагай старої ancestry й не відновлюй попередні branches або історію.
+- Пріоритет: фактичні файли/status/HEAD і тести поточного запуску → актуальні verified docs із зазначеним scope → README → історичні звіти. Назва verified не сертифікує весь продукт.
 
-## 0. Джерело істини й пріоритети
-1. Поточні файли checkout, `git status`, фактичний HEAD, успішні тести.
-2. Верифікована документація `docs/codex/verified/` та генерований `dist/codex_audit/` (перевірити свіжість).
-3. `README.md`, `docs/performance.md`, `tools/`, тести, CI workflow.
-4. Початкова документація `docs/codex/` — **гіпотези та навігація**, а не гарантія вичерпного аналізу.
-5. Пропозиції й припущення — завжди позначай як припущення.
+## Onboarding checklist кожної сесії
 
-## 1. Обов'язкова ініціалізація нової сесії
-- Прочитай цей файл; `README.md`; `docs/codex/01_ARCHITECTURE.md`, `04_BUILD_RELEASE.md`, `05_TESTING.md`, `06_GUARDRAILS.md`; переглянь `git status --short` і `git log -1 --format='%h %s'`.
-- Запусти `python3 tools/codex/repository_audit.py --repo . --out dist/codex_audit`, якщо інвентар відсутній або застарів.
-- Перш ніж робити конкретну зміну, прочитай **повний вміст усіх файлів**, причетних до неї, включно з батьківськими `extends` файлами, залежностями, відповідними тестами і serialized форматами.
-- Для першої сесії виконай поетапний глибокий аудит ЗАВСІХ текстових джерел (не тільки топових), карти сценаріїв, стану, потоків мережі, можливих технічних проблем. Великі файли читай частинами до повного покриття. Бінарні ресурси інвентаризуй за розміром/типом/хешем, не вигадуй їхню семантику.
-- Ніколи не вважай наявну документацію повнішою за код. Знайдені розбіжності виправляй в `docs/codex/verified/`.
+1. `pwd`, `git rev-parse --show-toplevel`, `git status --short`, `git branch -vv`, `git remote -v`, `git log -1 --format='%h %s'`, `git worktree list`. Не припускай старий шлях або чисте дерево.
+2. Прочитай [NEXT_SESSION](docs/codex/verified/NEXT_SESSION.md), [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md), README та документи цільової системи.
+3. Архітектура: [ARCHITECTURE_AND_FLOWS](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md); факти й прогалини: [REONBOARDING_AUDIT](docs/codex/verified/REONBOARDING_AUDIT.md), [SOURCE_COVERAGE](docs/codex/verified/SOURCE_COVERAGE.md); Windows: [WINDOWS_TWO_PEER_QA_PLAN](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+4. Перевір актуальну beta без переміщення shared refs: `git ls-remote --heads origin main beta`. Нові `feature/*`, `fix/*`, `docs/*` — від перевіреної beta. За dirty checkout не перемикай гілки з ризиком втрати чужих змін.
+5. Перед конкретною зміною прочитай повністю змінювані файли, батьківські extends, залежності, тести й serialized contracts. Попередній coverage не замінює цей крок. Не повторюй увесь історичний PR audit; працюй за конкретним scope і відкритими прогалинами.
 
-## 2. Архітектурні інваріанти
-- Godot 4.7.2 (сумісність з pinned editor/template з workflow; не міняти версію мимоволі).
-- Startup за README: `game/override.cfg` -> `res://pc/boot.tscn` -> `pc/updater.gd` -> `res://game/main.tscn`; перевір існування фактичної основної сцени, зокрема можливі бінарні ресурси.
-- `PcPort` і `SteamNet` — autoload; не міняти імена/ініціалізацію без аналізу.
-- `game/game/main.gd` — entry script; успадкування йде через `game/game/main/main_input.gd` -> `main_strike.gd` -> `main_core.gd` -> `main_base.gd` (звіряти actual extends при зміні).
-- Підхід `GameWorld`, `NetSession`, `Hud`, `Menus`, `MapCamera`, економіка, армія, авіація, флот, AI, save, localization з'ясувати на коді, не насаджувати новий фреймворк.
-- Стан симуляції у multiplayer має бути детермінований; зміна порядку ітерацій, RNG, часу, tick scheduling, інтерполяції, ID або команд може розсинхронізувати клієнтів.
-- НЕ ламати старі save-файли і формат serialization. Для змін формату — план міграції та round-trip тест.
-- Обережно з `user://` (налаштування, збереження), async роботою, потоками Godot й об'єктними посиланнями.
-- Зміна версій, лобі, мережевих пакетів або simulation protocol вимагає явної оцінки сумісності.
+Старих `docs/codex/01_ARCHITECTURE.md`, `04_BUILD_RELEASE.md`, `05_TESTING.md`, `06_GUARDRAILS.md` і `tools/codex/repository_audit.py` у snapshot немає. Не запускай відсутній auditor і не припускай наявність старих dist/Godot cache.
 
-## 3. Захист користувачів і релізів
-- **Не роби `git push`, merge у `main`, `gh release`, manual workflow_dispatch, теги або публікацію збірок без явної команди користувача.** Phase5C локально прибирає auto-publication; доки цей workflow не інтегровано, remote може все ще публікувати після push до `main`.
-- Ніколи не розповсюджуй чужий код/графіку/закриті бета-збірки без підтверджених прав власників; `README.md` прямо попереджає про похідний код із closed-beta APK.
-- Steam AppID 480 — тестовий Spacewar; не вважай готовою комерційною Steam інтеграцією.
-- Updater завантажує бінарні артефакти. Під час змін перевіряти origin, HTTPS, контрольні суми, zip-пути, rollback, атомарність заміни, version rollback, тайм-аути, permissions. Ніколи не випробовуй на єдиній робочій інсталяції користувача.
-- Не зливай токени, секрети, приватні збереження, конфігурацію Steam та особисті дані в логи, issue чи коміти.
-- Збереження/міграції тестуй на КОПІЯХ; перформанс-тести запускай з ізольованими `user://` шляхами.
+## Git safety і review
 
-## 4. Правила змін
-- Спочатку контекст, план, ризики, acceptance criteria; для дрібної задачі — лаконічний план.
-- Мінімальний diff, прагматичні модулі; SOLID/DRY/KISS без «великого переписування» відновленого коду.
-- Не перейменовуй `class_name`, signal, node paths, `res://` paths, RPC/API без перевірки всіх референсів.
-- Не замінюй детерміноване планування на wall-clock або хаотичний `await`/threading.
-- Не змінюй UI, Steam, updater, saves чи economy side effects без відповідних цільових тестів і ручної перевірки.
-- Залежності, натівні dll, артефакти, великі ассети — не додавай і не оновлюй без явної потреби та обліку походження.
-- Не додавай обов'язкових Python dependency, якщо завдання вирішується стандартною бібліотекою.
-- Не прибирай чи не замовчуй наявні помилки для «зелених» тестів; окремо відокремлюй уже відомі несумісності headless Linux зі Steam/WebRTC.
+- main — прийнята основна база власника; beta — активна розробка й тестування. Не редагуй main для експериментів; beta→main лише після тестування й окремого дозволу.
+- Дозвіл редагувати файли **не дозволяє commit, push, PR, merge, tags, release або workflow dispatch**. Потрібна пряма команда в поточній задачі. Історичний Phase7 дозвіл не діє на нові задачі.
+- Не переписуй shared/чужі/OKREDU branches; без force push, автоматичного reset/rebase/clean. Конфлікти — явний review; ownership великих спільних файлів узгоджуй.
+- Звичайний PR: base beta, мінімальний diff, поведінка/compatibility/фактичні тести/NOT RUN; людський review. Required checks/protection не обходити. PR template не встановлює default branch.
+- У snapshot немає `.github/`, workflow і PR template; CI policy tests падають через відсутній файл. Не вважай історичні release gates чинними. Відновлення CI — окрема задача, policy не послаблювати.
 
-## 5. Тестова матриця
-1. `python3 -m unittest discover -s tests -p 'test_release.py'` — version/build/release logic.
-2. `python3 tools/check_performance.py` — headless deterministic regressions (потрібен Godot).
-3. Профільний benchmark на однаковому checkpoint, seed/dt/config, порівнювати p50/p99/max, samples.
-4. Windows GUI smoke: меню, гра, камера, звук, UX 16:9/інші роздільності, навантаження, save/load, updater на тестовому release/source.
-5. Steam mock 2+ peer + реальний Steam smoke — invite, join, disconnection/reconnect, version mismatches, desync, packet limits.
-6. При змінах конкретної механіки — контрольні кейси на економіку/країни/війська/AI.
-Не стверджуй PASS без реального запуску; збирай команди, статуси, логи й обмеження.
+## Технології й структура
 
-## 6. Завершення роботи
-Кожна відповідь після імплементації повинна містити: (а) що змінено і чому; (б) конкретні шляхи; (в) тести PASS/FAIL/NOT RUN і причини; (г) ризики compatibility / save / multiplayer; (д) що лишилося. Онови відповідний verified-документ, журнал рішень `docs/codex/verified/DECISIONS.md` та backlog, якщо змінена поведінка. Тримай git working tree прозорим, не чіпай чужі локальні зміни.
+- Godot/GDScript; fetch/build tooling вимагає Godot 4.7.2, fetch default `4.7.2-stable`. Editor і Windows release template мають відповідати одне одному; pin не оновлювати мимоволі. Engine перевіряй фактично.
+- `game/game/`: simulation/entities/Main/save; `game/world/`: генерація/камера/rendering; `game/ui/`: HUD/Menus/UI24; `game/net/`: session/codec/hash/LAN/backend; `game/pc/`: PC/Steam/updater; `libs/`: три Windows DLL; `tools/`, `tests/`: build/release/regression/QA.
+- Конфігурація — binary `game/project.binary` + `game/override.cfg`. Startup: `pc/boot.tscn` → updater → `game/main.tscn.remap` → tracked binary PackedScene → `game/main.gd`.
+- Autoload PcPort і SteamNet; RPC Node Main/Net. Не міняй імена/class_name/signals/node paths/res paths/RPC/enum ordinals без перевірки референсів і serialized наслідків.
+- Main: main.gd → main/main_input.gd → main_strike.gd → main_core.gd → main_base.gd. GameWorld: game_world.gd → game_world/gw_states.gd → gw_infra.gd → gw_map.gd → gw_base.gd. Перед зміною звір actual extends.
 
-## 7. Інструменти (за наявності)
-- Serena — навігація по символах, референсах, структурі коду; якщо підтримує GDScript у поточній конфігурації.
-- Context7 / офіційна документація — Godot/GDScript API з урахуванням версії.
-- Git/GitHub CLI — локальна історія, PR, CI. Публікаційні дії — тільки за дозволом.
-- draw.io — архітектурні схеми за встановленим кодом; Playwright/Chrome DevTools не основний шлях тестування Godot GUI.
+## Simulation, multiplayer і saves
 
-## Phase5C checkpoint rules
+- SP використовує адаптивний frame delta; MP — SIM_DT=1/30, три ticks/turn, canonical host command order. Не прирівнюй режими й не замінюй operation-count scheduling на wall-clock/довільні await/threading.
+- Порядок RNG draws, ітерацій, ID, commands і `_sim_step` є частиною determinism. Shared caches/static state теж можуть впливати на світ. Не кожний unsorted Dictionary є bug: простеж authoritative наслідок.
+- Поточні PROTO=7, SIM_REV=pr10-phase5b2-1, Save.FORMAT=1 змінюються лише за окремим погодженням. SIM_REV не fingerprint; QA peers мають один точний EXE/DLL комплект з однаковими SHA256.
+- UI-команди MP мають проходити NetSession queue/authoritative ownership/schema checks. ALLOWED не доводить повну validation всіх methods. LAN/Steam не отримують автоматично online host migration.
+- Не ламай старі saves. Property/class/enum/reference layout — контракт; новий формат потребує migration plan і round-trip tests. Optional `sys.diplo.land_cooldowns` уже є: missing→empty history, new→old downgrade не підтриманий.
+- Failed network restore не має false success/turn advance. Partial world завершує local session, повного world rollback немає; перевіряй epoch/await/cleanup/explicit retry.
 
-- Читати свіжий CURRENT_STATE.md і PHASE5C_INTEGRATION_RESULTS.md; не повторювати повний PR audit. Історичні Phase5–5C fixes були uncommitted; Phase7 дозволяє їх commit/integration. Актуальний стан перевіряти Git, не припускати його з історичного report.
-- SIM_REV=pr10-phase5b2-1 погоджено для поточного кандидата. Protocol7/FORMAT1 незмінні; optional cooldown fields мають попередньо задокументовану downgrade несумісність. SIM_REV не fingerprint коду; QA peers використовують однаковий exact build+SHA256.
-- Updater cleanup: лише доведені власні expendable temp names; не видаляти .old без доказу committed integrity. Не тестувати updater download/replacement на робочих інсталяціях. Native DLL не змінювати.
-- Tracked game/.godot містить потрібні імпортовані ресурси. Не untrack/delete; .gitignore лише targeted caches. AGENTS/docs мають увійти до майбутнього review, не ховати їх ignore-правилами.
-- .github/pull_request_template.md не змінює GitHub default branch/settings; target beta обирається явно. CI policy перевіряти offline, workflow не dispatch без команди.
+## Ресурси, native та дані користувачів
 
-## Phase7 owner decision — integration before manual QA
+- **Не видаляй, не untrack і не ігноруй глобально `game/.godot/`.** Там потрібні textures/audio/fonts і основна сцена. `.import` із кінцевим NUL — текстовий mapping; missing original PNG/OGG не доводить missing runtime resource.
+- DLL не змінюй/не оновлюй без окремого погодження та provenance. Три наявні Windows x64 DLL не забезпечують Linux Steam/WebRTC; missing .so не маскуй заради green tests.
+- QA: DF_NO_UPDATE=1, build `--repo ""`. Не запускай updater download/EXE/DLL replacement на робочих інсталяціях. Cleanup зберігає .old; integrity/atomicity відкриті.
+- Steam AppID480 — тестовий Spacewar. Production backend/accounts/data не використовуй і не змінюй без дозволу. Fixtures — synthetic/copies, ізольовані user paths, не реальні saves.
+- Не виводь tokens/rejoin seats/account.bin/Steam config/особисті дані в logs/docs/issues. Права оригінальних авторів code/art зберігаються; відкритий URL не надає права розповсюдження.
 
-- Поточна явна задача дозволяє commits, push codex/fix-pr10-critical, один integration PR та звичайний merge commit виключно у beta. Manual Windows GUI/full multiplayer проводяться після merge; лишаються NOT RUN. Не вимагати їх повторно як precondition цієї інтеграції.
-- Не обходити required review/checks/protection. Main, OKREDU/Gemini branches, tags/releases/manual workflow dispatch не змінювати; force push/rewrite заборонені. Цей task-specific дозвіл не є дозволом на stable publication чи довільні наступні merges.
-- Beta QA: DF_NO_UPDATE=1, updater repo empty, не запускати production updater download/activation через OPEN R03/R04. Same exact EXE/DLL SHA на peers, SIM_REV не code fingerprint.
-- Після інтеграції нові задачі від actual beta у feature/* або fix/*; власник окремо вирішує stable release. Прочитати PHASE7_BETA_INTEGRATION та PHASE8_BETA_QA_PLAN, перевірити GitHub merge/remote SHA.
+## Зміни, перевірки й завершення
+
+- Спочатку контекст, короткий план, ризики та acceptance; мінімальний diff, без великого переписування. Не додавай обов'язкові Python dependencies, якщо вистачає stdlib. Version number без рішення власника не підвищувати.
+- Легка перевірка: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_release.py' -v`; повний discovery — з `-p 'test_*.py'`. Skips не є PASS.
+- Із pinned Godot: `python3 tools/check_performance.py --godot <editor> --mode regression --out <fresh-output>` та профільні tests. Build/manual QA — за Windows plan. Без engine — NOT RUN; залежності не встановлюй неконтрольовано.
+- Simulation/economy/UI/Steam/updater/save changes потребують відповідних цільових checks і ручних сценаріїв. Benchmarks: один checkpoint/seed/dt/config/build, p50/p99/max/samples; CPU headless не є Windows FPS.
+- Serena — символи, якщо GDScript LSP працює; інакше Git/rg/Python. Context7 — version-specific API. Playwright/Chrome не замінюють Godot Windows GUI. MCP використовуй за доречністю, звітуй про реально використані інструменти.
+- Після імплементації: що/чому/шляхи; PASS/FAIL/SKIP/NOT RUN і причини; compatibility/save/MP ризики; залишок. Оновлюй verified docs, DECISIONS/BACKLOG за зміною поведінки/policy. Історичні звіти зберігай з датою/scope; старі PASS не стають поточними.
