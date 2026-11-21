@@ -1,4 +1,4 @@
-> **PARTIALLY OUTDATED, 2026-11-21.** FORMAT1 підтверджено; поточні optional cooldown/preflight/restore і durability limits: [ARCHITECTURE_AND_FLOWS](ARCHITECTURE_AND_FLOWS.md). Старі checkpoints/results нижче HISTORICAL, поточні Godot tests SKIP.
+> **CURRENT contract / HISTORICAL report below.** FORMAT1, optional land_cooldowns + UrbanHold far_fail, legacy missing defaults і repeated restore перевірені PR #4. Autosave freeze повного encoded graph перед worker; Navy current-threat routes/scratch reset. New→old downgrade unsupported; OS durability не закрита. [Current flows](ARCHITECTURE_AND_FLOWS.md), [tests](V036_FIX_RESULTS.md).
 
 # Phase 5B.2 — явне optional розширення FORMAT1
 

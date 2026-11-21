@@ -4,11 +4,16 @@ extends "res://ui/hud/hud_cards.gd"
 
 
 func push_news(text: String, col: String) -> void:
-	if not news_on:
+	if not news_on or GameConfig.news_mode == 2:
+		return
+	var lvl: int = CalmScript.news_level(text, gw.player.name if gw != null and gw.player != null else "")
+	if GameConfig.news_mode == 1 and col not in ["alert_red", "intercept_cyan"] and lvl > 1:
 		return
 	if lane != null and is_instance_valid(lane):
-
-		lane.call("ambient", text, CalmScript.news_level(text, gw.player.name if gw != null and gw.player != null else ""), Palette.c(col).lightened(0.15))
+		if gw != null and gw.nuke_warn_target != Vector2.ZERO and gw.game_time <= gw.nuke_warn_until and (col == "alert_red" or Loc.src_of(text).contains("МБР") or Loc.src_of(text).contains("ЯДЕРН")):
+			lane.call("push", "alert", {"title": text, "sub": Loc.t("Тап — камера к угрозе"), "colour": Color("ffb8a8"), "icon": "icon_nuke_missile", "act": "nuke_focus"})
+			return
+		lane.call("ambient", text, lvl, Palette.c(col).lightened(0.15))
 		return
 	news_queue.append([text, col])
 	if news_queue.size() > 6:
@@ -125,6 +130,8 @@ func _on_lane_action(nm: String) -> void:
 				open_diplomacy()
 		"war_focus":
 			action.emit("battle_cam")
+		"nuke_focus":
+			action.emit("nuke_focus")
 		"inbox":
 			open_inbox()
 		"mystate":
@@ -309,6 +316,8 @@ func _pending_chip() -> void:
 						sub = Loc.t("требует разорвать союз")
 					"cancel_visa":
 						sub = Loc.t("требует отменить безвиз")
+					"halt_nukes":
+						sub = Loc.t("требует свернуть ядерную программу")
 		d["title"] = Loc.t("УЛЬТИМАТУМ · %s") % cname
 		d["sub"] = Loc.t(sub) + (Loc.t(" · отказ = война") if String(it.get("conseq", "")) == "war" else Loc.t(" · отказ = эмбарго"))
 		d["style"] = "red"

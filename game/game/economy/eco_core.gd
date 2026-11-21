@@ -1813,7 +1813,12 @@ func level_of(f: Facility) -> int:
 
 
 func level_mul(f: Facility) -> float:
-	return float(LEVEL_MUL[clampi(f.level, 1, MAX_LEVEL)])
+	if f != null and f.level >= MAX_LEVEL:
+		if f.t3_spec == 1:
+			return 2.6
+		if f.t3_spec == 2:
+			return 1.85
+	return float(LEVEL_MUL[clampi(f.level if f != null else 1, 1, MAX_LEVEL)])
 
 
 static func kind_upgradable(kind: int) -> bool:

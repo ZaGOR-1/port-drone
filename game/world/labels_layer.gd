@@ -235,7 +235,7 @@ func _process(delta: float) -> void:
 		_cam_prev = ck
 		if _visible_mask() != _vis_mask:
 			_relayout = true
-	if z != _lay_key.z or moved > 24.0 or _lay_t >= 0.5 or _relayout or int(gw.map_mode) != _lay_mode:
+	if z != _lay_key.z or moved > 24.0 or _relayout or int(gw.map_mode) != _lay_mode:
 		_layout()
 		redraw = true
 

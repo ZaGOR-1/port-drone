@@ -1153,11 +1153,13 @@ func _deal_btn(parent: Control, side: String) -> Dictionary:
 	b.button_up.connect(func() -> void:
 		if _hold == side:
 			_hold = "")
+	b.tooltip_text = Loc.t("Shift+клик — МАКС")
 	b.pressed.connect(func() -> void:
 		if _hold_fired:
 			_hold_fired = false
 			return
-		_order(side == "buy"))
+		var sh: bool = (DisplayServer.get_name() == "headless" or DisplayServer.window_is_focused()) and Input.is_key_pressed(KEY_SHIFT)
+		_order(side == "buy", sh))
 	return {"btn": b, "t1": t1, "t2": t2, "coin": cn, "look": ""}
 
 
@@ -1358,7 +1360,7 @@ func _hold_tick(delta: float) -> void:
 
 
 
-func _order(buying: bool) -> bool:
+func _order(buying: bool, use_max: bool = false) -> bool:
 	var d: Dictionary = rows_d.get(sel, {})
 	if d.is_empty():
 		return false
@@ -1369,7 +1371,7 @@ func _order(buying: bool) -> bool:
 		return false
 	if _pending:
 		return false
-	var n: int = eff_n(sd)
+	var n: int = maxi(int(sd.get("max", 0)), 0) if use_max else eff_n(sd)
 	if n <= 0:
 		return false
 	var res: String = sel

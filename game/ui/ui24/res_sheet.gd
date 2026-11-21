@@ -113,9 +113,15 @@ func setup(h: Node, compact: bool) -> void:
 	_bulk_btn.visible = false
 	_bulk_btn.clip_text = true
 	_bulk_btn.pressed.connect(func() -> void:
-		if _bulk_act != "" and hub != null:
+		if _bulk_act.begins_with("dep_build_all:") and hub != null:
 			UiKit.snd("ui_select")
 			hub.action.emit(_bulk_act))
+	Hud.bind_hold_5s_btn(_bulk_btn, func() -> void:
+		if _bulk_act.begins_with("kind_upg:") and hub != null:
+			UiKit.snd("ui_select")
+			hub.action.emit(_bulk_act), func() -> void:
+		if _bulk_act.begins_with("kind_upg:") and hub != null and hub.hud != null:
+			hub.hud.show_toast(Loc.t("Удерживайте кнопку 5 секунд для массового улучшения")), 5.0)
 	add_child(_bulk_btn)
 	scroll = ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -526,16 +532,21 @@ func _update_bulk_btn(sd: Dictionary, data: Variant) -> void:
 				nf += 1
 		if nf > 0:
 			_bulk_act = "dep_build_all:" + key
+			_bulk_btn.disabled = false
 			_bulk_btn.text = Loc.t("ПОСТРОИТЬ НА ВСЕХ СВОБОДНЫХ (%d)") % nf
 	elif id == "make" and player != null and gw != null and gw.econ != null:
 		var kind: int = int(sd.get("kind", -1))
 		if Economy.UPG_RES.has(kind):
-			var sum: Dictionary = gw.econ.upgrade_kinds_summary(player, Economy.MAX_LEVEL).get(kind, {})
-			var ready_n: int = int(sum.get("ready", 0))
+			var ore_f: String = key if kind == Facility.Kind.MINE and key in ["metal", "titanium", "precious"] else ""
+			var pl: Dictionary = gw.econ.upgrade_plan(player, [kind], Economy.MAX_LEVEL, ore_f)
+			var ready_n: int = int(pl.get("ready", 0))
+			var aff_n: int = int(pl.get("afford", 0))
 			if ready_n > 0:
-				_bulk_act = "kind_upg:%d:%d" % [kind, Economy.MAX_LEVEL]
-				var cmoney: int = int((sum.get("cost", {}) as Dictionary).get("money", 0))
-				_bulk_btn.text = Loc.t("УЛУЧШИТЬ ВСЕ (%d) · %d") % [ready_n, cmoney]
+				var suf: String = (":" + ore_f) if ore_f != "" else ""
+				_bulk_act = "kind_upg:%d:%d%s" % [kind, Economy.MAX_LEVEL, suf]
+				_bulk_btn.disabled = aff_n <= 0
+				var cdict: Dictionary = pl.get("cost_afford" if aff_n > 0 else "cost_all", {})
+				_bulk_btn.text = Loc.t("УДЕРЖ. 5С: УЛУЧШИТЬ ВСЕ (%d/%d) · %s") % [aff_n, ready_n, Economy.cost_text(cdict)]
 	_bulk_btn.visible = _bulk_act != ""
 
 

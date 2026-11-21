@@ -1,3 +1,13 @@
+# Поточний checkpoint рішень — 2026-11-21
+
+PR #2 відновив CI; PR #4 злитий звичайним merge у beta `0f26040994043827a7c14913d945a3df02e00fdd`,8 author +10 fix commits збережено. Beta CI [run 44937756401](https://github.com/ZaGOR-1/port-drone/actions/runs/44937756401) PASS. PR #3 автоматично marked MERGED GitHub через ancestry; його окремо не закривали. П’ять HIGH виправлені; manual GUI/LAN/Steam NOT RUN, performance/shutdown/save/updater/general-schema ризики лишаються.
+
+Власник окремо дозволив завершення PR #1: merge actual beta у docs/codex-reonboarding без rewrite, документаційні commits/push, PR CI, normal merge→beta за успішних checks/reviews, потім видалення лише інтегрованих неактивних remote branches. Main/releases/tags/updater/production changes поза scope. Цей дозвіл не переноситься на наступні задачі. [Поточний контекст](CURRENT_STATE.md), [QA plan](WINDOWS_TWO_PEER_QA_PLAN.md).
+
+Нижче — **HISTORICAL dated decisions**. Формулювання «поточна задача», старі заборони/дозволи, PR/worktree/SHA і неінтегровані fixes стосуються лише відповідного етапу; не тлумачити їх як активні instructions.
+
+---
+
 # Decision update — 2026-11-21, нова Git-історія
 
 - Завершення документаційного етапу: окрема команда власника дозволила commit/push docs/codex-reonboarding і один PR у beta. Merge дозволений лише за успішних checks/review без bypass. GitHub inspection: workflows=0, beta unprotected, active branch rules=[]; через missing CI/FAIL policy tests залишити PR відкритим. Production/main/releases не входять у дозвіл; наступне завдання CI/build лише підготовлене документально.
@@ -110,3 +120,16 @@ Critical81/regression2476/mechanics309/Python17/Windowsbuild-smoke та Main E2E
 ## 2026-11-20 — Phase7: development integration before manual QA
 
 ZaGOR-1 прямо дозволив logical commits, push Codex branch, один cumulative PR1–10 + Phase5–5C та merge commit лише у beta. Manual GUI/full MP переносяться після integration і залишаються NOT RUN. Main/stable/tags/releases/manual workflows/Gemini/OKREDU не змінювати; required reviews/protection не обходити. Beta-only commits0, усі10heads ancestors96053d66, попередні fixes hash-identical. Backup86files реально відновлений; новий Phase7 backup також. Updater off, OPEN risks не приховані. [Mapping/authorization/evidence](PHASE7_BETA_INTEGRATION.md).
+
+## CI_RESTORE — 2026-11-21, нова Git-історія
+
+За окремою командою власника відновлюється CI у ci/restore-build від actual beta: PR→beta і push main/beta запускають tests/build, без Releases/tags/updater. Existing publication policy tests збережено; reserved release guard неактивний (build output=false), publish commands відсутні. Godot4.7.2 verified hashes, artifact provenance та нові negative artifact tests — [CI_RESTORATION](CI_RESTORATION.md). Commit/push/CI PR та merge beta дозволені лише за успішних Actions і виконаних required review/protection. PR #1 не змінювати; після integration лише повторна перевірка його умов.
+
+
+## V036 — 2026-11-21: owner-authorized integration fixes, no merge
+
+ZaGOR-1 доручив Codex самостійно виправити review PR #3 у власній integration branch, зберігши всі8 author commits. Commit/push/новий PR→beta дозволені; фінальний merge заборонений. Main, feature OKREDU, docs PR #1, tags/releases/updater не змінювати. Required checks/reviews не обходити.
+
+Identity v0.36.0/7/v036-integration-1: існуючий exact-string handshake відділяє нові simulation/hash semantics; PROTO7 та FORMAT1 залишаються, optional UrbanHold cooldown має old→new defaults, new→old downgrade unsupported. Build derives checked UI/updater version, CI перевіряє actual embedded identity. Same identity не crypto fingerprint — QA exact SHA256 cohort.
+
+Freeze всієї encoded snapshot graph лише перед worker; Navy routes від current authoritative threats без unsaved TTL history; generation scratch reset при repeated restore; power command wire/schema/owner checks до execution; нові state поля хешуються канонічно. Gameplay author changes збережені, тексти приводяться до правил75s/2decoys. Без глобального рефакторингу. Early CPU timings не підтвердили загального gain; correctness tradeoffs й manual QA лишаються явними. [Root causes/tests/limits](V036_FIX_RESULTS.md).

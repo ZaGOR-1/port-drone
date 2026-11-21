@@ -1,4 +1,4 @@
-> **HISTORICAL / PARTIALLY OUTDATED, 2026-11-21.** У новому snapshot немає `.github/workflows/build.yml`; описані нижче CI gates і build PASS не чинний доказ. Підтримувані build-команди й поточні prerequisites: [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md); [actual tests](REONBOARDING_AUDIT.md#test-map).
+> **CURRENT entry / HISTORICAL report below.** Godot4.7.2; CI PR #2 і v0.36 PR #4 інтегровані. Tests/build PASS, release не публікується на жодній події. Source version0.36.0: `python3 tools/build.py --print-version`, explicit --version має збігатися. Поточні команди/manifest — [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md); старі0.34 commands/remote-policy припущення нижче не застосовувати.
 
 # Phase 5C — актуальна local build/CI policy
 

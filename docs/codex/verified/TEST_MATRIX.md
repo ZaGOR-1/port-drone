@@ -1,4 +1,4 @@
-> **2026-11-21 — поточні результати нового snapshot:** release15 PASS; full Python discovery FAIL (26 methods,10 CI errors,7 Godot skips), бо `.github/workflows/build.yml` відсутній. Godot/Windows/live multiplayer NOT RUN. [Повна актуальна карта й обмеження](REONBOARDING_AUDIT.md#test-map). Усі checkpoints/PASS нижче — **HISTORICAL**, не результати цієї сесії.
+> **CURRENT evidence / HISTORICAL matrix below.** Beta v0.36 CI PASS43 tests з Godot +2476 regression checks +Windows x64 package verification; job без Godot36 tests/9 skips. CI існує PR #2; [CURRENT_STATE](CURRENT_STATE.md) містить exact run/cohort. GUI і real LAN/Steam NOT RUN. Старі кількості tests/PASS/SKIP нижче не є результатами нової сесії.
 
 # Phase 5C — актуальна тестова матриця
 

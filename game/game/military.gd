@@ -141,6 +141,7 @@ func _income() -> void:
 
 
 func _produce(dt: float) -> void:
+	var full_c: Dictionary = {}
 	for f: Facility in facilities:
 		if f.kind != Facility.Kind.DRONE_FACTORY and f.kind != Facility.Kind.MISSILE_FACTORY:
 			continue
@@ -159,6 +160,9 @@ func _produce(dt: float) -> void:
 			continue
 		var c: Country = gw.country_by_id(f.country_id)
 		if not f.producing:
+			var fk: int = f.country_id * 2 + (1 if f.prod_type == 1 else 0)
+			if full_c.has(fk):
+				continue
 
 
 			if not c.is_player and f.prod_type == 0 and _port_runway(c) and gw.rng.roll() < 0.35:
@@ -169,6 +173,7 @@ func _produce(dt: float) -> void:
 			if gw.econ.get("upk") != null:
 				cost["money"] = roundi(float(int(cost["money"])) * gw.econ.upk.series_mult(c.id, sk))
 			if stock_count(c.id) >= drone_capacity(c.id) and not DepotS.drone_fits(self, c, jet):
+				full_c[fk] = true
 				continue
 			if jet and not _port_runway(c):
 				if c.is_player and not _warned.has(-f.id - 100000):
@@ -179,6 +184,7 @@ func _produce(dt: float) -> void:
 				if c.is_player and not _warned.has(-f.id):
 					_warned[-f.id] = true
 					gw.say(c, Loc.mk("Завод ждёт: не хватает — %s", [c.missing_res(cost)]))
+				full_c[fk] = true
 				continue
 			if _port_with_space(c, f.center_px()) == null and not DepotS.drone_fits(self, c, jet):
 				if c.is_player and not _warned.has(f.id):
@@ -392,11 +398,11 @@ func launch_missiles(country: Country, target: Vector2, count: int) -> int:
 
 
 func _update_tels(dt: float) -> void:
-	for f: Facility in facilities:
-		if f.kind != Facility.Kind.TEL:
-			if f.moving:
-				_drive_tel(f, dt)
-			continue
+	for rk: int in [Facility.Kind.AD_MFG, Facility.Kind.AD_SPAAG, Facility.Kind.COASTAL_ASM]:
+		for fr_m: Facility in facs_of_kind(rk):
+			if fr_m.moving:
+				_drive_tel(fr_m, dt)
+	for f: Facility in facs_of_kind(Facility.Kind.TEL):
 		var c: Country = gw.country_by_id(f.country_id)
 		if f.moving:
 			_drive_tel(f, dt)
@@ -1132,6 +1138,7 @@ func load_state(d: Dictionary) -> void:
 	_roam_jobs = {}
 	Save.fill(air, d.get("air", {}))
 	brain.load_state(d.get("brain", {}))
+	invalidate_fac_owners()
 	_plan_cache_key = ""
 	for f: Facility in facilities:
 		f.fx = []

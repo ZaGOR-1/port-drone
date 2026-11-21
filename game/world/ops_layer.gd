@@ -44,15 +44,192 @@ func _k() -> float:
 	return 1.0 / maxf(0.05, gw.camera.zoom.x) if gw.camera != null else 1.0
 
 
+var _pending_labels: Array = []
+var _q_chevs: Array = []
+var _q_polys: Array = []
+var _t_pts: PackedVector2Array = PackedVector2Array()
+var _t_cols: PackedColorArray = PackedColorArray()
+var _t_idx: PackedInt32Array = PackedInt32Array()
+
+
+func _push_poly(poly: PackedVector2Array, col: Color) -> void:
+	var n: int = poly.size()
+	if n < 3 or col.a <= 0.001:
+		return
+	var b: int = _t_pts.size()
+	_t_pts.append_array(poly)
+	for _i in n:
+		_t_cols.append(col)
+	for k2 in range(1, n - 1):
+		_t_idx.append(b)
+		_t_idx.append(b + k2)
+		_t_idx.append(b + k2 + 1)
+
+
+func _push_strip(pts: PackedVector2Array, w: float, col: Color, closed: bool = false) -> void:
+	if pts.size() < 2 or w <= 0.0 or col.a <= 0.001:
+		return
+	var clean := PackedVector2Array()
+	clean.append(pts[0])
+	for i in range(1, pts.size()):
+		if pts[i].distance_squared_to(clean[clean.size() - 1]) > 0.0001:
+			clean.append(pts[i])
+	if closed and clean.size() >= 3 and clean[clean.size() - 1].distance_squared_to(clean[0]) <= 0.0001:
+		clean.remove_at(clean.size() - 1)
+	var m: int = clean.size()
+	if m < 2:
+		return
+	var hw: float = w * 0.5
+	var b: int = _t_pts.size()
+	for i in m:
+		var has_prev: bool = i > 0 or closed
+		var has_next: bool = i < m - 1 or closed
+		var d0 := Vector2.ZERO
+		var d1 := Vector2.ZERO
+		if has_prev:
+			var p_prev: Vector2 = clean[m - 1 if i == 0 else i - 1]
+			d0 = (clean[i] - p_prev).normalized()
+		if has_next:
+			var p_next: Vector2 = clean[0 if i == m - 1 else i + 1]
+			d1 = (p_next - clean[i]).normalized()
+		var n: Vector2
+		if not has_prev:
+			n = Vector2(-d1.y, d1.x) * hw
+		elif not has_next:
+			n = Vector2(-d0.y, d0.x) * hw
+		else:
+			var avg: Vector2 = d0 + d1
+			if avg.length_squared() < 0.001:
+				n = Vector2(-d0.y, d0.x) * hw
+			else:
+				var dn: Vector2 = Vector2(-avg.y, avg.x).normalized()
+				var dv: float = dn.dot(Vector2(-d0.y, d0.x))
+				var miter: float = minf(1.8, 1.0 / maxf(0.25, dv))
+				n = dn * (hw * miter)
+		_t_pts.append(clean[i] - n)
+		_t_pts.append(clean[i] + n)
+		_t_cols.append(col)
+		_t_cols.append(col)
+	var segs: int = m if closed else m - 1
+	for i2 in segs:
+		var j2: int = (i2 + 1) % m
+		var a0: int = b + i2 * 2
+		var b0: int = b + j2 * 2
+		_t_idx.append(a0); _t_idx.append(b0); _t_idx.append(a0 + 1)
+		_t_idx.append(b0); _t_idx.append(b0 + 1); _t_idx.append(a0 + 1)
+
+
+func _push_grad_seg(a: Vector2, b: Vector2, w: float, c0: Color, c1: Color) -> void:
+	var d: Vector2 = b - a
+	var ln: float = d.length()
+	if ln < 0.001:
+		return
+	var n: Vector2 = Vector2(-d.y, d.x) * (w * 0.5 / ln)
+	var base: int = _t_pts.size()
+	_t_pts.append(a - n); _t_pts.append(b - n); _t_pts.append(b + n); _t_pts.append(a + n)
+	_t_cols.append(c0); _t_cols.append(c1); _t_cols.append(c1); _t_cols.append(c0)
+	_t_idx.append(base); _t_idx.append(base + 1); _t_idx.append(base + 2)
+	_t_idx.append(base); _t_idx.append(base + 2); _t_idx.append(base + 3)
+
+
+func _flush_flow_q(pts: PackedVector2Array, col: Color, t: float, k: float, stop: float) -> void:
+	if pts.size() < 2:
+		return
+	var cum: PackedFloat32Array = PK.lengths(pts)
+	var L: float = cum[cum.size() - 1]
+	if L < 30.0 * k:
+		return
+	var gap: float = clampf(L * 0.5, 70.0 * k, 160.0 * k)
+	var tail: float = 26.0 * k
+	var hd: float = fmod(t * 55.0 * k, gap)
+	var lc: Color = col.lightened(0.7)
+	var wl: float = maxf(1.0 * k, 4.0 * k * 0.75)
+	var c0 := Color(lc, 0.0)
+	var c1 := Color(lc, 0.9 * 0.75)
+	while hd < L - stop:
+		var d0: float = maxf(0.0, hd - tail)
+		if hd - d0 >= 1.0:
+			_push_grad_seg(PK._at(pts, cum, d0), PK._at(pts, cum, hd), wl, c0, c1)
+		hd += gap
+
+
+func _flush_pass() -> void:
+	for ch: Array in _q_chevs:
+		_flush_flow_q(ch[0] as PackedVector2Array, ch[1] as Color, float(ch[2]), float(ch[3]), float(ch[4]))
+	_q_chevs.clear()
+	for po: Array in _q_polys:
+		_push_poly(po[0] as PackedVector2Array, po[1] as Color)
+	_q_polys.clear()
+
+
+func _emit_seg(a: Vector2, b: Vector2, w: float, col: Color) -> void:
+	var d: Vector2 = b - a
+	var ln: float = d.length()
+	if ln < 0.001:
+		return
+	var n: Vector2 = Vector2(-d.y, d.x) * (w * 0.5 / ln)
+	_q_polys.append([PackedVector2Array([a - n, b - n, b + n, a + n]), col])
+
+
+func _emit_disc(p: Vector2, r: float, col: Color) -> void:
+	var pts := PackedVector2Array()
+	pts.resize(12)
+	for i in 12:
+		var a: float = TAU * float(i) / 12.0
+		pts[i] = p + Vector2(cos(a), sin(a)) * r
+	_q_polys.append([pts, col])
+
+
+func _op_visible(op: Dictionary, rest: PackedVector2Array, vr: Rect2, k: float) -> bool:
+	if gw.selected_facility() == op.get("f"):
+		return true
+	var pad: float = 90.0 * k
+	var front: Vector2 = op["front"]
+	var target: Vector2 = op["target"]
+	var lo := Vector2(minf(front.x, target.x), minf(front.y, target.y))
+	var hi := Vector2(maxf(front.x, target.x), maxf(front.y, target.y))
+	if not rest.is_empty():
+		var step: int = maxi(1, rest.size() / 6)
+		for i in range(0, rest.size(), step):
+			var q: Vector2 = rest[i]
+			lo.x = minf(lo.x, q.x)
+			lo.y = minf(lo.y, q.y)
+			hi.x = maxf(hi.x, q.x)
+			hi.y = maxf(hi.y, q.y)
+	else:
+		var path: PackedVector2Array = op["path"]
+		if not path.is_empty():
+			var step2: int = maxi(1, path.size() / 6)
+			for i2 in range(0, path.size(), step2):
+				var q2: Vector2 = path[i2]
+				lo.x = minf(lo.x, q2.x)
+				lo.y = minf(lo.y, q2.y)
+				hi.x = maxf(hi.x, q2.x)
+				hi.y = maxf(hi.y, q2.y)
+	return Rect2(lo - Vector2(pad, pad), (hi - lo) + Vector2(pad * 2.0, pad * 2.0)).intersects(vr)
+
+
 func _draw() -> void:
 	MD.begin("ops")
 	if gw == null or gw.ops == null or gw.camera == null:
 		return
+	var cam: MapCamera = gw.camera
+	var half: Vector2 = cam.view_size() * 0.5 / cam.zoom.x
+	var vr: Rect2 = Rect2(cam.position - half, half * 2.0).grow(80.0)
+	_pending_labels.clear()
+	_t_pts.clear()
+	_t_cols.clear()
+	_t_idx.clear()
+	_q_chevs.clear()
+	_q_polys.clear()
 	var o: Operations = gw.ops
 	var k: float = _k()
 	var pid: int = gw.player.id if gw.player != null else -1
 	for z: Dictionary in o.zones:
-		_zone(z, k)
+		var zp: Vector2 = z["pos"]
+		var zr: float = float(z["r"]) + 24.0
+		if Rect2(zp - Vector2(zr, zr), Vector2(zr * 2.0, zr * 2.0)).intersects(vr):
+			_zone(z, k)
 	var bun: Dictionary = _bundles(o, pid)
 	for pass_i in 2:
 		for f: Facility in o.list:
@@ -70,16 +247,56 @@ func _draw() -> void:
 					continue
 			elif pass_i == 0:
 				continue
+			var lr: PackedVector2Array = bf[0] if follower else PackedVector2Array()
+			if not _op_visible(op, lr, vr, k):
+				continue
 			if own and op.has("fp"):
 				_fp_retreat(op, c, k)
 			elif own:
-				_op_arrow(op, c, k, bf[0] if follower else PackedVector2Array(), int(bf[1]) if not bf.is_empty() else 1)
+				_op_arrow(op, c, k, lr, int(bf[1]) if not bf.is_empty() else 1)
 			elif gw.vision == null or gw.vision.sees(op["front"]):
 				_enemy_arrow(op, c, k)
+		_flush_pass()
 	if not o.preview_arrow.is_empty():
 		_preview_arrow(o, k)
 	if not o.preview_order.is_empty():
 		_preview_order(o, k)
+	if not _t_idx.is_empty():
+		RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), _t_idx, _t_pts, _t_cols)
+		_t_pts.clear()
+		_t_cols.clear()
+		_t_idx.clear()
+	if not _pending_labels.is_empty():
+		var font: Font = UiKit.f_bold if UiKit.f_bold != null else ThemeDB.fallback_font
+		for lb: Array in _pending_labels:
+			var lp: Vector2 = lb[0]
+			var lr2: Rect2 = lb[1]
+			var lcol: Color = lb[3]
+			var lalpha: float = float(lb[5])
+			var lprog: float = float(lb[4])
+			var bx := Rect2(lp + lr2.position * k, lr2.size * k)
+			draw_rect(bx, Color(0.05, 0.06, 0.05, 0.6 * lalpha))
+			var ocol := Color(lcol, 0.7 * lalpha)
+			var ow: float = maxf(1.0, k)
+			draw_rect(Rect2(bx.position.x, bx.position.y, bx.size.x, ow), ocol)
+			draw_rect(Rect2(bx.position.x, bx.end.y - ow, bx.size.x, ow), ocol)
+			draw_rect(Rect2(bx.position.x, bx.position.y + ow, ow, maxf(0.0, bx.size.y - ow * 2.0)), ocol)
+			draw_rect(Rect2(bx.end.x - ow, bx.position.y + ow, ow, maxf(0.0, bx.size.y - ow * 2.0)), ocol)
+			if lprog >= 0.0:
+				var bar: = Rect2(lr2.position + Vector2(3.0, lr2.size.y - 4.0), Vector2(lr2.size.x - 6.0, 2.0))
+				draw_rect(Rect2(lp + bar.position * k, bar.size * k), Color(0, 0, 0, 0.5 * lalpha))
+				draw_rect(Rect2(lp + bar.position * k, Vector2(bar.size.x * clampf(lprog, 0.0, 1.0), 2.0) * k), Color(lcol, lalpha))
+		var inv_k: float = 1.0 / k
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(k, k))
+		for lb2: Array in _pending_labels:
+			draw_string(font, (lb2[0] as Vector2) * inv_k + Vector2(-float(lb2[7]) * 0.5, -4.0), String(lb2[2]), HORIZONTAL_ALIGNMENT_LEFT, -1, int(lb2[6]), Color(Palette.c("white"), 0.95 * float(lb2[5])))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		_pending_labels.clear()
+	_t_pts.clear()
+	_t_cols.clear()
+	_t_idx.clear()
+	_q_chevs.clear()
+	_q_polys.clear()
 
 
 
@@ -192,31 +409,31 @@ func _op_arrow(op: Dictionary, c: Country, k: float, lead_rest: PackedVector2Arr
 				rest.append(op["target"])
 	var w: float = (4.5 if gw.camera.zoom.x >= 1.0 else 3.5) * k * (0.6 if stub else 1.0) * (0.6 if quiet else 1.0)
 	var dim: = Color(col.r, col.g, col.b, 0.35)
+	var sm: PackedVector2Array = PK.smooth(rest, 9.0 * k)
 	if gw.selected_facility() == op.get("f"):
 		_poly(done, dim, w * 0.7, k, false)
-	_poly(rest, col, w, k, true)
+	_poly_sm(sm, col, w, k, true)
 	if not stub:
-		_chevrons(rest, col.lightened(0.5), k, kind == Operations.Kind.RETREAT)
-	var sm: PackedVector2Array = PK.smooth(rest, 9.0 * k)
+		_q_chevs.append([sm, col.lightened(0.5), _t * (0.55 if kind == Operations.Kind.RETREAT else 1.0), k, 14.0 * k])
 	var end: Vector2 = sm[sm.size() - 1]
 	var dir: Vector2 = (end - sm[maxi(0, sm.size() - 2)]).normalized() if sm.size() >= 2 else Vector2.RIGHT
 	if dir == Vector2.ZERO:
 		dir = (end - front).normalized() if end != front else Vector2.RIGHT
 	if stub:
-		draw_circle(end, 3.5 * k, Palette.c("ui_rubber"))
-		draw_circle(end, 2.2 * k, col)
+		_emit_disc(end, 3.5 * k, Palette.c("ui_rubber"))
+		_emit_disc(end, 2.2 * k, col)
 	elif kind == Operations.Kind.DEFEND:
-		_defence_line(end, dir, col, k)
+		_defence_line_q(end, dir, col, k)
 	else:
-		_head(end, dir, col, k * 0.75)
+		_head_q(end, dir, col, k * 0.75)
 		if badge > 1:
 			_label(end - dir * 26.0 * k + Vector2(0, -12.0 * k), "×%d" % badge, col, k, -1.0, 1.0, 10)
 	if (op.get("wp", Vector2.INF) as Vector2).is_finite():
 		var wp: Vector2 = op["wp"]
-		draw_circle(wp, 4.0 * k, Palette.c("ui_rubber"))
-		draw_circle(wp, 2.5 * k, col)
+		_emit_disc(wp, 4.0 * k, Palette.c("ui_rubber"))
+		_emit_disc(wp, 2.5 * k, col)
 	if not on_train:
-		_front_marker(front, _dir_at(path, cut), col, k)
+		_front_marker_q(front, _dir_at(path, cut), col, k)
 
 
 	var f: Facility = op["f"]
@@ -254,10 +471,10 @@ func _fp_retreat(op: Dictionary, c: Country, k: float) -> void:
 	var col: Color = c.color_light.lerp(Palette.c("ui_steel_light"), 0.55)
 	col.a = 0.7
 	var b: Vector2 = front + dir * L
-	draw_line(front, b, Palette.c("ui_rubber"), 3.5 * k)
-	draw_line(front, b, col, 2.0 * k)
+	_emit_seg(front, b, 3.5 * k, Palette.c("ui_rubber"))
+	_emit_seg(front, b, 2.0 * k, col)
 	var n: = Vector2(-dir.y, dir.x)
-	draw_colored_polygon(PackedVector2Array([b + dir * 5.0 * k, b - dir * 2.0 * k + n * 4.0 * k, b - dir * 2.0 * k - n * 4.0 * k]), col)
+	_q_polys.append([PackedVector2Array([b + dir * 5.0 * k, b - dir * 2.0 * k + n * 4.0 * k, b - dir * 2.0 * k - n * 4.0 * k]), col])
 
 
 func _enemy_arrow(op: Dictionary, c: Country, k: float) -> void:
@@ -270,8 +487,35 @@ func _enemy_arrow(op: Dictionary, c: Country, k: float) -> void:
 	var a: Vector2 = front - dir * 50.0 * k
 	var b: Vector2 = front + dir * 45.0 * k
 	_poly(PackedVector2Array([a, b]), col, 5.0 * k, k, true)
-	_head(b, dir, col, k)
-	_front_marker(front, dir, col, k)
+	_head_q(b, dir, col, k)
+	_front_marker_q(front, dir, col, k)
+
+
+func _defence_line_q(p: Vector2, dir: Vector2, col: Color, k: float) -> void:
+	var side: = Vector2(-dir.y, dir.x)
+	var half: float = 34.0
+	var a: Vector2 = p - side * half
+	var b: Vector2 = p + side * half
+	_emit_seg(a, b, 6.0 * k, Palette.c("ui_rubber"))
+	_emit_seg(a, b, 3.5 * k, col)
+	var n: int = 6
+	for i in n:
+		var q: Vector2 = a.lerp(b, (float(i) + 0.5) / float(n))
+		_q_polys.append([PackedVector2Array([q - side * 3.0 * k, q + side * 3.0 * k, q + dir * 5.0 * k]), col])
+
+
+func _head_q(p: Vector2, dir: Vector2, col: Color, k: float) -> void:
+	var n: = Vector2(-dir.y, dir.x)
+	var tip: Vector2 = p + dir * 6.0 * k
+	_q_polys.append([PackedVector2Array([tip + dir * 2.0 * k, tip - dir * 16.5 * k + n * 11.0 * k, tip - dir * 16.5 * k - n * 11.0 * k]), Palette.c("ui_rubber")])
+	_q_polys.append([PackedVector2Array([tip, tip - dir * 15.0 * k + n * 9.0 * k, tip - dir * 15.0 * k - n * 9.0 * k]), col])
+
+
+func _front_marker_q(p: Vector2, dir: Vector2, col: Color, k: float) -> void:
+	var side: = Vector2(-dir.y, dir.x)
+	var pulse: float = 1.0 + 0.15 * sin(_t * 5.0)
+	_emit_seg(p - side * 9.0 * k * pulse, p + side * 9.0 * k * pulse, 5.0 * k, Palette.c("ui_rubber"))
+	_emit_seg(p - side * 8.0 * k * pulse, p + side * 8.0 * k * pulse, 2.5 * k, col.lightened(0.3))
 
 
 func _defence_line(p: Vector2, dir: Vector2, col: Color, k: float) -> void:
@@ -315,12 +559,17 @@ func _chevrons(path: PackedVector2Array, col: Color, k: float, slow: bool) -> vo
 func _poly(pts: PackedVector2Array, col: Color, w: float, k: float, outline: bool) -> void:
 	if pts.size() < 2:
 		return
-	var sp: PackedVector2Array = PK.smooth(pts, 9.0 * k)
+	_poly_sm(PK.smooth(pts, 9.0 * k), col, w, k, outline)
+
+
+func _poly_sm(sp: PackedVector2Array, col: Color, w: float, k: float, outline: bool) -> void:
+	if sp.size() < 2:
+		return
 	if outline:
-		draw_polyline(sp, Color(Palette.c("ui_rubber"), col.a), w + 2.5 * k, true)
-	draw_polyline(sp, col, w, true)
+		_push_strip(sp, w + 2.5 * k, Color(Palette.c("ui_rubber"), col.a), false)
+	_push_strip(sp, w, col, false)
 	if w >= 3.0 * k:
-		draw_polyline(sp, Color(col.lightened(0.45), 0.5 * col.a), w * 0.34, true)
+		_push_strip(sp, w * 0.34, Color(col.lightened(0.45), 0.5 * col.a), false)
 
 
 const LABEL_MIN_ZOOM: float = 0.6
@@ -402,15 +651,7 @@ func _label(p: Vector2, txt: String, col: Color, k: float, progress: float = -1.
 		p = cam.screen_to_world(sp)
 	if MD.rec and gw.camera != null:
 		MD.note("ops", Rect2(gw.camera.world_to_screen(p) + r.position * k * gw.camera.zoom.x, r.size * k * gw.camera.zoom.x))
-	draw_set_transform(p, 0.0, Vector2(k, k))
-	draw_rect(r, Color(0.05, 0.06, 0.05, 0.6 * alpha))
-	draw_rect(r, Color(col, 0.7 * alpha), false, 1.0)
-	draw_string(font, Vector2(-sz.x * 0.5, -4.0), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(Palette.c("white"), 0.95 * alpha))
-	if progress >= 0.0:
-		var bar: = Rect2(r.position + Vector2(3.0, r.size.y - 4.0), Vector2(r.size.x - 6.0, 2.0))
-		draw_rect(bar, Color(0, 0, 0, 0.5 * alpha))
-		draw_rect(Rect2(bar.position, Vector2(bar.size.x * clampf(progress, 0.0, 1.0), 2.0)), Color(col, alpha))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	_pending_labels.append([p, r, txt, col, progress, alpha, fs, sz.x])
 
 
 static func _nearest_idx(path: PackedVector2Array, p: Vector2) -> int:
@@ -460,7 +701,7 @@ func _zone(z: Dictionary, k: float) -> void:
 				_arc_e(p, r, a0, 0.5, Color(Palette.c("white"), 0.7 * life2), k)
 			if fmod(_t * 3.0, 1.0) < 0.5:
 				var q: Vector2 = p + Vector2.from_angle(_t * 7.3) * Vector2(1.0, 0.72) * r * 0.9
-				draw_circle(q, 1.5 * k, Color(Palette.c("white"), 0.8 * life2))
+				_disc_t(q, 1.5 * k, Color(Palette.c("white"), 0.8 * life2))
 		Operations.Order.ARTY:
 			var red: Color = Palette.c("alert_red")
 			var warn: bool = now < float(z["t0"]) + Operations.WARN_T
@@ -469,7 +710,22 @@ func _zone(z: Dictionary, k: float) -> void:
 			_target_ring(p, r, k, Palette.c("fire_yellow") if warn else red, a1)
 
 
+func _disc_t(p: Vector2, r: float, col: Color) -> void:
+	var pts := PackedVector2Array()
+	pts.resize(12)
+	for i in 12:
+		var a: float = TAU * float(i) / 12.0
+		pts[i] = p + Vector2(cos(a), sin(a)) * r
+	_push_poly(pts, col)
 
+
+func _seg_t(a: Vector2, b: Vector2, w: float, col: Color) -> void:
+	var d: Vector2 = b - a
+	var ln: float = d.length()
+	if ln < 0.001:
+		return
+	var n: Vector2 = Vector2(-d.y, d.x) * (w * 0.5 / ln)
+	_push_poly(PackedVector2Array([a - n, b - n, b + n, a + n]), col)
 
 
 func _target_ring(p: Vector2, r: float, k: float, accent: Color, a: float) -> void:
@@ -482,36 +738,62 @@ func _target_ring(p: Vector2, r: float, k: float, accent: Color, a: float) -> vo
 	_ellipse(p, ri, Color(Palette.c("outline"), 0.6 * a), false, k, 3.0)
 	_ellipse(p, ri, Color(white, 0.8 * a), false, k, 1.0)
 	for d: Vector2 in [Vector2(1, 0), Vector2(0, 1)]:
-		draw_line(p - d * 10.0 * k, p + d * 10.0 * k, dark, 4.0 * k)
+		_seg_t(p - d * 10.0 * k, p + d * 10.0 * k, 4.0 * k, dark)
 	for d2: Vector2 in [Vector2(1, 0), Vector2(0, 1)]:
-		draw_line(p - d2 * 9.0 * k, p - d2 * 2.5 * k, white, 2.0 * k)
-		draw_line(p + d2 * 2.5 * k, p + d2 * 9.0 * k, white, 2.0 * k)
-	draw_rect(Rect2(p - Vector2(1, 1) * k, Vector2(2, 2) * k), Color(accent, a))
+		_seg_t(p - d2 * 9.0 * k, p - d2 * 2.5 * k, 2.0 * k, white)
+		_seg_t(p + d2 * 2.5 * k, p + d2 * 9.0 * k, 2.0 * k, white)
+	_seg_t(p - Vector2(k, 0), p + Vector2(k, 0), 2.0 * k, Color(accent, a))
+
+
+const _ELLIPSE_SEGS: int = 36
+static var _u_ell: PackedVector2Array = PackedVector2Array()
+
+static func _get_u_ell() -> PackedVector2Array:
+	if _u_ell.is_empty():
+		_u_ell.resize(_ELLIPSE_SEGS)
+		for i in _ELLIPSE_SEGS:
+			var a: float = TAU * float(i) / float(_ELLIPSE_SEGS)
+			_u_ell[i] = Vector2(cos(a), sin(a) * 0.72)
+	return _u_ell
 
 
 func _ellipse(p: Vector2, r: float, col: Color, fill: bool, k: float, w: float = 1.0) -> void:
-	draw_set_transform(p, 0.0, Vector2(1.0, 0.72))
+	var u: PackedVector2Array = _get_u_ell()
+	var n: int = _ELLIPSE_SEGS
+	var pts := PackedVector2Array()
+	pts.resize(n)
+	for i in n:
+		pts[i] = p + u[i] * r
 	if fill:
-		draw_circle(Vector2.ZERO, r, col)
+		_push_poly(pts, col)
 	else:
-		draw_arc(Vector2.ZERO, r, 0.0, TAU, 64, col, w * k / 0.86)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		_push_strip(pts, w * k / 0.86, col, true)
 
 
 func _arc_e(p: Vector2, r: float, a0: float, span: float, col: Color, k: float) -> void:
-	draw_set_transform(p, 0.0, Vector2(1.0, 0.72))
-	draw_arc(Vector2.ZERO, r, a0, a0 + span, 12, col, 2.0 * k)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	var segs: int = 8
+	var pts := PackedVector2Array()
+	pts.resize(segs + 1)
+	for i in segs + 1:
+		var a: float = a0 + span * float(i) / float(segs)
+		pts[i] = p + Vector2(cos(a) * r, sin(a) * r * 0.72)
+	_push_strip(pts, 2.0 * k, col, false)
 
 
 func _dashed_ellipse(p: Vector2, r: float, col: Color, k: float, w: float = 1.5) -> void:
-	draw_set_transform(p, 0.0, Vector2(1.0, 0.72))
 	var n: int = 24
 	var rot: float = _t * 0.6
+	var step: float = TAU / float(n)
+	var span: float = step * 0.55
+	var sw: float = w * k
 	for i in n:
-		var a: float = rot + float(i) / float(n) * TAU
-		draw_arc(Vector2.ZERO, r, a, a + TAU / float(n) * 0.55, 4, col, w * k)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		var a: float = rot + step * float(i)
+		var am: float = a + span * 0.5
+		var a1: float = a + span
+		var p0 := Vector2(p.x + cos(a) * r, p.y + sin(a) * r * 0.72)
+		var pm := Vector2(p.x + cos(am) * r, p.y + sin(am) * r * 0.72)
+		var p1 := Vector2(p.x + cos(a1) * r, p.y + sin(a1) * r * 0.72)
+		_push_strip(PackedVector2Array([p0, pm, p1]), sw, col, false)
 
 
 
@@ -529,19 +811,22 @@ func _preview_arrow(o: Operations, k: float) -> void:
 	var path: PackedVector2Array = res["path"]
 	var ok: bool = bool(res["ok"])
 	col.a = 0.9 if ok else 0.7
-	_poly(path, col, 4.0 * k, k, true)
+	var sm_p: PackedVector2Array = PK.smooth(path, 9.0 * k)
+	_poly_sm(sm_p, col, 4.0 * k, k, true)
 	if ok:
-		_chevrons(path, col.lightened(0.5), k, false)
-	var end: Vector2 = path[path.size() - 1] if not path.is_empty() else to
-	var dir: Vector2 = _dir_at(path, path.size() - 2)
+		_flush_flow_q(sm_p, col.lightened(0.5), _t, k, 14.0 * k)
+	var end: Vector2 = sm_p[sm_p.size() - 1] if not sm_p.is_empty() else to
+	var dir: Vector2 = (end - sm_p[maxi(0, sm_p.size() - 2)]).normalized() if sm_p.size() >= 2 else _dir_at(path, path.size() - 2)
 	if ok and int(res["kind"]) == Operations.Kind.DEFEND:
-		_defence_line(end, dir, col, k)
+		_defence_line_q(end, dir, col, k)
+		_flush_pass()
 	elif ok:
-		_head(end, dir, col, k)
+		_head_q(end, dir, col, k)
+		_flush_pass()
 	else:
 		var x: float = 5.0 * k
-		draw_line(to - Vector2(x, x), to + Vector2(x, x), Palette.c("alert_red"), 2.0 * k)
-		draw_line(to - Vector2(x, -x), to + Vector2(x, -x), Palette.c("alert_red"), 2.0 * k)
+		_seg_t(to - Vector2(x, x), to + Vector2(x, x), 2.0 * k, Palette.c("alert_red"))
+		_seg_t(to - Vector2(x, -x), to + Vector2(x, -x), 2.0 * k, Palette.c("alert_red"))
 	_label(to + Vector2(0, -18.0 * k), Loc.t(String(res["text"])),
 			col if ok else Palette.c("alert_red"), k)
 
@@ -568,11 +853,14 @@ func _preview_order(o: Operations, k: float) -> void:
 		var far: bool = bool(chk.get("too_far", false))
 		var rc: Color = Palette.c("alert_red") if far else Color(Palette.c("intercept_cyan"), 0.55)
 		if an.is_finite():
+			var r_step: float = TAU / 48.0
+			var r_span: float = r_step * 0.55
+			var r_col := Color(rc, 0.75 if far else 0.45)
 			for i9 in 48:
-				var a9: float = _t * 0.2 + float(i9) / 48.0 * TAU
-				draw_arc(an, Operations.ARTY_REACH, a9, a9 + TAU / 48.0 * 0.55, 4, Color(rc, 0.75 if far else 0.45), 2.0 * k)
+				var a9: float = _t * 0.2 + r_step * float(i9)
+				_seg_t(an + Vector2(cos(a9), sin(a9)) * Operations.ARTY_REACH, an + Vector2(cos(a9 + r_span), sin(a9 + r_span)) * Operations.ARTY_REACH, 2.0 * k, r_col)
 			if far:
-				draw_line(an, an + (p - an).limit_length(Operations.ARTY_REACH), Color(rc, 0.6), 1.5 * k)
+				_seg_t(an, an + (p - an).limit_length(Operations.ARTY_REACH), 1.5 * k, Color(rc, 0.6))
 		if far:
 			_ellipse(p, r, Color(Palette.c("alert_red"), 0.22), true, k)
 	var txt: String = Loc.t(String(Operations.ORDERS[kind]["name"])) if bool(chk["ok"]) else Loc.t(String(chk["why"]))

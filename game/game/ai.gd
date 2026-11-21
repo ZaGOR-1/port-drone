@@ -433,6 +433,9 @@ func load_state(d: Dictionary) -> void:
 
 
 func update(_dt: float) -> void:
+	if gw.game_time >= _ttl_clean_t:
+		_ttl_clean_t = gw.game_time + 30.0
+		_prune_caches()
 	for c: Country in gw.countries:
 		if c.is_player or c.eliminated or c.capital_id < 0:
 			continue
@@ -547,7 +550,7 @@ func _attack_next(c: Country) -> void:
 
 func _kind_counts(c: Country) -> Dictionary:
 	var counts: Dictionary = {}
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id == c.id:
 			counts[f.kind] = int(counts.get(f.kind, 0)) + 1
 	return counts
@@ -557,7 +560,7 @@ func _count(c: Country, kind: int, counts: Dictionary = {}) -> int:
 	if not counts.is_empty():
 		return int(counts.get(kind, 0))
 	var n: int = 0
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id == c.id and f.kind == kind:
 			n += 1
 	return n
@@ -592,7 +595,8 @@ func _think_part(c: Country, ph: int, split: bool = false) -> void:
 				gw.naval.ai_think(c, P)
 			_spend_surplus(c, P)
 			_missile_mix(c, P)
-			for f: Facility in gw.mil.facilities:
+			_ai_power_prio(c)
+			for f: Facility in gw.mil.facs_of(c.id):
 				if f.country_id == c.id and (f.halted or f.stance != 0):
 					f.halted = false
 					f.stance = 0
@@ -613,6 +617,8 @@ func _think_part(c: Country, ph: int, split: bool = false) -> void:
 				var foe: Country = _tension_foe(c, P5)
 				if foe != null:
 					_fortify(c, foe, false)
+				if gw.diplo != null and gw.diplo.in_grey_zone():
+					_grey_skirmish(c, P5)
 		6:
 			if split and gw.cad344.war_br.has(c.id):
 				gw.cad344.war_br.erase(c.id)
@@ -657,6 +663,70 @@ func _tension_foe(c: Country, P: Dictionary) -> Country:
 	if best != null:
 		_stat(c, "r22b_tense")
 	return best
+
+
+func _ai_power_prio(c: Country) -> void:
+	if c == null or c.eliminated:
+		return
+	var want: int = 0
+	if c.power_use > c.power_cap:
+		var war_alert: bool = not c.at_war.is_empty() or int(_tens.get(c.id, [-1.0, -1])[1]) >= 0
+		if not war_alert and gw.diplo != null:
+			for o: Country in gw.countries:
+				if o.id != c.id and not o.eliminated and o.nuke_ready and not gw.diplo.allied(c.id, o.id):
+					war_alert = true
+					break
+		if war_alert:
+			want = 1
+		elif c.money < 600 or c.oil >= 8:
+			want = 2
+	gw.mil.set_power_prio(c, want)
+
+
+var _grey_t: Dictionary = {}
+func _grey_skirmish(c: Country, P: Dictionary) -> void:
+	var dp: Diplomacy = gw.diplo
+	if c == null or dp == null or not dp.in_grey_zone() or c.capital_id < 0:
+		return
+	var now: float = gw.game_time
+	if now < float(_grey_t.get(c.id, 190.0 + float(c.id % 5) * 5.0)):
+		return
+	var min_aggr: float = 0.65 if GameConfig.diff_of(c) == 0 else 0.45
+	if float(P.get("aggr", 0.5)) < min_aggr:
+		return
+	if gw.mil.parked_count(c.id) < 2:
+		return
+	var port: Facility = gw.mil.best_port(c, Vector2(gw.cities[c.capital_id].center * GameWorld.CELL))
+	if port == null:
+		return
+	var from: Vector2 = gw.mil.launch_point(port)
+	var best_tp: Vector2 = Vector2.INF
+	var best_d: float = INF
+	for f: Facility in gw.mil.facilities:
+		if f.country_id <= 0 or f.country_id == c.id or not gw.mil.alive(f):
+			continue
+		if not (f.kind in [Facility.Kind.MINE, Facility.Kind.REFINERY, Facility.Kind.FARM, Facility.Kind.SAWMILL, Facility.Kind.POWER_PLANT, Facility.Kind.BARRACKS]):
+			continue
+		var oc: Country = gw.country_by_id(f.country_id)
+		if oc == null or oc.eliminated:
+			continue
+		if dp.allied(c.id, oc.id) or (dp.ally != null and dp.ally.same(c.id, oc.id)) or dp.relation(c.id, oc.id) > 15:
+			continue
+		var tp: Vector2 = f.center_px()
+		var d: float = from.distance_to(tp)
+		if d > Military.RANGE_PX * 0.85 or d >= best_d:
+			continue
+		if not dp.is_skirmish_target(c.id, oc.id, tp) or dp.strike_block_at(c.id, tp, false) != "":
+			continue
+		if dp.path_block(c.id, PackedVector2Array([from, tp])) > 0:
+			continue
+		best_d = d
+		best_tp = tp
+	if best_tp != Vector2.INF:
+		_grey_t[c.id] = now + 45.0 + float(c.id % 4) * 5.0
+		var wps: Array[Vector2] = []
+		if gw.mil.launch(c, wps, best_tp, 1).size() > 0:
+			_stat(c, "grey_skirmish")
 
 
 func _repair(c: Country) -> void:
@@ -974,6 +1044,27 @@ const AI_RESTRIKE: float = 60.0
 const CITY_SPOT_T: float = 600.0
 const CITY_GAP: float = 45.0
 var _hit_f: Dictionary = {}
+var _ttl_clean_t: float = 30.0
+
+
+func _prune_caches() -> void:
+	var now: float = gw.game_time
+	for k: Variant in _spend_cd.keys():
+		if now >= float(_spend_cd[k]):
+			_spend_cd.erase(k)
+	for hk: Variant in _hit_f.keys():
+		if now - float(_hit_f[hk]) >= AI_RESTRIKE:
+			_hit_f.erase(hk)
+	for c: Country in gw.countries:
+		if c.eliminated:
+			_t.erase(c.id)
+			_take_t.erase(c.id)
+			_cr_t.erase(c.id)
+			_off_t.erase(c.id)
+			_cont_b.erase(c.id)
+			_cont_s.erase(c.id)
+			_cont_a.erase(c.id)
+			_saving.erase(c.id)
 var _hit_spots: Dictionary = {}
 var _pick_cls: String = ""
 var _pick_pt: Vector2 = Vector2.INF
@@ -999,7 +1090,20 @@ func _pick_target(c: Country, foe: Country, from: Vector2, max_d: float, cls: St
 	var v_dup: int = 0
 	var strike: bool = cls != "" and sense != null
 	var assault: Dictionary = _assault_cities(c) if strike else {}
-	for f: Facility in gw.mil.facilities:
+	var cand_facs: Array = gw.mil.facs_of(foe.id)
+	if gw.diplo != null and gw.diplo.get("sky") != null and not (gw.diplo.sky.fac as Dictionary).is_empty():
+		var extra: Array = []
+		for fid_v: Variant in gw.diplo.sky.fac:
+			var fid: int = int(fid_v)
+			if fid >= 0 and fid < gw.mil.facilities.size():
+				var sf: Facility = gw.mil.facilities[fid]
+				if sf.country_id != foe.id and gw.diplo.sky_target(c.id, sf) == foe.id:
+					extra.append(sf)
+		if not extra.is_empty():
+			cand_facs = cand_facs.duplicate()
+			cand_facs.append_array(extra)
+			cand_facs.sort_custom(func(fa: Facility, fb: Facility) -> bool: return fa.id < fb.id)
+	for f: Facility in cand_facs:
 		if (f.country_id != foe.id and gw.diplo.sky_target(c.id, f) != foe.id) or f.parent != null or not gw.mil.alive(f) or f.moving:
 			continue
 		var p: Vector2 = f.center_px()
@@ -1875,7 +1979,7 @@ func _fortify(c: Country, foe: Country, war: bool = true) -> void:
 	var tr_all: int = 0
 	var te_all: int = 0
 	var per: Dictionary = {}
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id != c.id or not Military.is_field_work(f.kind):
 			continue
 		var teeth: bool = Military.is_teeth(f.kind)
@@ -1923,6 +2027,9 @@ func _fortify(c: Country, foe: Country, war: bool = true) -> void:
 
 
 const FORT_MASS: int = 4
+var _tmp_front: Array = []
+
+
 func _front_cities(c: Country, foe: Country, war: bool) -> Array:
 	var lst: Array = []
 	for cid in c.city_ids:
@@ -1937,7 +2044,7 @@ func _front_cities(c: Country, foe: Country, war: bool) -> Array:
 		var cen: = Vector2.ZERO
 		var nm: int = 0
 		var cp: Vector2 = Vector2(city.center * GameWorld.CELL)
-		for o: Variant in gw.army._near(cp, float(maxi(city.radius, city.claim_max) * GameWorld.CELL) + 700.0):
+		for o: Variant in gw.army._near_into(cp, float(maxi(city.radius, city.claim_max) * GameWorld.CELL) + 700.0, _tmp_front):
 			var u: Unit = o
 			if u.country_id == foe.id and u.alive() and u.ground():
 				cen += u.pos
@@ -2261,7 +2368,7 @@ func _spent(c: Country, what: String, n: int) -> void:
 
 func _ad_n(c: Country) -> int:
 	var n: int = 0
-	for f: Facility in gw.mil.facilities:
+	for f: Facility in gw.mil.facs_of(c.id):
 		if f.country_id == c.id and f.kind >= Facility.Kind.AD_SPAAG and f.kind <= Facility.Kind.AD_INT and not guard.placed.has(f.id):
 			n += 1
 	return n

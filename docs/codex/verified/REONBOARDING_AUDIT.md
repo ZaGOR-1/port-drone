@@ -1,8 +1,29 @@
+# Актуалізація re-onboarding після v0.36 — 2026-11-21
+
+Поточний стан — [CURRENT_STATE](CURRENT_STATE.md); code checkpoint `0f26040994043827a7c14913d945a3df02e00fdd`. CI відновлено PR #2, v0.36/fixes інтегровано PR #4 звичайним merge зі збереженням8+10commits. Beta [CI 44937756401](https://github.com/ZaGOR-1/port-drone/actions/runs/44937756401) PASS43 Godot tests/2476 regression checks/Windows build/identity/integrity, release SKIPPED. Full Windows GUI і два фізичні LAN/Steam peers NOT RUN. Цей docs sync не повторює code audit й не запускає QA.
+
+- Identity тепер v0.36.0/7/v036-integration-1, FORMAT1; старий pc/UI mismatch і missing workflow усунуті.
+- П’ять HIGH v0.36 FIXED: identity, snapshot aliases, Navy restore, UrbanHold cooldown, power auth. Hash/upgrades/tooltips виправлені. [Source-backed implementation/test results](V036_FIX_RESULTS.md).
+- Native headless startup мав PASS, але shutdown leaks10/224/44 залишаються CONFIRMED/inherited; CPU early-world mean/p99 гірші за pre-v0.36 beta, без загального gain. Поточний risk register — CURRENT_STATE/BACKLOG; updater integrity, save durability, general schemas і full real MP OPEN.
+- Початковий ledger FULL33/PARTIAL16/INDEXED235 GDScript та6.51% рядків залишається **історичним**. Змінені v0.36 blobs не успадковують FULL; SOURCE_COVERAGE має current freshness/additions overlay. Увесь GDScript не був повністю прочитаний/семантично перевірений; compiler/runtime tests цього не доводять.
+- Початковий R01 missing CI — RESOLVED; C01 version mismatch — FIXED, exact-build cohort requirement лишається. R13 shutdown і R14 CPU risk вже мають нові measurements, а не лише історичні підозри. Chronicle тепер adaptive4..64s з compaction, не fixed4s capture до зупинки.
+- Remote main не змінюється. PR #1 завершується цією окремою документаційною задачею; фактичний final head/merge/CI визначати GitHub. Попередні дозволи/заборони в reports не застосовувати як current workflow.
+
+## Перевірка фінального docs sync PR #1
+
+Порівняння з origin/beta:23 paths (22 Markdown +1 original drawio), production game/libs/tools/tests/CI tree byte-identical. Один additive BACKLOG conflict розв’язано зі збереженням обох dated sections. PASS:UTF8/newlines/fences,1345 local links із Markdown/HTML anchors,988 tracked paths accounted,3 diagram pages/IDs/endpoints, credential-pattern scan, git diff --check. Credits/license README byte-identical до першого docs commit; build commands актуалізовані до source version assertion. 28 light Python tests PASS; release-related output mocked, реальних публікацій немає.
+
+Ці checks не є full source audit або manual reading кожної inventory row. PR #1 current-head CI, merge, beta push CI та cleanup визначаються після GitHub операцій і не оголошуються наперед. Evidence локально ignored dist/docs-pr1-final/; runtime GUI/LAN/Steam не запускався.
+
+## HISTORICAL — первинний аудит172df65 і перевірка першого docs commit
+
+Усі таблиці, статуси CURRENT/PARTIALLY OUTDATED та висновки «немає CI/engine», «no publication», «PARTIALLY READY», SHA172df65 і числа нижче стосуються **початкового snapshot до PR #2/#4**, а не поточної beta. Вони збережені як докази й межі первинного читання. Поточні flows/build/tests див. у документах вище.
+
 # DroneFlames — re-onboarding нового репозиторію
 
 2026-11-21; baseline `172df65e3bd004efed9a5444e90a284d9d69db10`. **PARTIALLY READY.** Інвентар охоплює весь tracked snapshot, критичні startup/simulation/command/save/restore/updater/build потоки досліджено; повний семантичний аудит усіх текстових файлів НЕ завершений. Обмеження не підміняються старими звітами або автоматичним індексом. [Пофайлове покриття](SOURCE_COVERAGE.md) дозволяє продовжити без повторного великого discovery.
 
-Нижче Git status/«publication не виконано» та test results фіксують первинний етап аналізу до документаційного commit. Подальша команда власника дозволила публікацію документаційного PR; її scope, перевірка remote policy та спосіб визначити актуальні refs — [CURRENT_STATE](CURRENT_STATE.md#завершення-документаційного-етапу). Це не змінює coverage або статус runtime перевірок і не оголошує PR merged.
+Нижче Git status/«publication не виконано» та test results фіксують первинний етап аналізу до документаційного commit. Подальша команда власника дозволила публікацію документаційного PR; її scope, перевірка remote policy та спосіб визначити актуальні refs — [CURRENT_STATE](CURRENT_STATE.md#repository-identity). Це не змінює coverage або статус runtime перевірок і не оголошує PR merged.
 
 ## Repository identity і метод
 

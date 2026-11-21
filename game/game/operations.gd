@@ -136,6 +136,7 @@ var _urgent: Array = []
 var _warn_t: float = 0.0
 var _naval_wait: Dictionary = {}
 var _str_cache: Dictionary = {}
+var _tmp_z_u: Array = []
 
 
 func _init(world: GameWorld) -> void:
@@ -1149,6 +1150,13 @@ func cooldown_left(country_id: int, kind: int) -> float:
 
 
 
+func has_smoke_zones() -> bool:
+	for z: Dictionary in zones:
+		if int(z["k"]) == Order.SMOKE:
+			return true
+	return false
+
+
 func smoke_at(p: Vector2) -> bool:
 	for z: Dictionary in zones:
 		if int(z["k"]) == Order.SMOKE and (z["pos"] as Vector2).distance_squared_to(p) <= float(z["r"]) * float(z["r"]):
@@ -1647,16 +1655,15 @@ func auto_orders_of(country_id: int) -> bool:
 
 
 
-func command_summary(country_id: int) -> Dictionary:
-	var out: Dictionary = AutoCmd.summary(gw, country_id)
+func command_summary(country_id: int, armies_only: bool = false) -> Dictionary:
+	var out: Dictionary = AutoCmd.summary(gw, country_id, armies_only)
 	if gw.get("naval") == null:
 		return out
+	var bar_by_id: Dictionary = {}
+	for g: Facility in gw.mil.facs_of_kind(Facility.Kind.BARRACKS):
+		bar_by_id[g.id] = g
 	for a: Dictionary in out.get("armies", []):
-		var f: Facility = null
-		for g: Facility in gw.mil.facilities:
-			if g.id == int(a["fid"]):
-				f = g
-				break
+		var f: Facility = bar_by_id.get(int(a["fid"]))
 		var sea: Array = gw.naval.aboard_of(f) if f != null else []
 		a["at_sea"] = sea.size()
 		a["landing"] = gw.naval.landing_info(f) if f != null else {}
@@ -2357,8 +2364,11 @@ func _barrage(z: Dictionary) -> void:
 
 	if now >= float(z["t0"]) + WARN_T + 1.0:
 		var pr: float = float(z["r"]) * 1.25
-		for u: Unit in gw.army.units:
-			if u.alive() and u.ground() and gw.army._hostile(int(z["c"]), u.country_id) and u.pos.distance_squared_to(z["pos"]) <= pr * pr:
+		var pr2: float = pr * pr
+		var c_id: int = int(z["c"])
+		var zp: Vector2 = z["pos"]
+		for u: Unit in gw.army._near_into(zp, pr, _tmp_z_u):
+			if u.alive() and u.ground() and gw.army._hostile(c_id, u.country_id) and u.pos.distance_squared_to(zp) <= pr2:
 				u.supp = maxf(u.supp, 0.5 if u.type == Unit.Type.TANK else 0.85)
 	if not bool(z["hit"]) and now >= float(z["t0"]) + WARN_T + 1.2:
 		z["hit"] = true

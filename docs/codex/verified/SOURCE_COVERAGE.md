@@ -1,3 +1,148 @@
+# Source coverage — актуальність після v0.36
+
+2026-11-21, code checkpoint `0f26040994043827a7c14913d945a3df02e00fdd` + документаційний PR #1. Поточний облік: **988 tracked paths, 286 GDScript, 56 Markdown** (це file inventory, не semantic coverage). Жоден source не видалений проти початкових970paths. Зміни цієї документаційної гілки поза Markdown/AGENTS/редагованою схемою не допускаються; фактичний production tree звіряється з origin/beta.
+
+Нижче збережено **історичний read ledger172df65**: FULL104/PARTIAL17/INDEXED559/BINARY290, GDScript FULL33/PARTIAL16/INDEXED235 та6.51% рядків. Він не є поточним100% audit. **FULL/ranges стосуються конкретного старого blob**; якщо файл змінено, ці ranges не доводять читання нової версії. Unchanged blob зберігає лише попередній dated read evidence, не новий запуск.
+
+v0.36 review досліджував змінені ділянки й безпосередні залежності, не всі90 scripts повністю. Нові code files нижче — INDEXED/targeted tests, не автоматично FULL. Runtime compiler93/translation3,43 tests/2476 checks не підвищують manual semantic coverage. Оновлені документаційні intro/diff перевірені; великі історичні таблиці залишають власні PARTIAL/INDEXED scopes.
+
+**Кожен current tracked path враховано** як початковий path у dated ledger або новий path у таблиці additions. Змінені blobs вказані окремо: 103 initial paths змінилися у CI/v0.36; кожен вважається NEEDS CURRENT READ перед наступним production edit. Сам SOURCE_COVERAGE індекс перевірено машинно, без заяви повного ручного читання кожної inventory row. [Поточні flows](ARCHITECTURE_AND_FLOWS.md), [v0.36 evidence](V036_FIX_RESULTS.md).
+
+## Additions після початкового970-file snapshot
+
+| Path | Поточний review scope |
+|---|---|
+| [.github/workflows/build.yml](../../../.github/workflows/build.yml) | INDEXED/targeted CI; full semantic read не заявляється |
+| [docs/codex/verified/ARCHITECTURE_AND_FLOWS.md](../../../docs/codex/verified/ARCHITECTURE_AND_FLOWS.md) | Documentation diff review; історичні розділи зберігають dated scope |
+| [docs/codex/verified/CI_RESTORATION.md](../../../docs/codex/verified/CI_RESTORATION.md) | Existing dated CI report; current reference check, не новий full read |
+| [docs/codex/verified/NEXT_SESSION.md](../../../docs/codex/verified/NEXT_SESSION.md) | Documentation diff review; історичні розділи зберігають dated scope |
+| [docs/codex/verified/REONBOARDING_AUDIT.md](../../../docs/codex/verified/REONBOARDING_AUDIT.md) | Documentation diff review; історичні розділи зберігають dated scope |
+| [docs/codex/verified/SOURCE_COVERAGE.md](../../../docs/codex/verified/SOURCE_COVERAGE.md) | INDEXED/targeted CI; full semantic read не заявляється |
+| [docs/codex/verified/V036_FIX_RESULTS.md](../../../docs/codex/verified/V036_FIX_RESULTS.md) | Documentation diff review; історичні розділи зберігають dated scope |
+| [docs/codex/verified/V036_REVIEW.md](../../../docs/codex/verified/V036_REVIEW.md) | Documentation diff review; історичні розділи зберігають dated scope |
+| [docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md](../../../docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) | Documentation diff review; історичні розділи зберігають dated scope |
+| [docs/codex/verified/reonboarding-flows.drawio](../../../docs/codex/verified/reonboarding-flows.drawio) | INDEXED/XML validation; початкова схема172df65 |
+| [tests/test_build_identity.py](../../../tests/test_build_identity.py) | INDEXED/targeted CI; full semantic read не заявляється |
+| [tests/test_ci_artifacts.py](../../../tests/test_ci_artifacts.py) | INDEXED/targeted CI; full semantic read не заявляється |
+| [tests/test_network_identity.py](../../../tests/test_network_identity.py) | INDEXED/targeted CI; full semantic read не заявляється |
+| [tests/test_v036_regressions.gd](../../../tests/test_v036_regressions.gd) | INDEXED/targeted CI; full semantic read не заявляється |
+| [tests/test_v036_regressions.py](../../../tests/test_v036_regressions.py) | INDEXED/targeted CI; full semantic read не заявляється |
+| [tools/ci/godot-4.7.2.json](../../../tools/ci/godot-4.7.2.json) | INDEXED/targeted CI; full semantic read не заявляється |
+| [tools/ci/verify_build.py](../../../tools/ci/verify_build.py) | INDEXED/targeted CI; full semantic read не заявляється |
+| [tools/ci/verify_identity.gd](../../../tools/ci/verify_identity.gd) | INDEXED/targeted CI; full semantic read не заявляється |
+
+## Changed initial blobs — не успадковувати старий FULL
+
+| Path | Freshness |
+|---|---|
+| [docs/codex/verified/BACKLOG.md](../../../docs/codex/verified/BACKLOG.md) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [docs/codex/verified/DECISIONS.md](../../../docs/codex/verified/DECISIONS.md) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/core/sprite_atlas.gd](../../../game/core/sprite_atlas.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/ai.gd](../../../game/game/ai.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/air.gd](../../../game/game/air.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/army.gd](../../../game/game/army.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/army_fire.gd](../../../game/game/army_fire.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/army_tac.gd](../../../game/game/army_tac.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/auto_cmd.gd](../../../game/game/auto_cmd.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/chronicle.gd](../../../game/game/chronicle.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/city.gd](../../../game/game/city.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/country.gd](../../../game/game/country.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/defense.gd](../../../game/game/defense.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/depot.gd](../../../game/game/depot.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/diplomacy.gd](../../../game/game/diplomacy.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/diplomacy/dip_allies.gd](../../../game/game/diplomacy/dip_allies.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/diplomacy/dip_base.gd](../../../game/game/diplomacy/dip_base.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/diplomacy/dip_rules.gd](../../../game/game/diplomacy/dip_rules.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/econ_rates.gd](../../../game/game/econ_rates.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/economy.gd](../../../game/game/economy.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/economy/eco_base.gd](../../../game/game/economy/eco_base.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/economy/eco_core.gd](../../../game/game/economy/eco_core.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/economy/eco_trade.gd](../../../game/game/economy/eco_trade.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/facility.gd](../../../game/game/facility.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/game_config.gd](../../../game/game/game_config.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/game_world.gd](../../../game/game/game_world.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/game_world/gw_base.gd](../../../game/game/game_world/gw_base.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/game_world/gw_infra.gd](../../../game/game/game_world/gw_infra.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/game_world/gw_map.gd](../../../game/game/game_world/gw_map.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/game_world/gw_states.gd](../../../game/game/game_world/gw_states.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/land_trade.gd](../../../game/game/land_trade.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/main.gd](../../../game/game/main.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/main/main_base.gd](../../../game/game/main/main_base.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/main/main_core.gd](../../../game/game/main/main_core.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/main/main_input.gd](../../../game/game/main/main_input.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/main/main_strike.gd](../../../game/game/main/main_strike.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/match.gd](../../../game/game/match.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/military.gd](../../../game/game/military.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/military/mil_base.gd](../../../game/game/military/mil_base.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/military/mil_build.gd](../../../game/game/military/mil_build.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/military/mil_strike.gd](../../../game/game/military/mil_strike.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/missile.gd](../../../game/game/missile.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/navy.gd](../../../game/game/navy.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/navy_fleets.gd](../../../game/game/navy_fleets.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/nuclear.gd](../../../game/game/nuclear.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/operations.gd](../../../game/game/operations.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/peace_conf.gd](../../../game/game/peace_conf.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/protect.gd](../../../game/game/protect.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/rail.gd](../../../game/game/rail.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/save.gd](../../../game/game/save.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/supply.gd](../../../game/game/supply.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/upkeep335.gd](../../../game/game/upkeep335.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/urban_hold.gd](../../../game/game/urban_hold.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/game/vision.gd](../../../game/game/vision.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/net/net_codec.gd](../../../game/net/net_codec.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/net/net_config.gd](../../../game/net/net_config.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/net/net_hash.gd](../../../game/net/net_hash.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/net/net_session.gd](../../../game/net/net_session.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/pc/army_select.gd](../../../game/pc/army_select.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/pc/pc_port.gd](../../../game/pc/pc_port.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/pc/version.cfg](../../../game/pc/version.cfg) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/translations/en.po](../../../game/translations/en.po) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/translations/es.po](../../../game/translations/es.po) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/translations/uk.po](../../../game/translations/uk.po) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/chronicle_viewer.gd](../../../game/ui/chronicle_viewer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud.gd](../../../game/ui/hud.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud/hud_base.gd](../../../game/ui/hud/hud_base.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud/hud_cards.gd](../../../game/ui/hud/hud_cards.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud/hud_dip.gd](../../../game/ui/hud/hud_dip.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud/hud_keys.gd](../../../game/ui/hud/hud_keys.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud/hud_kit.gd](../../../game/ui/hud/hud_kit.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud/hud_lane.gd](../../../game/ui/hud/hud_lane.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud/hud_ops.gd](../../../game/ui/hud/hud_ops.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/hud/hud_stack.gd](../../../game/ui/hud/hud_stack.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/menus.gd](../../../game/ui/menus.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/hold_tip.gd](../../../game/ui/ui24/hold_tip.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/map_pennants.gd](../../../game/ui/ui24/map_pennants.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/navy_dock.gd](../../../game/ui/ui24/navy_dock.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/navy_yard.gd](../../../game/ui/ui24/navy_yard.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/notif_lane.gd](../../../game/ui/ui24/notif_lane.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/path_kit.gd](../../../game/ui/ui24/path_kit.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/res_sheet.gd](../../../game/ui/ui24/res_sheet.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/strike_sheet.gd](../../../game/ui/ui24/strike_sheet.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/ui/ui24/trade_sheet.gd](../../../game/ui/ui24/trade_sheet.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/eco_layer.gd](../../../game/world/eco_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/econ_fx_layer.gd](../../../game/world/econ_fx_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/fauna_layer.gd](../../../game/world/fauna_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/fog_layer.gd](../../../game/world/fog_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/labels_layer.gd](../../../game/world/labels_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/map_camera.gd](../../../game/world/map_camera.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/map_icons.gd](../../../game/world/map_icons.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/night_layer.gd](../../../game/world/night_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/ops_layer.gd](../../../game/world/ops_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/protect_layer.gd](../../../game/world/protect_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/trade_layer.gd](../../../game/world/trade_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [game/world/units_layer.gd](../../../game/world/units_layer.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [tests/test_godot_suite.gd](../../../tests/test_godot_suite.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [tests/test_phase5b2_gameplay.gd](../../../tests/test_phase5b2_gameplay.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [tests/test_pr10_critical.gd](../../../tests/test_pr10_critical.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [tests/test_sim_revision.gd](../../../tests/test_sim_revision.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [tests/test_snapshot_restore_integration.gd](../../../tests/test_snapshot_restore_integration.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [tools/build.py](../../../tools/build.py) | Changed after172df65; targeted review/CI, current full read не заявлено |
+| [tools/performance_benchmark.gd](../../../tools/performance_benchmark.gd) | Changed after172df65; targeted review/CI, current full read не заявлено |
+
+## HISTORICAL — первинний пофайловий ledger172df65
+
+Усі counts/ranges/runtime NOT RUN нижче датовані початковим onboarding, не поточною beta. Зміни документаційного PR до original Markdown теж не успадковують його старі line numbers; актуальні entry points наведено вище.
+
 # Покриття re-onboarding — пофайловий інвентар
 
 2026-11-21; baseline172df65e3bd004efed9a5444e90a284d9d69db10. У таблицях нижче **всі970 tracked paths** baseline, без пропусків і без успадкування FULL зі старого FILE_COVERAGE. Розміри/рядки стосуються baseline до documentation edits. Нові5 Markdown +1 drawio перелічені окремо й не входять до зафіксованого baseline count; після їх commit поточний tracked count буде976. Статуси читання описують первинний аналіз, не змінюються через публікацію документації.

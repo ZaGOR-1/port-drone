@@ -118,6 +118,7 @@ func _build_ops() -> void:
 	var minus: Button = UiKit.big("−", "stone", "", 40.0, 16)
 	minus.custom_minimum_size.x = 42
 	minus.pressed.connect(func() -> void: action.emit("plan_minus"))
+	HoldTip.tip(minus, Loc.t("МЕНЬШЕ — −1 на цель (Shift: −5)"))
 	ops_row.add_child(minus)
 	ops_count = UiKit.lbl("x1", 14, UiKit.GOLD, 3, 3)
 	ops_count.custom_minimum_size = Vector2(34, 0)
@@ -127,6 +128,7 @@ func _build_ops() -> void:
 	var plus: Button = UiKit.big("+", "stone", "", 40.0, 16)
 	plus.custom_minimum_size.x = 42
 	plus.pressed.connect(func() -> void: action.emit("plan_plus"))
+	HoldTip.tip(plus, Loc.t("БОЛЬШЕ — +1 на цель (Shift: +5)"))
 	ops_row.add_child(plus)
 	var sp: = Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -224,6 +226,17 @@ func _fill_acts(sig_base: String, acts: Array) -> void:
 				var bd: Label = UiKit.lbl(String(a["badge"]), 10, UiKit.GOLD, 3, 3)
 				bd.position = Vector2(30, 26)
 				b.add_child(bd)
+			var ctx_hk: String = ""
+			if act in ["nuke_build", "nuke_arm", "nuke_launch"] and bool(a["on"]):
+				ctx_hk = "N"
+			elif act == "zaslon_buy_1":
+				ctx_hk = "Z"
+			elif act == "zaslon_buy_fill":
+				ctx_hk = "⇧Z"
+			elif act in ["buy_bomber", "buy_fighter", "buy_heli", "buy_attack", "buy_transport"]:
+				ctx_hk = "⇧"
+			if ctx_hk != "":
+				set_hk_badge(b, ctx_hk, true, false)
 			var txt: String = String(a["t"])
 			var l: Label = UiKit.lbl(txt, 9, (UiKit.RED if bool(a.get("red", false)) else UiKit.TEXT) if bool(a["on"]) else UiKit.DIM, 2, 3)
 			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -290,6 +303,10 @@ func _act_tip(b: Control, act: String, shown: String, sel: int) -> void:
 	var ln: String = Loc.t(HoldTip.act_line(act))
 	if ln == "":
 		return
+	if act in ["buy_bomber", "buy_fighter", "buy_heli", "buy_attack", "buy_transport"] and _PcPortK.desktop():
+		ln += "\n" + Loc.t("Shift+клик — купить всё доступное крыло")
+	elif act == "zaslon_buy_1" and _PcPortK.desktop():
+		ln += "\n" + Loc.t("Shift+клик — заполнить БК до предела")
 	var st: String = ""
 	if act == "stance_cycle" and shown.find("\n") > 0:
 		st = shown.get_slice("\n", 1)

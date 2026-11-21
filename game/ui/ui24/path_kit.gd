@@ -275,7 +275,7 @@ static func flow(ci: CanvasItem, pts: PackedVector2Array, col: Color, w: float, 
 static func _comet(ci: CanvasItem, pts: PackedVector2Array, cum: PackedFloat32Array, d0: float, d1: float, lc: Color, a: float, wl: float) -> void:
 	if d1 - d0 < 1.0:
 		return
-	ci.draw_polyline_colors(PackedVector2Array([_at(pts, cum, d0), _at(pts, cum, d1)]), PackedColorArray([Color(lc, 0.0), Color(lc, a)]), wl, true)
+	ci.draw_polyline_colors(PackedVector2Array([_at(pts, cum, d0), _at(pts, cum, d1)]), PackedColorArray([Color(lc, 0.0), Color(lc, a)]), wl, false)
 
 
 

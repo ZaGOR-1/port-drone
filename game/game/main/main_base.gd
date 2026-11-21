@@ -84,6 +84,11 @@ var _pend: Dictionary = {}
 var _confirming: bool = false
 var _ghost: Node2D
 var _ghost_live: bool = false
+var _shift_built_in_series: bool = false
+var _shift_mouse_tap: bool = false
+var _mp_pend_builds: Array[Dictionary] = []
+var _ghost_shift_last: bool = false
+var _ghost_cell_last: Vector2i = Vector2i(-999, -999)
 var op_from: Facility = null
 var hold_from: Facility = null
 var garrison_from: Facility = null

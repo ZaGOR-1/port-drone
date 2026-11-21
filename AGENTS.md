@@ -13,7 +13,7 @@
 
 1. `pwd`, `git rev-parse --show-toplevel`, `git status --short`, `git branch -vv`, `git remote -v`, `git log -1 --format='%h %s'`, `git worktree list`. Не припускай старий шлях або чисте дерево.
 2. Прочитай [NEXT_SESSION](docs/codex/verified/NEXT_SESSION.md), [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md), README та документи цільової системи.
-3. Архітектура: [ARCHITECTURE_AND_FLOWS](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md); факти й прогалини: [REONBOARDING_AUDIT](docs/codex/verified/REONBOARDING_AUDIT.md), [SOURCE_COVERAGE](docs/codex/verified/SOURCE_COVERAGE.md); Windows: [WINDOWS_TWO_PEER_QA_PLAN](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+3. Поточні v0.36 fixes/results: [V036_FIX_RESULTS](docs/codex/verified/V036_FIX_RESULTS.md); п’ять HIGH виправлені та інтегровані PR #4. CPU regression і shutdown leaks відкриті, Windows GUI/LAN/Steam NOT RUN. Архітектура: [ARCHITECTURE_AND_FLOWS](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md); факти й прогалини: [REONBOARDING_AUDIT](docs/codex/verified/REONBOARDING_AUDIT.md), [SOURCE_COVERAGE](docs/codex/verified/SOURCE_COVERAGE.md); Windows: [WINDOWS_TWO_PEER_QA_PLAN](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 4. Перевір актуальну beta без переміщення shared refs: `git ls-remote --heads origin main beta`. Нові `feature/*`, `fix/*`, `docs/*` — від перевіреної beta. За dirty checkout не перемикай гілки з ризиком втрати чужих змін.
 5. Перед конкретною зміною прочитай повністю змінювані файли, батьківські extends, залежності, тести й serialized contracts. Попередній coverage не замінює цей крок. Не повторюй увесь історичний PR audit; працюй за конкретним scope і відкритими прогалинами.
 
@@ -25,7 +25,7 @@
 - Дозвіл редагувати файли **не дозволяє commit, push, PR, merge, tags, release або workflow dispatch**. Потрібна пряма команда в поточній задачі. Історичний Phase7 дозвіл не діє на нові задачі.
 - Не переписуй shared/чужі/OKREDU branches; без force push, автоматичного reset/rebase/clean. Конфлікти — явний review; ownership великих спільних файлів узгоджуй.
 - Звичайний PR: base beta, мінімальний diff, поведінка/compatibility/фактичні тести/NOT RUN; людський review. Required checks/protection не обходити. PR template не встановлює default branch.
-- У snapshot немає `.github/`, workflow і PR template; CI policy tests падають через відсутній файл. Не вважай історичні release gates чинними. Відновлення CI — окрема задача, policy не послаблювати.
+- CI відновлено PR #2: `.github/workflows/build.yml` запускає PR→beta і push beta/main, tests та Windows build без публікації. PR template наразі відсутній; base beta обирай явно. Required checks/reviews/protection перевіряй на GitHub, не послаблюй policy tests.
 
 ## Технології й структура
 
@@ -39,9 +39,9 @@
 
 - SP використовує адаптивний frame delta; MP — SIM_DT=1/30, три ticks/turn, canonical host command order. Не прирівнюй режими й не замінюй operation-count scheduling на wall-clock/довільні await/threading.
 - Порядок RNG draws, ітерацій, ID, commands і `_sim_step` є частиною determinism. Shared caches/static state теж можуть впливати на світ. Не кожний unsorted Dictionary є bug: простеж authoritative наслідок.
-- Поточні PROTO=7, SIM_REV=pr10-phase5b2-1, Save.FORMAT=1 змінюються лише за окремим погодженням. SIM_REV не fingerprint; QA peers мають один точний EXE/DLL комплект з однаковими SHA256.
+- Поточні UI/updater v0.36.0, PROTO=7, SIM_REV=v036-integration-1, Save.FORMAT=1 змінюються лише за окремим погодженням. SIM_REV не fingerprint; QA peers мають один точний EXE/DLL комплект з однаковими SHA256.
 - UI-команди MP мають проходити NetSession queue/authoritative ownership/schema checks. ALLOWED не доводить повну validation всіх methods. LAN/Steam не отримують автоматично online host migration.
-- Не ламай старі saves. Property/class/enum/reference layout — контракт; новий формат потребує migration plan і round-trip tests. Optional `sys.diplo.land_cooldowns` уже є: missing→empty history, new→old downgrade не підтриманий.
+- Не ламай старі saves. Property/class/enum/reference layout — контракт; новий формат потребує migration plan і round-trip tests. Optional `sys.diplo.land_cooldowns` і `sys.hold.far_fail` уже є: missing→empty history, new→old downgrade не підтриманий. Autosave freeze всього encoded graph перед worker; Navy routing не залежить від unsaved TTL history.
 - Failed network restore не має false success/turn advance. Partial world завершує local session, повного world rollback немає; перевіряй epoch/await/cleanup/explicit retry.
 
 ## Ресурси, native та дані користувачів
@@ -56,7 +56,7 @@
 
 - Спочатку контекст, короткий план, ризики та acceptance; мінімальний diff, без великого переписування. Не додавай обов'язкові Python dependencies, якщо вистачає stdlib. Version number без рішення власника не підвищувати.
 - Легка перевірка: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_release.py' -v`; повний discovery — з `-p 'test_*.py'`. Skips не є PASS.
-- Із pinned Godot: `python3 tools/check_performance.py --godot <editor> --mode regression --out <fresh-output>` та профільні tests. Build/manual QA — за Windows plan. Без engine — NOT RUN; залежності не встановлюй неконтрольовано.
+- Із pinned Godot: `python3 tools/check_performance.py --godot <editor> --mode regression --out <fresh-output>` та профільні tests. Build version бери через `python3 tools/build.py --print-version`; explicit --version має збігатися з source. Godot Editor/import запускай лише в ізольованій копії: не створюй `game/project.godot`, зберігай `game/project.binary` і tracked imports. Build/manual QA — за Windows plan. Без engine — NOT RUN; залежності не встановлюй неконтрольовано.
 - Simulation/economy/UI/Steam/updater/save changes потребують відповідних цільових checks і ручних сценаріїв. Benchmarks: один checkpoint/seed/dt/config/build, p50/p99/max/samples; CPU headless не є Windows FPS.
 - Serena — символи, якщо GDScript LSP працює; інакше Git/rg/Python. Context7 — version-specific API. Playwright/Chrome не замінюють Godot Windows GUI. MCP використовуй за доречністю, звітуй про реально використані інструменти.
 - Після імплементації: що/чому/шляхи; PASS/FAIL/SKIP/NOT RUN і причини; compatibility/save/MP ризики; залишок. Оновлюй verified docs, DECISIONS/BACKLOG за зміною поведінки/policy. Історичні звіти зберігай з датою/scope; старі PASS не стають поточними.

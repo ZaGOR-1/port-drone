@@ -21,17 +21,17 @@ The current beta implements the following systems. Their presence in the code do
 - **Seasons and presentation:** seasonal changes, weather, snow, visual effects, flags and alliance emblems.
 - **Saves:** save, load and continue a match; a Chronicle of recorded snapshots rather than a full command replay.
 
-**Multiplayer:** LAN and Steam transports are implemented. Earlier automated admission results are historical; current Godot suites are skipped because the engine is unavailable. A full match between two independent peers, reconnect/resync and real Steam/LAN acceptance testing are still **NOT RUN**. Both test peers must use the same exact EXE/DLL set with matching SHA256 hashes. Steam integration uses the Spacewar test AppID 480.
+**Multiplayer:** LAN and Steam transports are implemented. Current v0.36 compatibility, command, snapshot and hash/RNG fixtures pass CI; loopback admission does not replace a match on two PCs. A full match between two independent peers, reconnect/resync and real Steam/LAN acceptance testing are still **NOT RUN**. Both test peers must use the same exact EXE/DLL set with matching SHA256 hashes. Steam integration uses the Spacewar test AppID 480.
 
 For current evidence and coverage limits, see the [re-onboarding audit](docs/codex/verified/REONBOARDING_AUDIT.md) and [architecture and mechanics](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md). [Phase 5C results](docs/codex/verified/PHASE5C_INTEGRATION_RESULTS.md) are historical.
 
 ## Development status
 
 - **`main`** holds the last accepted stable baseline and is kept separate from experimental development.
-- **`beta`** is the active development and testing branch. The owner imported the current snapshot into a new Git history; PR #1–#11 belong to the earlier history. Verified branch state is recorded in [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md).
+- **`beta`** is the active development and testing branch. The owner imported the initial snapshot into a new Git history. PR #2 restored CI and PR #4 integrated v0.36.0 with regression fixes. The PR #1–#11 series mentioned in older Phase reports belongs to the earlier history, not the current GitHub numbering. Verified branch state is recorded in [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md).
 - The beta is **not a stable release**. Windows GUI and full multiplayer QA are still pending, and some features may contain bugs.
 
-Open work includes update integrity and atomicity, save durability, general network command validation, historical shutdown leak reports and simulation tail latency requiring fresh measurements. See the [backlog](docs/codex/verified/BACKLOG.md) and [Beta QA plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+Open work includes update integrity and atomicity, save durability, general network command validation, confirmed inherited shutdown leaks and CPU regressions in early-world measurements requiring a controlled late-game profile. See the [backlog](docs/codex/verified/BACKLOG.md) and [Beta QA plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 
 ## Running on Windows
 
@@ -67,22 +67,22 @@ GODOT_VERSION=4.7.2-stable python3 tools/fetch_godot.py godot_dl
 python3 tools/build.py \
   --godot godot_dl/godot \
   --template godot_dl/windows_release_x86_64.exe \
-  --version 0.34.0 --repo "" --out dist/beta
-cp tools/qa/Run-*.ps1 dist/beta/
+  --version "$(python3 tools/build.py --print-version)" --repo "" --out dist/beta
+cp libs/*.dll tools/qa/Run-*.ps1 dist/beta/
 ```
 
-Here, `0.34.0` is the beta's existing interface version label, not an announcement of a new stable release. Passing `--repo ""` leaves the package without an automatic update source.
+`--print-version` reads the checked source version, currently `0.36.0`; explicit --version asserts that value. This is a test beta, not a new stable release. Passing `--repo ""` leaves the package without an automatic update source.
 
 [tools/build.py](tools/build.py) packs `game/` into a PCK and embeds it in the Windows EXE. The output in `dist/beta/` contains the **EXE with its embedded PCK**, the DLL ZIP, checksums and copied launchers. Follow the Windows launch steps next. Keep the tracked `game/.godot/` files: the current build depends on these imported resources.
 
-Windows x64 builds and native headless startup passed checks in the earlier Git history. They are **NOT RUN** for the new snapshot; the current checkout lacks the engine and export template. This does not establish Windows GUI, audio or full multiplayer correctness. See the [detailed build and QA plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+The new beta passes CI:43 Godot/Python tests,2476 simulation checks, Windows x64 build/integrity/identity. Native Windows headless startup of the earlier PR #4 package also passed. Windows GUI, audio, GPU and full physical multiplayer QA remain **NOT RUN**; inherited shutdown leaks are open. Engine/template caches are not tracked; check local availability. See the [detailed build and QA plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 
 ## Development and contributions
 
 1. Update your local `beta` and create a task branch: `feature/*`, `fix/*` or `docs/*` as appropriate.
 2. Make a focused change and preserve attribution for earlier work.
 3. Run the relevant [checks](docs/codex/verified/TEST_MATRIX.md); for documentation, check links and the Markdown diff. Mark tests you have not run as `NOT RUN`, and unrelated checks as `N/A` with a reason.
-4. After authorization to publish, open a Pull Request targeting **`beta`**. This snapshot lacks the PR template and CI workflow; full Python discovery currently fails because the workflow is missing.
+4. After authorization to publish, open a Pull Request targeting **`beta`**. CI runs tests/builds for PRs into beta and pushes to beta/main without publishing Releases. There is no PR template; check required reviews and checks on GitHub.
 5. Complete review. Promoting changes to `main` or making a stable release requires a separate decision by the repository owner.
 
 Read [AGENTS.md](AGENTS.md) before working on the project. The [architecture](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md) and [collaboration workflow](docs/codex/verified/COLLABORATION_WORKFLOW.md) provide further context. Protocol, save and deterministic simulation changes need a separate compatibility assessment.

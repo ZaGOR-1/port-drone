@@ -5,9 +5,9 @@ CURRENT, 2026-11-21. Source of truth: actual Git/code/tests, [AGENTS](../../../A
 - ZaGOR-1 — власник і release decision maker; OKREDU — довірений співавтор. Зберігати авторство і погоджені механіки людей.
 - main — прийнята база; beta — development/integration/testing. Нові feature/*, fix/*, docs/* від актуальної beta. Не переписувати спільні branches/історію; великі shared files — погодити ownership.
 - Перед зміною: статус/HEAD/контекст, повне читання залежностей/extends/tests/serialization, лаконічні acceptance/risk criteria. Мінімальний diff і review на correctness, authorization, determinism, save compatibility та side effects.
-- Перед PR: перевірити diff, relevant checks і непроведені ручні cases; явно вказати target beta. У поточному snapshot PR template та CI workflow відсутні; не стверджувати, що вони автоматично enforce policy.
+- Перед PR: перевірити diff, relevant checks і непроведені ручні cases; явно вказати target beta. CI PR #2 існує: PR→beta/push beta/main tests/build без release; PR template відсутній. Branch protection/required reviews перевіряти фактично.
 - Commit, push, PR creation, merge, tags, release/dispatch — лише за прямою командою на відповідну дію. Старі Phase7 task-specific дозволи більше не чинні. main/stable потребує окремого рішення власника після QA.
-- Поточний re-onboarding дозволяє лише документацію й safe local analysis/tests. Production GDScript/DLL/protocol/save/version не змінюються.
+- Scope кожної нової задачі визначає власник. PR #4 уже інтегрував v0.36; завершення PR #1 — документація й branch cleanup без production edits. Старі одноразові дозволи не є поточним workflow.
 - Наступний Windows/two-peer QA — [план](WINDOWS_TWO_PEER_QA_PLAN.md), updater off, isolated users, exact EXE/DLL SHA. Жодних реальних updater/production accounts/data без scope/approval.
 
 ---

@@ -106,7 +106,9 @@ func _run() -> void:
 			return
 	var result: Dictionary = {"passed": true, "samples": samples.size(), "size": gw.data.w, "bots": GameConfig.bots,
 		"dt": dt, "game_time": gw.game_time, "cities": gw.cities.size(), "facilities": gw.mil.facilities.size(), "units": gw.army.units.size(),
-		"mean_ms": float(total_us) / samples.size() / 1000.0, "p95_ms": samples[int(samples.size() * 0.95)] / 1000.0,
+		"mean_ms": float(total_us) / samples.size() / 1000.0,
+		"median_ms": (float(samples[(samples.size() - 1) / 2]) + float(samples[samples.size() / 2])) / 2000.0,
+		"p95_ms": samples[int(samples.size() * 0.95)] / 1000.0,
 		"p99_ms": samples[int(samples.size() * 0.99)] / 1000.0, "max_ms": samples[-1] / 1000.0,
 		"over50ms": over50, "over100ms": over100, "autosaves": saves, "system_total_us": gw.totals, "system_peak_us": gw.peaks}
 	FileAccess.open(args["out"], FileAccess.WRITE).store_string(JSON.stringify(result, "\t"))

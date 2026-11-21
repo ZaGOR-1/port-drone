@@ -7,7 +7,7 @@ extends RefCounted
 
 const PROTO: int = 7
 ## Opaque lobby compatibility identity, not a product version or transport protocol bump.
-const SIM_REV: String = "pr10-phase5b2-1"
+const SIM_REV: String = "v036-integration-1"
 const RECONNECT_S: float = 60.0
 const RECONNECT_EVERY: float = 4.0
 const REJOIN_KEEP_S: int = 1200

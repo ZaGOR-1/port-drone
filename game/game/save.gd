@@ -57,7 +57,7 @@ const GENERIC: Array = ["defense", "diplo", "ai", "session", "seasons"]
 const CFG: Array = ["bots", "difficulty", "aggression", "victory", "target_i", "time_i", "size_i", "tutorial", "fog", "ore_preset", "ore_custom", "creative", "expand_i", "reserves_i", "ai_autodig", "alliances", "limit_i", "nukes", "my_ideology"]
 
 
-const PREFS: Array = ["night", "hints", "econ_fx", "clouds", "fx_level", "ground_detail", "day_grade", "perf_hud", "confirm_actions", "dev_mode", "arch_i", "my_ideology", "opening", "notif_mode", "plan_pos", "power_save", "no_slow", "my_name", "my_flag", "my_land", "cb_on", "cb_list", "my_money", "lang", "pseudo_loc", "fps_i", "ui_scale_i", "reserves_i"]
+const PREFS: Array = ["night", "hints", "econ_fx", "clouds", "fx_level", "ground_detail", "day_grade", "perf_hud", "confirm_actions", "dev_mode", "arch_i", "my_ideology", "opening", "notif_mode", "res_compact", "news_mode", "nuke_alert_i", "alert_snd", "plan_pos", "power_save", "no_slow", "my_name", "my_flag", "my_land", "cb_on", "cb_list", "my_money", "lang", "pseudo_loc", "fps_i", "ui_scale_i", "reserves_i"]
 static var prefs_path: String = "user://settings.cfg"
 
 const DELAY_OK: Array = ["_apply_strike", "_grow_initial"]
@@ -145,7 +145,7 @@ static func match_over(win: bool) -> void:
 
 
 static func can_save(m: Node) -> bool:
-	if m == null or bool(m.get("in_menu")):
+	if m == null or m.get("in_menu") == true:
 		return false
 	var gw: GameWorld = m.get("world")
 	return why_not(m) == ""
@@ -155,7 +155,7 @@ static func can_save(m: Node) -> bool:
 
 
 static func why_not(m: Node) -> String:
-	if m == null or bool(m.get("in_menu")):
+	if m == null or m.get("in_menu") == true:
 		return "Сохранять пока нечего"
 	var gw: GameWorld = m.get("world")
 	if gw == null or gw.data == null or gw.player == null or gw.session == null:
@@ -422,7 +422,7 @@ static func _load_pack(m: Node, pack: Dictionary, net: bool, current: Callable =
 	if not net:
 		gw.net_driven = false
 	gw.time_scale = 0.0
-	gw.new_world(s)
+	gw.new_world(s, true)
 	if not _load_current(m, current) or gw.data == null or gw.data.w != s.size or gw.data.h != s.size:
 		return false
 	var t2: int = Time.get_ticks_usec()
@@ -590,7 +590,7 @@ static func enc(v: Variant) -> Variant:
 			for i in a.size():
 				var e: Variant = a[i]
 				var te: int = typeof(e)
-				out[i] = e if te < TYPE_RID or te > TYPE_ARRAY else enc(e)
+				out[i] = e if te < TYPE_RID else enc(e)
 			return out
 		TYPE_DICTIONARY:
 			var d: Dictionary = v
@@ -600,10 +600,12 @@ static func enc(v: Variant) -> Variant:
 				var tk: int = typeof(k)
 				var tv: int = typeof(dv)
 
-				out2[k if tk < TYPE_RID or tk > TYPE_ARRAY else enc(k)] = dv if tv < TYPE_RID or tv > TYPE_ARRAY else enc(dv)
+				out2[k if tk < TYPE_RID else enc(k)] = dv if tv < TYPE_RID else enc(dv)
 			return out2
 		TYPE_CALLABLE, TYPE_SIGNAL, TYPE_RID:
 			return null
+		TYPE_PACKED_BYTE_ARRAY, TYPE_PACKED_INT32_ARRAY, TYPE_PACKED_INT64_ARRAY, TYPE_PACKED_FLOAT32_ARRAY, TYPE_PACKED_FLOAT64_ARRAY, TYPE_PACKED_STRING_ARRAY, TYPE_PACKED_VECTOR2_ARRAY, TYPE_PACKED_VECTOR3_ARRAY, TYPE_PACKED_COLOR_ARRAY:
+			return v.duplicate()
 	return v
 
 
@@ -830,7 +832,23 @@ static func _snapshot(m: Node) -> Array:
 		if GENERIC.has(n):
 			sys["$gen:" + n] = dump(o)
 		if o.has_method("save_state"):
-			sys[n] = enc(o.call("save_state"))
+			if n == "chronicle":
+				var cst: Dictionary = o.call("save_state")
+				var m_cp: Dictionary = (cst.get("meta", {}) as Dictionary).duplicate(true)
+				if m_cp.has("water") and m_cp["water"] is PackedByteArray:
+					m_cp["water"] = (m_cp["water"] as PackedByteArray).duplicate()
+				sys[n] = {
+					"frames": (cst.get("frames", []) as Array).duplicate(false),
+					"events": (cst.get("events", []) as Array).duplicate(false),
+					"meta": m_cp,
+					"fac_born": (cst.get("fac_born", {}) as Dictionary).duplicate(),
+					"initialized": bool(cst.get("initialized", false)),
+					"saved_match": bool(cst.get("saved_match", false)),
+					"sample_dt": float(cst.get("sample_dt", 4.0)),
+					"sample_t": float(cst.get("sample_t", 4.0)),
+				}
+			else:
+				sys[n] = enc(o.call("save_state"))
 		parts[n] = (Time.get_ticks_usec() - tp) / 1000.0
 	tp = Time.get_ticks_usec()
 
@@ -901,13 +919,18 @@ static func _md5(b: PackedByteArray) -> PackedByteArray:
 
 
 static func _queue_write(header: Dictionary, body: Dictionary, thi: Dictionary = {}, fresh: bool = false) -> int:
-	# Packed arrays are shared references too. Freeze them before the simulation
-	# resumes, then serialize/compress/write entirely on the worker.
+	# The snapshot and this freeze run synchronously at one simulation tick.
+	# Freeze the complete encoded graph once, before the worker can observe it:
+	# entity packed arrays, nested containers and future system fields included.
 	var frozen: Dictionary = body.duplicate(true)
-	var thumb: Dictionary = thi.duplicate()
-	if not thumb.is_empty():
-		thumb["biome"] = frozen["core"]["biome"]
-		thumb["owners"] = frozen["core"]["owners"]
+	header = header.duplicate(true)
+	var thumb: Dictionary = thi.duplicate(true)
+	if not thumb.is_empty() and frozen.has("core") and frozen["core"] is Dictionary:
+		var cf: Dictionary = frozen["core"]
+		if cf.has("biome"):
+			thumb["biome"] = cf["biome"]
+		if cf.has("owners"):
+			thumb["owners"] = cf["owners"]
 	return WorkerThreadPool.add_task(_write_job.bind(header, frozen, thumb, fresh), false, "autosave")
 
 
@@ -1007,6 +1030,10 @@ static func _sound(body: Dictionary) -> bool:
 		return false
 	# Optional FORMAT1 extension: validate before either disk or network load mutates the world.
 	var systems: Variant = body.get("sys", {})
+	if systems is Dictionary and systems.get("hold") is Dictionary:
+		var hold: Dictionary = systems["hold"]
+		if hold.has("far_fail") and not preload("res://game/urban_hold.gd").valid_far_fail(hold["far_fail"]):
+			return false
 	if systems is Dictionary and systems.get("diplo") is Dictionary:
 		var diplomacy: Dictionary = systems["diplo"]
 		if diplomacy.has("land_cooldowns"):
@@ -1099,6 +1126,8 @@ static func load_prefs() -> void:
 			(GameConfig as GDScript).set(n, v)
 	GameConfig.fx_level = clampi(GameConfig.fx_level, 0, 2)
 	GameConfig.notif_mode = clampi(GameConfig.notif_mode, 0, 2)
+	GameConfig.news_mode = clampi(GameConfig.news_mode, 0, 2)
+	GameConfig.nuke_alert_i = clampi(GameConfig.nuke_alert_i, 0, 1)
 	apply_power_save()
 	apply_ui_scale()
 	Loc.boot()

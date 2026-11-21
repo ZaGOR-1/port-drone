@@ -1,4 +1,4 @@
-> **PARTIALLY OUTDATED, 2026-11-21.** PROTO7/SIM_REV pr10-phase5b2-1 підтверджено; старі SHA/results/permissions нижче HISTORICAL. Поточні command/admission/restore/host-change boundaries: [ARCHITECTURE_AND_FLOWS](ARCHITECTURE_AND_FLOWS.md). Live two-peer NOT RUN.
+> **CURRENT identity / HISTORICAL report below.** v0.36.0/PROTO7/SIM_REV `v036-integration-1`. Exact hello/resume gate, power wire/schema/owner guard і canonical hash нових fields перевірені targeted fixtures у PR #4; full physical LAN/Steam NOT RUN. [Current flows](ARCHITECTURE_AND_FLOWS.md), [fixes](V036_FIX_RESULTS.md). Старі revisions/SHA/permissions/results нижче датовані, не поточні.
 
 # Phase 5B.2 — command validation і compatibility boundary
 

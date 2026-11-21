@@ -130,7 +130,7 @@ func open_ultimatum() -> void:
 	var opts: Array = gw.diplo.demand_options(p.id, c.id)
 	for i in opts.size():
 		var o: Dictionary = opts[i]
-		if String(o["kind"]) in ["deposit", "break_alliance", "cancel_visa"]:
+		if String(o["kind"]) in ["deposit", "break_alliance", "cancel_visa", "halt_nukes"]:
 			kinds.append(["opt:%d" % i, String(o["label"])])
 	vb.add_child(UiKit.lbl("ЧТО ТРЕБУЕМ", 11, UiKit.TITLE, 2, 2))
 	var kf: = HFlowContainer.new()

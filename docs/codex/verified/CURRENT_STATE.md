@@ -1,68 +1,61 @@
-# DroneFlames — поточний стан нового репозиторію
+# DroneFlames — поточний технічний стан
 
-2026-11-21, re-onboarding. **PARTIALLY READY**: архітектурні критичні потоки відновлено за кодом, але повне семантичне читання всіх текстових джерел не завершене; runtime/build у цій сесії не виконані. Точні межі — [SOURCE_COVERAGE](SOURCE_COVERAGE.md), повний звіт і ризики — [REONBOARDING_AUDIT](REONBOARDING_AUDIT.md).
+Оновлено 2026-11-21 після integration PR #4. **READY TO START WINDOWS TWO-PEER QA**; це готовність до тестування, не сертифікація gameplay/multiplayer. Цей документаційний етап не повторює повного аудиту й не запускає GUI/Steam/LAN.
 
 ## Repository identity
 
-| Поле | Перевірений стан на початку сесії |
+| Поле | Перевірений checkpoint |
 |---|---|
-| URL | https://github.com/ZaGOR-1/port-drone.git |
-| Git root | /home/zagor/projects/port-drone |
-| main / beta / origin/main / origin/beta | 172df65e3bd004efed9a5444e90a284d9d69db10 |
-| Remote refs | git ls-remote підтвердив обидва heads; не змінювали |
-| HEAD / base | той самий SHA; docs/codex-reonboarding від origin/beta |
-| Initial status | clean beta; один worktree; нова історія з одним root commit |
-| Первинний результат до публікації |15 edited Markdown +5 new Markdown +1 drawio; code/resources/DLL hashes незмінні; тоді commit/push/PR/merge ще не виконувалися |
-| Baseline tracked inventory | 970 файлів, 284 GDScript, 48 Markdown; 680 text / 290 binary |
-| Text volume | 10951776 bytes / 354461 lines; GDScript 6307192 bytes / 182509 lines |
-| LFS / submodules | LFS installed, але tracked LFS objects і submodules не виявлені |
+| Repository | https://github.com/ZaGOR-1/port-drone.git |
+| Primary root | /home/zagor/projects/port-drone; не припускати шлях іншої сесії |
+| main | `172df65e3bd004efed9a5444e90a284d9d69db10`, не змінюється цією задачею |
+| v0.36 code integration у beta | `0f26040994043827a7c14913d945a3df02e00fdd`, merge PR #4 |
+| Reviewed integration head | `0c92d4c216a281a70fa21869408190b83b42aded` |
+| Beta CI | [push run 44937756401](https://github.com/ZaGOR-1/port-drone/actions/runs/44937756401) — PASS для цього exact commit |
+| Docs PR #1 | `docs/codex-reonboarding` → beta, синхронізовано звичайним merge з v0.36; кінцевий стан і SHA брати з Git/GitHub |
 
-Main — прийнята база; beta — development/testing. Нові feature/fix/docs гілки від actual beta. Історичні PR1–11/Phase5–7 належать попередній Git-історії; не шукати старі SHA/гілки та не переносити старі task-specific дозволи. Оригінальну історію не відновлювали.
+`0f26040994043827a7c14913d945a3df02e00fdd` — зафіксований code/QA checkpoint, **не обіцянка вічного HEAD beta**. Документаційний merge змінить beta SHA без зміни code tree. Кожна сесія: git fetch/status/ls-remote; перевірити actual HEAD і PR. main — прийнята stable база; beta — активна розробка й QA; feature/fix/docs створюються від актуальної beta. Старі SHA/Phase5–7 дозволи не відновлювати.
 
-## Завершення документаційного етапу
+## Поточні контракти й виправлення
 
-Окремою командою власника дозволено commit/push гілки docs/codex-reonboarding, один PR із base beta та умовний merge лише після успішних checks/review без bypass. GitHub перед публікацією: **0 workflows**, beta **protected=false**, active branch rules **[]**. За відсутнього CI та відомого FAIL policy tests PR має лишитися відкритим; відсутність protection не є успішним check або review. Main/production code/resources не змінювати. Точні publication SHA/PR/state перевіряти через Git/GitHub, а не брати baseline172df65 за новий HEAD документаційної гілки. Цей дозвіл стосується лише завершення поточного документаційного PR.
+- Godot **4.7.2.stable.official.ed1daf0bf**, editor/template pin та digest у `tools/ci/godot-4.7.2.json`. CI перевіряє actual version/hashes. Локальний cache не tracked: його наявність перевіряти, не припускати й не встановлювати іншу версію.
+- UI `v0.36.0`, `pc/version.cfg=0.36.0`, PROTO **7**, SIM_REV **v036-integration-1**, Save.FORMAT **1**. `build.py --print-version` перевіряє згоду source UI/updater; --version є assertion, не довільною підміною. SIM_REV не content fingerprint; QA exact EXE/DLL SHA256.
+- CI відновлено [PR #2](https://github.com/ZaGOR-1/port-drone/pull/2), merge `145f23418a9a07420a15d6c350ac62c7633e2765`. Workflow PR→beta, push beta/main: tests/build only; release job неактивний, updater repo empty. PR template відсутній.
+- [PR #4](https://github.com/ZaGOR-1/port-drone/pull/4) інтегрував 8 author commits OKREDU/CAFAIML +10 commits fixes/docs, без squash/rebase. PR #3 GitHub автоматично позначив MERGED через включення його head, окремої команди merge/close #3 не було; branch cleanup не переписує ancestry.
+- П’ять HIGH **FIXED**: compatibility identity; повний autosave graph freeze; Navy current-threat routing та repeated-restore scratch reset; UrbanHold far_fail persistence/default/clear/preflight; power priority wire/schema/ownership. Деталі й tests — [V036_FIX_RESULTS](V036_FIX_RESULTS.md).
+- Hash охоплює нові nuclear/EMP/T3/power/convoy/hold/route поля, canonical dictionaries; upgrades filter не ховає VBox; tooltip EMP75s/MIRV2decoys. Це не доказ exhaustive hashing або повного semantic review.
+- Project: binary `game/project.binary` + override.cfg; PcPort/SteamNet → pc/boot → updater bypass → remapped binary main scene → Main/World/Net/Menus. `game/.godot/` потрібний; `game/project.godot` не створювати. Editor/import — лише disposable copy.
+- Save optional land/UrbanHold cooldown: old→new missing defaults перевірені, **new→old downgrade unsupported**. LAN/Steam transport існує; online-only automatic handover не обіцяється LAN/Steam. Chronicle — адаптивні SP keyframes/events, не command replay.
 
-Наступне окреме завдання: відновлення CI tests/build без автоматичної публікації, підготовка перевірених Godot4.7.2 editor/Windows x64 template та одного QA комплекту з exact commit/SHA256. Scope і критерії — [NEXT_SESSION](NEXT_SESSION.md); у цьому документаційному етапі CI/build не виконуються.
+## Фактичні перевірки та межі
 
-## Source contracts
-
-- Godot **4.7.2** за fetch default і project feature4.7; editor/template наразі відсутні. Старого CI workflow у snapshot немає.
-- `game/pc/version.cfg`: **0.33.2.3**, repo empty, libs_rev1. `Menus.VERSION`: **v0.34.0**. Розбіжність не виправляли; build підміняє обидві мітки у temp copy через --version.
-- `NetConfig.PROTO=7`, `SIM_REV=pr10-phase5b2-1`, `Save.FORMAT=1` підтверджено. SIM_REV не code fingerprint; QA — один точний EXE/DLL SHA256.
-- Startup: project.binary → override.cfg → PcPort/SteamNet → pc/boot.tscn + updater → remapped binary main scene → Main/World/Net/Menus. Tracked game/.godot потрібний; усі210 import/remap targets існують.
-- Основні gameplay systems мають code routes; implementation не означає runtime PASS. [Архітектура, механіки, command/save/network flows](ARCHITECTURE_AND_FLOWS.md).
-- LAN/Steam представлені в PC UI; online backend code збережений, normal UI disabled. Automatic host handover — online casual, не LAN/Steam. Chronicle — bounded SP keyframes/events, не full command replay.
-- Optional land cooldown зберігається/валідується/хешується; semantic downgrade на старий reader не підтримується. Format/protocol/version не змінені.
-
-## Реальні перевірки цієї сесії
-
-| Перевірка | Результат / межа |
+| Перевірка | Доказ / статус |
 |---|---|
-| Release Python | PASS:15; offline FakeGitHub, без публікації |
-| Full Python discovery | **FAIL**:26 methods,10 error reports у4 CI methods/subtests,7 Godot skips; missing .github/workflows/build.yml |
-| Python AST / JSON / PO | PASS:14 Python,93 JSON,4 PO structural parse; це не gameplay tests |
-| Resource/class mappings | PASS:210 targets;130 class_name/cache paths match |
-| PowerShell AST | PASS:обидва QA launchers; виконано parser у native Windows PowerShell, самі launchers/EXE не запускалися |
-| Godot compile/regression/save/snapshot/admission | SKIP/NOT RUN:Godot unavailable; старі PASS не зараховуються |
-| Windows build/native headless/GUI, live LAN/Steam, performance | NOT RUN:наступний scope, не виконувалися |
+| v0.36 final local suite | PASS43; new behavioral fixture108 assertions; це попередня implementation session |
+| CI beta `0f26040` | PASS43 з Godot /179.738s, simulation2476 PASS, Windows x64 build + artifact integrity + packaged identity PASS; release SKIPPED |
+| CI job без Godot | 36 tests,9 engine-dependent skips; не видавати skips за engine PASS |
+| Actual Main restore/legacy/defaults/replay continuation | PASS у targeted fixtures, hash/RNG з різним render schedule |
+| ENet compatibility | PASS двох loopback processes з контрольними cohort identities; не full cross-version match |
+| Native Windows headless | PASS попереднього PR #4 CI package: exit0/48.792s,3 DLL loaded; не GUI/Steam |
+| Windows GUI / real two-PC LAN/Steam / GPU | **NOT RUN** |
 
-Логи/індекс — ignored `dist/codex_audit/reonboarding-172df65/`. Повна [карта тестів](REONBOARDING_AUDIT.md#test-map). Немає tools/codex/repository_audit.py: інвентар зроблено тимчасовими stdlib scripts, production/tooling не редагували.
+PR #1 CI і post-merge CI його нового HEAD — окремі runs; їх перевіряти на GitHub, не успадковувати PASS run вище за самою назвою гілки. [План одного точного Windows комплекту](WINDOWS_TWO_PEER_QA_PLAN.md).
 
-## Найважливіші відкриті питання
+## Відкриті ризики й покриття
 
-1. CONFIRMED: missing CI workflow → full tests FAIL; відновлення — окрема tooling задача, не вимикати тести.
-2. CONFIRMED static: updater EXE digest optional, DLL ZIP без digest, activation/rollback неповні. Для QA **DF_NO_UPDATE=1 + repo empty**.
-3. CONFIRMED static: save rotation/fresh overwrite та net_match remove-before-rename мають durability gaps. ENOSPC/power loss не відтворювали; лише copied/synthetic saves.
-4. CONFIRMED scope gap: broad ALLOWED network methods без повної schemas/rate budget. Експлуатація конкретного методу UNVERIFIED.
-5. NEEDS MANUAL QA: two-peer determinism/reconnect/resync/Windows GUI/audio/GPU. Hash частковий; потрібен доказовий спосіб збору turn/hash/RNG, launcher не має trace switch.
-6. HISTORICAL: shutdown leaks і simulation p99 failures; нинішній runtime не перевірено. Старі R02/airport/cooldown/cancel failures не оголошувати поточними: guards/fixes у source є, Godot тести наразі SKIP.
+1. CPU: current early-world fixed mean0.264–0.313ms/p99=2.084–2.396ms проти beta до v0.36 mean0.197–0.241/p99=1.614–1.810. Workload0units,19–20facilities/SP async variability; загального gain не підтверджено, це не FPS/GPU claim. Потрібний late-war profile.
+2. Inherited clean shutdown **FAIL/OPEN**:10 CanvasItem RID,224 ObjectDB,44 resources-at-exit. Exit0 не закриває leaks.
+3. Windows GUI/Shift/scale/render batching, same-build real LAN/Steam, disconnect/rejoin/resync та довга робота — NOT RUN; це наступний QA.
+4. Updater integrity/atomicity, OS-level save durability/deep corruption та general command schemas/rate budgets поза power guard — OPEN. QA updater off, synthetic/copied saves.
+5. Початковий onboarding при172df65 мав FULL33/PARTIAL16/INDEXED235 GDScript,11886/182509 рядків (6.51%). Ці цифри **історичні**; v0.36 зміни не успадковують старий FULL. [SOURCE_COVERAGE](SOURCE_COVERAGE.md) має dated ledger та freshness overlay; full semantic audit усіх scripts не заявляється.
 
-Наступний етап лише після нової команди: [Windows build →18 GUI cases →two independent peers](WINDOWS_TWO_PEER_QA_PLAN.md). Не публікувати збірки, не запускати updater і не починати 0.41 migration. Швидке відновлення контексту — [NEXT_SESSION](NEXT_SESSION.md).
+[Архітектура](ARCHITECTURE_AND_FLOWS.md), [початковий audit і актуалізація](REONBOARDING_AUDIT.md), [backlog](BACKLOG.md), [NEXT_SESSION](NEXT_SESSION.md). Документація й agent rules не надають постійного дозволу на наступні commit/push/merge/main/releases.
 
 ---
 
 ## HISTORICAL — попередня Git-історія, текст збережено
+
+
 
 Усе нижче описує колишні checkpoints/worktrees/SHA/результати. Це не активний workflow і не дозвіл на Git або release дії. Current facts — вище.
 

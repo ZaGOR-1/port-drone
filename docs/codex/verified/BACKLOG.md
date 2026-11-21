@@ -1,3 +1,25 @@
+# Поточний backlog — beta v0.36
+
+2026-11-21 після PR #4. Поточний стан і code checkpoint — [CURRENT_STATE](CURRENT_STATE.md); наступна сесія — [NEXT_SESSION](NEXT_SESSION.md). Цей список не надає дозволів на implementation або publication.
+
+| Робота | Статус / критерій |
+|---|---|
+| CI restore / pinned engine / Windows build | DONE PR #2; actual beta CI43 tests/2476 checks/build PASS |
+| П’ять HIGH v0.36, hash/upgrades/tooltips | FIXED, PR #4 MERGED; [evidence](V036_FIX_RESULTS.md) |
+| Windows GUI18cases і v0.36 Shift/T3/fuel/power/nuclear/replay | NOT RUN; [current plan](WINDOWS_TWO_PEER_QA_PLAN.md) |
+| Два Windows PCs: LAN/Steam/hash/RNG/rejoin/resync/restore | NOT RUN; exact same package, способи збору hash/RNG погодити до acceptance |
+| CPU late-war profile | OPEN; early-world CPU regression/no global gain; GPU/FPS не виміряно |
+| Shutdown lifetime | CONFIRMED inherited10 CanvasItem/224 ObjectDB/44resources; не приховувати diagnostics |
+| Updater integrity/atomicity, OS save durability/deep malformed | OPEN; updater off, isolated copies |
+| General command schemas/rate limits / Steam admission negatives | OPEN поза targeted power/schema fixes |
+| Onboarding gaps | PARTIAL/INDEXED; актуальність кожного source див. SOURCE_COVERAGE; не повторювати full audit |
+
+main stable — окреме рішення власника,0.41 migration ON HOLD. Документаційний PR #1 синхронізується з beta; його final Git/CI/merge статус перевірити на GitHub. Дозвіл видалити інтегровані remote branches у поточній задачі не є постійним дозволом видаляти чужу активну роботу.
+
+---
+
+## HISTORICAL — початковий onboarding172df65 (до CI/v0.36)
+
 # Поточний backlog нового snapshot — 2026-11-21
 
 Докази, priority, reproduction і блокери: [реєстр ризиків](REONBOARDING_AUDIT.md#risk-register). Це план, не дозволи на fixes.
@@ -20,6 +42,24 @@
 ## HISTORICAL backlog попередньої Git-історії
 
 Старі OPEN/FIXED/permissions нижче мають лише свій checkpoint scope; current risk status — у re-onboarding audit.
+
+
+## HISTORICAL — fixes до дозволу merge PR #4
+
+# v0.36 integration — 2026-11-21
+
+Поточний scope supersedes історичний Phase7 дозвіл нижче: **merge beta у цій задачі заборонений**, final decision власника. [Fixes/results](V036_FIX_RESULTS.md), [original review](V036_REVIEW.md). PR #3 і #1 залишаються відкритими, авторські commits збережено.
+
+- FIXED у integration branch: compatibility identity, autosave aliases, Navy threat routing/repeated restore scratch, UrbanHold cooldown, power ownership/wire schema; hash/upgrade filtering/tooltips. Final CI/PR статус брати з GitHub, не з історичних Phase5 PASS.
+- P1: controlled late-war performance profile. Early-world fixed mean/p99 гірші за beta у поточних noisy runs; глобального прискорення не підтверджено. Unsafe кеші не повертати заради timing.
+- P1: Windows GUI18cases + нові T3/fuel/power/nuclear/Shift UX; render ordering/overlap після batching. Physical two-PC LAN/Steam, same exact EXE/DLL, hash/RNG, disconnect/rejoin/resync, supported host-change; updater disabled.
+- OPEN: general network command schema safety (за межами targeted power guard), updater integrity/atomicity, OS-level save durability/downgrade, inherited shutdown leaks. Native Windows smoke exit0 не закриває leaks.
+- Docs PR #1 не редагувався. Після рішення щодо v0.36 узгодити його current-state identity з accepted beta та цим report; старий SIM_REV у re-onboarding docs не переносити як актуальний факт.
+
+---
+
+
+## HISTORICAL — попередні Phase5–8
 
 # Phase 7 → Phase 8 — beta QA backlog
 
@@ -187,3 +227,7 @@ Cleanup мав конкретний trigger і малий compatibility surface;
 ## Критерій завершення саме аудиту
 
 Наявність документів або compiler PASS не означає review всіх gameplay branches. Після steering Phase2 критерій практичного прогресу — закриті критичні потоки/залежності, чесні ranges, невідоме позначене, runtime checks виконані або мають явний FAIL/BLOCKED/NOT RUN, binary metadata окремо, tracked code unchanged. Не перечитувати194 AUTO scripts лише заради100%; повертатися до них за ризиком/завданням. Exhaustive inventory/static index збережений у FILE_COVERAGE; поточний baseline у RUNTIME_BASELINE/CURRENT_STATE.
+
+## CI_RESTORE — новий репозиторій, 2026-11-21
+
+Missing workflow усунуто в ci/restore-build; локально32 Python/2476 regression і Windows package verification PASS. Remote Actions/merge ще визначаються за CI PR, не вважати локальний PASS remote acceptance. Деталі й exact Windows build commands — [CI_RESTORATION](CI_RESTORATION.md). Після успішної integration повторно перевірити PR #1 без зміни його head; Windows GUI/two-peer, updater/save/shutdown/p99 залишаються окремим QA/backlog.

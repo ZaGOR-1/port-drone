@@ -1,4 +1,4 @@
-> **HISTORICAL operational paths/build identity.** Для нового репозиторію користуйтеся [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md). Старі worktrees/SHA/Godot cache/PASS нижче не поточний стан; updater лишається вимкненим.
+> **HISTORICAL operational paths/build identity.** Старі0.34/SIM_REV/commands/PASS нижче не поточні. Для v0.36.0/7/v036-integration-1 застосовувати [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md); updater off, один exact CI package, GUI/two-peer NOT RUN.
 
 # Phase 8 — QA інтегрованої beta
 

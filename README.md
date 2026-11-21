@@ -21,17 +21,17 @@
 - **Сезони й оформлення:** сезонні зміни, погода, сніг, візуальні ефекти, прапори та емблеми альянсів.
 - **Збереження:** збереження, завантаження й продовження матчу; хроніка зі знімками подій, а не повноцінний повтор команд.
 
-**Мультиплеєр:** реалізовані LAN і Steam-транспорт. Історичні автоматичні перевірки допуску не є поточним PASS; у re-onboarding Godot suites пропущені через відсутній engine. Тим часом повний матч двох незалежних учасників, reconnect/resync і реальний Steam/LAN QA ще **NOT RUN**. Для тесту обидва учасники повинні використовувати один точний комплект EXE/DLL із однаковими SHA256. Steam використовує тестовий Spacewar AppID 480.
+**Мультиплеєр:** реалізовані LAN і Steam-транспорт. У v0.36 автоматичні compatibility/command/snapshot/hash-RNG fixtures проходять CI; loopback admission не замінює матч на двох ПК. Тим часом повний матч двох незалежних учасників, reconnect/resync і реальний Steam/LAN QA ще **NOT RUN**. Для тесту обидва учасники повинні використовувати один точний комплект EXE/DLL із однаковими SHA256. Steam використовує тестовий Spacewar AppID 480.
 
 Поточні докази й межі перевірок: [re-onboarding audit](docs/codex/verified/REONBOARDING_AUDIT.md), [архітектура та механіки](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md). [Phase 5C](docs/codex/verified/PHASE5C_INTEGRATION_RESULTS.md) — історичний звіт.
 
 ## Поточний стан розробки
 
 - **`main`** — остання прийнята стабільна база; експериментальна розробка сюди не надходить.
-- **`beta`** — активна гілка розробки й тестування. Власник переніс актуальний snapshot у нову Git-історію; попередні PR #1–#11 належать старій історії. Стан `main`/`beta` перевірено в [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md).
+- **`beta`** — активна гілка розробки й тестування. Початковий snapshot перенесено у нову Git-історію. У ній PR #2 відновив CI, PR #4 інтегрував v0.36.0 та виправлення. Серія PR #1–#11 у старих Phase-звітах належить попередній історії, не поточній нумерації GitHub. Стан `main`/`beta` перевірено в [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md).
 - Beta **не є стабільним релізом**. Windows GUI та повний multiplayer QA ще належить виконати; частина функцій може містити помилки.
 
-Відкриті задачі охоплюють цілісність і атомарність оновлень, надійність збережень, загальну перевірку мережевих команд, історичні повідомлення про витоки при завершенні та затримки симуляції, які потребують повторного вимірювання. Докладніше: [backlog](docs/codex/verified/BACKLOG.md) і [план Beta QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+Відкриті задачі охоплюють цілісність і атомарність оновлень, надійність збережень, загальну перевірку мережевих команд, підтверджені inherited витоки при завершенні та CPU performance regression у ранніх вимірюваннях; потрібний профіль тривалого матчу. Докладніше: [backlog](docs/codex/verified/BACKLOG.md) і [план Beta QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 
 ## Запуск у Windows
 
@@ -67,22 +67,22 @@ GODOT_VERSION=4.7.2-stable python3 tools/fetch_godot.py godot_dl
 python3 tools/build.py \
   --godot godot_dl/godot \
   --template godot_dl/windows_release_x86_64.exe \
-  --version 0.34.0 --repo "" --out dist/beta
-cp tools/qa/Run-*.ps1 dist/beta/
+  --version "$(python3 tools/build.py --print-version)" --repo "" --out dist/beta
+cp libs/*.dll tools/qa/Run-*.ps1 dist/beta/
 ```
 
-`0.34.0` тут — наявна назва версії в інтерфейсі beta, а не оголошення нового стабільного випуску. Параметр `--repo ""` вимикає джерело автоматичних оновлень у комплекті.
+`--print-version` бере узгоджену source версію, зараз `0.36.0`; explicit --version лише перевіряє її. Це тестова beta, не новий стабільний реліз. Параметр `--repo ""` вимикає джерело автоматичних оновлень у комплекті.
 
 [tools/build.py](tools/build.py) пакує `game/` у PCK і вбудовує його у Windows EXE. Результат у `dist/beta/`: **EXE з PCK усередині**, ZIP із DLL, контрольні суми та скопійовані launchers. Далі виконайте кроки запуску у Windows. Зберігайте tracked `game/.godot/`: поточна збірка використовує ці імпортовані ресурси.
 
-Windows x64 build і native headless startup підтверджувалися в попередній Git-історії. Для нового snapshot вони **NOT RUN**; engine/template у поточному checkout відсутні. Це не підтверджує роботу Windows GUI, звуку чи повного мультиплеєра. [Докладний план збірки й QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+Windows x64 build/integrity/identity і43 Godot/Python tests та2476 simulation checks проходять CI нової beta; native Windows headless попереднього PR #4 package теж PASS. Windows GUI, звук, GPU й повний фізичний multiplayer QA ще **NOT RUN**; shutdown leaks лишаються відкритими. Engine/template cache не tracked, його наявність перевіряйте локально. [Докладний план збірки й QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 
 ## Розробка та внесок
 
 1. Оновіть локальну `beta` та створіть окрему гілку: `feature/*`, `fix/*` або `docs/*` відповідно до задачі.
 2. Внесіть невелику узгоджену зміну, зберігаючи авторство попередньої роботи.
 3. Виконайте відповідні [перевірки](docs/codex/verified/TEST_MATRIX.md); для документації перевірте посилання та Markdown diff. Непроведені тести позначайте `NOT RUN`, нерелевантні — `N/A` із поясненням.
-4. Після дозволу на публікацію створіть Pull Request із цільовою гілкою **`beta`**. PR template та CI workflow у цьому snapshot відсутні; загальний Python discovery через це FAIL.
+4. Після дозволу на публікацію створіть Pull Request із цільовою гілкою **`beta`**. CI запускає tests/build для PR→beta та push beta/main без публікації Releases. PR template відсутній; required checks/reviews перевіряйте на GitHub.
 5. Пройдіть review. Перенесення в `main` і стабільний випуск потребують окремого рішення власника.
 
 Перед роботою прочитайте [AGENTS.md](AGENTS.md). [Архітектура](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md) та [правила співпраці](docs/codex/verified/COLLABORATION_WORKFLOW.md) допоможуть зорієнтуватися. Зміни протоколу, збережень і детермінованої симуляції потребують окремої оцінки сумісності.

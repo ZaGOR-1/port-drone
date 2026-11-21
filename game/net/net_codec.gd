@@ -57,7 +57,10 @@ static func _dec(gw: GameWorld, v: Variant) -> Variant:
 		return v
 	var d: Dictionary = v
 	if d.has("$e"):
-		var e: Object = _entity(gw, String(d["$e"]), int(d["i"]))
+		if not (d["$e"] is String) or not (d.get("i") is int):
+			ok = false
+			return null
+		var e: Object = _entity(gw, d["$e"], d["i"])
 		if e == null:
 			ok = false
 		return e

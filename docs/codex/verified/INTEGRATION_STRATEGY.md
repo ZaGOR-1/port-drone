@@ -1,4 +1,4 @@
-> **HISTORICAL — попередня Git-історія.** Старі PR/SHA/гілки й дозволи не відновлювати. Чинний workflow: [COLLABORATION_WORKFLOW](COLLABORATION_WORKFLOW.md), [CURRENT_STATE](CURRENT_STATE.md).
+> **HISTORICAL strategy below.** У новій історії PR #2/#4 уже інтегровані; PR #3 marked MERGED через ancestry. Не відновлювати cumulative PR1–11 старого repo. main stable, нові feature/fix/docs від actual beta; merge/push/cleanup лише за окремою командою. [Current policy](../../../AGENTS.md).
 
 # Phase 7 — поточне рішення власника
 

@@ -259,6 +259,19 @@ func buy(af: Facility, type: int, country: Country) -> String:
 	return ""
 
 
+func buy_batch(af: Facility, type: int, country: Country, max_n: int = 0) -> Dictionary:
+	var cap: int = max_n if max_n > 0 else AIR_CAP
+	var bought: int = 0
+	var last_why: String = ""
+	for _i in cap:
+		var w: String = buy(af, type, country)
+		if w != "":
+			last_why = w
+			break
+		bought += 1
+	return {"bought": bought, "why": last_why, "type": type}
+
+
 func buy_carrier_plane(s: Ship, type: int, country: Country) -> String:
 	if s == null or not s.is_carrier() or not s.alive() or country == null or s.c != country.id:
 		return Loc.t("Нужен живой свой авианосец")

@@ -1,4 +1,4 @@
-> **PARTIALLY OUTDATED, 2026-11-21.** Нижче історичні findings іншого checkpoint; cleanup/restore/UI guards уже присутні. Поточні CONFIRMED/HISTORICAL/SUSPECTED/NEEDS MANUAL QA: [risk register](REONBOARDING_AUDIT.md#risk-register). Не виправляти автоматично всі старі R-issues без reproduction.
+> **CURRENT register / HISTORICAL reports below.** Missing CI та п’ять HIGH v0.36 закриті PR #2/#4. CPU regression і inherited shutdown leaks підтверджені; GUI/LAN/Steam, updater integrity, save durability та general schemas відкриті. [CURRENT_STATE](CURRENT_STATE.md), [BACKLOG](BACKLOG.md), [fix evidence](V036_FIX_RESULTS.md) — актуальні scopes.
 
 # Phase 5 status overlay — 2026-11-20
 

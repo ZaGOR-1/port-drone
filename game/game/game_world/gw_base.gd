@@ -233,6 +233,7 @@ var units_air: UnitsLayer
 
 
 var _own_rect: Rect2i = Rect2i()
+var _terr_flush_t: float = 0.0
 
 
 var _gtab: Array = []

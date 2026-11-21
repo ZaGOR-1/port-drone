@@ -9,6 +9,7 @@ The engine finds a PCK appended to its own executable by the 12-byte trailer
 [u64 size of the pck][u32 'GDPC'] — the same mechanism the editor's «embed PCK» option uses.
 """
 import argparse, hashlib, os, re, shutil, struct, subprocess, sys, tempfile, zipfile
+from pathlib import Path
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAGIC = 0x43504447  # 'GDPC'
@@ -19,15 +20,37 @@ def sh(cmd):
     subprocess.run(cmd, check=True)
 
 
+def source_version():
+    """Keep the source UI and updater version in agreement before any build writes."""
+    game = Path(ROOT) / 'game'
+    ui = re.search(r'^const VERSION: String = "v([0-9]+(?:\.[0-9]+)*)"$',
+                   (game/'ui/menus.gd').read_text(), re.M)
+    cfg = re.search(r'^version="([0-9]+(?:\.[0-9]+)*)"$',
+                    (game/'pc/version.cfg').read_text(), re.M)
+    if ui is None or cfg is None or ui[1] != cfg[1]:
+        raise ValueError('Source UI and updater versions must agree')
+    return ui[1]
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--godot", required=True, help="Godot 4.7.2 editor binary (runs headless, packs the PCK)")
-    ap.add_argument("--template", required=True, help="export template exe (windows_release_x86_64.exe)")
-    ap.add_argument("--version", required=True)
+    ap.add_argument("--godot", help="Godot 4.7.2 editor binary (runs headless, packs the PCK)")
+    ap.add_argument("--template", help="export template exe (windows_release_x86_64.exe)")
+    ap.add_argument("--version", help="Optional assertion of the source version")
+    ap.add_argument("--print-version", action="store_true", help="Print checked source version without building")
     ap.add_argument("--repo", default="")
     ap.add_argument("--out", default="dist")
     ap.add_argument("--exe-name", default="DroneFlames.exe")
     a = ap.parse_args()
+    version = source_version()
+    if a.version is not None and a.version != version:
+        ap.error('--version must match source version ' + version)
+    a.version = version
+    if a.print_version:
+        print(version)
+        return 0
+    if not a.godot or not a.template:
+        ap.error('--godot and --template are required for a build')
 
     out = os.path.abspath(a.out)
     os.makedirs(out, exist_ok=True)

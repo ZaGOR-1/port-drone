@@ -22568,3 +22568,1075 @@ msgstr "Estabilidad y frentes — frentes FrontPlan corregidos, escala de sprite
 #. cat=static zone=ui uses=1
 msgid "Устаревший онлайн-релей и мобильные ограничения — сетевой режим переведён на Steam и LAN, убраны старые отладочные хоткеи камеры"
 msgstr "Relé legado y límites móviles — multijugador migrado a Steam y LAN, atajos antiguos de cámara eliminados"
+
+#. patch v0.35
+msgid "Добыча (рудники, вышки, лесопилки)"
+msgstr "Extracción (minas, pozos, aserraderos)"
+
+#. patch v0.35
+msgid "Промышленность (НПЗ и заводы)"
+msgstr "Industria (refinerías y fábricas)"
+
+#. patch v0.35
+msgid "Сельское хозяйство (колхозы)"
+msgstr "Agricultura (granjas)"
+
+#. patch v0.35
+msgid "Защита (антидроновые сетки и бетон)"
+msgstr "Protección (redes antidrones y hormigón)"
+
+#. patch v0.35
+msgid "Металлический рудник"
+msgstr "Mina de metal"
+
+#. patch v0.35
+msgid "Титановый рудник"
+msgstr "Mina de titanio"
+
+#. patch v0.35
+msgid "Рудник драгметаллов"
+msgstr "Mina de metales preciosos"
+
+#. patch v0.35
+msgid "МАССОВОЕ УЛУЧШЕНИЕ (5 С)"
+msgstr "MEJORA MASIVA (5 S)"
+
+#. patch v0.35
+msgid "Удерживайте кнопку 5 секунд для массового улучшения по категории или конкретному типу. Дешёвые объекты улучшаются первыми, строящиеся пропускаются."
+msgstr "Mantén pulsado 5 segundos para mejorar en masa por categoría o tipo. Los más baratos se mejoran primero; los que están en obras se omiten."
+
+#. patch v0.35
+msgid "ПО КАТЕГОРИЯМ (УДЕРЖАНИЕ 5 С)"
+msgstr "POR CATEGORÍA (MANTENER 5 S)"
+
+#. patch v0.35
+msgid "ПО КОНКРЕТНЫМ ТИПАМ (УДЕРЖАНИЕ 5 С)"
+msgstr "POR TIPO ESPECÍFICO (MANTENER 5 S)"
+
+#. patch v0.35
+msgid "УДЕРЖИВАЙТЕ %.1f С..."
+msgstr "MANTÉN %.1f S..."
+
+#. patch v0.35
+msgid "Удерживайте кнопку 5 секунд для массового улучшения"
+msgstr "Mantén pulsado 5 segundos para confirmar la mejora masiva"
+
+#. patch v0.35
+msgid "к ур.%d: готовы %d (доступно %d), строятся %d"
+msgstr "a niv.%d: listos %d (disponibles %d), en obras %d"
+
+#. patch v0.35
+msgid " · не хватает на все: %s"
+msgstr " · falta para todos: %s"
+
+#. patch v0.35
+msgid "→ УР.%d · %s"
+msgstr "→ NIV.%d · %s"
+
+#. patch v0.35
+msgid "→ УР.%d (0/%d) · %s"
+msgstr "→ NIV.%d (0/%d) · %s"
+
+#. patch v0.35
+msgid "5С → УР.%d (%d/%d) · %s"
+msgstr "5S → NIV.%d (%d/%d) · %s"
+
+#. patch v0.35
+msgid "сетки: готовы %d (доступно %d), строятся %d"
+msgstr "redes: listas %d (disponibles %d), en obras %d"
+
+#. patch v0.35
+msgid "бетон: готовы %d (доступно %d), строятся %d"
+msgstr "hormigón: listos %d (disponibles %d), en obras %d"
+
+#. patch v0.35
+msgid "5С СЕТКИ (%d/%d) · %s"
+msgstr "5S REDES (%d/%d) · %s"
+
+#. patch v0.35
+msgid "5С БЕТОН (%d/%d) · %s"
+msgstr "5S HORMIGÓN (%d/%d) · %s"
+
+#. patch v0.35
+msgid "СЕТКИ · %s"
+msgstr "REDES · %s"
+
+#. patch v0.35
+msgid "БЕТОН · %s"
+msgstr "HORMIGÓN · %s"
+
+#. patch v0.35
+msgid "Уже в очереди"
+msgstr "Ya en cola"
+
+#. patch v0.35
+msgid "Все на уровне"
+msgstr "Todos al nivel"
+
+#. patch v0.35
+msgid "Все защищены"
+msgstr "Todos protegidos"
+
+#. patch v0.35
+msgid "Не хватает ресурсов"
+msgstr "Faltan recursos"
+
+#. patch v0.35
+msgid "Защита: %d объект(ов), −%d%s"
+msgstr "Protección: %d instalación(es), −%d%s"
+
+#. patch v0.35
+msgid "Защита не начата: "
+msgstr "Protección no iniciada: "
+
+#. patch v0.35
+msgid "УДЕРЖ. 5С: УЛУЧШИТЬ ВСЕ (%d/%d) · %s"
+msgstr "MANTÉN 5S: MEJORAR TODOS (%d/%d) · %s"
+
+#. patch v0.35
+msgid "Боеприпасы «Заслона» производятся отдельно в карточке объекта"
+msgstr "La munición de Zaslon se produce por separado en la tarjeta"
+
+#. patch v0.35
+msgid "Выберите свой «Заслон»"
+msgstr "Selecciona tu propio Zaslon"
+
+#. patch v0.35
+msgid "Комплекс разрушен"
+msgstr "Complejo destruido"
+
+#. patch v0.35
+msgid "Комплекс ещё строится (%d с)"
+msgstr "El complejo aún se está construyendo (%d s)"
+
+#. patch v0.35
+msgid "Боекомплект и очередь «Заслона» заполнены (4/4)"
+msgstr "Munición y cola de Zaslon llenas (4/4)"
+
+#. patch v0.35
+msgid "ПРО «Заслон»: противоракета готова (%d/%d)"
+msgstr "ABM Zaslon: interceptor listo (%d/%d)"
+
+#. patch v0.35
+msgid "ПРО «Заслон»: производство БК в очереди (+%d, БК %d/%d)"
+msgstr "ABM Zaslon: producción de munición en cola (+%d, munición %d/%d)"
+
+#. patch v0.35
+msgid " · СТРОИТСЯ: %s · БК 0/%d"
+msgstr " · EN OBRAS: %s · MUN. 0/%d"
+
+#. patch v0.35
+msgid " · ЗАРЯД %d/%d · ПРОИЗВОДСТВО БК +%d (%s)%s"
+msgstr " · MUN. %d/%d · PRODUCIENDO +%d (%s)%s"
+
+#. patch v0.35
+msgid " · ПУСТОЙ: ЗАРЯД 0/%d — ТРЕБУЕТСЯ ПРОИЗВОДСТВО БК"
+msgstr " · VACÍO: MUN. 0/%d — REQUIERE PRODUCCIÓN"
+
+#. patch v0.35
+msgid " · БОЕГОТОВ: ЗАРЯД %d/%d"
+msgstr " · LISTO: MUN. %d/%d"
+
+#. patch v0.35
+msgid "ПЕРЕХВАТ МБР И ГИПЕРЗВУКА · 1 ЗАРЯД: %d + %s (%d С)"
+msgstr "INTERCEPCIÓN ICBM E HIPERSÓNICA · 1 CARGA: %d + %s (%d S)"
+
+#. patch v0.35
+msgid "+1 ЗАРЯД\n%d"
+msgstr "+1 CARGA\n%d"
+
+#. patch v0.35
+msgid "ЗАПОЛНИТЬ\n×%d"
+msgstr "LLENAR\n×%d"
+
+#. patch v0.35
+msgid "Стратегическая ПРО «Заслон» строится 2 мин и сдаётся без боекомплекта (0/%d). Противоракеты производятся отдельно в этом комплексе: %d денег + %s, %d с за каждый заряд."
+msgstr "El ABM estratégico Zaslon tarda 2 min en construirse y empieza sin munición (0/%d). Los interceptores se producen en este complejo: %d de dinero + %s, %d s por carga."
+
+#. patch v0.35
+msgid "+1 ЗАРЯД ПРО"
+msgstr "+1 CARGA ABM"
+
+#. patch v0.35
+msgid "Произвести 1 противоракету в этом «Заслоне» (2 500 денег, титан 6, металл 4, драгметаллы 1 · 30 с)"
+msgstr "Producir 1 interceptor en este Zaslon (2.500 dinero, titanio 6, metal 4, preciosos 1 · 30 s)"
+
+#. patch v0.35
+msgid "ЗАПОЛНИТЬ БК"
+msgstr "LLENAR MUNICIÓN"
+
+#. patch v0.35
+msgid "Поставить в очередь противоракеты до полного боекомплекта (4/4)"
+msgstr "Poner en cola interceptores hasta llenar (4/4)"
+
+#. patch v0.35
+msgid "СТРОИТСЯ / РЕМОНТ: %s"
+msgstr "EN OBRAS / REPARACIÓN: %s"
+
+#. patch v0.35
+msgid " · НЕТ ЭНЕРГИИ ×0.5"
+msgstr " · SIN ENERGÍA ×0.5"
+
+#. patch v0.35
+msgid "ПЕРЕЗАРЯДКА ШАХТЫ: %s"
+msgstr "RECARGA DEL SILO: %s"
+
+#. patch v0.35
+msgid "ЭТАП 1/2 — ПОДГОТОВКА МБР: %d %% (%s)"
+msgstr "FASE 1/2 — PREP. ICBM: %d %% (%s)"
+
+#. patch v0.35
+msgid "МБР СОБРАНА — ГОТОВА К ВЫХОДУ НА БОЕГОТОВНОСТЬ (%s)"
+msgstr "ICBM ENSAMBLADO — LISTO PARA ALERTA DE COMBATE (%s)"
+
+#. patch v0.35
+msgid "ЭТАП 2/2 — ВЫХОД НА БОЕГОТОВНОСТЬ: %d %% (%s)"
+msgstr "FASE 2/2 — ALERTA DE COMBATE: %d %% (%s)"
+
+#. patch v0.35
+msgid "ЯДЕРНАЯ ПРОГРАММА: %s НАЧАЛА ПОДГОТОВКУ МБР (ЭТАП 1/2 — 2:00)"
+msgstr "PROGRAMA NUCLEAR: %s INICIÓ PREPARACIÓN DE ICBM (FASE 1/2 — 2:00)"
+
+#. patch v0.35
+msgid "РАЗВЕДКА: %s начала подготовку МБР (этап 1/2 — 2 мин)"
+msgstr "INTELIGENCIA: %s inició preparación de ICBM (fase 1/2 — 2 min)"
+
+#. patch v0.35
+msgid "ЯДЕРНАЯ УГРОЗА: %s ВЫВОДИТ МБР НА БОЕГОТОВНОСТЬ (ЭТАП 2/2 — 2:00)!"
+msgstr "¡AMENAZA NUCLEAR: %s PONE UN ICBM EN ALERTA DE COMBATE (FASE 2/2 — 2:00)!"
+
+#. patch v0.35
+msgid "ТРЕВОГА: %s выводит МБР на боеготовность (этап 2/2 — 2 мин)!"
+msgstr "¡ALERTA: %s pone un ICBM en alerta de combate (fase 2/2 — 2 min)!"
+
+#. patch v0.35
+msgid "Подготовка МБР начата (этап 1/2 — %s)"
+msgstr "Preparación de ICBM iniciada (fase 1/2 — %s)"
+
+#. patch v0.35
+msgid "Выход МБР на боеготовность (этап 2/2 — %s)"
+msgstr "Puesta de ICBM en alerta de combate (fase 2/2 — %s)"
+
+#. patch v0.35
+msgid "Ядерная шахта: МБР собрана — приведите в боеготовность (этап 2/2)"
+msgstr "Silo nuclear: ICBM ensamblado — ponlo en alerta de combate (fase 2/2)"
+
+#. patch v0.35
+msgid "ЯДЕРНАЯ ПРОГРАММА %s СОРВАНА: ШАХТА МБР УНИЧТОЖЕНА!"
+msgstr "¡PROGRAMA NUCLEAR DE %s FRUSTRADO: SILO ICBM DESTRUIDO!"
+
+#. patch v0.35
+msgid "НАРУШЕН ЯДЕРНЫЙ МЕМОРАНДУМ: %s ВОЗОБНОВИЛА ПРОГРАММУ МБР!"
+msgstr "¡MEMORANDO NUCLEAR ROTO: %s REANUDÓ SU PROGRAMA ICBM!"
+
+#. patch v0.35
+msgid "требует свернуть ядерную программу"
+msgstr "exige detener el programa nuclear"
+
+#. patch v0.35
+msgid "КД ПОДГ.\n%s"
+msgstr "ENFR. PREP.\n%s"
+
+#. patch v0.35
+msgid "ЭТАП 1/2\n%s"
+msgstr "FASE 1/2\n%s"
+
+#. patch v0.35
+msgid "БОЕГОТ.\n%s"
+msgstr "ALERTA\n%s"
+
+#. patch v0.35
+msgid "ЭТАП 2/2\n%s"
+msgstr "FASE 2/2\n%s"
+
+#. patch v0.35
+msgid "Ядерная шахта МБР. Двухэтапная подготовка: 1) Подготовка МБР (%s, 25 000 + 5 плутония от АЭС) — мир получает предупреждение. 2) Выход на боеготовность (%s) — тревога для всех стран, возможны ультиматумы. 3) Пуск на любую дистанцию (КД %d с). Перехватывает только ПРО «Заслон»."
+msgstr "Silo nuclear ICBM. Preparación en 2 fases: 1) Preparación (%s, 25.000 + 5 de plutonio) — aviso global. 2) Alerta de combate (%s) — alerta mundial y posibles ultimátums. 3) Lanzamiento a cualquier distancia (recarga %d s). Solo lo intercepta el ABM Zaslon."
+
+#. patch v0.35
+msgid "ИНТЕРФЕЙС И ПК"
+msgstr "INTERFAZ Y PC"
+
+#. patch v0.35
+msgid "Интерфейс и ПК"
+msgstr "Interfaz y PC"
+
+#. patch v0.35
+msgid "МАСШТАБ %s · ТУЛТИПЫ · ХОТКЕИ"
+msgstr "ESCALA %s · TOOLTIPS · ATAJOS"
+
+#. patch v0.35
+msgid "ПАНЕЛЬ РЕСУРСОВ · ОПОВЕЩЕНИЯ"
+msgstr "BARRA DE RECURSOS · ALERTAS"
+
+#. patch v0.35
+msgid "НАВЕДЕНИЕ МЫШИ (ТУЛТИПЫ)"
+msgstr "TOOLTIPS AL PASAR EL RATÓN"
+
+#. patch v0.35
+msgid "ЗАДЕРЖКА ПОДСКАЗОК"
+msgstr "RETRASO DE TOOLTIPS"
+
+#. patch v0.35
+msgid "0.2 С"
+msgstr "0.2 S"
+
+#. patch v0.35
+msgid "0.45 С"
+msgstr "0.45 S"
+
+#. patch v0.35
+msgid "0.9 С"
+msgstr "0.9 S"
+
+#. patch v0.35
+msgid "ГОРЯЧИЕ КЛАВИШИ НА КНОПКАХ"
+msgstr "ATAJOS EN LOS BOTONES"
+
+#. patch v0.35
+msgid "СКОРОСТЬ КАМЕРЫ (WASD)"
+msgstr "VELOCIDAD DE CÁMARA (WASD)"
+
+#. patch v0.35
+msgid "ПРОКРУТКА У КРАЯ ЭКРАНА"
+msgstr "DESPLAZAMIENTO EN BORDES"
+
+#. patch v0.35
+msgid "ИНВЕРСИЯ КОЛЕСА МЫШИ"
+msgstr "INVERTIR RUEDA DEL RATÓN"
+
+#. patch v0.35
+msgid "ПАНЕЛЬ РЕСУРСОВ"
+msgstr "BARRA DE RECURSOS"
+
+#. patch v0.35
+msgid "ПОЛНАЯ"
+msgstr "COMPLETA"
+
+#. patch v0.35
+msgid "КОМПАКТ"
+msgstr "COMPACTA"
+
+#. patch v0.35
+msgid "ЛЕНТА НОВОСТЕЙ"
+msgstr "CANAL DE NOTICIAS"
+
+#. patch v0.35
+msgid "ЯДЕРНЫЕ ТРЕВОГИ"
+msgstr "ALERTAS NUCLEARES"
+
+#. patch v0.35
+msgid "ВСЕ ЭТАПЫ"
+msgstr "TODAS LAS FASES"
+
+#. patch v0.35
+msgid "ЭТАП 2 И ПУСК"
+msgstr "FASE 2 Y LANZAMIENTO"
+
+#. patch v0.35
+msgid "ЗВУК ТРЕВОГ И СИРЕН"
+msgstr "SONIDO DE ALERTAS Y SIRENAS"
+
+#. patch v0.35
+msgid "СТРОЙКА %d:%02d"
+msgstr "OBRA %d:%02d"
+
+#. patch v0.35
+msgid "СТРОЙКА %d С"
+msgstr "OBRA %d S"
+
+#. patch v0.35
+msgid "Горячие клавиши ПК: Пробел — пауза, X / [ ] — скорость, WASD/Стрелки — камера (Shift — быстрее), Q/E и F1–F7 — вкладки, H — столица, U — массовое улучшение (5 с), R — ремонт всего, N — действие ядерной шахты, Z — заряд «Заслона», O — залежи, Tab — следующий объект того же типа."
+msgstr "Atajos de PC: Espacio — pausa, X / [ ] — velocidad, WASD/Flechas — cámara (Shift — rápido), Q/E y F1–F7 — pestañas, H — capital, U — mejora masiva (5 s), R — reparar todo, N — acción de silo nuclear, Z — carga de Zaslon, O — yacimientos, Tab — siguiente edificio del mismo tipo."
+
+#. patch v0.35
+msgid "Двухэтапная ядерная программа (2+2 мин) — подготовка МБР (2 мин) и выход на боеготовность (2 мин) с глобальными предупреждениями всем странам и ядерными ультиматумами"
+msgstr "Programa nuclear en dos fases (2+2 min) — preparación de ICBM (2 min) y alerta de combate (2 min) con avisos globales y ultimátums nucleares"
+
+#. patch v0.35
+msgid "ПРО «Заслон» с производством БК — строится 2 мин без зарядов (0/4); противоракеты производятся отдельно в карточке каждого комплекса (2 500 + титан, металл, драгметаллы, 30 с)"
+msgstr "ABM Zaslon con producción de munición — se construye en 2 min sin cargas (0/4); los interceptores se producen por separado en cada complejo (2.500 + titanio, metal, preciosos, 30 s)"
+
+#. patch v0.35
+msgid "Массовое улучшение зданий (удержание 5 с) — двухуровневое меню по категориям (добыча, промышленность, колхозы, защита) и конкретным типам рудников с предварительным расчётом бюджета"
+msgstr "Mejora masiva de edificios (mantener 5 s) — menú en dos niveles por categoría y tipos específicos de minas con cálculo previo de presupuesto"
+
+#. patch v0.35
+msgid "Настройки «Интерфейс и ПК» — задержка подсказок, компактная панель ресурсов, фильтр новостей, скорость камеры WASD, прокрутка у края экрана и инверсия колеса мыши"
+msgstr "Ajustes de «Interfaz y PC» — retraso de tooltips, barra compacta de recursos, filtro de noticias, velocidad de cámara WASD, desplazamiento en bordes e inversión de rueda"
+
+#. patch v0.35
+msgid "Управление на ПК — горячие клавиши U (массовое улучшение), R (ремонт), N (действие ядерной шахты), Z (заряд «Заслона»), O (залежи), Tab (перебор объектов того же типа)"
+msgstr "Control en PC — atajos U (mejora masiva), R (reparar), N (acción de silo nuclear), Z (carga de Zaslon), O (yacimientos), Tab (alternar edificios del mismo tipo)"
+
+#. patch v0.35
+msgid "Бесплатная автоперезарядка ПРО «Заслон» и устаревший онлайн-релей — боекомплект ПРО теперь требует промышленного производства"
+msgstr "Autorrecarga gratuita del ABM Zaslon y relé legado — la munición ABM ahora requiere producción industrial"
+#. patch v0.36
+msgid " · БЧ: %s"
+msgstr " · OJIVA: %s"
+
+#. patch v0.36
+msgid " · НЕТ ЭНЕРГИИ — ПАУЗА"
+msgstr " · SIN ENERGÍA — EN PAUSA"
+
+#. patch v0.36
+msgid " · ПЛУТОНИЙ %d/%d"
+msgstr " · PLUTONIO %d/%d"
+
+#. patch v0.36
+msgid "%s · ПРОДАНО НА %d\nБУФЕР ТОПЛИВА: %d/%d"
+msgstr "%s · VENDIDO POR %d\nBÚFER DE COMBUSTIBLE: %d/%d"
+
+#. patch v0.36
+msgid "%s\nСЕТЬ %d / %d · УРАН %d (НА %d МИН)%s\nПРИОРИТЕТ: %s"
+msgstr "%s\nRED %d / %d · URANIO %d (PARA %d MIN)%s\nPRIORIDAD: %s"
+
+#. patch v0.36
+msgid "3 режима приоритета электросети при дефиците («Баланс» / «Военные и ПВО» / «Экономика»); при полном блек-ауте ядерная шахта встаёт на паузу"
+msgstr "3 modos de prioridad eléctrica en escasez (Balance / Militar y AA / Economía); un apagón total pausa el silo nuclear"
+
+#. patch v0.36
+msgid "Tab · след."
+msgstr "Tab · sig."
+
+#. patch v0.36
+msgid "[Война]"
+msgstr "[Guerra]"
+
+#. patch v0.36
+msgid "[Союз]"
+msgstr "[Aliado]"
+
+#. patch v0.36
+msgid "×1.85 выпуск, 50% без сети и врождённый бетон (смена 300)"
+msgstr "×1.85 producción, 50% sin red y hormigón innato (cambio 300)"
+
+#. patch v0.36
+msgid "×2.6 выпуск, +1 ед. электричества и +25% крит-уязвимости (смена 300)"
+msgstr "×2.6 producción, +1 energía y +25% vulnerabilidad crítica (cambio 300)"
+
+#. patch v0.36
+msgid "АВАРИЙНОЕ ГЛУШЕНИЕ"
+msgstr "PARADA DE EMERGENCIA"
+
+#. patch v0.36
+msgid "АВАРИЯ НА АЭС %s: РАСПЛАВЛЕНИЕ АКТИВНОЙ ЗОНЫ!"
+msgstr "ACCIDENTE EN CENTRAL NUCLEAR %s: ¡FUSIÓN DEL NÚCLEO!"
+
+#. patch v0.36
+msgid "АЭС заглушена: перегрев снят"
+msgstr "Central nuclear detenida: sobrecalentamiento resuelto"
+
+#. patch v0.36
+msgid "АЭС разрушена"
+msgstr "Central nuclear destruida"
+
+#. patch v0.36
+msgid "АЭС: КРИТИЧЕСКИЙ ПЕРЕГРЕВ (%d с)! Сделайте аварийный стоп (1 500) или ремонт"
+msgstr "CENTRAL NUCLEAR: ¡SOBRECALENTAMIENTO CRÍTICO (%d s)! Parada de emergencia (1.500) o reparación"
+
+#. patch v0.36
+msgid "АЭС: аварийная остановка выполнена — угроза расплавления снята"
+msgstr "Central nuclear: parada de emergencia completada — fusión evitada"
+
+#. patch v0.36
+msgid "Б"
+msgstr "B"
+
+#. patch v0.36
+msgid "Ба"
+msgstr "Ba"
+
+#. patch v0.36
+msgid "БОЕГОТОВНОСТЬ — МБР НА ДЕЖУРСТВЕ"
+msgstr "LISTO — ICBM EN GUARDIA"
+
+#. patch v0.36
+msgid "БУНКЕР 50% (БЕЗ СЕТИ)"
+msgstr "BÚNKER 50% (SIN RED)"
+
+#. patch v0.36
+msgid "Базовая боеголовка МБР без доплаты титаном"
+msgstr "Ojiva ICBM estándar sin coste adicional de titanio"
+
+#. patch v0.36
+msgid "Боеголовки МБР и физическая логистика топлива — выбор Моно / РГЧ с ложными целями (+6 титана против «Заслона») / Высотный ЭМИ (блек-аут на 75 с); НПЗ копят топливо в буфер и отправляют бензовозы к столице/порту"
+msgstr "Ojivas ICBM y logística física de combustible — elige Mono / MIRV con señuelos (+6 titanio vs Zaslon) / PEM de gran altitud (apagón 75 s); las refinerías acumulan combustible y envían camiones cisterna"
+
+#. patch v0.36
+msgid "Бункер (×1.85, бетон Т1, 50%% без сети)"
+msgstr "Búnker (×1.85, hormigón T1, 50%% sin red)"
+
+#. patch v0.36
+msgid "Буферы НПЗ пусты"
+msgstr "Búferes de refinería vacíos"
+
+#. patch v0.36
+msgid "В ячейке %d армий не осталось"
+msgstr "No quedan ejércitos en el grupo %d"
+
+#. patch v0.36
+msgid "ВОЕН.+ПВО"
+msgstr "MIL.+AA"
+
+#. patch v0.36
+msgid "ВОЙНЫ И ЯО"
+msgstr "GUERRAS Y NUKE"
+
+#. patch v0.36
+msgid "ВСЕ ТИПЫ"
+msgstr "TODOS LOS TIPOS"
+
+#. patch v0.36
+msgid "ВЫСОТНЫЙ ЭМИ"
+msgstr "PEM DE ALTITUD"
+
+#. patch v0.36
+msgid "ВЫСОТНЫЙ ЭМИ-ВЗРЫВ: %s ОТКЛЮЧИЛА СЕТИ %s!"
+msgstr "DETONACIÓN PEM DE ALTITUD: ¡%s APAGÓ LA RED DE %s!"
+
+#. patch v0.36
+msgid "Во"
+msgstr "Mi"
+
+#. patch v0.36
+msgid "Вода"
+msgstr "Agua"
+
+#. patch v0.36
+msgid "Военные и ПВО"
+msgstr "Militar y AA"
+
+#. patch v0.36
+msgid "Все топливозаправщики в пути"
+msgstr "Todos los camiones cisterna están en ruta"
+
+#. patch v0.36
+msgid "Выпустить бензовоз с накопленным топливом прямо сейчас"
+msgstr "Enviar un camión cisterna con el combustible acumulado ahora mismo"
+
+#. patch v0.36
+msgid "Высотный ЭМИ: %s"
+msgstr "PEM de gran altitud: %s"
+
+#. patch v0.36
+msgid "Высотный подрыв без кратера: отключает ПВО, РЛС, РЭБ и электросети в большом радиусе на 75 с"
+msgstr "Detonación en altitud sin cráter: desactiva AA, radar, GE y redes eléctricas en un amplio radio durante 75 s"
+
+#. patch v0.36
+msgid "ГЛУШЕНИЕ\n%d"
+msgstr "PARADA\n%d"
+
+#. patch v0.36
+msgid "Город %s"
+msgstr "Ciudad %s"
+
+#. patch v0.36
+msgid "Города и баланс"
+msgstr "Ciudades y balance"
+
+#. patch v0.36
+msgid "Группа %d (%d бойцов): ЛКМ — выбрать · 2×ЛКМ — камера · ПКМ — очистить"
+msgstr "Grupo %d (%d tropas): Clic izq. elegir · 2×Clic centrar · Clic der. limpiar"
+
+#. patch v0.36
+msgid "Дорога"
+msgstr "Carretera"
+
+#. patch v0.36
+msgid "Доступно на уровне 3"
+msgstr "Disponible en nivel 3"
+
+#. patch v0.36
+msgid "ЗАФИКСИРОВАН ПУСК ЯДЕРНОЙ МБР%s: %s!"
+msgstr "¡LANZAMIENTO DE ICBM NUCLEAR DETECTADO%s: %s!"
+
+#. patch v0.36
+msgid "Зависание автопродажи топлива в обход дорог и стабильность пространственных/спрайтовых проверок в поздней игре"
+msgstr "Autoventa instantánea de combustible sin carreteras y estabilidad espacial/de sprites en partida tardía"
+
+#. patch v0.36
+msgid "Интерфейс ПК — тактический призрак с ценой/запретом у курсора, инспектор карты (150 мс), матрица бейджей клавиш (F1–F7, R, U, O, N, Z, Tab), кликабельная тревога МБР, панель групп Ctrl+1–9, доработанное удержание 5 с, фильтры и цвета стран в Хронике"
+msgstr "Interfaz de PC — fantasma táctico con validación en el cursor, inspector del mapa (150 ms), matriz de atajos (F1–F7, R, U, O, N, Z, Tab), alerta nuclear clicable, barra de grupos Ctrl+1–9, pulsación de 5 s mejorada y filtros/colores en Crónica"
+
+#. patch v0.36
+msgid "КОНВОЙ\n%d/%d"
+msgstr "CONVOY\n%d/%d"
+
+#. patch v0.36
+msgid "Конвой топлива отправлен"
+msgstr "Convoy de combustible enviado"
+
+#. patch v0.36
+msgid "МОНО"
+msgstr "MONO"
+
+#. patch v0.36
+msgid "МОНОБЛОК"
+msgstr "MONOBLOQUE"
+
+#. patch v0.36
+msgid "МОНОБЛОЧНАЯ БЧ"
+msgstr "OJIVA MONOBLOQUE"
+
+#. patch v0.36
+msgid "Мало топлива в буфере"
+msgstr "Poco combustible en el búfer"
+
+#. patch v0.36
+msgid "НПЗ отрезан от логистики (мост/дорога)"
+msgstr "Refinería aislada de la logística (puente/carretera)"
+
+#. patch v0.36
+msgid "НПЗ разрушен"
+msgstr "Refinería destruida"
+
+#. patch v0.36
+msgid "Нажмите тип, чтобы отстроить все его разрушенные объекты, пока хватает денег."
+msgstr "Pulsa un tipo para reconstruir todas sus estructuras destruidas mientras tengas fondos."
+
+#. patch v0.36
+msgid "Не хватает денег: %d"
+msgstr "Falta dinero: %d"
+
+#. patch v0.36
+msgid "Не хватает титана: нужно %d"
+msgstr "Falta titanio: se necesitan %d"
+
+#. patch v0.36
+msgid "Неверная специализация"
+msgstr "Especialización no válida"
+
+#. patch v0.36
+msgid "Неизвестный тип БЧ"
+msgstr "Tipo de ojiva desconocido"
+
+#. patch v0.36
+msgid "Нейтр."
+msgstr "Neutral"
+
+#. patch v0.36
+msgid "Нет АЭС"
+msgstr "Sin central nuclear"
+
+#. patch v0.36
+msgid "Нет НПЗ"
+msgstr "Sin refinería"
+
+#. patch v0.36
+msgid "Нет дороги до столицы (мост разрушен)"
+msgstr "Sin carretera a la capital (puente destruido)"
+
+#. patch v0.36
+msgid "Нет столицы для сбыта"
+msgstr "Sin capital para entrega"
+
+#. patch v0.36
+msgid "Нет шахты"
+msgstr "Sin silo"
+
+#. patch v0.36
+msgid "Нужно %d для экстренного заглушения"
+msgstr "Se necesitan %d para parada de emergencia"
+
+#. patch v0.36
+msgid "ОТПРАВИТЬ КОНВОЙ"
+msgstr "ENVIAR CONVOY"
+
+#. patch v0.36
+msgid "Оптимизация движка — батчинг дорог/огня/дыма, frustum-culling и троттлинг HUD, кеш-наследственность, сжатие хроники и асинхронные автосохранения для плавного позднего этапа"
+msgstr "Optimización del motor — lotes de carreteras/fuego/humo, frustum culling, ajuste de HUD, caché de territorio, crónica comprimida y autoguardados asíncronos"
+
+#. patch v0.36
+msgid "ПЕРЕГРЕВ %dс"
+msgstr "SOBRECAL. %ds"
+
+#. patch v0.36
+msgid "ПЕРЕГРЕВ %s"
+msgstr "SOBRECAL. %s"
+
+#. patch v0.36
+msgid "ПРИОРИТЕТ ЭЛЕКТРОСЕТИ"
+msgstr "PRIORIDAD DE RED ELÉCTRICA"
+
+#. patch v0.36
+msgid "ПРИОРИТЕТ\nСЕТИ"
+msgstr "PRIO\nRED"
+
+#. patch v0.36
+msgid "Переключить порядок питания при дефиците: Баланс / Военные и ПВО / Экономика"
+msgstr "Cambiar orden de suministro en escasez: Balance / Militar y AA / Economía"
+
+#. patch v0.36
+msgid "Перерабатывает нефть в топливо; при ≥%d т танкер везёт партию в столицу или порт. "
+msgstr "Refina petróleo en combustible; con ≥%d t un camión lo lleva a la capital o puerto. "
+
+#. patch v0.36
+msgid "Приоритет электросети: %s"
+msgstr "Prioridad eléctrica: %s"
+
+#. patch v0.36
+msgid "РГЧ + ЛОЖНЫЕ ЦЕЛИ"
+msgstr "MIRV + SEÑUELOS"
+
+#. patch v0.36
+msgid "РГЧ +%d Ti"
+msgstr "MIRV +%d Ti"
+
+#. patch v0.36
+msgid "Разделение Т3 экономики — при улучшении до 3 уровня выберите ⚡ Форсаж (×2.6 выпуск, +1 сеть, +25% крит-уязвимости) или 🛡 Бункер (×1.85 выпуск, 50% работы без сети и врождённый бетон)"
+msgstr "Especialización económica T3 — al subir a nivel 3 elige ⚡ Sobremarcha (×2.6 prod., +1 red, +25% vuln.) o 🛡 Búnker (×1.85 prod., 50% sin red y hormigón innato)"
+
+#. patch v0.36
+msgid "Расплавление АЭС: %s"
+msgstr "Fusión nuclear: %s"
+
+#. patch v0.36
+msgid "Реактор не перегревается"
+msgstr "El reactor no se sobrecalienta"
+
+#. patch v0.36
+msgid "СЕТЬ: %d / %d (+%d ОТ %s)\nПРИОРИТЕТ: %s"
+msgstr "RED: %d / %d (+%d DE %s)\nPRIORIDAD: %s"
+
+#. patch v0.36
+msgid "СПЕЦИАЛИЗАЦИЯ: БУНКЕР"
+msgstr "ESPECIALIZACIÓN: BÚNKER"
+
+#. patch v0.36
+msgid "СПЕЦИАЛИЗАЦИЯ: ФОРСАЖ"
+msgstr "ESPECIALIZACIÓN: SOBREMARCHA"
+
+#. patch v0.36
+msgid "СТРОЙКА"
+msgstr "OBRAS"
+
+#. patch v0.36
+msgid "Сектор (%d, %d)"
+msgstr "Sector (%d, %d)"
+
+#. patch v0.36
+msgid "Серая зона в начале партии — до 10:00 (12:00 на 8 странах) запрещены полномасштабная война и штурмы городов; с 3:00 возможны пограничные стычки за рудники и спорные залежи"
+msgstr "Zona Gris inicial — hasta las 10:00 (12:00 con 8 países) se prohíben guerras totales y asaltos a ciudades; desde las 3:00 hay escaramuzas fronterizas"
+
+#. patch v0.36
+msgid "Серая зона: до %d мин допустимы лишь стычки у границы и залежей"
+msgstr "Zona Gris: hasta %d min solo se permiten escaramuzas en frontera y yacimientos"
+
+#. patch v0.36
+msgid "Серая зона: пограничная стычка у залежи/границы (%s — %s)"
+msgstr "Zona Gris: escaramuza fronteriza (%s vs %s)"
+
+#. patch v0.36
+msgid "Серая зона: штурм городов открывается после %d мин"
+msgstr "Zona Gris: los asaltos a ciudades se abren tras %d min"
+
+#. patch v0.36
+msgid "Сначала соберите МБР"
+msgstr "Ensambla primero el ICBM"
+
+#. patch v0.36
+msgid "Снять перегрев АЭС за 1 500 и остановить таймер расплавления (60 с)"
+msgstr "Detener sobrecalentamiento de central por 1.500 y frenar fusión (60 s)"
+
+#. patch v0.36
+msgid "Специализация Т3: ×1.85 выпуск, работает на 50% без сети и получает врождённый бетон"
+msgstr "Esp. T3: ×1.85 producción, opera al 50% sin red y obtiene hormigón innato"
+
+#. patch v0.36
+msgid "Специализация Т3: ×2.6 выпуск, +1 ед. электричества и +25% крит-уязвимости"
+msgstr "Esp. T3: ×2.6 producción, +1 energía y +25% vulnerabilidad crítica"
+
+#. patch v0.36
+msgid "Стоит +6 титана: выпускает 2 ложные цели на подлёте, чтобы прорвать ПРО «Заслон»"
+msgstr "Cuesta +6 titanio: despliega 2 señuelos en vuelo para saturar el ABM Zaslon"
+
+#. patch v0.36
+msgid "Столица %s"
+msgstr "Capital %s"
+
+#. patch v0.36
+msgid "Стратегическая защита и кризис АЭС — сетки и бетон теперь защищают АЭС, ядерные шахты и «Заслоны»; 2-й удар по АЭС запускает 60 с перегрев (платное глушение за 1 500 или взрыв и заражение)"
+msgstr "Protección estratégica y crisis nuclear — redes/hormigón ahora protegen centrales, silos y Zaslon; el 2.º impacto inicia sobrecalentamiento de 60 s (parada por 1.500 o fusión)"
+
+#. patch v0.36
+msgid "Стратегическая защита: сетки и бетон работают. Вырабатывает +%d энергии и плутоний для ядерных МБР (1 за %d с, лимит %d). 2-й удар дрона/КР запускает 60 с перегрев (глушение %d или расплавление). Без урана АЭС стоит."
+msgstr "Protección estratégica: redes y hormigón activos. Genera +%d energía y plutonio (1 cada %d s, lím. %d). El 2.º impacto activa 60 s de sobrecalentamiento (parada %d o fusión). Se detiene sin uranio."
+
+#. patch v0.36
+msgid "Суша"
+msgstr "Tierra"
+
+#. patch v0.36
+msgid "Т3 (%s): ⚡ Форсаж (×2.6 вып., +1 сеть, +25%% крит) или 🛡 Бункер (×1.85 вып., 50%% без сети, врожд. бетон).%s"
+msgstr "T3 (%s): ⚡ Sobremarcha (×2.6 prod, +1 red, +25%% crit) o 🛡 Búnker (×1.85 prod, 50%% sin red, hormigón).%s"
+
+#. patch v0.36
+msgid "Т3 профиль: %s"
+msgstr "Perfil T3: %s"
+
+#. patch v0.36
+msgid "Т3 спец.: [⚡ Форсаж: ×2.6 вып., +1 сеть, +25%% крит] / [🛡 Бункер: ×1.85 вып., 50%% без сети, бетон]."
+msgstr "Esp. T3: [⚡ Sobremarcha: ×2.6 prod, +1 red, +25%% crit] / [🛡 Búnker: ×1.85 prod, 50%% sin red, hormigón]."
+
+#. patch v0.36
+msgid "ТОЛЬКО ДОСТУПНЫЕ"
+msgstr "SOLO ASEQUIBLES"
+
+#. patch v0.36
+msgid "Танкер вышел из порта: %d топлива на экспорт"
+msgstr "Buque cisterna zarpó del puerto: %d combustible exportado"
+
+#. patch v0.36
+msgid "Тап — камера к угрозе"
+msgstr "Clic — centrar cámara en amenaza"
+
+#. patch v0.36
+msgid "Топливный конвой доставлен (%d ед.): +%d"
+msgstr "Convoy de combustible entregado (%d t): +%d"
+
+#. patch v0.36
+msgid "Туман войны"
+msgstr "Niebla de guerra"
+
+#. patch v0.36
+msgid "УР %d→%d\n%d"
+msgstr "NV %d→%d\n%d"
+
+#. patch v0.36
+msgid "УР 2→3⚡\n%d"
+msgstr "NV 2→3⚡\n%d"
+
+#. patch v0.36
+msgid "УР 2→3🛡\n%d"
+msgstr "NV 2→3🛡\n%d"
+
+#. patch v0.36
+msgid "УР. 3 · БУНКЕР"
+msgstr "NV. 3 · BÚNKER"
+
+#. patch v0.36
+msgid "УР. 3 · ФОРСАЖ"
+msgstr "NV. 3 · SOBREMARCHA"
+
+#. patch v0.36
+msgid "УР.3: БАЛАНС"
+msgstr "NV.3: BALANCE"
+
+#. patch v0.36
+msgid "УР.3: ⚡ ФОРСАЖ"
+msgstr "NV.3: ⚡ SOBREM."
+
+#. patch v0.36
+msgid "УР.3: 🛡 БУНКЕР"
+msgstr "NV.3: 🛡 BÚNKER"
+
+#. patch v0.36
+msgid "Удерживайте кнопку (или Enter/Space при наведении) 5 секунд для массового улучшения. Дешёвые объекты улучшаются первыми, строящиеся пропускаются."
+msgstr "Mantén el botón (o Enter/Space al pasar el ratón) 5 s para mejorar en masa. Los más baratos primero."
+
+#. patch v0.36
+msgid "Ф"
+msgstr "S"
+
+#. patch v0.36
+msgid "Форсаж (×2.6, +1 кВт)"
+msgstr "Sobremarcha (×2.6, +1 energ.)"
+
+#. patch v0.36
+msgid "Цели: %s%s"
+msgstr "Objetivos: %s%s"
+
+#. patch v0.36
+msgid "Шахта МБР: выбрана БЧ «%s»"
+msgstr "Silo ICBM: ojiva «%s»"
+
+#. patch v0.36
+msgid "Шахта повреждена"
+msgstr "El silo está dañado"
+
+#. patch v0.36
+msgid "ЭКОН."
+msgstr "ECON."
+
+#. patch v0.36
+msgid "ЭМИ %dс"
+msgstr "PEM %ds"
+
+#. patch v0.36
+msgid "ЭМИ-БЧ"
+msgstr "OJIVA PEM"
+
+#. patch v0.36
+msgid "ЭТОЙ СЭС"
+msgstr "ESTA SOLAR"
+
+#. patch v0.36
+msgid "ЭТОЙ ТЭЦ"
+msgstr "ESTA CENTRAL"
+
+#. patch v0.36
+msgid "Это здание не поддерживает специализацию"
+msgstr "Este edificio no admite especialización"
+
+#. patch v0.36
+msgid "Экономика"
+msgstr "Economía"
+
+#. patch v0.36
+msgid "Эк"
+msgstr "Ec"
+
+#. patch v0.36
+msgid "Ядерная шахта МБР (сетки/бетон поддерживаются). 1) Сборка МБР (%s, 25 000 + 5 плутония) — мир видит старт. 2) Боеготовность (%s, без электричества на паузе!). БЧ: Моно / РГЧ+ложные (+%d титана против ПРО) / ЭМИ (блек-аут ПВО и сетей на 75 с)."
+msgstr "Silo ICBM nuclear (admite redes/hormigón). 1) Ensamblar ICBM (%s, 25.000 + 5 plutonio). 2) A punto (%s, ¡en pausa sin red!). Ojivas: Mono / MIRV (+%d titanio vs ABM) / PEM (apagón 75 s)."
+
+#. patch v0.36
+msgid "Ядерное оружие отключено"
+msgstr "Las armas nucleares están desactivadas"
+
+#. patch v0.36
+msgid "Ядерные шахты и ПРО «Заслон» (клик — перейти)"
+msgstr "Silos nucleares y ABM Zaslon (clic para ir)"
+
+#. patch v0.36
+msgid "Ячейка %d очищена"
+msgstr "Grupo %d limpiado"
+
+#. patch v0.36
+msgid "ложную цель ББ"
+msgstr "un señuelo de ojiva"
+
+#. patch v0.36
+msgid "можно"
+msgstr "válido"
+
+#. patch v0.36
+msgid "строит. %dс"
+msgstr "obr. %ds"
+
+#. patch v0.36
+msgid "ур."
+msgstr "nv."
+
+#. patch v0.36
+msgid "☢ %d ГОТ."
+msgstr "☢ %d LISTO"
+
+#. patch v0.36
+msgid "☢ ×%d"
+msgstr "☢ ×%d"
+
+#. patch v0.36
+msgid "⚠ ПЕРЕГРЕВ! ВЗРЫВ ЧЕРЕЗ %s — ГЛУШИТЕ!"
+msgstr "⚠ ¡SOBRECALENTAMIENTO! FUSIÓN EN %s — ¡PARAR!"
+
+#. patch v0.36
+msgid "⚡ ФОРСАЖ"
+msgstr "⚡ SOBREM."
+
+#. patch v0.36
+msgid "⚡ ФОРСАЖ\n%d"
+msgstr "⚡ SOBREM.\n%d"
+
+#. patch v0.36
+msgid "⚡ ФОРСАЖ\nБЕСПЛ."
+msgstr "⚡ SOBREM.\nGRATIS"
+
+#. patch v0.36
+msgid "🛡 %d/%d"
+msgstr "🛡 %d/%d"
+
+#. patch v0.36
+msgid "🛡 БУНКЕР"
+msgstr "🛡 BÚNKER"
+
+#. patch v0.36
+msgid "🛡 БУНКЕР\n%d"
+msgstr "🛡 BÚNKER\n%d"
+
+#. patch v0.36
+msgid "🛡 БУНКЕР\nБЕСПЛ."
+msgstr "🛡 BÚNKER\nGRATIS"
+
+
+#. patch v0.36
+msgid "Мгновенная автопродажа топлива из НПЗ в обход логистики и старый безвыборный Т3 апгрейд"
+msgstr "Autoventa instantánea de combustible sin logística y mejora T3 sin especialización"
+
+#. patch Shift UX
+msgid "⇧ серийное строительство"
+msgstr "⇧ construcción en serie"
+
+#. patch Shift UX
+msgid "[Shift] серия · ПКМ выход"
+msgstr "[Shift] serie · clic der. salir"
+
+#. patch Shift UX
+msgid "Город · %d"
+msgstr "Ciudad · %d"
+
+#. patch Shift UX
+msgid "Место занято: в очереди"
+msgstr "Espacio ocupado: en cola"
+
+#. patch Shift UX
+msgid "Не хватает: %s (без Shift — замена)"
+msgstr "Falta: %s (sin Shift para sustituir)"
+
+#. patch Shift UX
+msgid "Куплено: %s ×%d"
+msgstr "Comprado: %s ×%d"
+
+#. patch Shift UX
+msgid "Максимум %d точек маршрута"
+msgstr "Máximo %d puntos de ruta"
+
+#. patch Shift UX
+msgid "%s: маршрут (%d тчк)"
+msgstr "%s: ruta (%d pts)"
+
+#. patch Shift UX
+msgid "ПКМ — идти · Shift+ПКМ — маршрут · Shift+ЛКМ / рамка — выбор · Ctrl+1…9 — группа"
+msgstr "Clic der. — ir · Shift+der. — ruta · Shift+izq. / caja — elegir · Ctrl+1…9 — grupo"
+
+#. patch Shift UX
+msgid "ВЫДЕЛЕНО: %s · %d бойцов · %d%%"
+msgstr "SELECCIONADO: %s · %d tropas · %d%%"
+
+#. patch Shift UX
+msgid "Меньше (−1 · Shift: 1)"
+msgstr "Menos (−1 · Shift: 1)"
+
+#. patch Shift UX
+msgid "Больше (+1 · Shift: МАКС ×%d)"
+msgstr "Más (+1 · Shift: MÁX ×%d)"
+
+#. patch Shift UX
+msgid "Shift+клик — МАКС"
+msgstr "Shift+clic — MÁX"
+
+#. patch Shift UX
+msgid "МЕНЬШЕ — −1 на цель (Shift: −5)"
+msgstr "MENOS — −1 por objetivo (Shift: −5)"
+
+#. patch Shift UX
+msgid "БОЛЬШЕ — +1 на цель (Shift: +5)"
+msgstr "MÁS — +1 por objetivo (Shift: +5)"
+
+#. patch Shift UX
+msgid "МЕНЬШЕ — −1 на каждую цель (Shift: −5)"
+msgstr "MENOS — −1 por objetivo (Shift: −5)"
+
+#. patch Shift UX
+msgid "БОЛЬШЕ — +1 на каждую цель (Shift: +5)"
+msgstr "MÁS — +1 por objetivo (Shift: +5)"
+
+#. patch Shift UX
+msgid "Shift+клик — купить всё доступное крыло"
+msgstr "Shift+clic — comprar ala disponible"
+
+#. patch Shift UX
+msgid "Shift+клик — заполнить БК до предела"
+msgstr "Shift+clic — llenar munición al máx"

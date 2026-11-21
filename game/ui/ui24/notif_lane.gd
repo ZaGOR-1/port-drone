@@ -1409,6 +1409,9 @@ func _make_line(it: Dictionary) -> Control:
 				accept_event()
 				it["hold"] = mb.pressed
 				if not mb.pressed:
+					var act_nm: String = String(d.get("act", ""))
+					if act_nm != "":
+						action.emit(act_nm)
 					dismiss(it))
 
 	var bar_c: Color = Color(String(TAB_COL.get(String(cat[0]), "6a6e58"))).lightened(0.25)

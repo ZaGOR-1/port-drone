@@ -153,6 +153,8 @@ func _ok(p: Vector2, sp: String) -> bool:
 	if v != null:
 		return v
 	var r: bool = _ok_raw(c, bird == 1)
+	if _ok_memo.size() >= 8192:
+		_ok_memo.clear()
 	_ok_memo[key] = r
 	return r
 
