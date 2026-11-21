@@ -53,3 +53,7 @@ class V036RegressionTests(unittest.TestCase):
 
     def test_autosave_isolation(self):
         self.run_case('autosave')
+
+    def test_navy_restore_determinism(self):
+        self.run_case('navy')
+

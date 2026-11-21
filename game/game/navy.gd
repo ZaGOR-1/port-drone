@@ -122,7 +122,6 @@ var _tw_mark: PackedInt32Array = PackedInt32Array()
 var _tw_cnt: PackedInt32Array = PackedInt32Array()
 var _tw_cells: PackedInt32Array = PackedInt32Array()
 var _tw_seq: int = 0
-var _thr_cache: Dictionary = {}
 var _shore_tmp: Array = []
 const _SHORE_FAC_SET: Dictionary = {
 	Facility.Kind.COASTAL_ASM: true, Facility.Kind.AD_SAM: true, Facility.Kind.AD_SPAAG: true, Facility.Kind.AD_PATRIOT: true,
@@ -162,7 +161,6 @@ var _rn: int = 1
 var _fleet_t: float = 0.0
 var _think_acc: float = 0.0
 var _pcache: Dictionary = {}
-var _tcache: Dictionary = {}
 var _berth: Dictionary = {}
 var _alive_b: Dictionary = {}
 var _reach: Dictionary = {}
@@ -1174,9 +1172,6 @@ func coast_dist(q: Vector2i) -> int:
 func _threats(cid: int) -> Array:
 	if cid <= 0:
 		return []
-	var ce: Array = _thr_cache.get(cid, [])
-	if not ce.is_empty() and gw.game_time - float(ce[0]) < 1.5 and gw.game_time >= float(ce[0]):
-		return ce[1]
 	var out: Array = []
 	for f: Facility in gw.mil.facilities:
 		if THREAT_R.has(f.kind) and _hostile(cid, f.country_id) and gw.mil.alive(f):
@@ -1184,7 +1179,6 @@ func _threats(cid: int) -> Array:
 	for e: Ship in ships:
 		if e.alive() and _hostile(cid, e.c):
 			out.append([e.pos, 450.0])
-	_thr_cache[cid] = [gw.game_time, out]
 	return out
 
 
@@ -1200,12 +1194,8 @@ func sea_path(a: Vector2i, b: Vector2i, cid: int = 0) -> PackedVector2Array:
 	var key: = Vector4i(a.x, a.y, b.x, b.y)
 	if thr.is_empty() and _pcache.has(key):
 		return _pcache[key]
-	# Threat-aware paths are expensive (up to 3 A* runs on the sea grid): reuse them for a short while.
-	var tkey: = Vector3i(a.x * 4096 + a.y, b.x * 4096 + b.y, cid)
-	if not thr.is_empty():
-		var te: Array = _tcache.get(tkey, [])
-		if not te.is_empty() and gw.game_time - float(te[0]) < 15.0 and int(te[2]) == thr.size():
-			return te[1]
+	# Threat-dependent routes are a function of current authoritative state.
+	# TTL caches made route choice depend on unsaved query history after restore.
 	var raw: PackedVector2Array = _id_path(a, b)
 	var need_avoid: bool = not thr.is_empty() and _crosses(raw, thr, a, b)
 	var raw_len: float = _plen(raw)
@@ -1226,10 +1216,6 @@ func sea_path(a: Vector2i, b: Vector2i, cid: int = 0) -> PackedVector2Array:
 		if _pcache.size() > 256:
 			_pcache.clear()
 		_pcache[key] = out
-	else:
-		if _tcache.size() > 128:
-			_tcache.clear()
-		_tcache[tkey] = [gw.game_time, out, thr.size()]
 	return out
 
 
@@ -3236,8 +3222,6 @@ func load_state(d: Dictionary) -> void:
 	for s2: Ship in ships:
 		_id = maxi(_id, s2.id + 1)
 	_pcache.clear()
-	_tcache.clear()
-	_thr_cache.clear()
 	_tw_seq = 0
 	_tw_cells.clear()
 	_berth.clear()
