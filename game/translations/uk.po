@@ -35785,3 +35785,79 @@ msgstr "🛡 БУНКЕР\nБЕЗК."
 #. patch v0.36
 msgid "Мгновенная автопродажа топлива из НПЗ в обход логистики и старый безвыборный Т3 апгрейд"
 msgstr "Миттєвий автопродаж палива з НПЗ в обхід логістики та старий безвибірковий Т3 апгрейд"
+
+#. patch Shift UX
+msgid "⇧ серийное строительство"
+msgstr "⇧ серійне будівництво"
+
+#. patch Shift UX
+msgid "[Shift] серия · ПКМ выход"
+msgstr "[Shift] серія · ПКМ вихід"
+
+#. patch Shift UX
+msgid "Город · %d"
+msgstr "Місто · %d"
+
+#. patch Shift UX
+msgid "Место занято: в очереди"
+msgstr "Місце зайняте: в черзі"
+
+#. patch Shift UX
+msgid "Не хватает: %s (без Shift — замена)"
+msgstr "Не вистачає: %s (без Shift — заміна)"
+
+#. patch Shift UX
+msgid "Куплено: %s ×%d"
+msgstr "Куплено: %s ×%d"
+
+#. patch Shift UX
+msgid "Максимум %d точек маршрута"
+msgstr "Максимум %d точок маршруту"
+
+#. patch Shift UX
+msgid "%s: маршрут (%d тчк)"
+msgstr "%s: маршрут (%d тчк)"
+
+#. patch Shift UX
+msgid "ПКМ — идти · Shift+ПКМ — маршрут · Shift+ЛКМ / рамка — выбор · Ctrl+1…9 — группа"
+msgstr "ПКМ — йти · Shift+ПКМ — маршрут · Shift+ЛКМ / рамка — вибір · Ctrl+1…9 — група"
+
+#. patch Shift UX
+msgid "ВЫДЕЛЕНО: %s · %d бойцов · %d%%"
+msgstr "ВИДІЛЕНО: %s · %d бійців · %d%%"
+
+#. patch Shift UX
+msgid "Меньше (−1 · Shift: 1)"
+msgstr "Менше (−1 · Shift: 1)"
+
+#. patch Shift UX
+msgid "Больше (+1 · Shift: МАКС ×%d)"
+msgstr "Більше (+1 · Shift: МАКС ×%d)"
+
+#. patch Shift UX
+msgid "Shift+клик — МАКС"
+msgstr "Shift+клік — МАКС"
+
+#. patch Shift UX
+msgid "МЕНЬШЕ — −1 на цель (Shift: −5)"
+msgstr "МЕНШЕ — −1 на ціль (Shift: −5)"
+
+#. patch Shift UX
+msgid "БОЛЬШЕ — +1 на цель (Shift: +5)"
+msgstr "БІЛЬШЕ — +1 на ціль (Shift: +5)"
+
+#. patch Shift UX
+msgid "МЕНЬШЕ — −1 на каждую цель (Shift: −5)"
+msgstr "МЕНШЕ — −1 на кожну ціль (Shift: −5)"
+
+#. patch Shift UX
+msgid "БОЛЬШЕ — +1 на каждую цель (Shift: +5)"
+msgstr "БІЛЬШЕ — +1 на кожну ціль (Shift: +5)"
+
+#. patch Shift UX
+msgid "Shift+клик — купить всё доступное крыло"
+msgstr "Shift+клік — купити все доступне крило"
+
+#. patch Shift UX
+msgid "Shift+клик — заполнить БК до предела"
+msgstr "Shift+клік — заповнити БК вщент"

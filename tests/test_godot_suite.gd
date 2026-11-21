@@ -80,6 +80,7 @@ func _run() -> void:
 	_test_step6_pc_and_perf()
 	await _test_replay_stability_and_exit()
 	_test_patch_v036_mechanics()
+	_test_shift_ux()
 	var result: Dictionary = {"passed": failures.is_empty(), "checks": checks, "failures": failures}
 	for a: String in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
@@ -1489,4 +1490,290 @@ func _test_patch_v036_mechanics() -> void:
 		cv.filter_cat = 1
 		check(cv._parse_html_color("#40a0ff", Color.WHITE).b > 0.9, "ChronicleViewer parses country colors for swatches")
 		cv.free()
+	gw.free()
+
+
+func _test_shift_ux() -> void:
+	# 1. All modified Shift UX scripts compile & instantiate cleanly
+	for sp: String in [
+		"res://world/map_camera.gd",
+		"res://game/main/main_base.gd",
+		"res://game/main/main_core.gd",
+		"res://game/main/main_strike.gd",
+		"res://game/main/main_input.gd",
+		"res://game/main.gd",
+		"res://pc/army_select.gd",
+		"res://game/air.gd",
+		"res://net/net_session.gd",
+		"res://ui/ui24/navy_yard.gd",
+		"res://ui/ui24/navy_dock.gd",
+		"res://ui/ui24/trade_sheet.gd",
+		"res://ui/hud/hud_ops.gd",
+		"res://ui/ui24/strike_sheet.gd",
+	]:
+		var sc: GDScript = load(sp) as GDScript
+		check(sc != null and sc.can_instantiate(), "Shift UX script loads cleanly: " + sp)
+
+	# 2. Translations for new Shift UX keys load in uk/en/es
+	var tr_uk := load("res://translations/uk.po") as Translation
+	var tr_en := load("res://translations/en.po") as Translation
+	var tr_es := load("res://translations/es.po") as Translation
+	check(tr_uk != null and tr_uk.get_message(&"⇧ серийное строительство") == &"⇧ серійне будівництво", "uk.po has Shift batch build translation")
+	check(tr_en != null and tr_en.get_message(&"⇧ серийное строительство") == &"⇧ batch build", "en.po has Shift batch build translation")
+	check(tr_es != null and tr_es.get_message(&"⇧ серийное строительство") == &"⇧ construcción en serie", "es.po has Shift batch build translation")
+
+	# 3. MapCamera focus-out & clear_held guard
+	var mc := MapCamera.new()
+	mc._held_m = true
+	mc._held_t[0] = true
+	check(mc.is_held(), "MapCamera tracks held mouse/touch")
+	mc._notification(Node.NOTIFICATION_WM_WINDOW_FOCUS_OUT)
+	check(not mc.is_held(), "MapCamera clears held state on focus out")
+	mc.free()
+
+	# 4. Air.buy_batch + NetSession whitelist (O3)
+	check(NetSession.ALLOWED.get("mil.air.buy_batch", null) == -1, "NetSession.ALLOWED includes mil.air.buy_batch")
+	var gw := _step1_world(128)
+	for sname_sh: String in ["barracks", "power_plant", "factory", "ad_zaslon", "ad_zaslon_open"]:
+		if not gw.spr_index.has(sname_sh):
+			gw.spr_index[sname_sh] = gw.spr_name.size()
+			gw.spr_name.append(sname_sh)
+			gw.spr_fd.append(1)
+			gw.spr_fw.append(1)
+			gw.spr_frames.append(1)
+			gw.spr_rect.append(Rect2(0, 0, 12, 12))
+			gw.spr_anchor.append(Vector2.ZERO)
+			gw.spr_tex.append(null)
+	var c1: Country = gw.countries[0]
+	c1.is_player = true
+	gw.player = c1
+	gw.mil._no_construct = true
+	var af: Facility = gw.mil.build(Facility.Kind.AIRFIELD, Vector2i(25, 25), c1, null, true)
+	check(af != null, "Built Airfield for batch buy test")
+	var bres: Dictionary = gw.mil.air.buy_batch(af, Aircraft.Type.FIGHTER, c1, 0)
+	check(int(bres.get("bought", 0)) == Air.AIR_CAP, "Air.buy_batch fills airfield fighter capacity cleanly")
+	var bres2: Dictionary = gw.mil.air.buy_batch(af, Aircraft.Type.FIGHTER, c1, 0)
+	check(int(bres2.get("bought", -1)) == 0 and String(bres2.get("why", "")) != "", "Air.buy_batch rejects when airfield full without deducting funds")
+	c1.money = 10
+	var bres3: Dictionary = gw.mil.air.buy_batch(af, Aircraft.Type.BOMBER, c1, 0)
+	check(int(bres3.get("bought", -1)) == 0 and c1.money == 10, "Air.buy_batch never spends money into negative")
+
+	# 5. Main Variant 1A Shift build, resource/can_substitute guard, pause, and MP pending queue
+	var stub_hud_src := """
+extends Hud
+var last_toast: String = ""
+var confirm_shown: bool = false
+func set_hint(_text: String) -> void: pass
+func set_key_pressed(_nm: String, _on: bool) -> void: pass
+func show_toast(text: String, _reply: bool = true) -> void: last_toast = text
+func show_confirm(_text: String, _ok: bool = true) -> void: confirm_shown = true
+func hide_confirm() -> void: confirm_shown = false
+func hide_ops() -> void: pass
+func refresh() -> void: pass
+func ui24_open_now() -> bool: return false
+func set_ghost_tip(_txt: String, _col: Color, _screen_pos: Vector2) -> void: pass
+func set_map_tip(_txt: String) -> void: pass
+"""
+	var stub_ux_src := """
+extends Node
+var view: String = ""
+var cur_fid: int = -1
+var cur_gid: int = -1
+var picked: Dictionary = {}
+var preview: Dictionary = {}
+var place_kind: String = ""
+var place_sea: bool = false
+func map_tap(_p: Vector2, _wp: Vector2) -> bool: return false
+func open_army(f: int) -> void:
+	view = "army"
+	cur_fid = f
+func close_view() -> void: view = ""
+func ast(_f: int) -> Dictionary: return {}
+func check(_f, _w, _k) -> Dictionary: return {"ok": [], "bad": []}
+func toast(_t: String, _o = []) -> void: pass
+func _ok_fids(_f, _d) -> Array: return []
+func _skip_why(_d) -> String: return ""
+"""
+	var stub_ov_src := """
+extends RouteOverlay
+func ripple(_world_p: Vector2, _col: String = "amber") -> void: pass
+"""
+	var hud_gd := GDScript.new()
+	hud_gd.source_code = stub_hud_src
+	check(hud_gd.reload() == OK, "Stub Hud compiles cleanly")
+	var shud: Hud = hud_gd.new()
+	var ux_gd := GDScript.new()
+	ux_gd.source_code = stub_ux_src
+	check(ux_gd.reload() == OK, "Stub ArmyUx compiles cleanly")
+	var sux: Node = ux_gd.new()
+	var ov_gd := GDScript.new()
+	ov_gd.source_code = stub_ov_src
+	check(ov_gd.reload() == OK, "Stub RouteOverlay compiles cleanly")
+	var sov: RouteOverlay = ov_gd.new()
+	var mcam := MapCamera.new()
+	root.add_child(mcam)
+	mcam.position = Vector2.ZERO
+	mcam.zoom = Vector2.ONE
+	var mnet := NetSession.new()
+	mnet.gw = gw
+	NetSession._inst = mnet
+	var ghost_n := Node2D.new()
+	var m = (load("res://game/main.gd") as GDScript).new()
+	m.in_menu = false
+	shud.main_node = m
+	shud.gw = gw
+	shud.army_ux = sux
+	m.world = gw
+	m.hud = shud
+	m.overlay = sov
+	m.cam = mcam
+	m.net = mnet
+	m._ghost = ghost_n
+	gw.time_scale = 0.0  # paused
+
+	# Verify _shift_down with InputEventKey modifier priority
+	var ev_sh := InputEventKey.new()
+	ev_sh.keycode = KEY_SHIFT
+	ev_sh.shift_pressed = true
+	ev_sh.pressed = true
+	check(m._shift_down(ev_sh), "Main._shift_down honors InputEventWithModifiers.shift_pressed")
+	var ev_no := InputEventKey.new()
+	ev_no.keycode = KEY_A
+	ev_no.shift_pressed = false
+	check(not m._shift_down(ev_no), "Main._shift_down returns false when shift_pressed is false")
+
+	# Verify Variant 1A under GameConfig.confirm_actions = true while paused
+	var was_confirm: bool = GameConfig.confirm_actions
+	GameConfig.confirm_actions = true
+	c1.money = 50000
+	c1.metal = 1000
+	c1.wood = 1000
+	var fac_cnt0: int = gw.mil.facilities.size()
+	m._set_mode(m.Mode.POWER)
+	# Plain tap opens _pend confirmation card without placing yet
+	m._tap(mcam.world_to_screen(Vector2(60 * GameWorld.CELL, 60 * GameWorld.CELL)), false)
+	check(not m._pend.is_empty() and gw.mil.facilities.size() == fac_cnt0, "Non-shift tap enters confirmation when confirm_actions=true (Variant 1A)")
+	m._pend.clear()
+	shud.confirm_shown = false
+	# Hold KEY_SHIFT via Input.parse_input_event + flush_buffered_events to verify multi-click serial build stays in Mode.POWER
+	Input.parse_input_event(ev_sh)
+	Input.flush_buffered_events()
+	m._tap(mcam.world_to_screen(Vector2(60 * GameWorld.CELL, 60 * GameWorld.CELL)), true)
+	check(m._pend.is_empty() and gw.mil.facilities.size() == fac_cnt0 + 1 and m._shift_built_in_series and m.mode == m.Mode.POWER, "Shift+tap bypasses confirmation and builds serially even on pause")
+	# Duplicate Shift tap on occupied cell is blocked without spawning second facility
+	m._tap(mcam.world_to_screen(Vector2(60 * GameWorld.CELL, 60 * GameWorld.CELL)), true)
+	check(gw.mil.facilities.size() == fac_cnt0 + 1, "Shift+tap blocks duplicate build on occupied cell")
+	# Verify releasing Shift after >= 1 build in series exits Mode.POWER -> Mode.NONE automatically
+	var ev_sh_up := InputEventKey.new()
+	ev_sh_up.keycode = KEY_SHIFT
+	ev_sh_up.shift_pressed = false
+	ev_sh_up.pressed = false
+	Input.parse_input_event(ev_sh_up)
+	Input.flush_buffered_events()
+	m._unhandled_input(ev_sh_up)
+	check(m.mode == m.Mode.NONE and not m._shift_built_in_series, "Releasing Shift after serial builds exits to Mode.NONE (Variant 1A)")
+	# can_substitute is NOT auto-spent during Shift series
+	c1.money = 50000
+	c1.wood = 0
+	m._set_mode(m.Mode.FACTORY)
+	var money_before_sub: int = c1.money
+	m._tap(mcam.world_to_screen(Vector2(80 * GameWorld.CELL, 60 * GameWorld.CELL)), true)
+	check(c1.money == money_before_sub and m.mode == m.Mode.FACTORY, "Shift build refuses silent can_substitute spend and keeps build mode")
+	# O2 plan_plus Shift step +5 & O4 zaslon_buy_1 Shift -> ZASLON_CAP
+	m._plan_info = {"available": 20}
+	m.plan_count = 1
+	Input.parse_input_event(ev_sh)
+	Input.flush_buffered_events()
+	m._on_action("plan_plus")
+	check(m.plan_count == 6, "Shift+plan_plus steps strike count by +5 (O2)")
+	m._on_action("plan_minus")
+	check(m.plan_count == 1, "Shift+plan_minus steps strike count by -5 (O2)")
+	Input.parse_input_event(ev_sh_up)
+	Input.flush_buffered_events()
+	# MP pending build queue overlap + cash reservation
+	mnet.in_match = true
+	c1.money = 1000
+	c1.wood = 500
+	var ptok: int = m._mp_pend_record(Facility.Kind.POWER_PLANT, Vector2i(90, 60), c1)
+	check(ptok > 0 and m._mp_pend_why(Facility.Kind.POWER_PLANT, Vector2i(91, 61)) != "", "MP pending queue blocks overlapping cell")
+	check(m.ghost_place_why(Facility.Kind.POWER_PLANT, Vector2i(100, 60)) != "", "ghost_place_why reflects MP pending money reservation + low funds immediately")
+	m._mp_pend_done(ptok)
+	mnet.in_match = false
+	# Focus out resets stuck drag & series flags
+	m._mouse_down = true
+	m._pc_pan = true
+	m._shift_built_in_series = true
+	m._notification(Node.NOTIFICATION_WM_WINDOW_FOCUS_OUT)
+	check(not m._mouse_down and not m._pc_pan and not m._shift_built_in_series, "Focus-out resets mouse/pan/shift series flags")
+	GameConfig.confirm_actions = was_confirm
+
+	# 6. PcArmySelect: _hits zoomed-out box select, cancel_drag, Shift+RMB waypoint chain, Ops queue
+	gw.ops = Operations.new(gw)
+	var ag_cls := load("res://game/army_groups.gd")
+	var b1: Facility = gw.mil.build(Facility.Kind.BARRACKS, Vector2i(20, 90), c1, null, true)
+	var b2: Facility = gw.mil.build(Facility.Kind.BARRACKS, Vector2i(36, 90), c1, null, true)
+	check(b1 != null and b2 != null, "Built two barracks for PcArmySelect Shift tests")
+	var u_a1 := Unit.new()
+	u_a1.id = 901
+	u_a1.country_id = c1.id
+	u_a1.home = b1
+	u_a1.type = Unit.Type.INFANTRY
+	u_a1.hp = 50.0
+	u_a1.max_hp = 50.0
+	u_a1.pos = Vector2(20, 20)
+	var u_a2 := Unit.new()
+	u_a2.id = 902
+	u_a2.country_id = c1.id
+	u_a2.home = b2
+	u_a2.type = Unit.Type.TANK
+	u_a2.hp = 80.0
+	u_a2.max_hp = 80.0
+	u_a2.pos = Vector2(2000, 2000)  # offscreen unit tested via counter _hits rect
+	gw.army.units.append_array([u_a1, u_a2])
+
+	var pca = (load("res://pc/army_select.gd") as GDScript).new()
+	pca.hud = shud
+	pca.gw = gw
+	pca._box_from = Vector2(10, 10)
+	pca._box_to = Vector2(90, 90)
+	pca.cancel_drag()
+	check(not pca._box_from.is_finite() and not pca._box_to.is_finite(), "PcArmySelect.cancel_drag resets rubber-band box")
+	pca._hits = [[Rect2(Vector2(100, 100), Vector2(36, 18)), [b2.id]]]
+	pca._box_from = Vector2(95, 95)
+	pca._box_to = Vector2(140, 130)
+	var mb_rel := InputEventMouseButton.new()
+	mb_rel.button_index = MOUSE_BUTTON_LEFT
+	mb_rel.pressed = false
+	mb_rel.position = Vector2(140, 130)
+	check(pca.lmb(mb_rel) and pca.sel.has(b2.id), "Shift+box selects folded counter rects in _hits on zoomed-out map")
+	pca._set_sel([b1.id], true)
+	check(pca.sel.has(b1.id) and pca.sel.has(b2.id), "Shift+LMB adds second army without dropping first")
+	pca._set_sel([b2.id], true)
+	check(pca.sel.has(b1.id) and not pca.sel.has(b2.id), "Shift+LMB toggles already-selected army off")
+
+	var fids_one := PackedInt32Array([b1.id])
+	pca.order_move(fids_one, Vector2(120, 120), true)
+	pca.order_move(fids_one, Vector2(180, 120), true)
+	pca.order_move(fids_one, Vector2(220, 160), true)
+	check(pca._wp_chain.size() == 3, "Shift+RMB accumulates multi-waypoint chain up to ROUTE_MAX+1")
+	for wi in range(12):
+		pca.order_move(fids_one, Vector2(250 + wi * 30, 160), true)
+	check(pca._wp_chain.size() == ag_cls.ROUTE_MAX + 1, "Shift+RMB respects AG.ROUTE_MAX+1 waypoint limit")
+	pca.order_move(fids_one, Vector2(300, 200), false)
+	check(pca._wp_chain.is_empty(), "Plain RMB resets queued waypoint chain")
+
+	var ord_res: Dictionary = ag_cls.order_fids(gw, c1.id, fids_one, "move", Vector2(240, 200), "", Vector2.INF, PackedVector2Array([Vector2(120, 120), Vector2(180, 120)]))
+	check(int(ord_res.get("ok", 0)) == 1, "AG.order_fids dispatches chained waypoints even while paused (time_scale=0)")
+
+	# Cleanup everything cleanly (zero ObjectDB leaks)
+	NetSession._inst = null
+	root.remove_child(mcam)
+	pca.free()
+	sux.free()
+	shud.free()
+	sov.free()
+	mnet.free()
+	mcam.free()
+	ghost_n.free()
+	m.free()
 	gw.free()

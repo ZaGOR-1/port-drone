@@ -201,7 +201,7 @@ func _build_right() -> Control:
 	var minus: Button = UiKit.big("−", "stone", "", 44.0, 16)
 	minus.custom_minimum_size.x = 44
 	minus.pressed.connect(func() -> void: main._on_action("plan_minus"))
-	HT.tip(minus, "МЕНЬШЕ — на одну единицу меньше на каждую цель")
+	HT.tip(minus, "МЕНЬШЕ — −1 на каждую цель (Shift: −5)")
 	row.add_child(minus)
 	_cnt = UiKit.lbl("×1", 13, UiKit.GOLD, 3, 3)
 	_cnt.custom_minimum_size = Vector2(34, 0)
@@ -211,7 +211,7 @@ func _build_right() -> Control:
 	var plus: Button = UiKit.big("+", "stone", "", 44.0, 16)
 	plus.custom_minimum_size.x = 44
 	plus.pressed.connect(func() -> void: main._on_action("plan_plus"))
-	HT.tip(plus, "БОЛЬШЕ — на одну единицу больше на каждую цель")
+	HT.tip(plus, "БОЛЬШЕ — +1 на каждую цель (Shift: +5)")
 	row.add_child(plus)
 	_back = UiKit.big("НАЗАД", "stone", "", 44.0, 11)
 	_back.size_flags_horizontal = Control.SIZE_EXPAND_FILL

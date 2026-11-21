@@ -35405,3 +35405,79 @@ msgstr "🛡 BUNKER\nFREE"
 #. patch v0.36
 msgid "Мгновенная автопродажа топлива из НПЗ в обход логистики и старый безвыборный Т3 апгрейд"
 msgstr "Instant refinery fuel auto-sell bypassing logistics and uniform T3 upgrade without specialization"
+
+#. patch Shift UX
+msgid "⇧ серийное строительство"
+msgstr "⇧ batch build"
+
+#. patch Shift UX
+msgid "[Shift] серия · ПКМ выход"
+msgstr "[Shift] batch · RMB exit"
+
+#. patch Shift UX
+msgid "Город · %d"
+msgstr "City · %d"
+
+#. patch Shift UX
+msgid "Место занято: в очереди"
+msgstr "Space occupied: queued"
+
+#. patch Shift UX
+msgid "Не хватает: %s (без Shift — замена)"
+msgstr "Missing: %s (release Shift to substitute)"
+
+#. patch Shift UX
+msgid "Куплено: %s ×%d"
+msgstr "Purchased: %s ×%d"
+
+#. patch Shift UX
+msgid "Максимум %d точек маршрута"
+msgstr "Max %d waypoints"
+
+#. patch Shift UX
+msgid "%s: маршрут (%d тчк)"
+msgstr "%s: route (%d pts)"
+
+#. patch Shift UX
+msgid "ПКМ — идти · Shift+ПКМ — маршрут · Shift+ЛКМ / рамка — выбор · Ctrl+1…9 — группа"
+msgstr "RMB — move · Shift+RMB — route · Shift+LMB / box — select · Ctrl+1…9 — group"
+
+#. patch Shift UX
+msgid "ВЫДЕЛЕНО: %s · %d бойцов · %d%%"
+msgstr "SELECTED: %s · %d troops · %d%%"
+
+#. patch Shift UX
+msgid "Меньше (−1 · Shift: 1)"
+msgstr "Less (−1 · Shift: 1)"
+
+#. patch Shift UX
+msgid "Больше (+1 · Shift: МАКС ×%d)"
+msgstr "More (+1 · Shift: MAX ×%d)"
+
+#. patch Shift UX
+msgid "Shift+клик — МАКС"
+msgstr "Shift+click — MAX"
+
+#. patch Shift UX
+msgid "МЕНЬШЕ — −1 на цель (Shift: −5)"
+msgstr "LESS — −1 per target (Shift: −5)"
+
+#. patch Shift UX
+msgid "БОЛЬШЕ — +1 на цель (Shift: +5)"
+msgstr "MORE — +1 per target (Shift: +5)"
+
+#. patch Shift UX
+msgid "МЕНЬШЕ — −1 на каждую цель (Shift: −5)"
+msgstr "LESS — −1 per target (Shift: −5)"
+
+#. patch Shift UX
+msgid "БОЛЬШЕ — +1 на каждую цель (Shift: +5)"
+msgstr "MORE — +1 per target (Shift: +5)"
+
+#. patch Shift UX
+msgid "Shift+клик — купить всё доступное крыло"
+msgstr "Shift+click — buy full available wing"
+
+#. patch Shift UX
+msgid "Shift+клик — заполнить БК до предела"
+msgstr "Shift+click — fill ammo to max"

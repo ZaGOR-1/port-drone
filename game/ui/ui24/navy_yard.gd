@@ -485,7 +485,10 @@ func _build_footer() -> void:
 	vb.add_child(fr)
 	minus_btn = UiKit.big("−", "stone", "", 44.0, 18)
 	minus_btn.custom_minimum_size = Vector2(44, 44)
-	minus_btn.pressed.connect(func() -> void: set_count(count - 1))
+	minus_btn.tooltip_text = Loc.t("Меньше (−1 · Shift: 1)")
+	minus_btn.pressed.connect(func() -> void:
+		var sh: bool = (DisplayServer.get_name() == "headless" or DisplayServer.window_is_focused()) and Input.is_key_pressed(KEY_SHIFT)
+		set_count(1 if sh else count - 1))
 	fr.add_child(minus_btn)
 	n_lbl = UiKit.lbl("×1", 16, UiKit.TITLE, 3, 4)
 	n_lbl.custom_minimum_size = Vector2(34, 0)
@@ -494,7 +497,10 @@ func _build_footer() -> void:
 	fr.add_child(n_lbl)
 	plus_btn = UiKit.big("+", "stone", "", 44.0, 18)
 	plus_btn.custom_minimum_size = Vector2(44, 44)
-	plus_btn.pressed.connect(func() -> void: set_count(count + 1))
+	plus_btn.tooltip_text = Loc.t("Больше (+1 · Shift: МАКС ×%d)") % N_MAX
+	plus_btn.pressed.connect(func() -> void:
+		var sh: bool = (DisplayServer.get_name() == "headless" or DisplayServer.window_is_focused()) and Input.is_key_pressed(KEY_SHIFT)
+		set_count(N_MAX if sh else count + 1))
 	fr.add_child(plus_btn)
 	var tv: = VBoxContainer.new()
 	tv.add_theme_constant_override("separation", -1)
