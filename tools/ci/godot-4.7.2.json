@@ -1,0 +1,21 @@
+{
+  "version": "4.7.2-stable",
+  "files": {
+    "godot": {
+      "sha256": "8d106cbe6144c2dc7e881d61d2429c1a8a76e6b22ef48bd5e48dcf934953f71e",
+      "bytes": 146414384,
+      "archive": "Godot_v4.7.2-stable_linux.x86_64.zip",
+      "archive_sha256": "cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4",
+      "url": "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip",
+      "member": "Godot_v4.7.2-stable_linux.x86_64"
+    },
+    "windows_release_x86_64.exe": {
+      "sha256": "d34d36f3be1a6c49c56525ae86469b92e4f417ddf0b43cf00dd80c385c4b0562",
+      "bytes": 109268480,
+      "archive": "Godot_v4.7.2-stable_export_templates.tpz",
+      "archive_sha256": "f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011",
+      "url": "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz",
+      "member": "templates/windows_release_x86_64.exe"
+    }
+  }
+}
