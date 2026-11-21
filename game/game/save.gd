@@ -919,21 +919,12 @@ static func _md5(b: PackedByteArray) -> PackedByteArray:
 
 
 static func _queue_write(header: Dictionary, body: Dictionary, thi: Dictionary = {}, fresh: bool = false) -> int:
-	# Freeze live packed buffers & shallow chronicle frames without a full recursive body.duplicate(true).
-	var frozen: Dictionary = body.duplicate(false)
-	if body.has("core") and body["core"] is Dictionary:
-		var core_src: Dictionary = body["core"]
-		var core_f: Dictionary = core_src.duplicate(false)
-		for k: String in ["biome", "flags", "owners", "obj_spr", "obj_x", "obj_y", "obj_state", "obj_kind", "obj_hidden", "free_ids", "spr_name"]:
-			if core_src.has(k):
-				var v: Variant = core_src[k]
-				core_f[k] = (v as Array).duplicate(false) if v is Array else v.duplicate()
-		if core_src.has("obj_fix") and core_src["obj_fix"] is Dictionary:
-			core_f["obj_fix"] = (core_src["obj_fix"] as Dictionary).duplicate(true)
-		if core_src.has("checkpoints") and core_src["checkpoints"] is Dictionary:
-			core_f["checkpoints"] = (core_src["checkpoints"] as Dictionary).duplicate(true)
-		frozen["core"] = core_f
-	var thumb: Dictionary = thi.duplicate()
+	# The snapshot and this freeze run synchronously at one simulation tick.
+	# Freeze the complete encoded graph once, before the worker can observe it:
+	# entity packed arrays, nested containers and future system fields included.
+	var frozen: Dictionary = body.duplicate(true)
+	header = header.duplicate(true)
+	var thumb: Dictionary = thi.duplicate(true)
 	if not thumb.is_empty() and frozen.has("core") and frozen["core"] is Dictionary:
 		var cf: Dictionary = frozen["core"]
 		if cf.has("biome"):
