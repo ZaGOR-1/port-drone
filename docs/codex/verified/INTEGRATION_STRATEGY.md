@@ -1,3 +1,5 @@
+> **HISTORICAL — попередня Git-історія.** Старі PR/SHA/гілки й дозволи не відновлювати. Чинний workflow: [COLLABORATION_WORKFLOW](COLLABORATION_WORKFLOW.md), [CURRENT_STATE](CURRENT_STATE.md).
+
 # Phase 7 — поточне рішення власника
 
 Спочатку один cumulative merge PR1–10 + Phase5–5C у beta, після нього manual Windows/MP QA. Дозвіл на commits/push/PR/merge beta надано прямо; main/release/tags/manual workflows не дозволені. Required reviews/checks не обходити. [Mapping і план](PHASE7_BETA_INTEGRATION.md), [Phase8](PHASE8_BETA_QA_PLAN.md). Попередні pre-merge GUI gates нижче історичні й superseded для development integration, а не оголошені пройденими. Updater off; дефекти лишаються backlog.

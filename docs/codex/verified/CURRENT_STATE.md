@@ -1,3 +1,71 @@
+# DroneFlames — поточний стан нового репозиторію
+
+2026-11-21, re-onboarding. **PARTIALLY READY**: архітектурні критичні потоки відновлено за кодом, але повне семантичне читання всіх текстових джерел не завершене; runtime/build у цій сесії не виконані. Точні межі — [SOURCE_COVERAGE](SOURCE_COVERAGE.md), повний звіт і ризики — [REONBOARDING_AUDIT](REONBOARDING_AUDIT.md).
+
+## Repository identity
+
+| Поле | Перевірений стан на початку сесії |
+|---|---|
+| URL | https://github.com/ZaGOR-1/port-drone.git |
+| Git root | /home/zagor/projects/port-drone |
+| main / beta / origin/main / origin/beta | 172df65e3bd004efed9a5444e90a284d9d69db10 |
+| Remote refs | git ls-remote підтвердив обидва heads; не змінювали |
+| HEAD / base | той самий SHA; docs/codex-reonboarding від origin/beta |
+| Initial status | clean beta; один worktree; нова історія з одним root commit |
+| Первинний результат до публікації |15 edited Markdown +5 new Markdown +1 drawio; code/resources/DLL hashes незмінні; тоді commit/push/PR/merge ще не виконувалися |
+| Baseline tracked inventory | 970 файлів, 284 GDScript, 48 Markdown; 680 text / 290 binary |
+| Text volume | 10951776 bytes / 354461 lines; GDScript 6307192 bytes / 182509 lines |
+| LFS / submodules | LFS installed, але tracked LFS objects і submodules не виявлені |
+
+Main — прийнята база; beta — development/testing. Нові feature/fix/docs гілки від actual beta. Історичні PR1–11/Phase5–7 належать попередній Git-історії; не шукати старі SHA/гілки та не переносити старі task-specific дозволи. Оригінальну історію не відновлювали.
+
+## Завершення документаційного етапу
+
+Окремою командою власника дозволено commit/push гілки docs/codex-reonboarding, один PR із base beta та умовний merge лише після успішних checks/review без bypass. GitHub перед публікацією: **0 workflows**, beta **protected=false**, active branch rules **[]**. За відсутнього CI та відомого FAIL policy tests PR має лишитися відкритим; відсутність protection не є успішним check або review. Main/production code/resources не змінювати. Точні publication SHA/PR/state перевіряти через Git/GitHub, а не брати baseline172df65 за новий HEAD документаційної гілки. Цей дозвіл стосується лише завершення поточного документаційного PR.
+
+Наступне окреме завдання: відновлення CI tests/build без автоматичної публікації, підготовка перевірених Godot4.7.2 editor/Windows x64 template та одного QA комплекту з exact commit/SHA256. Scope і критерії — [NEXT_SESSION](NEXT_SESSION.md); у цьому документаційному етапі CI/build не виконуються.
+
+## Source contracts
+
+- Godot **4.7.2** за fetch default і project feature4.7; editor/template наразі відсутні. Старого CI workflow у snapshot немає.
+- `game/pc/version.cfg`: **0.33.2.3**, repo empty, libs_rev1. `Menus.VERSION`: **v0.34.0**. Розбіжність не виправляли; build підміняє обидві мітки у temp copy через --version.
+- `NetConfig.PROTO=7`, `SIM_REV=pr10-phase5b2-1`, `Save.FORMAT=1` підтверджено. SIM_REV не code fingerprint; QA — один точний EXE/DLL SHA256.
+- Startup: project.binary → override.cfg → PcPort/SteamNet → pc/boot.tscn + updater → remapped binary main scene → Main/World/Net/Menus. Tracked game/.godot потрібний; усі210 import/remap targets існують.
+- Основні gameplay systems мають code routes; implementation не означає runtime PASS. [Архітектура, механіки, command/save/network flows](ARCHITECTURE_AND_FLOWS.md).
+- LAN/Steam представлені в PC UI; online backend code збережений, normal UI disabled. Automatic host handover — online casual, не LAN/Steam. Chronicle — bounded SP keyframes/events, не full command replay.
+- Optional land cooldown зберігається/валідується/хешується; semantic downgrade на старий reader не підтримується. Format/protocol/version не змінені.
+
+## Реальні перевірки цієї сесії
+
+| Перевірка | Результат / межа |
+|---|---|
+| Release Python | PASS:15; offline FakeGitHub, без публікації |
+| Full Python discovery | **FAIL**:26 methods,10 error reports у4 CI methods/subtests,7 Godot skips; missing .github/workflows/build.yml |
+| Python AST / JSON / PO | PASS:14 Python,93 JSON,4 PO structural parse; це не gameplay tests |
+| Resource/class mappings | PASS:210 targets;130 class_name/cache paths match |
+| PowerShell AST | PASS:обидва QA launchers; виконано parser у native Windows PowerShell, самі launchers/EXE не запускалися |
+| Godot compile/regression/save/snapshot/admission | SKIP/NOT RUN:Godot unavailable; старі PASS не зараховуються |
+| Windows build/native headless/GUI, live LAN/Steam, performance | NOT RUN:наступний scope, не виконувалися |
+
+Логи/індекс — ignored `dist/codex_audit/reonboarding-172df65/`. Повна [карта тестів](REONBOARDING_AUDIT.md#test-map). Немає tools/codex/repository_audit.py: інвентар зроблено тимчасовими stdlib scripts, production/tooling не редагували.
+
+## Найважливіші відкриті питання
+
+1. CONFIRMED: missing CI workflow → full tests FAIL; відновлення — окрема tooling задача, не вимикати тести.
+2. CONFIRMED static: updater EXE digest optional, DLL ZIP без digest, activation/rollback неповні. Для QA **DF_NO_UPDATE=1 + repo empty**.
+3. CONFIRMED static: save rotation/fresh overwrite та net_match remove-before-rename мають durability gaps. ENOSPC/power loss не відтворювали; лише copied/synthetic saves.
+4. CONFIRMED scope gap: broad ALLOWED network methods без повної schemas/rate budget. Експлуатація конкретного методу UNVERIFIED.
+5. NEEDS MANUAL QA: two-peer determinism/reconnect/resync/Windows GUI/audio/GPU. Hash частковий; потрібен доказовий спосіб збору turn/hash/RNG, launcher не має trace switch.
+6. HISTORICAL: shutdown leaks і simulation p99 failures; нинішній runtime не перевірено. Старі R02/airport/cooldown/cancel failures не оголошувати поточними: guards/fixes у source є, Godot тести наразі SKIP.
+
+Наступний етап лише після нової команди: [Windows build →18 GUI cases →two independent peers](WINDOWS_TWO_PEER_QA_PLAN.md). Не публікувати збірки, не запускати updater і не починати 0.41 migration. Швидке відновлення контексту — [NEXT_SESSION](NEXT_SESSION.md).
+
+---
+
+## HISTORICAL — попередня Git-історія, текст збережено
+
+Усе нижче описує колишні checkpoints/worktrees/SHA/результати. Це не активний workflow і не дозвіл на Git або release дії. Current facts — вище.
+
 # Поточний checkpoint — Phase 7, integration authorization
 
 2026-11-20. Власник змінив порядок: **спершу інтеграція cumulative PR1–10 + Phase5–5C у development beta, потім Windows GUI/full multiplayer QA**. Дозволено local commits, push Codex branch, один PR і merge виключно в beta без bypass protections. Main/release/tags/manual dispatch/Gemini лишаються недоторканними.

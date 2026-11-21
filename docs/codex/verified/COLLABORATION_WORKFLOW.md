@@ -1,3 +1,21 @@
+# Співпраця в новому репозиторії DroneFlames
+
+CURRENT, 2026-11-21. Source of truth: actual Git/code/tests, [AGENTS](../../../AGENTS.md), [CURRENT_STATE](CURRENT_STATE.md), [NEXT_SESSION](NEXT_SESSION.md).
+
+- ZaGOR-1 — власник і release decision maker; OKREDU — довірений співавтор. Зберігати авторство і погоджені механіки людей.
+- main — прийнята база; beta — development/integration/testing. Нові feature/*, fix/*, docs/* від актуальної beta. Не переписувати спільні branches/історію; великі shared files — погодити ownership.
+- Перед зміною: статус/HEAD/контекст, повне читання залежностей/extends/tests/serialization, лаконічні acceptance/risk criteria. Мінімальний diff і review на correctness, authorization, determinism, save compatibility та side effects.
+- Перед PR: перевірити diff, relevant checks і непроведені ручні cases; явно вказати target beta. У поточному snapshot PR template та CI workflow відсутні; не стверджувати, що вони автоматично enforce policy.
+- Commit, push, PR creation, merge, tags, release/dispatch — лише за прямою командою на відповідну дію. Старі Phase7 task-specific дозволи більше не чинні. main/stable потребує окремого рішення власника після QA.
+- Поточний re-onboarding дозволяє лише документацію й safe local analysis/tests. Production GDScript/DLL/protocol/save/version не змінюються.
+- Наступний Windows/two-peer QA — [план](WINDOWS_TWO_PEER_QA_PLAN.md), updater off, isolated users, exact EXE/DLL SHA. Жодних реальних updater/production accounts/data без scope/approval.
+
+---
+
+## HISTORICAL — колишні правила й task-specific винятки
+
+Нижче збережено старий документ для attribution/decision context. Його old worktrees/SHA/permissions/PR instructions не застосовувати до нової історії.
+
 # DroneFlames — спільна незалежна розробка
 
 Політика власника, 2026-11-20: ZaGOR-1 — власник, OKREDU — довірений співавтор, Codex — технічний AI-агент. Розвиваємо власний PC-порт на доступній Godot-базі. Відповідність0.41.x не є метою; міграція DEFERRED без повторного пошуку. Права на сторонні ресурси/код зберігають значення; сама нова стратегія не надає прав публікації.

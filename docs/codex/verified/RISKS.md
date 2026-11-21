@@ -1,3 +1,5 @@
+> **PARTIALLY OUTDATED, 2026-11-21.** Нижче історичні findings іншого checkpoint; cleanup/restore/UI guards уже присутні. Поточні CONFIRMED/HISTORICAL/SUSPECTED/NEEDS MANUAL QA: [risk register](REONBOARDING_AUDIT.md#risk-register). Не виправляти автоматично всі старі R-issues без reproduction.
+
 # Phase 5 status overlay — 2026-11-20
 
 Нова стратегія незалежного порту:0.41 source migration DEFERRED і не поточний blocker. Цільові PR10 PA01/02/03/04/06 закриті локальним uncommitted diff у перевіреному scope. Старі updater R01/R03/R04, save fault matrix, transport admission та R17/R18 не виправлені. **R02 HIGH відтворений:** failed restore помилково advances/rejoins; це integration blocker. Airport/cooldown/cancel також FAIL, GUI/actual2-peer NOT RUN, p99 success не підтверджений. Exact evidence — PR10_REGRESSION_RESULTS, окремі fixes — PHASE5B_PLAN. Нижче історичний baseline risk register, не перелік нових fixes.

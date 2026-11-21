@@ -1,0 +1,180 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="24.7.17" type="device">
+  <diagram id="01" name="01 Startup">
+    <mxGraphModel dx="1100" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1500" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="cfg" value="1. project.binary + override.cfg&lt;br&gt;Godot 4.7.2 / res://pc/boot.tscn" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="50" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="auto" value="2. Autoload&lt;br&gt;PcPort + SteamNet" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="190" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="boot" value="3. PcBoot / updater.gd&lt;br&gt;QA: DF_NO_UPDATE=1, repo порожній" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;">
+          <mxGeometry x="400" y="330" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="scene" value="4. res://game/main.tscn.remap&lt;br&gt;Tracked бінарна PackedScene" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="470" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="main" value="5. Main._ready&lt;br&gt;World, Camera, Hud, Net, Menus" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="610" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="menu" value="6. Menus.setup / Save prefs / Loc&lt;br&gt;Живий світ головного меню" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="750" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="new" value="Нова гра&lt;br&gt;Save.begin_new → start_world&lt;br&gt;GameWorld.new_world → столиця" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;">
+          <mxGeometry x="50" y="950" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="load" value="Продовжити / завантажити&lt;br&gt;Save: entities → systems&lt;br&gt;finish → світ та UI" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;">
+          <mxGeometry x="400" y="950" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="net" value="Мультиплеєр&lt;br&gt;host/join → admission → ready&lt;br&gt;Симуляція з фіксованим кроком" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;">
+          <mxGeometry x="750" y="950" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" value="" edge="1" parent="1" source="cfg" target="auto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="" edge="1" parent="1" source="auto" target="boot" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" edge="1" parent="1" source="boot" target="scene" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" edge="1" parent="1" source="scene" target="main" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" edge="1" parent="1" source="main" target="menu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" edge="1" parent="1" source="menu" target="new" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="" edge="1" parent="1" source="menu" target="load" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" edge="1" parent="1" source="menu" target="net" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="02" name="02 Command and simulation">
+    <mxGraphModel dx="1100" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1500" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ui" value="1. HUD: airport&lt;br&gt;Main action → режим розміщення" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="50" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="tap" value="2. Натискання мапи / main_input&lt;br&gt;_sim(mil, build, args)" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="190" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="call" value="3. NetSession.call_sim&lt;br&gt;NetCodec refs → issue seq" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="330" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="turn" value="5. Host формує канонічний turn&lt;br&gt;Reliable _turn(n, cmds, speed)" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="610" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="rq" value="4. Host _cmd_rq&lt;br&gt;Slot відправника → pending" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="470" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="exec" value="6. Кожен peer: _exec&lt;br&gt;Allowlist, schema, ownership" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;">
+          <mxGeometry x="400" y="750" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="mil" value="7. Military.build&lt;br&gt;Місце/оплата/ID/власник/registry" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;">
+          <mxGeometry x="400" y="890" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sim" value="8. GameWorld.net_step&lt;br&gt;dt=1/30, 3 ticks/turn" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;">
+          <mxGeometry x="400" y="1030" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="hash" value="9. Кожні 50 turns: hash&lt;br&gt;Розбіжність → snapshot resync" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;">
+          <mxGeometry x="400" y="1170" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" value="" edge="1" parent="1" source="ui" target="tap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="" edge="1" parent="1" source="tap" target="call" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" edge="1" parent="1" source="call" target="rq" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" edge="1" parent="1" source="rq" target="turn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" edge="1" parent="1" source="turn" target="exec" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" edge="1" parent="1" source="exec" target="mil" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="" edge="1" parent="1" source="mil" target="sim" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" edge="1" parent="1" source="sim" target="hash" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="03" name="03 Save and restore">
+    <mxGraphModel dx="1100" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1500" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="freeze" value="Знімок збереження&lt;br&gt;Core + systems + entity graph&lt;br&gt;Autosave фіксує масиви на main" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="50" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="write" value="Диск FORMAT1 / DFS1&lt;br&gt;ZSTD + MD5 перевірка пошкоджень&lt;br&gt;Slots / rotation / fallback" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="50" y="230" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="snap" value="Мережевий snapshot&lt;br&gt;Обмежені chunks / epoch&lt;br&gt;Host і peers: однакові bytes" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="750" y="230" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="decode" value="Preflight + decode&lt;br&gt;Створити entities → заповнити refs&lt;br&gt;Settings / new_world / core" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;">
+          <mxGeometry x="400" y="410" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="systems" value="Відновити системи по черзі&lt;br&gt;mil/econ/army/diplo/...&lt;br&gt;Terrain / refs / cleanup caches" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;">
+          <mxGeometry x="400" y="590" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="finish" value="Локальний player / fog / Main&lt;br&gt;Потім commit turn / tick / success" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;">
+          <mxGeometry x="400" y="770" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="risk" value="Ризик надійності запису&lt;br&gt;Fresh cleanup / rotation / rename&lt;br&gt;Fault injection NOT RUN" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;">
+          <mxGeometry x="50" y="410" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="fail" value="Збій: freeze / leave&lt;br&gt;Нове меню / явний retry&lt;br&gt;Повного rollback світу немає" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;">
+          <mxGeometry x="400" y="950" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="scope" value="КАРТА ЗА ПРОЧИТАНИМ КОДОМ&lt;br&gt;Runtime / Windows / два peers&lt;br&gt;NOT RUN у re-onboarding" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;">
+          <mxGeometry x="750" y="950" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" value="" edge="1" parent="1" source="freeze" target="write" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="" edge="1" parent="1" source="freeze" target="snap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" edge="1" parent="1" source="write" target="decode" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" edge="1" parent="1" source="snap" target="decode" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" edge="1" parent="1" source="decode" target="systems" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" edge="1" parent="1" source="systems" target="finish" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="якщо відновлення невдале" edge="1" parent="1" source="finish" target="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" edge="1" parent="1" source="write" target="risk" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;labelBackgroundColor=#ffffff;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

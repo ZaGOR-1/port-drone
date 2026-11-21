@@ -1,3 +1,5 @@
+> **HISTORICAL / PARTIALLY OUTDATED, 2026-11-21.** У новому snapshot немає `.github/workflows/build.yml`; описані нижче CI gates і build PASS не чинний доказ. Підтримувані build-команди й поточні prerequisites: [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md); [actual tests](REONBOARDING_AUDIT.md#test-map).
+
 # Phase 5C — актуальна local build/CI policy
 
 [Exact artifacts/commands/tests](PHASE5C_INTEGRATION_RESULTS.md). Pinned Godot4.7.2; Windows build/native headless exit0, три original DLL loaded/hash-match. Existing Menus v0.34.0 label не є owner-approved stable; source product number не підвищували.

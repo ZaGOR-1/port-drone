@@ -1,3 +1,5 @@
+> **2026-11-21 — 18 сценаріїв перевикористовуються.** Старі SHA/каталоги/build results нижче HISTORICAL. Для нового exact beta build застосовувати [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md); усі18 cases зараз NOT RUN, updater off. TC-WIN-14 потребує human peers.
+
 # Windows Beta QA — Phase5C candidate
 
 Стан усіх 18 ручних сценаріїв: **NOT RUN**. Code review та headless assertions нижче — підстава очікувань, а не GUI PASS. Походження: reviewed Gemini G03; оригінал у Gemini worktree збережений. Цей checklist замінює його для приймання поточного кандидата.
