@@ -107,6 +107,8 @@ var _cut: Dictionary = {}
 var _flip: Dictionary = {}
 var _lt: float = 0.0
 var _lpath: Dictionary = {}
+var _sep_grid: Dictionary = {}
+var _sep_pool: Array = []
 
 
 const LB_BUDGET: int = 1200
@@ -1244,15 +1246,24 @@ func relane(cs: Dictionary) -> void:
 
 func _separate() -> void:
 	var ships: Array = gw.econ.ports.ships
-	var grid: Dictionary = {}
+	for bk_v: Variant in _sep_grid.values():
+		var arr := bk_v as Array
+		arr.clear()
+		_sep_pool.append(arr)
+	_sep_grid.clear()
+	var grid: Dictionary = _sep_grid
 	for i in ships.size():
 		var cs: Dictionary = ships[i]
 		if int(cs["stage"]) == 0:
 			continue
 		var k: = Vector2i((cs["pos"] as Vector2) / 64.0)
-		if not grid.has(k):
-			grid[k] = []
-		(grid[k] as Array).append(i)
+		var bk: Variant = grid.get(k)
+		if bk == null:
+			var arr2: Array = _sep_pool.pop_back() if not _sep_pool.is_empty() else []
+			arr2.append(i)
+			grid[k] = arr2
+		else:
+			(bk as Array).append(i)
 	for i in ships.size():
 		var a: Dictionary = ships[i]
 		a["spf"] = 1.0
@@ -1388,13 +1399,8 @@ func _land_tick() -> void:
 			var lanes: int = 1 if (s.is_player or r.is_player) else mini(LAND_LANES, want_lanes(s, r))
 			if int(out.get("%d>%d" % [s.id, r.id], 0)) >= lanes or route_risk(s.id, r.id) >= MERCH_HOLD:
 				continue
-			var p2: PackedVector2Array = route
-			var start: Vector2 = lp[2]
-			if dir == 1:
-				p2 = PackedVector2Array()
-				for i in range(route.size() - 1, -1, -1):
-					p2.append(route[i])
-				start = Vector2(gw.cities[b.capital_id].entrance * GameWorld.CELL)
+			var p2: PackedVector2Array = route if dir == 0 else (lp[2] as PackedVector2Array)
+			var start: Vector2 = (lp[3] as Vector2) if dir == 0 else Vector2(gw.cities[b.capital_id].entrance * GameWorld.CELL)
 			tries += 1
 			if _caravan(s, r, p2, start) or tries >= 3:
 				return
@@ -1559,7 +1565,13 @@ func _notification(what: int) -> void:
 
 
 func _lb_finish(path: PackedVector2Array) -> void:
-	_lpath[_lb_key] = [gw.game_time, path, _lb_pa]
+	var rev := PackedVector2Array()
+	if not path.is_empty():
+		var pn: int = path.size()
+		rev.resize(pn)
+		for i in pn:
+			rev[i] = path[pn - 1 - i]
+	_lpath[_lb_key] = [gw.game_time, path, rev, _lb_pa, _lb_pb]
 	_lb_st = -1
 	_lb_t = gw.game_time
 	_lb_ids = []

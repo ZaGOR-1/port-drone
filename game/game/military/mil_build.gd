@@ -392,10 +392,15 @@ func build(kind: int, center: Vector2i, country: Country, parent: Facility = nul
 		Facility.Kind.NUKE_SILO:
 			f.nuke_state = 0
 			f.nuke_t = 0.0
+			f.nuke_tt = 0.0
 			f.nuke_prog = 0.0
+			f.nuke_stage_sent = 0
 			gw.set_obj_frame(f.main_obj, "nuke_silo", 0)
 		Facility.Kind.AD_ZASLON:
-			f.ammo = int(Defense.SPEC[Facility.Kind.AD_ZASLON]["ammo"])
+			f.ammo = 0
+			f.zas_q = 0
+			f.zas_t = 0.0
+			f.zas_tt = 0.0
 			gw.set_obj_frame(f.main_obj, "ad_zaslon", 0)
 		Facility.Kind.MINE, Facility.Kind.OIL_RIG, Facility.Kind.SAWMILL, Facility.Kind.PORT, Facility.Kind.PORT_CRANE, Facility.Kind.URANIUM_MINE:
 			gw.econ.bind_site(f)
@@ -599,11 +604,12 @@ func _crit_hit(p: Vector2, r_px: float) -> void:
 			continue
 		site_hit_t[f.id] = gw.game_time
 		if f.restore_t > 0.0 and constructing.has(f.id):
-			f.restore_t = float(CRIT_RESTORE[f.kind])
+			var cmul: float = 1.25 if f.level >= 3 and f.t3_spec == 1 else 1.0
+			f.restore_t = float(CRIT_RESTORE[f.kind]) * cmul
 			if gw.country_by_id(f.country_id).is_player:
 				gw.say(gw.country_by_id(f.country_id), Loc.mk("%s: стройка сорвана ударом", [title_of(f.kind)]))
 		elif f.restore_t > 0.0:
-			ruin_hits[f.id] = int(ruin_hits.get(f.id, 0)) + 1
+			ruin_hits[f.id] = int(ruin_hits.get(f.id, 0)) + (2 if f.level >= 3 and f.t3_spec == 1 else 1)
 			f.restore_t = 0.0
 			if gw.country_by_id(f.country_id).is_player:
 				gw.say(gw.country_by_id(f.country_id), Loc.mk("%s: восстановление сорвано ударом", [title_of(f.kind)]))
@@ -841,17 +847,23 @@ func _restore_tick(f: Facility, dt: float) -> void:
 		gw.set_obj_frame(f.main_obj, "tel0", 0)
 	if f.kind == Facility.Kind.NUCLEAR_PLANT:
 		f.u_hits = 0
+		f.npp_overheat_t = -1.0
 		Nuclear.refresh_look(gw, f)
 		_stop_fx(f)
 		_ambient_fx(f)
 	if f.kind == Facility.Kind.NUKE_SILO:
 		f.nuke_state = 0
 		f.nuke_t = 0.0
+		f.nuke_tt = 0.0
 		f.nuke_prog = 0.0
 		f.nuke_cd = 0.0
+		f.nuke_stage_sent = 0
 		gw.set_obj_frame(f.main_obj, "nuke_silo", 0)
 	if f.kind == Facility.Kind.AD_ZASLON:
-		f.ammo = int(Defense.SPEC[Facility.Kind.AD_ZASLON]["ammo"])
+		f.ammo = 0
+		f.zas_q = 0
+		f.zas_t = 0.0
+		f.zas_tt = 0.0
 		gw.set_obj_frame(f.main_obj, "ad_zaslon", 0)
 	ruin_hits.erase(f.id)
 	f.ruined_at = -1.0
@@ -979,9 +991,56 @@ func has_solar(f: Facility) -> bool:
 
 
 func has_power(f: Facility) -> bool:
+	if f != null and f.emp_until > gw.game_time:
+		return false
 	return f.powered or has_solar(f)
 
 
+static func need_power(f: Facility) -> int:
+	if f != null and f.level >= 3 and f.t3_spec == 1 and uses_power(f.kind):
+		return 2
+	return USE_FACILITY
+
+
+static func power_prio_group(kind: int) -> int:
+	match kind:
+		Facility.Kind.AD_RADAR, Facility.Kind.AD_EW, Facility.Kind.AD_ZASLON, Facility.Kind.NUKE_SILO, Facility.Kind.MISSILE_FACTORY, Facility.Kind.DRONE_FACTORY, Facility.Kind.DRONE_PORT:
+			return 1
+		Facility.Kind.REFINERY, Facility.Kind.CIV_FACTORY, Facility.Kind.MINE, Facility.Kind.URANIUM_MINE:
+			return 2
+	return 0
+
+
+func set_power_prio(c: Country, prio: int) -> void:
+	if c == null:
+		return
+	var np: int = clampi(prio, 0, 2)
+	if c.power_prio == np:
+		return
+	c.power_prio = np
+	_update_power()
+	if c.is_player:
+		var lbls: Array = [Loc.t("Города и баланс"), Loc.t("Военные и ПВО"), Loc.t("Экономика")]
+		gw.say(c, Loc.mk("Приоритет электросети: %s", [lbls[np]]))
+	gw.changed.emit()
+
+
+func _alloc_fac_power(fl: Array, left: int, grp_filter: int, use_ref: Array) -> int:
+	for f: Facility in fl:
+		if grp_filter >= 0 and power_prio_group(f.kind) != grp_filter:
+			continue
+		var np: int = need_power(f)
+		use_ref[0] = int(use_ref[0]) + np
+		var was: bool = f.powered
+		if f.emp_until > gw.game_time:
+			f.powered = false
+		else:
+			f.powered = left >= np
+			if f.powered:
+				left -= np
+		if was and not f.powered and gw.country_by_id(f.country_id) == gw.player:
+			_lost_fac += 1
+	return left
 
 
 func _update_power() -> void:
@@ -989,6 +1048,8 @@ func _update_power() -> void:
 	var cap_by_c: Dictionary = {}
 	var fl_by_c: Dictionary = {}
 	for f: Facility in facilities:
+		if f.emp_until > gw.game_time:
+			continue
 		if f.kind == Facility.Kind.POWER_PLANT and alive(f):
 			cap_by_c[f.country_id] = int(cap_by_c.get(f.country_id, 0)) + PLANT_CAP
 		elif f.kind == Facility.Kind.NUCLEAR_PLANT:
@@ -1003,34 +1064,34 @@ func _update_power() -> void:
 	for c: Country in gw.countries:
 		var cap: int = int(cap_by_c.get(c.id, 0))
 		var left: int = cap
-		var use: int = 0
+		var use_ref: Array = [0]
 		var order: Array = []
 		for cid in c.city_ids:
 			order.append(gw.cities[cid])
 		order.sort_custom(func(a: City, b: City) -> bool: return a.kind < b.kind or (a.kind == b.kind and a.id < b.id))
 		var forced: Dictionary = _grid_shock(c, cap, order)
+		var fl: Array = fl_by_c.get(c.id, [])
+		fl.sort_custom(func(a: Facility, b: Facility) -> bool: return (not has_solar(a)) and has_solar(b))
+		var prio: int = clampi(c.power_prio, 0, 2)
+		if prio > 0:
+			left = _alloc_fac_power(fl, left, prio, use_ref)
 		for city: City in order:
 			var need: int = USE_CAPITAL if city.kind == City.Kind.CAPITAL else (USE_TOWN if city.kind == City.Kind.TOWN else USE_VILLAGE)
-			use += need
-			if forced.has(city.id):
+			use_ref[0] = int(use_ref[0]) + need
+			if forced.has(city.id) or city.emp_until > gw.game_time:
 				_set_city_power(city, false)
 				continue
 			_set_city_power(city, left >= need)
 			if left >= need:
 				left -= need
-
-		var fl: Array = fl_by_c.get(c.id, [])
-		fl.sort_custom(func(a: Facility, b: Facility) -> bool: return (not has_solar(a)) and has_solar(b))
-		for f: Facility in fl:
-			use += USE_FACILITY
-			var was: bool = f.powered
-			f.powered = left >= USE_FACILITY
-			if f.powered:
-				left -= USE_FACILITY
-			if was and not f.powered and c == gw.player:
-				_lost_fac += 1
+		if prio > 0:
+			var other_g: int = 2 if prio == 1 else 1
+			left = _alloc_fac_power(fl, left, other_g, use_ref)
+			left = _alloc_fac_power(fl, left, 0, use_ref)
+		else:
+			left = _alloc_fac_power(fl, left, -1, use_ref)
 		c.power_cap = cap
-		c.power_use = use
+		c.power_use = int(use_ref[0])
 
 	if _plant_hit_msg or _lost_city > 0 or _lost_fac > 0 or _back_city > 0:
 		var parts: Array[String] = []
@@ -1107,6 +1168,8 @@ func _set_city_power(city: City, on: bool) -> void:
 	if city.powered == on:
 		return
 	city.powered = on
+	if gw != null and gw.labels != null:
+		gw.labels.force()
 	if not on:
 		city.flicker_until = gw.game_time + BLACKOUT_FLICKER
 		city.dark_since = gw.game_time
@@ -1140,36 +1203,46 @@ func _ai_energy() -> void:
 
 
 func _update_fuel() -> void:
-	var refs_by_c: Dictionary = {}
-	for f: Facility in facilities:
-		if f.kind == Facility.Kind.REFINERY and alive(f):
-			var arr: Array = refs_by_c.get(f.country_id, [])
-			if arr.is_empty():
-				refs_by_c[f.country_id] = arr
-			arr.append(f)
-	for c: Country in gw.countries:
-		var n: int = 0
-		for f: Facility in refs_by_c.get(c.id, []):
-			n += 1
-			if has_power(f) and not f.halted:
-				for _lv in gw.econ.level_of(f):
-					if c.oil < 1:
-						break
-					c.oil -= 1
-					c.fuel += 1
-					gw.econ.stat_res(c, "oil", "refinery", -1)
-					gw.econ.stat_res(c, "fuel", "refinery", 1)
-
-		if c.fuel > FUEL_RESERVE:
-			var sold: int = c.fuel - FUEL_RESERVE
-			var fp: int = maxi(1, roundi(float(gw.econ.market_price("fuel")) * (gw.econ.upk.sell_k(c.id, "fuel") if gw.econ.upk != null else 1.0)))
-			if gw.econ.upk != null:
-				gw.econ.upk.note_trade(c.id, "fuel", sold, fp)
-			c.fuel = FUEL_RESERVE
-			c.add_money(sold * fp)
-			c.fuel_sold += sold * fp
-			gw.econ.stat_res(c, "fuel", "fuel_sale", -sold)
-			gw.econ.stat_add(c, "income", "fuel_sale", sold * fp)
+	for f: Facility in facs_of_kind(Facility.Kind.REFINERY):
+		if not alive(f) or f.halted or f.emp_until > gw.game_time:
+			continue
+		if gw.supply != null and gw.supply.cut_off(f):
+			continue
+		var c: Country = gw.country_by_id(f.country_id)
+		if c == null or c.eliminated:
+			continue
+		var pwr: bool = has_power(f)
+		var bnk: bool = (not pwr) and f.level >= 3 and f.t3_spec == 2
+		if not pwr and not bnk:
+			continue
+		if bnk:
+			f.fuel_t += FUEL_DT
+			if f.fuel_t < FUEL_DT * 2.0:
+				continue
+			f.fuel_t = 0.0
+		var steps: int = roundi(float(gw.econ.level_of(f)) * (1.2 if (f.level >= 3 and f.t3_spec == 1) else 1.0)) if gw.econ != null else f.level
+		var tank_cap: int = REFINERY_TANK_CAP * maxi(1, gw.econ.level_of(f) if gw.econ != null else f.level)
+		var fuel_cap: int = gw.econ.res_cap(c, "fuel") if gw.econ != null else Economy.BASE_CAP.get("fuel", 60)
+		for _lv in steps:
+			if c.oil < 1:
+				break
+			if c.fuel < FUEL_RESERVE:
+				c.oil -= 1
+				c.fuel += 1
+				gw.econ.stat_res(c, "oil", "refinery", -1)
+				gw.econ.stat_res(c, "fuel", "refinery", 1)
+			elif f.ref_fuel < tank_cap:
+				c.oil -= 1
+				f.ref_fuel += 1
+				gw.econ.stat_res(c, "oil", "refinery", -1)
+				gw.econ.stat_res(c, "fuel", "refinery", 1)
+			elif c.fuel < fuel_cap:
+				c.oil -= 1
+				c.fuel += 1
+				gw.econ.stat_res(c, "oil", "refinery", -1)
+				gw.econ.stat_res(c, "fuel", "refinery", 1)
+			else:
+				break
 
 
 

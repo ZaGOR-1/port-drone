@@ -174,30 +174,40 @@ func _draw() -> void:
 	var dark: = Palette.c("ui_rubber")
 	var fill: = Palette.c("ui_steel_dark")
 	var s: float = (PIN_SCREEN + 0.25 * clampf(z - 1.0, 0.0, 1.0)) / z
+	var icons_by_tex: Dictionary = {}
+	var blinks: Array[Rect2] = []
 	for m: Array in ms:
 		var f: Facility = m[0]
 		var p: Vector2 = m[1]
 		if not view.has_point(p):
 			continue
-
 		if z >= 1.0 and not f.moving:
 			_dashed(Rect2(Vector2(f.cell * GameWorld.CELL), Vector2(f.size * GameWorld.CELL)), Color(red, 0.85))
-
-		draw_set_transform(p.round(), 0.0, Vector2(s, s))
-		var card: = Rect2(-15, -38, 30, 30)
-		draw_rect(card.grow(1), dark)
+		var mp: Vector2 = p.round()
+		var card: = Rect2(mp + Vector2(-15, -38) * s, Vector2(30, 30) * s)
+		draw_rect(card.grow(s), dark)
 		draw_rect(card, red)
-		draw_rect(card.grow(-2), fill)
+		draw_rect(card.grow(-2.0 * s), fill)
 		for k in 4:
-			draw_rect(Rect2(-4 + k, -8 + k, 8 - 2 * k, 1), red)
-		draw_rect(Rect2(-1, -4, 2, 1), dark)
+			draw_rect(Rect2(mp + Vector2(-4 + k, -8 + k) * s, Vector2(8 - 2 * k, 1) * s), red)
+		draw_rect(Rect2(mp + Vector2(-1, -4) * s, Vector2(2, 1) * s), dark)
 		var t: AtlasTexture = icon_of(f.kind)
-		if t != null:
-			draw_texture_rect_region(t.atlas, Rect2(-12, -35, 24, 24), t.region)
-
+		if t != null and t.atlas != null:
+			var aid: int = t.atlas.get_rid().get_id()
+			var bkt: Variant = icons_by_tex.get(aid)
+			if bkt == null:
+				bkt = []
+				icons_by_tex[aid] = bkt
+			(bkt as Array).append([t.atlas, Rect2(mp + Vector2(-12, -35) * s, Vector2(24, 24) * s), t.region])
 		if _blink:
-			draw_rect(Rect2(10, -38, 5, 5), Palette.c("amber"))
-	draw_set_transform(Vector2.ZERO)
+			blinks.append(Rect2(mp + Vector2(10, -38) * s, Vector2(5, 5) * s))
+	for aid_k: Variant in icons_by_tex:
+		for e_ic: Array in (icons_by_tex[aid_k] as Array):
+			draw_texture_rect_region(e_ic[0] as Texture2D, e_ic[1] as Rect2, e_ic[2] as Rect2)
+	if not blinks.is_empty():
+		var amb: = Palette.c("amber")
+		for br_f: Rect2 in blinks:
+			draw_rect(br_f, amb)
 
 
 func _dashed(r: Rect2, col: Color) -> void:

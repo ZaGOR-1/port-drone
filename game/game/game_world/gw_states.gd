@@ -464,6 +464,30 @@ func cmd_nuke_arm(f: Facility, pl: Country) -> String:
 
 func cmd_nuke_launch(f: Facility, pl: Country, target: Vector2) -> String:
 	return Nuclear.silo_launch(self, f, pl, target)
+
+
+func cmd_zaslon_buy(f: Facility, pl: Country, count: int = 1) -> String:
+	return defense.buy_zaslon_ammo(f, pl, count)
+
+
+func cmd_nuke_warhead(f: Facility, pl: Country, wh: int) -> String:
+	return Nuclear.set_warhead(self, f, pl, wh)
+
+
+func cmd_npp_scram(f: Facility, pl: Country) -> String:
+	return Nuclear.npp_scram(self, f, pl)
+
+
+func cmd_t3_spec(f: Facility, pl: Country, spec: int) -> String:
+	return econ.set_t3_spec(f, pl, spec)
+
+
+func cmd_power_prio(pl: Country, prio: int) -> void:
+	mil.set_power_prio(pl, prio)
+
+
+func cmd_fuel_dispatch(f: Variant, pl: Country) -> String:
+	return econ.dispatch_fuel_cmd(f, pl)
 func cmd_field(o: Object, field: String, v: Variant) -> void:
 	if o == null or not CMD_FIELDS.has(field) or not (field in o):
 		return
@@ -772,6 +796,7 @@ func capture_city(city: City, new_id: int) -> void:
 		if data.inside(hc.x, hc.y) and data.get_owner_id(hc.x, hc.y) == new_id and on_own.has(f.id):
 			f.country_id = new_id
 			f.queued.clear()
+			mil.invalidate_fac_owners()
 			if f.kind == Facility.Kind.BARRACKS:
 				bars.append(f)
 			if data.inside(fc.x, fc.y):

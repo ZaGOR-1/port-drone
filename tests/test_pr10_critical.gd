@@ -9,7 +9,7 @@ var failures: Array = []
 
 class RenderWorld:
 	extends GameWorld
-	func _flush_territory() -> void:
+	func _flush_territory(_force: bool = true, _dt: float = 0.0) -> void:
 		pass
 
 

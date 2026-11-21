@@ -58,6 +58,7 @@ static func of(gw: GameWorld) -> String:
 	var h: = HashingContext.new()
 	h.start(HashingContext.HASH_MD5)
 	h.update(nums.to_byte_array())
+	h.update(var_to_bytes(v036_state(gw)))
 	if not gw.obj_state.is_empty():
 		h.update(gw.obj_state)
 	if not gw.data.owners.is_empty():
@@ -128,6 +129,7 @@ static func diplo_nums(gw: GameWorld) -> PackedFloat64Array:
 
 static func parts(gw: GameWorld) -> Dictionary:
 	var out: Dictionary = {}
+	out["v036"] = _h(var_to_bytes(v036_state(gw)))
 	out["time"] = "%.4f/%d" % [gw.game_time, gw.net_tick]
 	out["rng"] = str(gw.rng.state)
 	var cs: PackedFloat64Array = PackedFloat64Array()
@@ -271,3 +273,53 @@ static func _h(b: PackedByteArray) -> String:
 	h.start(HashingContext.HASH_MD5)
 	h.update(b)
 	return h.finish().hex_encode().substr(0, 8)
+
+
+## New authoritative v0.36 state, without render-only caches or Save codec globals.
+## Preserve simulation array order; canonicalize dictionaries recursively.
+static func v036_state(gw: GameWorld) -> Array:
+	var countries: Array = []
+	for c: Country in gw.countries:
+		countries.append([c.id, c.power_prio, c.nuke_pledge_until])
+	var facilities: Array = []
+	for f: Facility in gw.mil.facilities:
+		facilities.append([f.id, f.nuke_state, f.nuke_t, f.nuke_tt, f.nuke_prog, f.nuke_cd, f.nuke_stage_sent, f.nuke_warhead,
+			f.zas_q, f.zas_t, f.zas_tt, f.t3_spec, f.npp_overheat_t, f.emp_until, f.ref_fuel])
+	var cities: Array = []
+	for c: City in gw.cities:
+		cities.append([c.id, c.emp_until])
+	var missiles: Array = []
+	for m: Missile in gw.mil.missiles:
+		missiles.append([m.id, m.warhead, m.decoy, m.mirv_split])
+	var convoys: Array = []
+	if gw.econ != null:
+		for t: Dictionary in gw.econ.trucks:
+			if bool(t.get("fuel_sale", false)):
+				# Route/bridge/supply fields affect future delivery. Visual heading/frame do not.
+				var state: Dictionary = t.duplicate()
+				state.erase("heading")
+				state.erase("frame")
+				convoys.append(_canonical(state))
+	var routes: Array = []
+	if gw.navy != null:
+		for s: Ship in gw.navy.ships:
+			routes.append([s.id, s.path, s.pi])
+	var hold: Variant = _canonical(NetCodec.encode(gw.hold.save_state())) if gw.hold != null else null
+	return [countries, facilities, cities, missiles, convoys, routes, hold]
+
+
+static func _canonical(v: Variant) -> Variant:
+	if v is Dictionary:
+		var keys: Array = v.keys()
+		keys.sort_custom(func(a: Variant, b: Variant) -> bool:
+			return typeof(a) < typeof(b) if typeof(a) != typeof(b) else var_to_str(a) < var_to_str(b))
+		var out: Dictionary = {}
+		for k: Variant in keys:
+			out[k] = _canonical(v[k])
+		return out
+	if v is Array:
+		var out: Array = []
+		for item: Variant in v:
+			out.append(_canonical(item))
+		return out
+	return v

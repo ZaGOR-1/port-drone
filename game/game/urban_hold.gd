@@ -447,6 +447,13 @@ func _threat_pos(c: Country, city: City) -> Vector2:
 	return sum / float(n) if n > 0 else Vector2.INF
 
 
+var _hold_near_u: Array = []
+var _far_trunk: PackedVector2Array = PackedVector2Array()
+var _far_trunk_from: Vector2 = Vector2.INF
+var _far_trunk_city: int = -1
+var _far_fail: Dictionary = {}
+
+
 func _auto_city(c: Country, city: City) -> void:
 	var cp: Vector2 = Vector2(city.center * GameWorld.CELL)
 	var rr: float = float(city.radius * GameWorld.CELL) + DEF_PAD
@@ -463,7 +470,8 @@ func _auto_city(c: Country, city: City) -> void:
 
 	var cr2: float = float(city.radius * GameWorld.CELL) * float(city.radius * GameWorld.CELL)
 	var defs: Array[Unit] = []
-	for u: Unit in gw.army.units:
+	var src_u: Array = gw.army._near_into(cp, rr, _hold_near_u) if gw.army._grid_w > 0 else gw.army.units
+	for u: Unit in src_u:
 		if u.country_id != c.id or u.pos.distance_squared_to(cp) > rr * rr:
 			continue
 		if u.post != null:
@@ -486,6 +494,9 @@ func _auto_city(c: Country, city: City) -> void:
 				continue
 		defs.append(u)
 	var far: bool = false
+	_far_trunk = PackedVector2Array()
+	_far_trunk_from = Vector2.INF
+	_far_trunk_city = -1
 	if defs.is_empty():
 
 
@@ -495,6 +506,17 @@ func _auto_city(c: Country, city: City) -> void:
 		if defs.is_empty():
 			return
 		far = true
+		if defs[0].home != null:
+			var fk: String = "%d:%d" % [defs[0].home.id, city.id]
+			if gw.game_time < float(_far_fail.get(fk, -1.0)):
+				return
+			var tp_test: PackedVector2Array = gw.econ.nav_path(defs[0].pos, cp)
+			if not gw.econ.nav_last_ok and (tp_test.is_empty() or tp_test[tp_test.size() - 1].distance_to(cp) > float(city.radius * GameWorld.CELL) + 80.0):
+				_far_fail[fk] = gw.game_time + 30.0
+				return
+			_far_trunk = tp_test
+			_far_trunk_from = defs[0].pos
+			_far_trunk_city = city.id
 		stats["dispatch"] = int(stats.get("dispatch", 0)) + 1
 	stats["auto_try"] = int(stats.get("auto_try", 0)) + 1
 
@@ -527,6 +549,8 @@ func _auto_city(c: Country, city: City) -> void:
 		if n > 0:
 			took += 1
 			stats["auto"] = int(stats["auto"]) + 1
+	_far_trunk = PackedVector2Array()
+	_far_trunk_city = -1
 
 
 func _foot_kind(u: Unit) -> bool:
@@ -611,17 +635,30 @@ func _send(oid: int, home: Facility, cid: int, auto: bool, pool: Array[Unit] = [
 		var ap: Vector2 = sp3 + outv
 		var path: = PackedVector2Array()
 		if u.pos.distance_to(sp3) > 40.0:
-			path = gw.econ.nav_path(u.pos, ap)
+			if far and not _far_trunk.is_empty() and u.pos.distance_to(_far_trunk_from) < 160.0 and gw.econ._wet_path(PackedVector2Array([u.pos, _far_trunk[0]])) == false:
+				path = PackedVector2Array(_far_trunk)
+				var tail: PackedVector2Array = gw.econ.nav_path(_far_trunk[_far_trunk.size() - 1], ap)
+				if not gw.econ.nav_last_ok and (tail.is_empty() or tail[tail.size() - 1].distance_to(ap) > 24.0):
+					stats["s_nav"] = int(stats.get("s_nav", 0)) + 1
+					if auto:
+						pool.erase(u)
+					nav_fail += 1
+					if nav_fail >= 3:
+						break
+					continue
+				path.append_array(tail)
+			else:
+				path = gw.econ.nav_path(u.pos, ap)
 
 
-			if not gw.econ.nav_last_ok and (path.is_empty() or path[path.size() - 1].distance_to(ap) > 24.0):
-				stats["s_nav"] = int(stats.get("s_nav", 0)) + 1
-				if auto:
-					pool.erase(u)
-				nav_fail += 1
-				if nav_fail >= 3:
-					break
-				continue
+				if not gw.econ.nav_last_ok and (path.is_empty() or path[path.size() - 1].distance_to(ap) > 24.0):
+					stats["s_nav"] = int(stats.get("s_nav", 0)) + 1
+					if auto:
+						pool.erase(u)
+					nav_fail += 1
+					if nav_fail >= 3:
+						break
+					continue
 		path.append(sp3)
 		if h.is_empty():
 			var hc: City = gw.city_at_cell(Vector2i(gw.obj_x[oid], gw.obj_y[oid]))
@@ -972,7 +1009,7 @@ func save_state() -> Dictionary:
 	var hot: = PackedInt32Array()
 	for hc: int in _hot:
 		hot.append(hc)
-	return {"ids": ids, "h": hs, "ck": ck, "cv": cv, "ok": ok, "ov": ov, "t1": _t1, "t5": _t5, "hot": hot, "bhit": _hit.duplicate(true)}
+	return {"ids": ids, "h": hs, "ck": ck, "cv": cv, "ok": ok, "ov": ov, "t1": _t1, "t5": _t5, "hot": hot, "bhit": _hit.duplicate(true), "far_fail": _far_fail.duplicate()}
 
 
 func load_state(d: Dictionary) -> void:
@@ -984,6 +1021,14 @@ func load_state(d: Dictionary) -> void:
 	_hit.clear()
 	_spots.clear()
 	_aims.clear()
+	_far_fail.clear()
+	_far_trunk.clear()
+	_far_trunk_from = Vector2.INF
+	_far_trunk_city = -1
+	_hold_near_u.clear()
+	var ff: Variant = d.get("far_fail", {})
+	if valid_far_fail(ff):
+		_far_fail = (ff as Dictionary).duplicate()
 	var bh: Variant = d.get("bhit", {})
 	if bh is Dictionary:
 		for k: Variant in bh:
@@ -1030,3 +1075,22 @@ func load_state(d: Dictionary) -> void:
 	if ok is PackedInt32Array and ov is PackedFloat64Array and (ok as PackedInt32Array).size() == (ov as PackedFloat64Array).size():
 		for i in (ok as PackedInt32Array).size():
 			_off[int(ok[i])] = float(ov[i])
+
+
+## Optional FORMAT1 state. Old saves start without a failed-dispatch cooldown.
+static func valid_far_fail(value: Variant) -> bool:
+	if not (value is Dictionary):
+		return false
+	for key: Variant in value:
+		if not (key is String):
+			return false
+		var ids: PackedStringArray = key.split(":")
+		if ids.size() != 2:
+			return false
+		for id: String in ids:
+			if not id.is_valid_int() or int(id) < 0 or str(int(id)) != id:
+				return false
+		var until: Variant = value[key]
+		if not (until is int or until is float) or not is_finite(float(until)) or float(until) < 0.0:
+			return false
+	return true

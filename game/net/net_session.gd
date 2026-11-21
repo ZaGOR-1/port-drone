@@ -37,7 +37,7 @@ const ALLOWED: Dictionary = {
 	"mil.set_auto_strike": 0, "mil.set_auto_kab": 0, "mil.set_auto_drones": 0, "mil.launch": -1,
 	"mil.launch_multi_ex": -1, "mil.launch_missiles": -1, "mil.launch_missiles_multi": -1,
 	"mil.retarget": -1, "mil.order_move": -1,
-	"mil.air.set_pylon": -1, "mil.air.buy": -1, "mil.air.order_land": -1, "mil.air.upgrade": -1,
+	"mil.air.set_pylon": -1, "mil.air.buy": -1, "mil.air.buy_batch": -1, "mil.air.order_land": -1, "mil.air.upgrade": -1,
 	"mil.air.set_payload": -1, "mil.air.order_patrol": -1, "mil.air.order_fly": -1,
 	"mil.air.launch_kab": -1, "mil.air.launch_cruise": -1, "mil.air.multi_launch": -1,
 	"mil.air.kab_strike": 0, "mil.air.cas_support": 0, "mil.air.sell": -1, "mil.air.rebase": -1,
@@ -71,7 +71,9 @@ const ALLOWED: Dictionary = {
 	"diplo.conf.demand_surrender": 0, "diplo.conf.pick": 3, "diplo.conf.reset_picks": 1, "diplo.conf.confirm": 1,
 	"navy.order": -1, "navy.cancel": -1,
 	".cmd_static": -1, ".cmd_strike": -1, ".cmd_refill_all": -1,
-	".cmd_nuke_build": -1, ".cmd_nuke_arm": -1, ".cmd_nuke_launch": -1,
+	".cmd_nuke_build": -1, ".cmd_nuke_arm": -1, ".cmd_nuke_launch": -1, ".cmd_nuke_warhead": -1,
+	".cmd_npp_scram": -1, ".cmd_t3_spec": -1, ".cmd_power_prio": -1, ".cmd_fuel_dispatch": -1,
+	".cmd_zaslon_buy": -1, "defense.buy_zaslon_ammo": -1, "econ.protect_all": -1,
 	"hold.occupy": 2, "hold.leave": 1,  # v0.30.14 R314 (twink): soldiers into / out of a city building (game/urban_hold.gd)
 	"econ.trd.set_sanctions": 0, "econ.trd.contract_offer": 0, "econ.trd.contract_answer": 0, "econ.trd.contract_cancel": 0,  # R331 TRADE (game/trade331.gd; the function checks `me` is a party)
 	"rail.set_rail_ok": -1,  # R332b RAIL332: «ЖД: РАЗРЕШЕНО / ЗАПРЕЩЕНО» (args[0] = the author's Country; the barracks are checked to be his)
@@ -2048,6 +2050,14 @@ static func _valid_air_order_args(method: String, args: Array) -> bool:
 	return args[1] is Vector2 and (args[1] as Vector2).is_finite()
 
 
+static func _valid_power_wire(args: Variant) -> bool:
+	# Inspect this command's wire shape before the general codec can cast containers.
+	if not (args is Array) or args.size() != 2 or not (args[0] is Dictionary):
+		return false
+	var country: Dictionary = args[0]
+	return country.get("$e") is String and country["$e"] == "C" and country.get("i") is int and args[1] is int and args[1] >= 0 and args[1] <= 2
+
+
 func _exec(cmd: Dictionary) -> void:
 	var slot: int = int(cmd.get("s", -1))
 	var issuer: Country = gw.country_by_id(slot + 1) if slot >= 0 else null
@@ -2061,7 +2071,7 @@ func _exec(cmd: Dictionary) -> void:
 			var m: String = String(cmd.get("m", ""))
 			var key: String = "%s.%s" % [path, m]
 			var obj: Object = _target(path)
-			if issuer == null or not issuer.is_player or obj == null or not ALLOWED.has(key) or not obj.has_method(m):
+			if issuer == null or not issuer.is_player or obj == null or not ALLOWED.has(key) or not obj.has_method(m) or (key == ".cmd_power_prio" and not _valid_power_wire(cmd.get("a"))):
 				done = false
 			else:
 				var args: Variant = NetCodec.decode(gw, cmd.get("a", []))
@@ -2072,6 +2082,8 @@ func _exec(cmd: Dictionary) -> void:
 				elif key == "diplo.answer_as" and ((args as Array).size() != 3 or not (args[0] is int) or not (args[1] is String) or not (args[2] is String)):
 					done = false
 				elif key == "mil.build" and not _valid_build_args(args):
+					done = false
+				elif key == ".cmd_power_prio" and ((args as Array).size() != 2 or not (args[0] is Country) or args[0] != issuer or not (args[1] is int) or args[1] < 0 or args[1] > 2):
 					done = false
 				elif key in ["mil.air.rebase", "mil.air.order_airdrop"] and not _valid_air_order_args(m, args):
 					done = false

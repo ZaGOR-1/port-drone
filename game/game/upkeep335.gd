@@ -34,8 +34,8 @@ const GRACE_OLD: float = 720.0
 
 const PCT: Dictionary = {
 	Facility.Kind.AD_SAM: 0.03, Facility.Kind.AD_PATRIOT: 0.03, Facility.Kind.AD_SPAAG: 0.02, Facility.Kind.AD_MFG: 0.02,
-	Facility.Kind.AD_INT: 0.02, Facility.Kind.AD_RADAR: 0.015, Facility.Kind.AD_EW: 0.015,
-	Facility.Kind.TEL: 0.03, Facility.Kind.COASTAL_ASM: 0.025,
+	Facility.Kind.AD_INT: 0.02, Facility.Kind.AD_RADAR: 0.015, Facility.Kind.AD_EW: 0.015, Facility.Kind.AD_ZASLON: 0.015,
+	Facility.Kind.TEL: 0.03, Facility.Kind.COASTAL_ASM: 0.025, Facility.Kind.NUKE_SILO: 0.02,
 	Facility.Kind.AIRFIELD: 0.012, Facility.Kind.AIRPORT: 0.01, Facility.Kind.DRONE_PORT: 0.01, Facility.Kind.DP_RAMP: 0.01, Facility.Kind.DP_RUNWAY: 0.01,
 	Facility.Kind.DP_STORE: 0.01, Facility.Kind.DRONE_FACTORY: 0.01, Facility.Kind.MISSILE_FACTORY: 0.01,
 	Facility.Kind.BARRACKS: 0.01, Facility.Kind.NAVAL_BASE: 0.01,
@@ -53,7 +53,7 @@ const FREE_ZERO: int = 9
 
 const CLASS_OF: Dictionary = {
 	Facility.Kind.AD_SAM: "ad", Facility.Kind.AD_PATRIOT: "ad", Facility.Kind.AD_SPAAG: "ad", Facility.Kind.AD_MFG: "ad", Facility.Kind.AD_INT: "ad",
-	Facility.Kind.AD_RADAR: "ad", Facility.Kind.AD_EW: "ad", Facility.Kind.TEL: "strike", Facility.Kind.COASTAL_ASM: "strike",
+	Facility.Kind.AD_RADAR: "ad", Facility.Kind.AD_EW: "ad", Facility.Kind.AD_ZASLON: "ad", Facility.Kind.TEL: "strike", Facility.Kind.COASTAL_ASM: "strike", Facility.Kind.NUKE_SILO: "strike",
 	Facility.Kind.MISSILE_FACTORY: "strike", Facility.Kind.AIRFIELD: "air", Facility.Kind.AIRPORT: "air", Facility.Kind.DRONE_PORT: "drones", Facility.Kind.DP_RAMP: "drones",
 	Facility.Kind.DP_RUNWAY: "drones", Facility.Kind.DP_STORE: "drones", Facility.Kind.DRONE_FACTORY: "drones",
 	Facility.Kind.BARRACKS: "army", Facility.Kind.NAVAL_BASE: "navy",
@@ -62,6 +62,7 @@ const CLASSES: Array[String] = ["ad", "strike", "air", "drones", "army", "navy"]
 const LOC_CLASS: Dictionary = {"ad": "ПВО", "strike": "Ракеты", "air": "Авиация", "drones": "Дроны", "army": "Армия", "navy": "Флот"}
 
 const PRI: Dictionary = {
+	Facility.Kind.AD_ZASLON: 95, Facility.Kind.NUKE_SILO: 95,
 	Facility.Kind.AD_PATRIOT: 90, Facility.Kind.AD_SAM: 85, Facility.Kind.AD_RADAR: 80, Facility.Kind.AD_SPAAG: 75, Facility.Kind.AD_MFG: 70,
 	Facility.Kind.AD_INT: 65, Facility.Kind.AD_EW: 60, Facility.Kind.BARRACKS: 55, Facility.Kind.TEL: 50, Facility.Kind.COASTAL_ASM: 45,
 	Facility.Kind.AIRFIELD: 40, Facility.Kind.AIRPORT: 30, Facility.Kind.DRONE_PORT: 35, Facility.Kind.MISSILE_FACTORY: 30, Facility.Kind.DRONE_FACTORY: 30,

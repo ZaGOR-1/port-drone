@@ -436,9 +436,10 @@ func _demand_text(d: Dictionary) -> Array:
 
 
 func _make_demand(from: int, to: int, kind: String, params: Dictionary) -> Dictionary:
+	var dt_limit: float = NUKE_DEMAND_TIME if kind == "halt_nukes" else DEMAND_TIME
 	var d: Dictionary = {"id": _dem_id, "from": from, "to": to, "kind": kind, "n": int(params.get("n", 0)), "res": String(params.get("res", "")),
 		"cell": params.get("cell", Vector2i(-1, -1)), "third": int(params.get("third", 0)), "conseq": String(params.get("conseq", "embargo")),
-		"made": gw.game_time, "until": gw.game_time + DEMAND_TIME}
+		"made": gw.game_time, "until": gw.game_time + dt_limit}
 	_dem_id += 1
 	d["text"] = _demand_text(d)
 	return d
@@ -494,8 +495,10 @@ func _issue(d: Dictionary) -> void:
 	_reveal(int(d["from"]), int(d["to"]))
 	gw.news_m(Loc.mk("%s ПРЕДЪЯВЛЯЕТ УЛЬТИМАТУМ: %s", [Loc.name(_name(int(d["from"]))), Loc.name(_name(int(d["to"])))]), "amber")
 	if to_p:
-		gw.say(int(d["to"]), Loc.mk("УЛЬТИМАТУМ: %s (%d с)", [d["text"], int(DEMAND_TIME)]))
-		Sfx.ui("ui_alert")
+		var wait_s: int = maxi(1, roundi(float(d.get("until", gw.game_time + DEMAND_TIME)) - gw.game_time))
+		gw.say(int(d["to"]), Loc.mk("УЛЬТИМАТУМ: %s (%d с)", [d["text"], wait_s]))
+		if GameConfig.alert_snd:
+			Sfx.ui("ui_alert")
 		gw.offer_received.emit()
 		pending_changed.emit()
 
@@ -531,8 +534,15 @@ func demand_options(from: int, to: int) -> Array:
 			out.append({"kind": "break_alliance", "label": Loc.t("РАЗРЫВ"), "text": Loc.t("разорвать союз (%s)") % c.name, "params": {"third": c.id}})
 		if has_treaty(to, c.id, "visa"):
 			out.append({"kind": "cancel_visa", "label": Loc.t("ВИЗЫ"), "text": Loc.t("отменить безвиз (%s)") % c.name, "params": {"third": c.id}})
-	if GameConfig.nukes and ct.nuke_ready:
-		out.append({"kind": "halt_nukes", "label": Loc.t("ЯДЕРНОЕ"), "text": Loc.t("свернуть ядерную программу"), "params": {}})
+	if GameConfig.nukes:
+		var has_np: bool = ct.nuke_ready
+		if not has_np and gw.mil != null:
+			for nf: Facility in gw.mil.facilities:
+				if nf.country_id == to and nf.kind == Facility.Kind.NUKE_SILO and nf.nuke_state > 0 and gw.mil.alive(nf):
+					has_np = true
+					break
+		if has_np:
+			out.append({"kind": "halt_nukes", "label": Loc.t("ЯДЕРНОЕ"), "text": Loc.t("свернуть ядерную программу"), "params": {}})
 	return out
 
 
@@ -571,7 +581,16 @@ func _demand_value(d: Dictionary, victim: int) -> float:
 		"cancel_visa":
 			return 0.25
 		"halt_nukes":
-			return 0.75
+			var base_v: float = 0.65
+			if gw.mil != null:
+				for nf: Facility in gw.mil.facilities:
+					if nf.country_id == victim and nf.kind == Facility.Kind.NUKE_SILO and gw.mil.alive(nf):
+						if nf.nuke_state >= 2:
+							base_v = 0.82
+							break
+					elif nf.country_id == victim and nf.kind == Facility.Kind.AD_ZASLON and gw.mil.alive(nf) and nf.ammo > 0:
+						base_v += 0.08
+			return base_v
 	return 0.3
 
 
@@ -607,6 +626,7 @@ func cede_area(giver: int, taker: int, cell: Vector2i, r: int) -> void:
 		if d.inside(hc.x, hc.y) and d.get_owner_id(hc.x, hc.y) == taker:
 			f.country_id = taker
 			f.queued.clear()
+			gw.mil.invalidate_fac_owners()
 	if gw.econ != null:
 		gw.econ.draw_ver += 1
 	_count("land_ceded")
@@ -1090,6 +1110,39 @@ func war_block_why(a: int, b: int) -> String:
 	return String(war_block(a, b).get("why", ""))
 
 
+func in_grey_zone(t: float = -1.0) -> bool:
+	var now: float = gw.game_time if t < 0.0 else t
+	return GameConfig.aggression > 0 and now >= GREY_ZONE_T and now < maxf(GRACE, GameConfig.player_grace())
+
+
+func is_skirmish_target(a: int, b: int, p: Vector2) -> bool:
+	if gw == null or gw.data == null or a <= 0 or b < 0 or a == b:
+		return false
+	if not in_grey_zone():
+		return false
+	if b > 0 and (at_war(a, b) or allied(a, b) or truce_on(a, b) or is_subject(a) or subject_of(a) == b or subject_of(b) == a or (ally != null and ally.same(a, b))):
+		return false
+	var cell: = Vector2i(floori(p.x / GameWorld.CELL), floori(p.y / GameWorld.CELL))
+	if not gw.data.inside(cell.x, cell.y):
+		return false
+	var own: int = gw.data.get_owner_id(cell.x, cell.y)
+	for ct: City in gw.cities:
+		if ct.country_id == own and own > 0 and own != a:
+			if Vector2(ct.center * GameWorld.CELL).distance_to(p) <= float(ct.radius + 4) * GameWorld.CELL:
+				return false
+	if own == 0:
+		return true
+	if gw.econ != null:
+		for dep: Dictionary in gw.econ.deposits:
+			if Vector2((dep["cell"] as Vector2i) * GameWorld.CELL).distance_to(p) <= 16.0 * GameWorld.CELL:
+				return true
+	for dir_off: Vector2i in [Vector2i(14, 0), Vector2i(-14, 0), Vector2i(0, 14), Vector2i(0, -14)]:
+		var qc: Vector2i = cell + dir_off
+		if gw.data.inside(qc.x, qc.y) and gw.data.get_owner_id(qc.x, qc.y) != own:
+			return true
+	return false
+
+
 func strike_block(a: int, o: int) -> String:
 	if a <= 0 or o <= 0 or a == o or at_war(a, o):
 		return ""
@@ -1104,6 +1157,9 @@ func strike_block_at(a: int, p: Vector2, tell: bool = true) -> String:
 		return ""
 	var o: int = gw.ops._owner_at(p)
 	var why: String = strike_block(a, o)
+	if why == "" and o > 0 and o != a and not at_war(a, o) and in_grey_zone():
+		if not is_skirmish_target(a, o, p):
+			why = Loc.t("Серая зона: до %d мин допустимы лишь стычки у границы и залежей") % roundi(maxf(GRACE, GameConfig.player_grace()) / 60.0)
 	if why != "" and tell:
 		_count("strike_blocked")
 		var k: String = "%d>%d" % [a, o]

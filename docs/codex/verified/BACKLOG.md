@@ -1,3 +1,15 @@
+# v0.36 integration — 2026-11-21
+
+Поточний scope supersedes історичний Phase7 дозвіл нижче: **merge beta у цій задачі заборонений**, final decision власника. [Fixes/results](V036_FIX_RESULTS.md), [original review](V036_REVIEW.md). PR #3 і #1 залишаються відкритими, авторські commits збережено.
+
+- FIXED у integration branch: compatibility identity, autosave aliases, Navy threat routing/repeated restore scratch, UrbanHold cooldown, power ownership/wire schema; hash/upgrade filtering/tooltips. Final CI/PR статус брати з GitHub, не з історичних Phase5 PASS.
+- P1: controlled late-war performance profile. Early-world fixed mean/p99 гірші за beta у поточних noisy runs; глобального прискорення не підтверджено. Unsafe кеші не повертати заради timing.
+- P1: Windows GUI18cases + нові T3/fuel/power/nuclear/Shift UX; render ordering/overlap після batching. Physical two-PC LAN/Steam, same exact EXE/DLL, hash/RNG, disconnect/rejoin/resync, supported host-change; updater disabled.
+- OPEN: general network command schema safety (за межами targeted power guard), updater integrity/atomicity, OS-level save durability/downgrade, inherited shutdown leaks. Native Windows smoke exit0 не закриває leaks.
+- Docs PR #1 не редагувався. Після рішення щодо v0.36 узгодити його current-state identity з accepted beta та цим report; старий SIM_REV у re-onboarding docs не переносити як актуальний факт.
+
+---
+
 # Phase 7 → Phase 8 — beta QA backlog
 
 За рішенням власника Windows GUI і full multiplayer виконуються **після** інтеграції в development beta. Вони NOT RUN, не блокують дозволений Phase7 merge самі по собі. Updater download/replacement не використовувати у тестовій beta: DF_NO_UPDATE=1 та repo-empty build. [QA plan](PHASE8_BETA_QA_PLAN.md).

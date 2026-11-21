@@ -605,7 +605,7 @@ func _tel_sprite(f: Facility, frame: int) -> void:
 		gw.set_obj_frame(f.main_obj, "tel0", 0)
 
 
-func launch_nuke(f: Facility, target: Vector2) -> Missile:
+func launch_nuke(f: Facility, target: Vector2, warhead: int = 0) -> Missile:
 	var launch_pos: Vector2 = f.center_px()
 	var m: = Missile.new()
 	m.id = _next_missile_id
@@ -613,6 +613,7 @@ func launch_nuke(f: Facility, target: Vector2) -> Missile:
 	m.country_id = f.country_id
 	m.tel = f
 	m.nuke = true
+	m.warhead = warhead
 	m.state = Missile.State.IGNITE
 	m.t = 0.0
 	m.launch = launch_pos
@@ -717,19 +718,54 @@ func _update_missiles(dt: float) -> void:
 				trail_flip.append(Hash32.h2(m.id, trail_pts.size(), 77) & 3)
 				n += 1
 		m.prev_screen = sp
-		if not m.whistled and m.time_left() < 1.8:
+		if m.nuke and m.warhead == Nuclear.Warhead.MIRV and not m.decoy and not m.mirv_split and m.state == Missile.State.FLIGHT and m.u() >= 0.42:
+			m.mirv_split = true
+			var side_v: Vector2 = (m.target - m.launch).normalized().orthogonal()
+			for di in Nuclear.MIRV_DECOYS:
+				var sign_d: float = 1.0 if di % 2 == 0 else -1.0
+				var dm: = Missile.new()
+				dm.id = _next_missile_id
+				_next_missile_id += 1
+				dm.country_id = m.country_id
+				dm.tel = m.tel
+				dm.nuke = true
+				dm.warhead = m.warhead
+				dm.decoy = true
+				dm.state = Missile.State.FLIGHT
+				dm.launch = m.ground()
+				dm.alt0 = m.alt()
+				dm.apex = m.apex * 0.42
+				dm.apex_km = m.apex_km * 0.6
+				dm.target = m.target + side_v * sign_d * (22.0 + float(di) * 14.0)
+				dm.dist = dm.launch.distance_to(dm.target)
+				dm.flight_time = maxf(2.0, m.time_left())
+				dm.t = Missile.IGNITE_TIME
+				dm.prev_screen = dm.screen_pos()
+				dm.last_screen = dm.prev_screen
+				missiles.append(dm)
+			if gw._on_screen(sp, 120.0):
+				gw.fx.spawn("spark_burst", sp.round(), 6)
+		if not m.whistled and not m.decoy and m.time_left() < 1.8:
 			m.whistled = true
 			Sfx.play("missile_whistle", m.target)
 		if m.u() >= 1.0:
 			m.state = Missile.State.DONE
 			m.set_meta("hit", true)
 			missiles.remove_at(k)
-			if m.nuke:
-				if gw.battle_watch != null:
-					gw.battle_watch.impact(m.target, "Ядерный удар", m.country_id)
-				gw.strike_nuke(Vector2i(floori(m.target.x / GameWorld.CELL), floori(m.target.y / GameWorld.CELL)), m.country_id)
-				if gw.vfx != null:
-					gw.vfx.on_impact(m.target, 2)
+			if m.decoy:
+				gw.fx.spawn("intercept_flash", m.target.round(), 6)
+			elif m.nuke:
+				var mcell: Vector2i = Vector2i(floori(m.target.x / GameWorld.CELL), floori(m.target.y / GameWorld.CELL))
+				if m.warhead == Nuclear.Warhead.EMP:
+					gw.strike_emp(mcell, m.country_id)
+				else:
+					if gw.battle_watch != null:
+						gw.battle_watch.impact(m.target, "Ядерный удар", m.country_id)
+					var r_ovr: int = Nuclear.MIRV_R_CELLS if m.warhead == Nuclear.Warhead.MIRV else -1
+					var cr_ovr: int = Nuclear.MIRV_CRATER_R if m.warhead == Nuclear.Warhead.MIRV else -1
+					gw.strike_nuke(mcell, m.country_id, r_ovr, cr_ovr)
+					if gw.vfx != null:
+						gw.vfx.on_impact(m.target, 2)
 			else:
 				if gw.protect != null:
 					gw.protect.on_impact(m.target, Protect.HIT_HYPER if m.hyper else Protect.HIT_BALLISTIC, m.country_id)

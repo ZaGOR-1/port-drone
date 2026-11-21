@@ -66,15 +66,20 @@ func _process(delta: float) -> void:
 			OpsLayer.pennant_fids = {}
 			queue_redraw()
 		return
+	var was_on: bool = _on
 	_on = true
 	_dash_t = fmod(_dash_t + delta * 12.0, 12.0)
 	_data_t -= delta
+	var rows_changed: bool = not was_on
 	if _data_t <= 0.0:
 		_data_t = DATA_T
-		var sm: Dictionary = gw.ops.command_summary(gw.player.id)
+		var sm: Dictionary = gw.ops.command_summary(gw.player.id, true)
 		store.scan(sm)
 		_rows = store.armies(sm, -1).filter(func(r: Dictionary) -> bool: return int(r["gid"]) >= 0)
-	queue_redraw()
+		rows_changed = true
+	var has_content: bool = not _rows.is_empty() or not gw.player.army_groups.is_empty() or (dock != null and dock.is_open)
+	if has_content or rows_changed:
+		queue_redraw()
 
 
 func _draw() -> void:

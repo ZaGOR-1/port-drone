@@ -3,6 +3,9 @@
 import argparse
 import hashlib
 import json
+import os
+import re
+import tempfile
 from pathlib import Path
 import struct
 import subprocess
@@ -12,6 +15,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.release import release_assets
+from tools.build import source_version
+from tools.check_performance import _unexpected_errors
 
 LIBRARIES = {
     'libgodotsteam.windows.template_release.x86_64.dll',
@@ -91,6 +96,31 @@ def verify_artifacts(package, template, source_root=ROOT):
                        if p.is_file() and p.name not in {'BUILD_PROVENANCE.json', 'QA-SHA256SUMS.txt'}}}
 
 
+def verify_identity(package, godot):
+    version = source_version()
+    net = (ROOT/'game/net/net_config.gd').read_text()
+    proto = re.search(r'const PROTO: int = (\d+)', net)[1]
+    rev = re.search(r'const SIM_REV: String = "([^"]+)"', net)[1]
+    identity = f'v{version}/{proto}/{rev}'
+    with tempfile.TemporaryDirectory(prefix='df_ci_identity_') as tmp:
+        env = os.environ.copy()
+        env.update(DF_NO_UPDATE='1', DF_NO_OPENING='1', DF_STEAM_MOCK='0')
+        for key in ('XDG_DATA_HOME','XDG_CONFIG_HOME','XDG_CACHE_HOME','APPDATA','LOCALAPPDATA'):
+            env[key] = str(Path(tmp)/key); Path(env[key]).mkdir()
+        p = subprocess.run([str(godot.resolve()), '--headless', '--main-pack',
+            str((package/'DroneFlames.exe').resolve()), '--script',
+            str(ROOT/'tools/ci/verify_identity.gd'), '--', identity, version],
+            env=env, capture_output=True, text=True, timeout=60)
+        log = p.stdout+p.stderr
+        if p.returncode or 'SCRIPT ERROR:' in log or _unexpected_errors(log):
+            raise ValueError('Packaged identity verification failed:\n'+log)
+        line = next((line for line in p.stdout.splitlines() if line.startswith('PACKAGED_IDENTITY ')), '')
+        result = json.loads(line.removeprefix('PACKAGED_IDENTITY '))
+        if result != {'passed':True, 'identity':identity, 'version':version}:
+            raise ValueError(f'Unexpected packaged identity: {result}')
+        return result
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--godot-dir', type=Path, required=True)
@@ -103,6 +133,7 @@ def main():
         report['source_dirty'] = bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip())
         report['game_tree'] = subprocess.check_output(['git', 'rev-parse', 'HEAD:game'], cwd=ROOT, text=True).strip()
         report['artifacts'] = verify_artifacts(args.package, args.godot_dir/'windows_release_x86_64.exe')
+        report['identity'] = verify_identity(args.package, args.godot_dir/'godot')
         (args.package/'BUILD_PROVENANCE.json').write_text(json.dumps(report, indent=2)+'\n')
         # Separate from build.py's two-entry manifest, which release_assets validates.
         lines = [f'{sha256(f)}  {f.name}\n' for f in sorted(args.package.iterdir())

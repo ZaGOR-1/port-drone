@@ -22,8 +22,8 @@ func _run() -> void:
 		quit(2)
 		return
 	check(NetConfig.PROTO == 7,"transport protocol unchanged")
-	check(NetConfig.SIM_REV == "pr10-phase5b2-1","candidate revision identifies new simulation semantics")
-	check(NetConfig.version() == Menus.VERSION+"/7/pr10-phase5b2-1","full admission identity includes revision")
+	check(NetConfig.SIM_REV == "v036-integration-1","candidate revision identifies new simulation semantics")
+	check(NetConfig.version() == Menus.VERSION+"/7/v036-integration-1","full admission identity includes revision")
 	var n := NetSession.new()
 	n.mode = NetSession.Mode.LAN
 	n.is_host = true
@@ -37,7 +37,7 @@ func _run() -> void:
 	n.status_text = "unchanged"
 	n.slots = [{"peer":1,"name":"fixture"}]
 	var before: Array = state(n)
-	for old: String in ["", Menus.VERSION+"/7", Menus.VERSION+"/7/pr10-critical-1", Menus.VERSION+"/6/pr10-phase5b2-1", Menus.VERSION+"/7/future-incompatible"]:
+	for old: String in ["", "v0.34.0/7/pr10-phase5b2-1", Menus.VERSION+"/7/pr10-phase5b2-1", Menus.VERSION+"/7", Menus.VERSION+"/7/pr10-critical-1", Menus.VERSION+"/6/v036-integration-1", Menus.VERSION+"/7/future-incompatible"]:
 		NetConfig.save_match({"v":old,"snap":PackedByteArray([0,1]),"turn":999,"cfg":{"bots":11}})
 		check(NetConfig.load_match().get("v") == old,"fixture is real serialized match: "+old)
 		for attempt in 2:

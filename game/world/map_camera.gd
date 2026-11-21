@@ -153,6 +153,16 @@ func is_held() -> bool:
 	return _held_m or not _held_t.is_empty()
 
 
+func clear_held() -> void:
+	_held_m = false
+	_held_t.clear()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		clear_held()
+
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		var st: = event as InputEventScreenTouch

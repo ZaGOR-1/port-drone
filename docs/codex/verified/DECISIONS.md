@@ -102,3 +102,12 @@ ZaGOR-1 прямо дозволив logical commits, push Codex branch, один
 ## CI_RESTORE — 2026-11-21, нова Git-історія
 
 За окремою командою власника відновлюється CI у ci/restore-build від actual beta: PR→beta і push main/beta запускають tests/build, без Releases/tags/updater. Existing publication policy tests збережено; reserved release guard неактивний (build output=false), publish commands відсутні. Godot4.7.2 verified hashes, artifact provenance та нові negative artifact tests — [CI_RESTORATION](CI_RESTORATION.md). Commit/push/CI PR та merge beta дозволені лише за успішних Actions і виконаних required review/protection. PR #1 не змінювати; після integration лише повторна перевірка його умов.
+
+
+## V036 — 2026-11-21: owner-authorized integration fixes, no merge
+
+ZaGOR-1 доручив Codex самостійно виправити review PR #3 у власній integration branch, зберігши всі8 author commits. Commit/push/новий PR→beta дозволені; фінальний merge заборонений. Main, feature OKREDU, docs PR #1, tags/releases/updater не змінювати. Required checks/reviews не обходити.
+
+Identity v0.36.0/7/v036-integration-1: існуючий exact-string handshake відділяє нові simulation/hash semantics; PROTO7 та FORMAT1 залишаються, optional UrbanHold cooldown має old→new defaults, new→old downgrade unsupported. Build derives checked UI/updater version, CI перевіряє actual embedded identity. Same identity не crypto fingerprint — QA exact SHA256 cohort.
+
+Freeze всієї encoded snapshot graph лише перед worker; Navy routes від current authoritative threats без unsaved TTL history; generation scratch reset при repeated restore; power command wire/schema/owner checks до execution; нові state поля хешуються канонічно. Gameplay author changes збережені, тексти приводяться до правил75s/2decoys. Без глобального рефакторингу. Early CPU timings не підтвердили загального gain; correctness tradeoffs й manual QA лишаються явними. [Root causes/tests/limits](V036_FIX_RESULTS.md).

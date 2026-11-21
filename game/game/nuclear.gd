@@ -39,8 +39,8 @@ const U_MIN_DEP: int = 2
 const U_RESERVE: int = 8
 const PLUTONIUM_S: float = 45.0
 const PLUTONIUM_PER_ICBM: int = 5
-const SILO_BUILD_T: float = 45.0
-const SILO_ARM_T: float = 30.0
+const SILO_BUILD_T: float = 120.0
+const SILO_ARM_T: float = 120.0
 const SILO_RELOAD_CD: float = 90.0
 const NUKE_R_CELLS: int = 34
 const NUKE_CRATER_R: int = 13
@@ -58,6 +58,17 @@ const AI_MINE_FROM: float = 300.0
 const AI_AD_R: float = 260.0
 const FUND_WAIT: float = 120.0
 const FUND_SKIP: float = 900.0
+const NPP_OVERHEAT_T: float = 60.0
+const NPP_SCRAM_COST: int = 1500
+enum Warhead {MONO = 0, MIRV = 1, EMP = 2}
+const WARHEAD_NAMES: Array = ["МОНОБЛОК", "РГЧ + ЛОЖНЫЕ ЦЕЛИ", "ВЫСОТНЫЙ ЭМИ"]
+const MIRV_TI_EXTRA: int = 6
+const MIRV_R_CELLS: int = 22
+const MIRV_CRATER_R: int = 9
+const MIRV_DECOYS: int = 2
+const EMP_R_CELLS: int = 28
+const EMP_DUR: float = 75.0
+const EMP_DIPLO_PEN: int = -15
 
 
 
@@ -157,9 +168,19 @@ static func output(gw: GameWorld, f: Facility) -> int:
 
 static func burn(gw: GameWorld, dt: float) -> void:
 	for f: Facility in gw.mil.facilities:
-		if f.kind != Facility.Kind.NUCLEAR_PLANT or f.restore_t > 0.0 or f.halted:
+		if f.kind != Facility.Kind.NUCLEAR_PLANT or f.restore_t > 0.0:
 			continue
 		if f.main_obj < 0 or gw.obj_state[f.main_obj] != 0:
+			f.npp_overheat_t = -1.0
+			continue
+		if f.u_hits < CORE_HITS - 1:
+			f.npp_overheat_t = -1.0
+		elif f.npp_overheat_t >= 0.0:
+			f.npp_overheat_t = maxf(0.0, f.npp_overheat_t - dt * (0.5 if f.halted else 1.0))
+			if f.npp_overheat_t <= 0.0:
+				_meltdown(gw, f)
+				continue
+		if f.halted:
 			continue
 		var c: Country = gw.country_by_id(f.country_id)
 		if c == null:
@@ -192,6 +213,60 @@ static func burn(gw: GameWorld, dt: float) -> void:
 							gw.econ.stat_res(c, "plutonium", "npp", 1)
 
 
+static func _meltdown(gw: GameWorld, f: Facility) -> void:
+	f.npp_overheat_t = -1.0
+	f.u_fuel = 0.0
+	for id in f.obj_ids:
+		if id >= 0 and id < gw.obj_state.size():
+			gw.obj_state[id] = 1
+	var cen: Vector2i = f.cell + f.size / 2
+	var wp: Vector2 = f.center_px()
+	if gw.fx != null:
+		gw.fx.spawn("explosion_l", wp.round(), 8)
+		gw.fx.spawn("shockwave", wp.round(), 7)
+		gw.fx.debris_burst(wp, 18, false)
+	Sfx.play("expl_big", wp, 2.0)
+	var b0: int = gw.data.get_biome(cen.x, cen.y)
+	if not Biome.is_water(b0):
+		for dy in range(-5, 6):
+			for dx in range(-5, 6):
+				if dx * dx + dy * dy <= 30 and gw.data.inside(cen.x + dx, cen.y + dy) and not Biome.is_water(gw.data.get_biome(cen.x + dx, cen.y + dy)):
+					gw.data.set_biome(cen.x + dx, cen.y + dy, Biome.BURNT)
+		gw.nuke_zones.append({"cell": cen, "r_crater": 6, "r_rad": 96.0, "until": gw.game_time + 210.0, "by": f.country_id, "t": gw.game_time})
+		if gw.ground != null:
+			gw.ground.queue_redraw()
+	var c: Country = gw.country_by_id(f.country_id)
+	var cname: String = Loc.name(c.name).to_upper() if c != null else "?"
+	gw.news_m(Loc.mk("АВАРИЯ НА АЭС %s: РАСПЛАВЛЕНИЕ АКТИВНОЙ ЗОНЫ!", [cname]), "alert_red")
+	if gw.get("chronicle") != null and gw.chronicle != null:
+		gw.chronicle.log_event("nuke", f.country_id, cen, Loc.msg(Loc.mk("Расплавление АЭС: %s", [Loc.name(c.name) if c != null else "?"])))
+	gw.changed.emit()
+
+
+static func npp_scram(gw: GameWorld, f: Facility, c: Country) -> String:
+	if f == null or c == null or f.kind != Facility.Kind.NUCLEAR_PLANT or f.country_id != c.id:
+		return Loc.t("Нет АЭС")
+	if not gw.mil.alive(f):
+		return Loc.t("АЭС разрушена")
+	if f.npp_overheat_t < 0.0:
+		return Loc.t("Реактор не перегревается")
+	var cost: int = 0 if (GameConfig.creative and c.is_player) else NPP_SCRAM_COST
+	if c.money < cost:
+		return Loc.t("Нужно %d для экстренного заглушения") % cost
+	c.money -= cost
+	if gw.econ != null and cost > 0:
+		gw.econ.stat_add(c, "spend", "repair", cost)
+	f.npp_overheat_t = -1.0
+	f.halted = true
+	f.u_fuel = 0.0
+	gw.fx.spawn("smoke_s", f.center_px(), 5)
+	Sfx.play("ui_click", f.center_px())
+	if c.is_player:
+		gw.say(c, Loc.mk("АЭС: аварийная остановка выполнена — угроза расплавления снята"))
+	gw.changed.emit()
+	return ""
+
+
 
 static func status(gw: GameWorld, f: Facility) -> String:
 	if f.restore_t > 0.0:
@@ -207,6 +282,8 @@ static func status(gw: GameWorld, f: Facility) -> String:
 		out.append(Loc.t("ГРАДИРЕН %d/%d") % [int(p[1]), TOWERS.size()])
 	if f.u_hits > 0:
 		out.append(Loc.t("КОРПУС %d/%d") % [CORE_HITS - f.u_hits, CORE_HITS])
+	if f.npp_overheat_t >= 0.0:
+		out.append(Loc.t("ПЕРЕГРЕВ %s") % fmt_t(f.npp_overheat_t))
 	out.append(Loc.t("ТОПЛИВО %d С") % int(f.u_fuel))
 	return " · ".join(out)
 
@@ -231,28 +308,58 @@ static func refresh_country_ready(gw: GameWorld, c: Country) -> void:
 	c.nuke_ready = armed
 
 
+static func fmt_t(sec: float) -> String:
+	var s: int = maxi(0, ceili(sec))
+	var m: int = s / 60
+	return "%d:%02d" % [m, s % 60]
+
+
 static func silo_status(gw: GameWorld, f: Facility) -> String:
 	if not GameConfig.nukes:
 		return Loc.t("ЯДЕРНОЕ ОРУЖИЕ ОТКЛЮЧЕНО")
 	if f.restore_t > 0.0:
-		return Loc.t("СТРОИТСЯ / РЕМОНТ")
+		return Loc.t("СТРОИТСЯ / РЕМОНТ: %s") % fmt_t(f.restore_t)
 	if not gw.mil.alive(f):
 		return Loc.t("ШАХТА РАЗРУШЕНА")
+	var nopwr: String = Loc.t(" · НЕТ ЭНЕРГИИ — ПАУЗА") if (f.nuke_state == 1 or f.nuke_state == 4) and not gw.mil.has_power(f) else ""
+	var wh_txt: String = Loc.t(" · БЧ: %s") % Loc.t(String(WARHEAD_NAMES[clampi(f.nuke_warhead, 0, WARHEAD_NAMES.size() - 1)])) if (f.nuke_state >= 2 or f.nuke_warhead != 0) else ""
 	match f.nuke_state:
 		0:
 			if f.nuke_cd > 0.0:
-				return Loc.t("ПЕРЕЗАРЯДКА ШАХТЫ: %d С") % ceili(f.nuke_cd)
+				return Loc.t("ПЕРЕЗАРЯДКА ШАХТЫ: %s") % fmt_t(f.nuke_cd)
 		1:
 			var pct: int = clampi(roundi(f.nuke_prog * 100.0), 0, 99)
-			return Loc.t("ПОДГОТОВКА МБР: %d %% (%d С)") % [pct, ceili(f.nuke_t)]
+			return (Loc.t("ЭТАП 1/2 — ПОДГОТОВКА МБР: %d %% (%s)") % [pct, fmt_t(f.nuke_t)]) + nopwr
 		2:
-			return Loc.t("МБР СОБРАНА — ГОТОВА К ВЗВОДУ (%d С)") % int(SILO_ARM_T)
+			return (Loc.t("МБР СОБРАНА — ГОТОВА К ВЫХОДУ НА БОЕГОТОВНОСТЬ (%s)") % fmt_t(SILO_ARM_T)) + wh_txt
 		4:
 			var apct: int = clampi(roundi(f.nuke_prog * 100.0), 0, 99)
-			return Loc.t("ПРИВЕДЕНИЕ В БОЕГОТОВНОСТЬ: %d %% (%d С)") % [apct, ceili(f.nuke_t)]
+			return (Loc.t("ЭТАП 2/2 — ВЫХОД НА БОЕГОТОВНОСТЬ: %d %% (%s)") % [apct, fmt_t(f.nuke_t)]) + wh_txt + nopwr
 		3:
-			return Loc.t("БОЕГОТОВНОСТЬ — МБР НА ДЕЖУРСТВЕ")
+			return Loc.t("БОЕГОТОВНОСТЬ — МБР НА ДЕЖУРСТВЕ") + wh_txt
 	return Loc.t("ШАХТА ПУСТА")
+
+
+static func on_stage(gw: GameWorld, f: Facility, c: Country, stage: int) -> void:
+	if f == null or c == null or f.nuke_stage_sent == stage:
+		return
+	f.nuke_stage_sent = stage
+	var cname: String = Loc.name(c.name).to_upper()
+	if stage == 1:
+		gw.news_m(Loc.mk("ЯДЕРНАЯ ПРОГРАММА: %s НАЧАЛА ПОДГОТОВКУ МБР (ЭТАП 1/2 — 2:00)", [cname]), "amber")
+		if GameConfig.alert_snd:
+			Sfx.ui("ui_alert")
+		if gw.player != null and gw.player.id != c.id and GameConfig.nuke_alert_i == 0:
+			gw.say(gw.player, Loc.mk("РАЗВЕДКА: %s начала подготовку МБР (этап 1/2 — 2 мин)", [Loc.name(c.name)]))
+	elif stage == 2:
+		gw.news_m(Loc.mk("ЯДЕРНАЯ УГРОЗА: %s ВЫВОДИТ МБР НА БОЕГОТОВНОСТЬ (ЭТАП 2/2 — 2:00)!", [cname]), "alert_red")
+		if GameConfig.alert_snd:
+			Sfx.ui("ui_alert")
+		if gw.player != null and gw.player.id != c.id:
+			gw.say(gw.player, Loc.mk("ТРЕВОГА: %s выводит МБР на боеготовность (этап 2/2 — 2 мин)!", [Loc.name(c.name)]))
+	var is_cp: bool = GameConfig.creative and c.is_player
+	if gw.diplo != null and gw.diplo.has_method("nuke_alarm") and not is_cp:
+		gw.diplo.nuke_alarm(c.id, stage)
 
 
 static func silo_build(gw: GameWorld, f: Facility, c: Country) -> String:
@@ -280,13 +387,19 @@ static func silo_build(gw: GameWorld, f: Facility, c: Country) -> String:
 		if not (GameConfig.creative and c.is_player):
 			for rk: String in rcost:
 				gw.econ.stat_res(c, rk, "missiles", -int(rcost[rk]))
+	if c.nuke_pledge_until > gw.game_time and gw.diplo != null and gw.diplo.has_method("on_nuke_pledge_broken"):
+		gw.diplo.on_nuke_pledge_broken(c.id)
 	f.nuke_state = 1
 	f.nuke_t = 2.0 if GameConfig.creative and c.is_player else SILO_BUILD_T
+	f.nuke_tt = f.nuke_t
 	f.nuke_prog = 0.0
+	f.nuke_stage_sent = 0
+	f.nuke_warhead = 0
 	gw.fx.spawn("build_spark", f.center_px(), 6)
 	Sfx.play("ui_build", f.center_px())
 	if c.is_player:
-		gw.say(c, Loc.mk("Сборка МБР начата (%d с)", [ceili(f.nuke_t)]))
+		gw.say(c, Loc.mk("Подготовка МБР начата (этап 1/2 — %s)", [fmt_t(f.nuke_t)]))
+	on_stage(gw, f, c, 1)
 	gw.changed.emit()
 	return ""
 
@@ -304,11 +417,13 @@ static func silo_arm(gw: GameWorld, f: Facility, c: Country) -> String:
 		return Loc.t("Сначала соберите МБР")
 	f.nuke_state = 4
 	f.nuke_t = 1.5 if GameConfig.creative and c.is_player else SILO_ARM_T
+	f.nuke_tt = f.nuke_t
 	f.nuke_prog = 0.0
 	gw.fx.spawn("build_spark", f.center_px(), 6)
 	Sfx.play("radar_ping", f.center_px())
 	if c.is_player:
-		gw.say(c, Loc.mk("Приведение МБР в боеготовность: %d с", [ceili(f.nuke_t)]))
+		gw.say(c, Loc.mk("Выход МБР на боеготовность (этап 2/2 — %s)", [fmt_t(f.nuke_t)]))
+	on_stage(gw, f, c, 2)
 	gw.changed.emit()
 	return ""
 
@@ -316,10 +431,12 @@ static func silo_arm(gw: GameWorld, f: Facility, c: Country) -> String:
 static func _finish_arm(gw: GameWorld, f: Facility, c: Country) -> void:
 	f.nuke_state = 3
 	f.nuke_t = 0.0
+	f.nuke_tt = 0.0
 	f.nuke_prog = 1.0
 	refresh_silo_look(gw, f)
 	gw.fx.spawn("spark_burst", f.center_px(), 6)
-	Sfx.ui("ui_alert")
+	if GameConfig.alert_snd:
+		Sfx.ui("ui_alert")
 	if c != null:
 		var first: bool = not c.nuke_ready
 		c.nuke_ready = true
@@ -330,6 +447,37 @@ static func _finish_arm(gw: GameWorld, f: Facility, c: Country) -> void:
 		if c.is_player:
 			gw.say(c, Loc.mk("МБР на боевом дежурстве! Другие страны получили предупреждение"))
 	gw.changed.emit()
+
+
+static func set_warhead(gw: GameWorld, f: Facility, c: Country, wh: int) -> String:
+	if not GameConfig.nukes:
+		return Loc.t("Ядерное оружие отключено")
+	if f == null or c == null or f.kind != Facility.Kind.NUKE_SILO or f.country_id != c.id:
+		return Loc.t("Нет шахты")
+	if not gw.mil.alive(f):
+		return Loc.t("Шахта повреждена")
+	if f.nuke_state < 2:
+		return Loc.t("Сначала соберите МБР")
+	if wh < 0 or wh > Warhead.EMP:
+		return Loc.t("Неизвестный тип БЧ")
+	if f.nuke_warhead == wh:
+		return ""
+	var free: bool = GameConfig.creative and c.is_player
+	if not free and wh == Warhead.MIRV and c.titanium < MIRV_TI_EXTRA:
+		return Loc.t("Не хватает титана: нужно %d") % MIRV_TI_EXTRA
+	if not free and f.nuke_warhead == Warhead.MIRV:
+		c.titanium += MIRV_TI_EXTRA
+		if gw.econ != null:
+			gw.econ.stat_res(c, "titanium", "missiles", MIRV_TI_EXTRA)
+	if not free and wh == Warhead.MIRV:
+		c.titanium -= MIRV_TI_EXTRA
+		if gw.econ != null:
+			gw.econ.stat_res(c, "titanium", "missiles", -MIRV_TI_EXTRA)
+	f.nuke_warhead = wh
+	if c.is_player:
+		gw.say(c, Loc.mk("Шахта МБР: выбрана БЧ «%s»", [Loc.t(String(WARHEAD_NAMES[wh]))]))
+	gw.changed.emit()
+	return ""
 
 
 static func silo_launch(gw: GameWorld, f: Facility, c: Country, target: Vector2) -> String:
@@ -345,17 +493,23 @@ static func silo_launch(gw: GameWorld, f: Facility, c: Country, target: Vector2)
 		var bw: String = gw.diplo.strike_block_at(c.id, target, false)
 		if bw != "":
 			return bw
+	var wh: int = f.nuke_warhead
 	f.nuke_state = 0
 	f.nuke_t = 0.0
+	f.nuke_tt = 0.0
 	f.nuke_prog = 0.0
+	f.nuke_stage_sent = 0
+	f.nuke_warhead = 0
 	f.nuke_cd = 3.0 if GameConfig.creative and c.is_player else SILO_RELOAD_CD
 	refresh_silo_look(gw, f)
 	refresh_country_ready(gw, c)
-	var m: Missile = gw.mil.launch_nuke(f, target)
+	var m: Missile = gw.mil.launch_nuke(f, target, wh)
 	gw.nuke_warn_until = gw.game_time + 8.0
 	gw.nuke_warn_target = target
-	gw.news_m(Loc.mk("ЗАФИКСИРОВАН ПУСК ЯДЕРНОЙ МБР: %s!", [Loc.name(c.name).to_upper()]), "alert_red")
-	Sfx.ui("ui_alert")
+	var tag: String = " (РГЧ)" if wh == Warhead.MIRV else (" (ЭМИ)" if wh == Warhead.EMP else "")
+	gw.news_m(Loc.mk("ЗАФИКСИРОВАН ПУСК ЯДЕРНОЙ МБР%s: %s!", [tag, Loc.name(c.name).to_upper()]), "alert_red")
+	if GameConfig.alert_snd:
+		Sfx.ui("ui_alert")
 	if c.is_player and m != null:
 		gw.say(c, Loc.mk("Ядерный пуск: время подлёта %d с", [ceili(m.time_left())]))
 	gw.changed.emit()
@@ -367,32 +521,48 @@ static func update_silos(gw: GameWorld, dt: float) -> void:
 		if f.kind != Facility.Kind.NUKE_SILO:
 			continue
 		if not gw.mil.alive(f):
-			if f.nuke_state == 3 or f.nuke_state == 4:
+			if f.nuke_state != 0:
 				f.nuke_state = 0
 				f.nuke_t = 0.0
+				f.nuke_tt = 0.0
 				f.nuke_prog = 0.0
+				f.nuke_stage_sent = 0
+				f.nuke_warhead = 0
 				refresh_silo_look(gw, f)
-				refresh_country_ready(gw, gw.country_by_id(f.country_id))
+				var dc: Country = gw.country_by_id(f.country_id)
+				refresh_country_ready(gw, dc)
+				if dc != null:
+					gw.news_m(Loc.mk("ЯДЕРНАЯ ПРОГРАММА %s СОРВАНА: ШАХТА МБР УНИЧТОЖЕНА!", [Loc.name(dc.name).to_upper()]), "intercept_cyan")
+				if gw.diplo != null and gw.diplo.has_method("clear_halt_nukes_for"):
+					gw.diplo.clear_halt_nukes_for(f.country_id)
 			continue
 		if f.nuke_cd > 0.0:
 			f.nuke_cd = maxf(0.0, f.nuke_cd - dt)
 		var is_cp: bool = GameConfig.creative and gw.player != null and f.country_id == gw.player.id
 		if f.nuke_state == 1:
-			var spd: float = 1.0 if gw.mil.has_power(f) else 0.4
+			if f.nuke_stage_sent < 1:
+				on_stage(gw, f, gw.country_by_id(f.country_id), 1)
+			var spd: float = 1.0 if gw.mil.has_power(f) else 0.0
+			if f.nuke_tt <= 0.0:
+				f.nuke_tt = maxf(1.0, 2.0 if is_cp else SILO_BUILD_T)
 			f.nuke_t = maxf(0.0, f.nuke_t - dt * spd)
-			var total_t: float = 2.0 if is_cp else SILO_BUILD_T
-			f.nuke_prog = clampf(1.0 - f.nuke_t / maxf(1.0, total_t), 0.0, 1.0)
+			f.nuke_prog = clampf(1.0 - f.nuke_t / maxf(1.0, f.nuke_tt), 0.0, 1.0)
 			if f.nuke_t <= 0.0:
 				f.nuke_state = 2
+				f.nuke_t = 0.0
+				f.nuke_tt = 0.0
 				f.nuke_prog = 1.0
 				var c: Country = gw.country_by_id(f.country_id)
 				if c != null and c.is_player:
-					gw.say(c, Loc.mk("Ядерная шахта: МБР собрана — приведите в боеготовность"))
+					gw.say(c, Loc.mk("Ядерная шахта: МБР собрана — приведите в боеготовность (этап 2/2)"))
 		elif f.nuke_state == 4:
-			var aspd: float = 1.0 if gw.mil.has_power(f) else 0.5
+			if f.nuke_stage_sent < 2:
+				on_stage(gw, f, gw.country_by_id(f.country_id), 2)
+			var aspd: float = 1.0 if gw.mil.has_power(f) else 0.0
+			if f.nuke_tt <= 0.0:
+				f.nuke_tt = maxf(1.0, 1.5 if is_cp else SILO_ARM_T)
 			f.nuke_t = maxf(0.0, f.nuke_t - dt * aspd)
-			var atot: float = 1.5 if is_cp else SILO_ARM_T
-			f.nuke_prog = clampf(1.0 - f.nuke_t / maxf(1.0, atot), 0.0, 1.0)
+			f.nuke_prog = clampf(1.0 - f.nuke_t / maxf(1.0, f.nuke_tt), 0.0, 1.0)
 			if f.nuke_t <= 0.0:
 				_finish_arm(gw, f, gw.country_by_id(f.country_id))
 
@@ -425,15 +595,17 @@ static func update_rad_zones(gw: GameWorld, dt: float) -> void:
 			gw.fx.spawn("smoke_loop", (p + Vector2(ox, oy)).round(), 5, gw.game_time + 2.5, true)
 
 
-static func on_nuke_impact(gw: GameWorld, cell: Vector2i, by: int, victim: int, _value: int) -> void:
+static func on_nuke_impact(gw: GameWorld, cell: Vector2i, by: int, victim: int, _value: int, emp: bool = false) -> void:
 	var att: Country = gw.country_by_id(by)
 	var vic: Country = gw.country_by_id(victim)
 	if att != null:
 		att.nukes_used += 1
-		att.destroyed += 3000
+		att.destroyed += 1200 if emp else 3000
 	var anm: String = Loc.name(att.name).to_upper() if att != null else "?"
 	var vnm: String = Loc.name(vic.name).to_upper() if vic != null else "?"
-	if vic != null and by != victim:
+	if emp:
+		gw.news_m(Loc.mk("ВЫСОТНЫЙ ЭМИ-ВЗРЫВ: %s ОТКЛЮЧИЛА СЕТИ %s!" if vic != null and by != victim else "ВЫСОТНЫЙ ЭМИ-ВЗРЫВ В СЕКТОРЕ (%d, %d)", [anm, vnm] if vic != null and by != victim else [cell.x, cell.y]), "amber")
+	elif vic != null and by != victim:
 		gw.news_m(Loc.mk("ЯДЕРНЫЙ УДАР: %s ПОРАЗИЛА %s!", [anm, vnm]), "alert_red")
 	else:
 		gw.news_m(Loc.mk("ЯДЕРНЫЙ ВЗРЫВ В СЕКТОРЕ (%d, %d)", [cell.x, cell.y]), "alert_red")
@@ -445,6 +617,11 @@ static func on_nuke_impact(gw: GameWorld, cell: Vector2i, by: int, victim: int, 
 	var trd: Variant = gw.econ.get("trd") if gw.econ != null else null
 	for c: Country in gw.countries:
 		if c.id == by or c.eliminated or c.capital_id < 0:
+			continue
+		if emp:
+			gw.diplo.add_opinion(c.id, by, EMP_DIPLO_PEN if c.id == victim else -10)
+			if c.id == victim and not gw.diplo.at_war(by, victim) and not gw.diplo.allied(c.id, by):
+				gw.diplo.declare_war(by, victim, "высотный ЭМИ-удар")
 			continue
 		if c.id == victim:
 			gw.diplo.add_opinion(c.id, by, -60)
@@ -479,11 +656,11 @@ static func fuel_minutes(gw: GameWorld, c: Country) -> float:
 
 
 
-static func on_impact(gw: GameWorld, pr: Protect, cell: Vector2i, kind: int, r: int) -> void:
+static func on_impact(gw: GameWorld, pr: Protect, cell: Vector2i, kind: int, r: int, spared_fid: int = -1) -> void:
 	if kind == Protect.HIT_BALLISTIC or kind == Protect.HIT_HYPER:
 		return
 	for f: Facility in gw.mil.facilities:
-		if f.kind != Facility.Kind.NUCLEAR_PLANT or f.main_obj < 0 or gw.obj_state[f.main_obj] != 0 or f.restore_t > 0.0:
+		if f.kind != Facility.Kind.NUCLEAR_PLANT or f.id == spared_fid or f.main_obj < 0 or gw.obj_state[f.main_obj] != 0 or f.restore_t > 0.0:
 			continue
 		var rr: Rect2i = gw.object_rect(f.main_obj)
 		var qx: int = clampi(cell.x, rr.position.x, rr.end.x - 1)
@@ -493,6 +670,9 @@ static func on_impact(gw: GameWorld, pr: Protect, cell: Vector2i, kind: int, r: 
 		if f.u_hits >= CORE_HITS - 1:
 			continue
 		f.u_hits += 1
+		if f.u_hits >= CORE_HITS - 1 and f.npp_overheat_t < 0.0:
+			f.npp_overheat_t = NPP_OVERHEAT_T
+			gw.say(f.country_id, Loc.mk("АЭС: КРИТИЧЕСКИЙ ПЕРЕГРЕВ (%d с)! Сделайте аварийный стоп (1 500) или ремонт", [int(NPP_OVERHEAT_T)]))
 		refresh_look(gw, f)
 		pr._spare.append({"c": cell, "ids": PackedInt32Array([f.main_obj]), "t": gw.game_time + Protect.SPARE_TTL})
 		gw.say(f.country_id, Loc.mk("АЭС: попадание в корпус (%d/%d), мощность −25 %%. Нужна ПВО", [f.u_hits, CORE_HITS]))
@@ -520,6 +700,9 @@ static func ai_tick(gw: GameWorld, ai: AiBots, c: Country) -> bool:
 			if gw.mil.restore(f, c, true):
 				ai._stat(c, "npp_restore")
 				return true
+		if f.npp_overheat_t > 0.0 and c.money >= NPP_SCRAM_COST and npp_scram(gw, f, c) == "":
+			ai._stat(c, "npp_scram")
+			return true
 
 	if not npps.is_empty():
 		var keep: int = U_RESERVE * npps.size()
@@ -729,14 +912,26 @@ static func _ai_nuke_tick(gw: GameWorld, ai: AiBots, c: Country, P: Dictionary, 
 		if o.id != c.id and not o.eliminated and o.nuke_ready:
 			any_foe_nuke = true
 			break
-	# 1. Strategic ABM «Zaslon» (protect capital/NPPs when wealthy or nuke threat exists).
+	if not any_foe_nuke:
+		for f0: Facility in gw.mil.facilities:
+			if f0.country_id != c.id and f0.kind == Facility.Kind.NUKE_SILO and f0.nuke_state > 0 and gw.mil.alive(f0):
+				any_foe_nuke = true
+				break
+	# 1. Strategic ABM «Zaslon»: charge existing Zaslons first, only build a new one if budget covers building + 2 charges.
 	var zk: int = Facility.Kind.AD_ZASLON
+	var want_stock: int = 4 if (diff >= 2 or any_foe_nuke) else (2 if diff == 1 else 1)
+	for z_own: Facility in gw.mil.facilities:
+		if z_own.country_id == c.id and z_own.kind == zk and gw.mil.alive(z_own) and z_own.restore_t <= 0.0:
+			if z_own.ammo + z_own.zas_q < want_stock:
+				if c.money >= Military.COST_ZASLON_CHARGE + reserve / 2 and c.has_res(Economy.res_cost("zaslon_charge")):
+					if gw.defense.buy_zaslon_ammo(z_own, c, 1) == "":
+						return true
 	var have_z: int = ai._count(c, zk)
 	var want_z: int = (1 if diff >= 1 or any_foe_nuke else 0) + (1 if diff == 2 and any_foe_nuke else 0)
 	if have_z < want_z and now >= float(ai._skip.get("%d:%d" % [c.id, zk], -1.0)):
 		var zcost: Dictionary = Economy.build_cost(zk)
 		var zrc: Dictionary = Economy.res_cost("build_%d" % zk)
-		if c.money >= int(zcost["money"]) + reserve and c.has_res(zrc):
+		if c.money >= int(zcost["money"]) + Military.COST_ZASLON_CHARGE * 2 + reserve and c.has_res(zrc):
 			var cap_c: Vector2i = gw.cities[c.capital_id].center
 			var zf: Facility = gw.mil.auto_place(zk, cap_c, c, gw.cities[c.capital_id].radius + 5, gw.cities[c.capital_id].radius + 70)
 			if zf == null:
@@ -750,19 +945,28 @@ static func _ai_nuke_tick(gw: GameWorld, ai: AiBots, c: Country, P: Dictionary, 
 	# 2. Nuclear Silo construction + ICBM assembly + arming.
 	var sk: int = Facility.Kind.NUKE_SILO
 	var silos: Array[Facility] = []
+	var has_strong_ult: bool = false
+	if gw.diplo != null:
+		for d_ult: Dictionary in gw.diplo.demands:
+			if int(d_ult.get("to", -1)) == c.id and String(d_ult.get("kind", "")) == "halt_nukes":
+				if gw.diplo.strength(int(d_ult["from"])) > gw.diplo.strength(c.id) * 1.15:
+					has_strong_ult = true
+					break
+	var pledge_block: bool = c.nuke_pledge_until > now and c.at_war.is_empty()
 	for f: Facility in gw.mil.facilities:
 		if f.country_id == c.id and f.kind == sk:
 			silos.append(f)
-			if gw.mil.alive(f) and f.nuke_state == 2:
+			if gw.mil.alive(f) and f.nuke_state == 2 and not has_strong_ult and not pledge_block:
 				if silo_arm(gw, f, c) == "":
 					return true
 	if not silos.is_empty():
-		for sf: Facility in silos:
-			if gw.mil.alive(sf) and sf.nuke_state == 0 and sf.nuke_cd <= 0.0 and c.plutonium >= PLUTONIUM_PER_ICBM:
-				if c.money >= Military.COST_NUKE_MISSILE + reserve and c.has_res(Economy.res_cost("nuke_missile")):
-					if silo_build(gw, sf, c) == "":
-						return true
-	elif not npps.is_empty() and (diff >= 1 or float(P["aggr"]) > 0.55) and now >= float(ai._skip.get("%d:%d" % [c.id, sk], -1.0)):
+		if not has_strong_ult and not pledge_block:
+			for sf: Facility in silos:
+				if gw.mil.alive(sf) and sf.nuke_state == 0 and sf.nuke_cd <= 0.0 and c.plutonium >= PLUTONIUM_PER_ICBM:
+					if c.money >= Military.COST_NUKE_MISSILE + reserve and c.has_res(Economy.res_cost("nuke_missile")):
+						if silo_build(gw, sf, c) == "":
+							return true
+	elif not pledge_block and not npps.is_empty() and (diff >= 1 or float(P["aggr"]) > 0.55) and now >= float(ai._skip.get("%d:%d" % [c.id, sk], -1.0)):
 		var scost: Dictionary = Economy.build_cost(sk)
 		var src: Dictionary = Economy.res_cost("build_%d" % sk)
 		if c.money >= int(scost["money"]) + reserve and c.has_res(src):
@@ -805,8 +1009,17 @@ static func _ai_nuke_tick(gw: GameWorld, ai: AiBots, c: Country, P: Dictionary, 
 					break
 			if best_foe != null:
 				var tp: Vector2 = _ai_nuke_target(gw, best_foe)
-				if tp != Vector2.INF and silo_launch(gw, f2, c, tp) == "":
-					return true
+				if tp != Vector2.INF:
+					var foe_zas_q: int = 0
+					for zf_e: Facility in gw.mil.facs_of(best_foe.id):
+						if zf_e.kind == Facility.Kind.AD_ZASLON and gw.mil.alive(zf_e):
+							foe_zas_q += zf_e.ammo
+					if foe_zas_q >= 2 and c.titanium >= MIRV_TI_EXTRA and f2.nuke_warhead == Warhead.MONO:
+						set_warhead(gw, f2, c, Warhead.MIRV)
+					elif foe_zas_q == 0 and f2.nuke_warhead == Warhead.MONO and Hash32.h2(c.id, int(now), f2.id) % 3 == 0:
+						set_warhead(gw, f2, c, Warhead.EMP)
+					if silo_launch(gw, f2, c, tp) == "":
+						return true
 	return false
 
 

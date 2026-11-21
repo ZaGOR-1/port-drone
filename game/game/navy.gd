@@ -117,6 +117,17 @@ var msl: Array = []
 var asm_queue: Array = []
 var cr_queue: Array = []
 var cm_boost: Array = []
+var _base_w: PackedFloat32Array = PackedFloat32Array()
+var _tw_mark: PackedInt32Array = PackedInt32Array()
+var _tw_cnt: PackedInt32Array = PackedInt32Array()
+var _tw_cells: PackedInt32Array = PackedInt32Array()
+var _tw_seq: int = 0
+var _shore_tmp: Array = []
+const _SHORE_FAC_SET: Dictionary = {
+	Facility.Kind.COASTAL_ASM: true, Facility.Kind.AD_SAM: true, Facility.Kind.AD_SPAAG: true, Facility.Kind.AD_PATRIOT: true,
+	Facility.Kind.AD_RADAR: true, Facility.Kind.AD_EW: true, Facility.Kind.AD_INT: true, Facility.Kind.TEL: true,
+	Facility.Kind.BARRACKS: true, Facility.Kind.DRONE_PORT: true, Facility.Kind.DUGOUT: true,
+}
 var slicks: Array = []
 var wrecks: Array = []
 const WRECK_T: float = 14.0
@@ -1108,6 +1119,12 @@ func _ensure_nav() -> void:
 	_flat.update()
 	_cdist.resize(W * H)
 	_cdist.fill(255)
+	_base_w.resize(W * H)
+	_base_w.fill(1.0)
+	_tw_mark.resize(W * H)
+	_tw_mark.fill(0)
+	_tw_cnt.resize(W * H)
+	_tw_cnt.fill(0)
 	var q: = PackedInt32Array()
 	for i in W * H:
 		var c: = Vector2i(i % W, i / W)
@@ -1135,7 +1152,9 @@ func _ensure_nav() -> void:
 				_cdist[k] = dj + 1
 				q.append(k)
 				var f: float = float(COAST_N - (dj + 1)) / float(COAST_N)
-				_nav.set_point_weight_scale(Vector2i(x, y), 1.0 + COAST_W * f * f)
+				var bw: float = 1.0 + COAST_W * f * f
+				_base_w[k] = bw
+				_nav.set_point_weight_scale(Vector2i(x, y), bw)
 	if art != null and art._inl_src.is_empty():
 		art._build_inland(pr)
 	nav_ms = (Time.get_ticks_usec() - t0) / 1000.0
@@ -1151,9 +1170,9 @@ func coast_dist(q: Vector2i) -> int:
 
 
 func _threats(cid: int) -> Array:
-	var out: Array = []
 	if cid <= 0:
-		return out
+		return []
+	var out: Array = []
 	for f: Facility in gw.mil.facilities:
 		if THREAT_R.has(f.kind) and _hostile(cid, f.country_id) and gw.mil.alive(f):
 			out.append([f.center_px(), float(THREAT_R[f.kind])])
@@ -1165,23 +1184,31 @@ func _threats(cid: int) -> Array:
 
 
 
+func _pdist(a: Vector2i, b: Vector2i) -> float:
+	return _ports().cell_px(a).distance_to(_ports().cell_px(b))
+
+
 func sea_path(a: Vector2i, b: Vector2i, cid: int = 0) -> PackedVector2Array:
 	_ensure_nav()
 	var thr: Array = _threats(cid)
 	var key: = Vector4i(a.x, a.y, b.x, b.y)
 	if thr.is_empty() and _pcache.has(key):
 		return _pcache[key]
+	# Threat-dependent routes are a function of current authoritative state.
+	# TTL caches made route choice depend on unsaved query history after restore.
 	var raw: PackedVector2Array = _id_path(a, b)
-
-
-	var lim: float = _plen(_id_path(a, b, _flat))
-	if _plen(raw) > lim * DETOUR_K + 64.0:
-		raw = _id_path(a, b, _flat)
-	if not thr.is_empty() and _crosses(raw, thr, a, b):
-		var touched: Array = _weigh_threats(thr, a, b)
+	var need_avoid: bool = not thr.is_empty() and _crosses(raw, thr, a, b)
+	var raw_len: float = _plen(raw)
+	var lim: float = _pdist(a, b)
+	if need_avoid or raw_len > lim * DETOUR_K + 64.0:
+		lim = _plen(_id_path(a, b, _flat))
+		if raw_len > lim * DETOUR_K + 64.0:
+			raw = _id_path(a, b, _flat)
+			need_avoid = not thr.is_empty() and _crosses(raw, thr, a, b)
+	if need_avoid:
+		_weigh_threats_fast(thr, a, b)
 		var avoid: PackedVector2Array = _id_path(a, b)
-		for e: Array in touched:
-			_nav.set_point_weight_scale(e[0], e[1])
+		_unweigh_threats_fast()
 		if _plen(avoid) <= lim * THREAT_DETOUR_K + 64.0:
 			raw = avoid
 	var out: PackedVector2Array = _smooth(raw)
@@ -1221,6 +1248,56 @@ func _crosses(raw: PackedVector2Array, thr: Array, a: Vector2i, b: Vector2i) -> 
 				return true
 	return false
 
+
+
+func _weigh_threats_fast(thr: Array, a: Vector2i, b: Vector2i) -> void:
+	var pr: Ports = _ports()
+	var W: int = pr._w
+	var H: int = pr._h
+	if _tw_mark.size() != W * H:
+		return
+	var k: float = float(Ports.K * GameWorld.CELL)
+	var pa: Vector2 = pr.cell_px(a)
+	var pb: Vector2 = pr.cell_px(b)
+	_tw_seq += 1
+	var seq: int = _tw_seq
+	_tw_cells.resize(0)
+	for t: Array in thr:
+		var c: Vector2 = t[0]
+		var r: float = float(t[1])
+		var r2: float = r * r
+		if pa.distance_squared_to(c) <= r2 or pb.distance_squared_to(c) <= r2:
+			continue
+		var cq: Vector2i = _q(c)
+		var rc: int = ceili(r / k)
+		var rc2: int = rc * rc
+		var y0: int = maxi(0, cq.y - rc)
+		var y1: int = mini(H - 1, cq.y + rc)
+		for y in range(y0, y1 + 1):
+			var dy: int = y - cq.y
+			var dx_lim: int = int(sqrt(float(rc2 - dy * dy)))
+			var x0: int = maxi(0, cq.x - dx_lim)
+			var x1: int = mini(W - 1, cq.x + dx_lim)
+			var row: int = y * W
+			for x in range(x0, x1 + 1):
+				var idx: int = row + x
+				if _cdist[idx] == 0:
+					continue
+				if _tw_mark[idx] != seq:
+					_tw_mark[idx] = seq
+					_tw_cnt[idx] = 1
+					_tw_cells.append(idx)
+				else:
+					_tw_cnt[idx] += 1
+	for idx2: int in _tw_cells:
+		_nav.set_point_weight_scale(Vector2i(idx2 % W, idx2 / W), _base_w[idx2] + float(_tw_cnt[idx2]) * THREAT_W)
+
+
+func _unweigh_threats_fast() -> void:
+	var pr: Ports = _ports()
+	var W: int = pr._w
+	for idx: int in _tw_cells:
+		_nav.set_point_weight_scale(Vector2i(idx % W, idx / W), _base_w[idx])
 
 
 func _weigh_threats(thr: Array, a: Vector2i, b: Vector2i) -> Array:
@@ -1264,18 +1341,58 @@ func _smooth(raw: PackedVector2Array) -> PackedVector2Array:
 
 
 func _los(a: Vector2, b: Vector2) -> bool:
+	_ensure_nav()
 	var pr: Ports = _ports()
-	var ln: float = a.distance_to(b)
-	var steps: int = maxi(1, ceili(ln / 6.0))
-	var keep: int = mini(mini(coast_dist(_q(a)), coast_dist(_q(b))), COAST_N) - 1
+	var W: int = pr._w
+	var H: int = pr._h
+	var bd: PackedInt32Array = pr.body
+	var cd: PackedByteArray = _cdist
+	var cell_px: float = float(Ports.K * GameWorld.CELL)
+	var qa := Vector2i(floori(a.x / cell_px), floori(a.y / cell_px))
+	var qb := Vector2i(floori(b.x / cell_px), floori(b.y / cell_px))
+	var da: int = cd[qa.y * W + qa.x] if (qa.x >= 0 and qa.y >= 0 and qa.x < W and qa.y < H) else 0
+	var db: int = cd[qb.y * W + qb.x] if (qb.x >= 0 and qb.y >= 0 and qb.x < W and qb.y < H) else 0
+	var keep: int = mini(mini(da, db), COAST_N) - 1
+	var delta: Vector2 = b - a
+	var ln: float = delta.length()
+	if ln <= 0.001:
+		return true
+	var steps: int = maxi(1, ceili(ln / 8.0))
+	var side: Vector2 = Vector2(-delta.y, delta.x) / ln * 6.0
+	var prev_idx: int = -1
+	var prev_s1: int = -1
+	var prev_s2: int = -1
 	for k in range(1, steps):
-		var p: Vector2 = a.lerp(b, float(k) / float(steps))
-		if pr._body_at(_q(p)) == 0 or coast_dist(_q(p)) < keep:
+		var p: Vector2 = a + delta * (float(k) / float(steps))
+		var qx: int = floori(p.x / cell_px)
+		var qy: int = floori(p.y / cell_px)
+		if qx < 0 or qy < 0 or qx >= W or qy >= H:
 			return false
-
-		var side: Vector2 = (b - a).normalized().orthogonal() * 6.0
-		if pr._body_at(_q(p + side)) == 0 or pr._body_at(_q(p - side)) == 0:
+		var idx: int = qy * W + qx
+		if idx != prev_idx:
+			if bd[idx] == 0 or cd[idx] < keep:
+				return false
+			prev_idx = idx
+		var p1: Vector2 = p + side
+		var s1x: int = floori(p1.x / cell_px)
+		var s1y: int = floori(p1.y / cell_px)
+		if s1x < 0 or s1y < 0 or s1x >= W or s1y >= H:
 			return false
+		var i1: int = s1y * W + s1x
+		if i1 != prev_s1:
+			if bd[i1] == 0:
+				return false
+			prev_s1 = i1
+		var p2: Vector2 = p - side
+		var s2x: int = floori(p2.x / cell_px)
+		var s2y: int = floori(p2.y / cell_px)
+		if s2x < 0 or s2y < 0 or s2x >= W or s2y >= H:
+			return false
+		var i2: int = s2y * W + s2x
+		if i2 != prev_s2:
+			if bd[i2] == 0:
+				return false
+			prev_s2 = i2
 	return true
 
 
@@ -1718,6 +1835,8 @@ func _shore_target(s: Ship) -> Unit:
 
 
 func _open_shore(p: Vector2) -> bool:
+	if art != null and not art._inl_src.is_empty() and art.inland(p) > SHORE_INLAND + 16.0:
+		return false
 	var cell: = Vector2i(floori(p.x / GameWorld.CELL), floori(p.y / GameWorld.CELL))
 	var dd: WorldData = gw.data
 	if not dd.inside(cell.x, cell.y) or SHORE_COVER.has(dd.get_biome(cell.x, cell.y)) or dd.has_flag(cell.x, cell.y, WorldData.F_OCCUPIED):
@@ -1741,8 +1860,9 @@ func _shore_fac(s: Ship) -> Facility:
 		return null
 	var best: Facility = null
 	var bd: float = INF
-	for f: Facility in gw.mil.facilities:
-		if f.parent != null or f.moving or not SHORE_FAC_KINDS.has(f.kind) or not _hostile(s.c, f.country_id):
+	var src: Array = gw.army._near_fac_into(s.pos, SHORE_FAC_R + 64.0, _shore_tmp) if gw.army._fgrid_t >= 0.0 else gw.mil.facilities
+	for f: Facility in src:
+		if f.parent != null or f.moving or not _SHORE_FAC_SET.has(f.kind) or not _hostile(s.c, f.country_id):
 			continue
 		var d: float = f.center_px().distance_to(s.pos) - float(maxi(f.size.x, f.size.y)) * GameWorld.CELL * 0.5
 		if d > SHORE_FAC_R or not gw.mil.alive(f):
@@ -2993,26 +3113,32 @@ func sea_rival(c: Country) -> Country:
 	return null
 
 
+const _CM_KINDS: Array[int] = [Facility.Kind.COASTAL_ASM, Facility.Kind.NAVAL_BASE, Facility.Kind.PORT, Facility.Kind.POWER_PLANT, Facility.Kind.REFINERY]
+
+
 func _cm_target(s: Ship) -> Facility:
-	var best: Facility = null
-	var bd: float = CM_RANGE
-	for f: Facility in gw.mil.facilities:
-		if not _hostile(s.c, f.country_id) or not gw.mil.alive(f):
+	var cands: Array = []
+	var cm2: float = CM_RANGE * CM_RANGE
+	for fk: int in _CM_KINDS:
+		var shore: bool = fk == Facility.Kind.COASTAL_ASM
+		for f: Facility in gw.mil.facs_of_kind(fk):
+			if not _hostile(s.c, f.country_id) or not gw.mil.alive(f):
+				continue
+			var d2: float = f.center_px().distance_squared_to(s.pos)
+			if d2 > cm2:
+				continue
+			var score: float = sqrt(d2) * (0.5 if shore else 1.0)
+			cands.append([score, f])
+	if cands.is_empty():
+		return null
+	cands.sort_custom(func(a: Array, b: Array) -> bool: return float(a[0]) < float(b[0]))
+	var has_sense: bool = gw.ai != null and gw.ai.get("sense") != null
+	for e: Array in cands:
+		var f: Facility = e[1]
+		if has_sense and gw.ai.sense.aim_veto(s.c, f.center_px(), "air") != "":
 			continue
-		if gw.ai != null and gw.ai.get("sense") != null and gw.ai.sense.aim_veto(s.c, f.center_px(), "air") != "":
-			continue
-		var shore: bool = f.kind == Facility.Kind.COASTAL_ASM
-		if not shore and f.kind != Facility.Kind.NAVAL_BASE and f.kind != Facility.Kind.PORT and f.kind != Facility.Kind.POWER_PLANT and f.kind != Facility.Kind.REFINERY:
-			continue
-		var d: float = f.center_px().distance_to(s.pos)
-		if d > CM_RANGE:
-			continue
-		if shore:
-			d *= 0.5
-		if d < bd:
-			bd = d
-			best = f
-	return best
+		return f
+	return null
 
 
 
@@ -3096,6 +3222,10 @@ func load_state(d: Dictionary) -> void:
 	for s2: Ship in ships:
 		_id = maxi(_id, s2.id + 1)
 	_pcache.clear()
+	_tw_seq = 0
+	_tw_mark.fill(0)
+	_tw_cnt.fill(0)
+	_tw_cells.clear()
 	_berth.clear()
 	_alive_b.clear()
 	_boat_t.clear()

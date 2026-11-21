@@ -34,6 +34,24 @@ func setup(m: Node, world: GameWorld) -> void:
 	_build_plan()
 	_build_armies()
 	_build_toast()
+	map_tip = PanelContainer.new()
+	map_tip.name = "MapInspector"
+	map_tip.add_theme_stylebox_override("panel", UiKit.sb("wb_panel_dark", 7, 5))
+	map_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_tip.visible = false
+	map_tip_lbl = UiKit.lbl("", 10, UiKit.TEXT, 1, 2)
+	map_tip_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_tip.add_child(map_tip_lbl)
+	root.add_child(map_tip)
+	ghost_tip = PanelContainer.new()
+	ghost_tip.name = "GhostTip"
+	ghost_tip.add_theme_stylebox_override("panel", UiKit.sb("wb_pill", 6, 3))
+	ghost_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ghost_tip.visible = false
+	ghost_tip_lbl = UiKit.lbl("", 10, UiKit.TEXT, 2, 2)
+	ghost_tip_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ghost_tip.add_child(ghost_tip_lbl)
+	root.add_child(ghost_tip)
 	busy = Control.new()
 	if gw.has_signal("nuke_detonated"):
 		gw.nuke_detonated.connect(_on_nuke_detonated)
@@ -186,6 +204,11 @@ func _build_top() -> void:
 	mb.pressed.connect(func() -> void: action.emit("menu"))
 	hb.add_child(mb)
 
+	var top_sub: = HBoxContainer.new()
+	top_sub.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	top_sub.add_theme_constant_override("separation", 6)
+	top_sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(top_sub)
 	res_panel = PanelContainer.new()
 	res_panel.add_theme_stylebox_override("panel", UiKit.sb("wb_pill", 8, 3))
 	res_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -195,7 +218,15 @@ func _build_top() -> void:
 			UiKit.snd("ui_click")
 			open_inventory())
 	res_panel.visible = false
-	col.add_child(res_panel)
+	top_sub.add_child(res_panel)
+	strat_pill = UiKit.big("", "stone", "", 24.0, 9)
+	strat_pill.name = "StratPill"
+	strat_pill.tooltip_text = Loc.t("Ядерные шахты и ПРО «Заслон» (клик — перейти)")
+	strat_pill.visible = false
+	strat_pill.pressed.connect(func() -> void:
+		UiKit.snd("ui_click")
+		action.emit("strat_cycle"))
+	top_sub.add_child(strat_pill)
 	_res_hbox = HBoxContainer.new()
 	var rb: = _res_hbox
 	rb.add_theme_constant_override("separation", 12 if _PcPortH.wide() else 7)
@@ -290,13 +321,29 @@ func _cell(nm: String, icon: String, toggle: bool) -> VBoxContainer:
 		action.emit(nm))
 	b.mouse_entered.connect(func() -> void:
 		if _PcPortH.wide() and not OS.has_feature("mobile"):
+			var pc_n: Node = get_node_or_null("/root/PcPort")
+			if pc_n != null and not bool(pc_n.get("hover_tips")):
+				return
 			_tip_hover = true
-			_show_tip_for(nm))
+			var d_sec: float = float(pc_n.call("tip_delay")) if pc_n != null and pc_n.has_method("tip_delay") else 0.2
+			if d_sec <= 0.22:
+				_show_tip_for(nm)
+			else:
+				get_tree().create_timer(d_sec).timeout.connect(func() -> void:
+					if _tip_hover and is_instance_valid(b) and b.is_hovered():
+						_show_tip_for(nm)))
 	b.mouse_exited.connect(func() -> void:
 		if _tip_hover:
 			_tip_hover = false
 			_tip_until = Time.get_ticks_msec() / 1000.0 + 0.2)
 	cell.add_child(b)
+	var hk_map: Dictionary = {"pause": "␣", "speed": "X", "center": "H", "ores": "O"}
+	if _PcPortH.desktop() and hk_map.has(nm):
+		var hk_lbl: Label = UiKit.lbl(String(hk_map[nm]), 8, UiKit.MUTED, 2, 2)
+		hk_lbl.name = "HkBadge"
+		hk_lbl.position = Vector2(3, 1)
+		hk_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(hk_lbl)
 	keys[nm] = b
 	var info: Array = KEY_INFO.get(nm, [nm.to_upper(), "", ""])
 	var l: Label = UiKit.lbl(_key_text(String(info[0])), BuildPanel.KEY_FONT, UiKit.TEXT, 2, 3)
@@ -372,6 +419,7 @@ func _build_bottom() -> void:
 		tb.tooltip_text = "%s (F%d)" % [Loc.t(String(PAGE_TITLES[p_i])), p_i + 1]
 		tb.pressed.connect(func() -> void: _on_tab_tap(p_i))
 		tab_row.add_child(tb)
+		set_hk_badge(tb, "F%d" % (p_i + 1), true, false)
 		tabs.append(tb)
 		var grid: = GridContainer.new()
 		grid.columns = COLS
@@ -470,13 +518,40 @@ func _process(delta: float) -> void:
 		var p: Country = gw.player
 		if p.eliminated != _spect:
 			_apply_spectator(p.eliminated)
-		_set_res("money", short_num(p.money), p.money)
+		_flow_t -= 0.2
+		if _flow_t <= 0.0:
+			_flow_t = 1.0
+			if gw.get("econ") != null and gw.econ.has_method("stats"):
+				var st_f: Dictionary = gw.econ.stats(p)
+				var inc_f: int = 0
+				for vin: Variant in (st_f.get("income", {}) as Dictionary).values():
+					inc_f += int(vin)
+				var spn_f: int = 0
+				for vsp: Variant in (st_f.get("spend", {}) as Dictionary).values():
+					spn_f += int(vsp)
+				_net_money = inc_f - spn_f
+				_net_food = int(gw.econ.res_rate(p, "food")) if gw.econ.has_method("res_rate") else 0
+		var show_flow: bool = not GameConfig.res_compact and _PcPortH.wide()
+		var m_suf: String = (" (%s%s)" % ["-" if _net_money < 0 else "+", short_num(absi(_net_money))]) if show_flow else ""
+		var f_suf: String = (" (%s%d)" % ["+" if _net_food >= 0 else "", _net_food]) if show_flow else ""
+		_set_res("money", short_num(p.money) + m_suf, p.money)
 		_set_res("drones", str(gw.mil.parked_count(p.id)), -1)
 		_set_res("missiles", str(gw.mil.missiles_ready(p.id)), -1)
 		_set_res("power", "%d/%d" % [p.power_use, p.power_cap], -1)
 		_warn_col("power", p.power_use > p.power_cap)
-		_set_res("food", str(p.food), -1)
+		_set_res("food", str(p.food) + f_suf, -1)
 		_warn_col("food", p.food <= 0 and gw.army.count_units(p.id) > 0)
+		_sync_strat_pill(p)
+		if res_labels.has("store") and is_instance_valid(res_labels["store"]):
+			(res_labels["store"] as Control).visible = not GameConfig.res_compact
+		if _res_hbox != null and is_instance_valid(_res_hbox):
+			_res_hbox.add_theme_constant_override("separation", (6 if GameConfig.res_compact else 12) if _PcPortH.wide() else (4 if GameConfig.res_compact else 7))
+		if _PcPortH.desktop():
+			var pc_n2: Node = get_node_or_null("/root/PcPort")
+			var show_hk_i: int = 1 if (pc_n2 == null or bool(pc_n2.get("show_hotkeys"))) else 0
+			if show_hk_i != _last_show_hk:
+				_last_show_hk = show_hk_i
+				get_tree().call_group("hk_badge", "set_visible", show_hk_i == 1)
 		var short: String = _shortage(p)
 		_set_res("store", ((Loc.t("НЕТ ") if short != "" and int(p.get(short)) <= 0 else Loc.t("МАЛО ")) + String({"titanium": Loc.t("ТИТАНА"), "metal": Loc.t("МЕТАЛЛА"), "wood": Loc.t("ДЕРЕВА"), "oil": Loc.t("НЕФТИ"), "precious": Loc.t("ДРАГМЕТ."), "uranium": Loc.t("УРАНА")}.get(short, Loc.t("СЫРЬЯ")))) if short != "" else Loc.t("СКЛАД"), -1)
 		_warn_col("store", short != "")
@@ -529,14 +604,21 @@ func _process(delta: float) -> void:
 			var pct: float = float(ri.get("pct", 0.0))
 			race_lbl.add_theme_color_override("font_color", UiKit.GREEN if bool(ri.get("leader_is_player", false)) else (UiKit.RED if pct >= 0.8 else (UiKit.GOLD if pct >= 0.6 else UiKit.MUTED)))
 	if gw != null and gw.night != null:
-		clock_lbl.text = gw.night.clock_text()
+		var ck_txt: String = gw.night.clock_text()
+		if ck_txt != _last_clock:
+			_last_clock = ck_txt
+			clock_lbl.text = ck_txt
 	if gw != null and gw.seasons != null and season_lbl != null and is_instance_valid(season_lbl):
 		var sname: String = gw.seasons.name_text()
-		var s_col: Color = UiKit.BLUE if gw.seasons.is_winter() else (UiKit.TITLE if gw.seasons.season == Seasons.Season.AUTUMN else UiKit.MUTED)
-		season_lbl.text = ("%s −50%%" % sname) if gw.seasons.is_winter() else sname
-		season_lbl.add_theme_color_override("font_color", s_col)
-		if season_icon != null and is_instance_valid(season_icon):
-			UiKit.set_icon(season_icon, gw.seasons.icon_name(), 16.0)
+		var s_icon: String = gw.seasons.icon_name()
+		var s_sig: String = "%s|%d|%s" % [sname, int(gw.seasons.season), s_icon]
+		if s_sig != _last_season_sig:
+			_last_season_sig = s_sig
+			var s_col: Color = UiKit.BLUE if gw.seasons.is_winter() else (UiKit.TITLE if gw.seasons.season == Seasons.Season.AUTUMN else UiKit.MUTED)
+			season_lbl.text = ("%s −50%%" % sname) if gw.seasons.is_winter() else sname
+			season_lbl.add_theme_color_override("font_color", s_col)
+			if season_icon != null and is_instance_valid(season_icon):
+				UiKit.set_icon(season_icon, s_icon, 16.0)
 	_news_tick()
 	if war_banner.visible and now > war_until:
 		var tw: Tween = war_banner.create_tween()
@@ -562,13 +644,28 @@ func _process(delta: float) -> void:
 			var col: Color = Color(1.0, 0.99, 0.94, a) if fu < 0.22 else Color(1.0, 0.72, 0.32, a)
 			_nuke_flash_rect.color = col
 
-	var k: float = 1.0 + 0.18 * sin(_t * 5.0)
+	var any_pressed: bool = false
 	for nm: String in keys:
 		var b: Button = keys[nm]
-		if b.toggle_mode and b.is_visible_in_tree():
+		if b.toggle_mode and b.button_pressed and b.is_visible_in_tree():
+			any_pressed = true
+			break
+	if any_pressed:
+		var k: float = 1.0 + 0.18 * sin(_t * 5.0)
+		for nm: String in keys:
+			var b: Button = keys[nm]
+			if b.toggle_mode and b.is_visible_in_tree():
+				var ic: TextureRect = UiKit.slot_icon(b)
+				if ic != null:
+					ic.modulate = Color(k, k, k) if b.button_pressed else Color.WHITE
+		_pulse_active = true
+	elif _pulse_active:
+		for nm: String in keys:
+			var b: Button = keys[nm]
 			var ic: TextureRect = UiKit.slot_icon(b)
 			if ic != null:
-				ic.modulate = Color(k, k, k) if b.button_pressed else Color.WHITE
+				ic.modulate = Color.WHITE
+		_pulse_active = false
 	if panel != null and is_instance_valid(panel) and panel.has_meta("scroll"):
 		var sc: ScrollContainer = panel.get_meta("scroll")
 		var room: float = holder.position.y - win_reserve - (_win_top() - 4.0) - 96.0
@@ -750,3 +847,84 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion and _sd_moved:
 		if (event as InputEventMouseMotion).device == InputEvent.DEVICE_ID_EMULATION:
 			get_viewport().set_input_as_handled()
+
+
+func _sync_strat_pill(p: Country) -> void:
+	if strat_pill == null or not is_instance_valid(strat_pill):
+		return
+	if p == null or p.eliminated or gw == null or gw.mil == null:
+		strat_pill.visible = false
+		return
+	var silos: int = 0
+	var s_ready: int = 0
+	var s_cd: float = INF
+	var z_cnt: int = 0
+	var z_ammo: int = 0
+	var z_cap: int = 0
+	for f: Facility in gw.mil.facs_of(p.id):
+		if f.country_id != p.id or not gw.mil.alive(f):
+			continue
+		if f.kind == Facility.Kind.NUKE_SILO and GameConfig.nukes:
+			silos += 1
+			if f.nuke_state == 3:
+				s_ready += 1
+			elif (f.nuke_state == 1 or f.nuke_state == 4) and f.nuke_t < s_cd:
+				s_cd = f.nuke_t
+		elif f.kind == Facility.Kind.AD_ZASLON:
+			z_cnt += 1
+			z_ammo += f.ammo
+			z_cap += Defense.ZASLON_CAP
+	if silos == 0 and z_cnt == 0:
+		strat_pill.visible = false
+		return
+	var parts: PackedStringArray = PackedStringArray()
+	if silos > 0:
+		if s_ready > 0:
+			parts.append(Loc.t("☢ %d ГОТ.") % s_ready)
+		elif s_cd < INF:
+			parts.append("☢ %s" % _mmss(s_cd))
+		else:
+			parts.append(Loc.t("☢ ×%d") % silos)
+	if z_cnt > 0:
+		parts.append(Loc.t("🛡 %d/%d") % [z_ammo, z_cap])
+	var txt: String = " · ".join(parts)
+	if strat_pill.text != txt:
+		strat_pill.text = txt
+	strat_pill.modulate = Color(1.0, 0.72, 0.65) if (z_cnt > 0 and z_ammo == 0 and s_ready == 0) else (Color(0.85, 1.0, 0.78) if s_ready > 0 else Color.WHITE)
+	strat_pill.visible = true
+
+
+func set_map_tip(txt: String) -> void:
+	if map_tip == null or not is_instance_valid(map_tip) or map_tip_lbl == null:
+		return
+	if txt == "":
+		if map_tip.visible:
+			map_tip.visible = false
+		return
+	if map_tip_lbl.text != txt:
+		map_tip_lbl.text = txt
+		map_tip.reset_size()
+	if not map_tip.visible:
+		map_tip.visible = true
+		map_tip.reset_size()
+	var bot: float = holder.position.y - 8.0 if holder != null else root.size.y - 8.0
+	map_tip.position = Vector2(6.0, roundf(maxf(80.0, bot - map_tip.size.y)))
+
+
+func set_ghost_tip(txt: String, col: Color, screen_pos: Vector2) -> void:
+	if ghost_tip == null or not is_instance_valid(ghost_tip) or ghost_tip_lbl == null:
+		return
+	if txt == "":
+		if ghost_tip.visible:
+			ghost_tip.visible = false
+		return
+	if ghost_tip_lbl.text != txt:
+		ghost_tip_lbl.text = txt
+		ghost_tip.reset_size()
+	ghost_tip_lbl.add_theme_color_override("font_color", col)
+	if not ghost_tip.visible:
+		ghost_tip.visible = true
+		ghost_tip.reset_size()
+	var px: float = clampf(screen_pos.x + 18.0, 6.0, maxf(6.0, root.size.x - ghost_tip.size.x - 6.0))
+	var py: float = clampf(screen_pos.y + 18.0, 6.0, maxf(6.0, (holder.position.y if holder != null else root.size.y) - ghost_tip.size.y - 6.0))
+	ghost_tip.position = Vector2(roundf(px), roundf(py))

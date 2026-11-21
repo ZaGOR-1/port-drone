@@ -635,12 +635,15 @@ func _patrol_goal(o: Dictionary, lead: Ship) -> Vector2:
 func _steer(s: Ship, p: Vector2) -> void:
 	if s.refit != "" or not s.alive():
 		return
-	if s.pos.distance_to(p) < 10.0:
+	var d_goal: float = s.pos.distance_to(p)
+	if d_goal < 10.0:
 		if s.state == Ship.State.SAIL and s.path.size() <= 1:
 			nv.stop(s)
 		return
-	if s.state == Ship.State.SAIL and not s.path.is_empty() and s.path[s.path.size() - 1].distance_to(p) < 20.0:
-		return
+	if s.state == Ship.State.SAIL and not s.path.is_empty():
+		var tol: float = 20.0 if d_goal <= 250.0 else minf(96.0, d_goal * 0.12)
+		if s.path[s.path.size() - 1].distance_to(p) < tol:
+			return
 	if nv._body_px(p) != 0 and nv._body_px(p) == nv._body_px(s.pos) and nv._los(s.pos, p):
 		s.path = PackedVector2Array([p])
 		s.pi = 0
@@ -914,15 +917,15 @@ func ai(c: Country) -> void:
 func _strike_trip(c: Country, s: Ship) -> void:
 	var best: Facility = null
 	var bd: float = Navy.CM_RANGE * 2.5
-	for f: Facility in gw.mil.facilities:
-		if not nv._hostile(c.id, f.country_id) or not gw.mil.alive(f):
-			continue
-		if f.kind != Facility.Kind.NAVAL_BASE and f.kind != Facility.Kind.PORT and f.kind != Facility.Kind.POWER_PLANT and f.kind != Facility.Kind.REFINERY:
-			continue
-		var d: float = f.center_px().distance_to(s.pos)
-		if d < bd:
-			bd = d
-			best = f
+	var bd2: float = bd * bd
+	for fk: int in [Facility.Kind.NAVAL_BASE, Facility.Kind.PORT, Facility.Kind.POWER_PLANT, Facility.Kind.REFINERY]:
+		for f: Facility in gw.mil.facs_of_kind(fk):
+			if not nv._hostile(c.id, f.country_id) or not gw.mil.alive(f):
+				continue
+			var d2: float = f.center_px().distance_squared_to(s.pos)
+			if d2 < bd2:
+				bd2 = d2
+				best = f
 	_cm_at[s.id] = gw.game_time
 	if best == null:
 		return

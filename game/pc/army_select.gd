@@ -43,8 +43,19 @@ var _last_cam_p: Vector2 = Vector2.INF
 var _last_cam_z: float = -1.0
 var _last_sel_sig: String = ""
 
+var _wp_chain: PackedVector2Array = PackedVector2Array()
+var _wp_sig: String = ""
+var _wp_ms: int = 0
+
 var card: PanelContainer
 var _card_title: Label
+var _comp_row: HFlowContainer
+var _stance_btns: Array = []
+var _trench_btn: Button
+var _trench_want_out: bool = false
+var _grp_bar: PanelContainer
+var _grp_row: HBoxContainer
+var _grp_sig: String = ""
 var _card_sig: String = ""
 
 
@@ -96,15 +107,51 @@ func alive_fids() -> PackedInt32Array:
 	return out
 
 
+func _fids_sig(fids: PackedInt32Array) -> String:
+	var a: Array[int] = []
+	for fid: int in fids:
+		a.append(fid)
+	a.sort()
+	return str(a)
+
+
+func _clear_main_conflicts() -> void:
+	var m: Node = _main()
+	if m != null:
+		m.set("selected_fac", null)
+		m.set("follow", null)
+		m.set("selected_city", -1)
+		m.set("selected_dep", {})
+		m.set("selected_intel", null)
+		m.set("cam_lock", false)
+		if m.has_method("drop_cards_for_sheet"):
+			m.drop_cards_for_sheet()
+	if hud != null:
+		if hud.has_method("hide_ops"):
+			hud.hide_ops()
+		hud.set_key_pressed("follow", false)
+
+
+func cancel_drag() -> void:
+	if _box_from.is_finite() or _box_to.is_finite():
+		_box_from = Vector2.INF
+		_box_to = Vector2.INF
+		_box_add = false
+		queue_redraw()
+
+
 func clear() -> void:
 	sel.clear()
 	multi = false
+	_wp_chain.clear()
+	_wp_sig = ""
 	_card_sig = ""
 	_per_cache.clear()
 	_per_valid = false
 	_per_t = 0.0
 	_redraw_t = 0.0
 	_last_sel_sig = "__clear__"
+	queue_redraw()
 
 
 func _set_sel(fids: Array, add: bool) -> void:
@@ -123,24 +170,28 @@ func _set_sel(fids: Array, add: bool) -> void:
 		sel.clear()
 		for fid: int in fids:
 			sel[fid] = true
-	var n: int = alive_fids().size()
+	var alive: PackedInt32Array = alive_fids()
+	var n: int = alive.size()
 	if n == 0:
 		clear()
 		if ux != null and String(ux.view) in ["army", "group"]:
 			ux.close_view()
 		return
+	if _fids_sig(alive) != _wp_sig:
+		_wp_chain.clear()
+		_wp_sig = ""
+	_clear_main_conflicts()
 	if n == 1:
 		multi = false
 		if ux != null:
-			ux.open_army(int(alive_fids()[0]))
+			ux.open_army(int(alive[0]))
+		queue_redraw()
 		return
 	multi = true
 	_card_sig = ""
 	if ux != null and String(ux.view) != "":
 		ux.close_view()
-	var m: Node = _main()
-	if m != null and m.has_method("drop_cards_for_sheet"):
-		m.drop_cards_for_sheet()
+	queue_redraw()
 
 
 ## The game's own cards drive the selection while we are not in multi mode.
@@ -180,6 +231,8 @@ func _process(delta: float) -> void:
 	_per_t -= delta
 	_redraw_t -= delta
 	if gw != null and gw.player != _player:
+		_hot.clear()
+		_grp_sig = ""
 		_player = gw.player
 		clear()
 		_hot.clear()
@@ -192,14 +245,30 @@ func _process(delta: float) -> void:
 			queue_redraw()
 		return
 	_mirror()
+	if not _wp_chain.is_empty():
+		var alive_wp: PackedInt32Array = alive_fids()
+		if alive_wp.is_empty() or _fids_sig(alive_wp) != _wp_sig:
+			_wp_chain.clear()
+			_wp_sig = ""
+		elif Time.get_ticks_msec() - _wp_ms > 1000 and gw != null and gw.ops != null:
+			var any_op: bool = false
+			for fid_w: int in alive_wp:
+				var fw: Facility = AG.fac(gw, fid_w)
+				if fw != null and not gw.ops.of(fw).is_empty():
+					any_op = true
+					break
+			if not any_op:
+				_wp_chain.clear()
+				_wp_sig = ""
 	_card_tick()
+	_grp_tick()
 	var cam: MapCamera = _cam()
-	var ssig: String = str(sel.keys())
+	var ssig: String = str(sel.keys()) + "|" + str(_wp_chain.size())
 	if _redraw_t <= 0.0 or _box_from.is_finite() or cam.position != _last_cam_p or cam.zoom.x != _last_cam_z or ssig != _last_sel_sig:
 		_last_cam_p = cam.position
 		_last_cam_z = cam.zoom.x
 		_last_sel_sig = ssig
-		_redraw_t = 0.08
+		_redraw_t = 0.25 if gw.time_scale <= 0.0 else 0.08
 		queue_redraw()
 
 
@@ -252,6 +321,30 @@ func _draw() -> void:
 				draw_arc(sp, rr, 0.0, TAU, 12, U.DARK, 3.0)
 				draw_arc(sp, rr, 0.0, TAU, 12, UiKit.GOLD, 1.5)
 
+	# queued Shift+RMB waypoint chain
+	if not _wp_chain.is_empty() and _mode_none():
+		var fids_d: PackedInt32Array = alive_fids()
+		if not fids_d.is_empty() and _fids_sig(fids_d) == _wp_sig:
+			var orig_w: Vector2 = Vector2.ZERO
+			var on_c: int = 0
+			for fid_d: int in fids_d:
+				if per.has(fid_d):
+					orig_w += _core(fid_d, per[fid_d])
+					on_c += 1
+			if on_c > 0:
+				var prev_s: Vector2 = cam.world_to_screen(orig_w / float(on_c))
+				for wi: int in _wp_chain.size():
+					var sp_w: Vector2 = cam.world_to_screen(_wp_chain[wi])
+					draw_dashed_line(prev_s, sp_w, Color(0, 0, 0, 0.55), 3.5, 7.0)
+					draw_dashed_line(prev_s, sp_w, Color(UiKit.GOLD, 0.92), 1.8, 7.0)
+					prev_s = sp_w
+				for wj: int in _wp_chain.size():
+					var sp_n: Vector2 = cam.world_to_screen(_wp_chain[wj])
+					draw_circle(sp_n, 8.5, U.DARK)
+					draw_arc(sp_n, 8.5, 0.0, TAU, 16, UiKit.GOLD, 1.5)
+					var nt_w: String = str(wj + 1)
+					draw_string(f, sp_n + Vector2(-f.get_string_size(nt_w, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x * 0.5, 3.5), nt_w, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiKit.GOLD)
+
 	# armies -> screen points, biggest first, then fold the ones that would overlap
 	var items: Array = []
 	for fid: int in per:
@@ -274,6 +367,7 @@ func _draw() -> void:
 			stacks.append({"p": sp2, "fids": [it[0]], "n": int(it[2])})
 
 	var near: bool = z >= 1.2
+	var cards: Array = []
 	for st2: Dictionary in stacks:
 		var p0: Vector2 = st2["p"]
 		var cp: Vector2 = p0 + (Vector2(0, 14) if near else Vector2.ZERO)
@@ -300,30 +394,78 @@ func _draw() -> void:
 			var g: Dictionary = AG.by_id(gw, gw.player.id, lf.group_id)
 			if not g.is_empty():
 				col = U.color(int(g["color"]))
-		draw_rect(r.grow(1.0), U.DARK)
-		draw_rect(r, Color(0.09, 0.07, 0.05, 0.93))
-		draw_rect(Rect2(r.position, Vector2(4, h)), col)
 		var ic: Texture2D = U.tex(String(a.get("build_icon", "icon_infantry")))
 		if ic == null:
 			ic = U.tex("icon_infantry")
-		if ic != null:
-			draw_texture_rect(ic, Rect2(r.position + Vector2(6, 2), Vector2(15, 15)), false)
-		draw_string(f, r.position + Vector2(24, 14), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
-		draw_rect(Rect2(r.position + Vector2(4, h - 2), Vector2((w - 4) * clampf(hp, 0.0, 1.0), 2)), Color("a2e35f").lerp(Color("ff6a4d"), 1.0 - clampf(hp, 0.0, 1.0)))
+		_hits.append([r.grow(3.0), fids.duplicate()])
+		cards.append([r, w, h, col, hp, nsel, fids.size(), ic, txt, lf])
+	# Pass 1: all card backgrounds, bars, badges & selection borders
+	for cd: Array in cards:
+		var r: Rect2 = cd[0]
+		var w: float = float(cd[1])
+		var h: float = float(cd[2])
+		var hp: float = clampf(float(cd[4]), 0.0, 1.0)
+		var nsel: int = int(cd[5])
+		var fn: int = int(cd[6])
+		draw_rect(r.grow(1.0), U.DARK)
+		draw_rect(r, Color(0.09, 0.07, 0.05, 0.93))
+		draw_rect(Rect2(r.position, Vector2(4, h)), cd[3] as Color)
+		draw_rect(Rect2(r.position + Vector2(4, h - 2), Vector2((w - 4) * hp, 2)), Color("a2e35f").lerp(Color("ff6a4d"), 1.0 - hp))
 		if nsel > 0:
-			draw_rect(r.grow(2.0), UiKit.GOLD if nsel == fids.size() else UiKit.GOLD.darkened(0.35), false, 2.0)
-		if fids.size() > 1:
-			var bt: String = "×%d" % fids.size()
+			var sr2 := r.grow(2.0)
+			var scol: Color = UiKit.GOLD if nsel == fn else UiKit.GOLD.darkened(0.35)
+			draw_rect(Rect2(sr2.position.x, sr2.position.y, sr2.size.x, 2.0), scol)
+			draw_rect(Rect2(sr2.position.x, sr2.end.y - 2.0, sr2.size.x, 2.0), scol)
+			draw_rect(Rect2(sr2.position.x, sr2.position.y + 2.0, 2.0, maxf(0.0, sr2.size.y - 4.0)), scol)
+			draw_rect(Rect2(sr2.end.x - 2.0, sr2.position.y + 2.0, 2.0, maxf(0.0, sr2.size.y - 4.0)), scol)
+		if fn > 1:
+			var bt: String = "×%d" % fn
 			var bw: float = f.get_string_size(bt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x + 6.0
 			var br: = Rect2((r.position + Vector2(w - bw * 0.5, -8)).round(), Vector2(roundf(bw), 12))
 			draw_rect(br.grow(1.0), U.DARK)
 			draw_rect(br, Color(0.35, 0.27, 0.05, 0.95))
-			draw_string(f, br.position + Vector2(3, 10), bt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color.WHITE)
-		elif lf != null and z >= 0.7:
-			var nt: String = Loc.no(lf.army_no)
-			draw_string_outline(f, r.position + Vector2(w + 3, 13), nt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 4, U.DARK)
-			draw_string(f, r.position + Vector2(w + 3, 13), nt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiKit.MUTED)
-		_hits.append([r.grow(3.0), fids.duplicate()])
+			cd.append(br)
+			cd.append(bt)
+	# Pass 2: group unit icons by underlying Atlas Texture2D RID
+	var by_ic: Dictionary = {}
+	for cd2: Array in cards:
+		var ic2: Texture2D = cd2[7]
+		if ic2 != null:
+			var is_at2: bool = ic2 is AtlasTexture and (ic2 as AtlasTexture).atlas != null
+			var base2: Texture2D = (ic2 as AtlasTexture).atlas if is_at2 else ic2
+			var reg2: Rect2 = (ic2 as AtlasTexture).region if is_at2 else Rect2()
+			var rid2: int = base2.get_rid().get_id()
+			var b2: Variant = by_ic.get(rid2)
+			if b2 == null:
+				b2 = []
+				by_ic[rid2] = b2
+			(b2 as Array).append([base2, reg2, Rect2((cd2[0] as Rect2).position + Vector2(6, 2), Vector2(15, 15))])
+	for rk2: Variant in by_ic:
+		for e2: Array in (by_ic[rk2] as Array):
+			var rg2: Rect2 = e2[1] as Rect2
+			if rg2.size.x > 0.0:
+				draw_texture_rect_region(e2[0] as Texture2D, e2[2] as Rect2, rg2)
+			else:
+				draw_texture_rect(e2[0] as Texture2D, e2[2] as Rect2, false)
+	# Pass 3: batch strings by font size and outline pass
+	for cd3: Array in cards:
+		var r3: Rect2 = cd3[0]
+		draw_string(f, r3.position + Vector2(24, 14), String(cd3[8]), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
+	for cd4: Array in cards:
+		if int(cd4[6]) > 1:
+			var br4: Rect2 = cd4[10]
+			draw_string(f, br4.position + Vector2(3, 10), String(cd4[11]), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color.WHITE)
+	if z >= 0.7:
+		for cd5: Array in cards:
+			if int(cd5[6]) <= 1 and cd5[9] != null:
+				var r5: Rect2 = cd5[0]
+				var nt5: String = Loc.no((cd5[9] as Facility).army_no)
+				draw_string_outline(f, r5.position + Vector2(float(cd5[1]) + 3, 13), nt5, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 4, U.DARK)
+		for cd6: Array in cards:
+			if int(cd6[6]) <= 1 and cd6[9] != null:
+				var r6: Rect2 = cd6[0]
+				var nt6: String = Loc.no((cd6[9] as Facility).army_no)
+				draw_string(f, r6.position + Vector2(float(cd6[1]) + 3, 13), nt6, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiKit.MUTED)
 
 	if _box_from.is_finite() and _box_to.is_finite():
 		var br2: Rect2 = Rect2(_box_from, Vector2.ZERO).expand(_box_to)
@@ -414,6 +556,10 @@ func lmb(mb: InputEventMouseButton) -> bool:
 				_mirror()
 			_set_sel(f, true)
 			UiKit.snd("ui_select")
+			return true
+		var ndk: Variant = hud.get("navy_dock") if hud != null else null
+		if ndk != null and is_instance_valid(ndk) and (ndk as Object).has_method("shift_map_tap"):
+			bool(ndk.shift_map_tap(b))
 		return true
 	var rect: Rect2 = Rect2(a, Vector2.ZERO).expand(b)
 	var cam: MapCamera = _cam()
@@ -423,6 +569,13 @@ func lmb(mb: InputEventMouseButton) -> bool:
 			continue
 		if rect.has_point(cam.world_to_screen(u.pos)) and AG.army_alive(gw, u.home):
 			got[u.home.id] = true
+	for he: Array in _hits:
+		var hr: Rect2 = he[0]
+		if rect.intersects(hr):
+			for hfid: int in (he[1] as Array):
+				var hf: Facility = AG.fac(gw, hfid)
+				if hf != null and AG.army_alive(gw, hf):
+					got[hf.id] = true
 	if got.is_empty():
 		return true
 	if not multi:
@@ -443,7 +596,7 @@ func mouse_move(pos: Vector2) -> bool:
 
 
 ## A right click (not a drag). True = handled.
-func rmb_click(pos: Vector2) -> bool:
+func rmb_click(pos: Vector2, shift_held: bool = false) -> bool:
 	if not ok():
 		return false
 	var m: Node = _main()
@@ -467,8 +620,64 @@ func rmb_click(pos: Vector2) -> bool:
 	var fids: PackedInt32Array = alive_fids()
 	if fids.is_empty():
 		return false
-	order_move(fids, wp)
+	order_move(fids, wp, shift_held)
 	return true
+
+
+func _recall_hit(d: int, force_center: bool = false) -> void:
+	if not _hot.has(d) or not _mode_none():
+		return
+	var keep: PackedInt32Array = PackedInt32Array()
+	for fid: int in _hot[d]:
+		var f: Facility = AG.fac(gw, fid)
+		if f != null and AG.army_alive(gw, f):
+			keep.append(fid)
+	_hot[d] = keep
+	if keep.is_empty():
+		_say(Loc.t("В ячейке %d армий не осталось") % d)
+		return
+	var now: int = Time.get_ticks_msec()
+	var dbl: bool = force_center or (_recall_k == d and now - _recall_ms < RECALL_DBL_MS)
+	_recall_k = d
+	_recall_ms = now
+	_set_sel(Array(keep), false)
+	UiKit.snd("ui_select")
+	if dbl:
+		_center_on_sel()
+
+
+func bound_groups() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if gw == null or gw.player == null or gw.army == null:
+		return out
+	var ks: Array = _hot.keys()
+	ks.sort()
+	for kv: Variant in ks:
+		var d: int = int(kv)
+		var keep: PackedInt32Array = PackedInt32Array()
+		var men: int = 0
+		var active: bool = true
+		for fid: int in _hot[d]:
+			var f: Facility = AG.fac(gw, fid)
+			if f != null and f.country_id == gw.player.id and AG.army_alive(gw, f):
+				keep.append(fid)
+				men += int(gw.army.units_of(f).size())
+				if not sel.has(fid):
+					active = false
+		if keep.is_empty():
+			_hot.erase(d)
+			continue
+		if keep.size() != (_hot[d] as PackedInt32Array).size():
+			_hot[d] = keep
+		out.append({"k": d, "n": keep.size(), "soldiers": men, "active": active})
+	return out
+
+
+func clear_group(d: int) -> void:
+	if _hot.erase(d):
+		UiKit.snd("ui_close")
+		_say(Loc.t("Ячейка %d очищена") % d)
+		_grp_sig = ""
 
 
 ## Keys: Esc, Ctrl+digit, digit. True = handled.
@@ -491,26 +700,11 @@ func key(k: InputEventKey) -> bool:
 			_hot[d] = fids
 			_say(Loc.t("Выделение → %d (%s). Нажмите %d, чтобы выбрать снова") % [d, Loc.n(fids.size(), "%d армия", "%d армии", "%d армий") % fids.size(), d])
 		UiKit.snd("ui_select")
+		_grp_sig = ""
 		return true
 	if not _hot.has(d) or not _mode_none():
 		return false
-	var keep: PackedInt32Array = PackedInt32Array()
-	for fid: int in _hot[d]:
-		var f: Facility = AG.fac(gw, fid)
-		if f != null and AG.army_alive(gw, f):
-			keep.append(fid)
-	_hot[d] = keep
-	if keep.is_empty():
-		_say(Loc.t("В ячейке %d армий не осталось") % d)
-		return true
-	var now: int = Time.get_ticks_msec()
-	var dbl: bool = _recall_k == d and now - _recall_ms < RECALL_DBL_MS
-	_recall_k = d
-	_recall_ms = now
-	_set_sel(Array(keep), false)
-	UiKit.snd("ui_select")
-	if dbl:
-		_center_on_sel()
+	_recall_hit(d, false)
 	return true
 
 
@@ -565,29 +759,70 @@ func _cmd(fn: String, args: Array, done: Callable = Callable()) -> void:
 			done.call(r))
 
 
-func order_move(fids: PackedInt32Array, wp: Vector2) -> void:
+func order_move(fids: PackedInt32Array, wp: Vector2, queue: bool = false) -> void:
 	var ux: Node = _ux()
+	var target_wp: Vector2 = wp
+	var chain_pts: PackedVector2Array = PackedVector2Array()
+	if queue:
+		var sig: String = _fids_sig(fids)
+		if _wp_sig != sig or _wp_chain.is_empty():
+			_wp_chain.clear()
+			_wp_sig = sig
+			if gw != null and gw.ops != null:
+				for fid_q: int in fids:
+					var fq: Facility = AG.fac(gw, fid_q)
+					if fq == null:
+						continue
+					var op_q: Dictionary = gw.ops.of(fq)
+					if not op_q.is_empty() and op_q.get("to") is Vector2:
+						var g_to: Vector2 = op_q["to"]
+						if g_to.is_finite() and g_to.distance_to(wp) > 24.0:
+							_wp_chain.append(g_to)
+							break
+		if _wp_chain.size() >= AG.ROUTE_MAX + 1:
+			_say(Loc.t("Максимум %d точек маршрута") % (AG.ROUTE_MAX + 1))
+			UiKit.snd("ui_error")
+			return
+		if _wp_chain.is_empty() or _wp_chain[_wp_chain.size() - 1].distance_to(wp) > 12.0:
+			_wp_chain.append(wp)
+		_wp_ms = Time.get_ticks_msec()
+		target_wp = _wp_chain[_wp_chain.size() - 1]
+		if _wp_chain.size() >= 2:
+			chain_pts = _wp_chain.slice(0, _wp_chain.size() - 1)
+		queue_redraw()
+	else:
+		_wp_chain.clear()
+		_wp_sig = ""
+		queue_redraw()
 	if ux != null:
 		# the same path preview the army card draws (green lines, red crosses for those that cannot go)
 		var pk: String = String(ux.place_kind)
 		var ps: bool = bool(ux.place_sea)
 		ux.place_kind = "move"
 		ux.place_sea = false
-		var chk: Dictionary = ux.check(fids, wp, "move")
+		var chk: Dictionary = ux.check(fids, target_wp, "move")
 		ux.place_kind = pk
 		ux.place_sea = ps
-		ux.preview = {"to": wp, "ok": chk["ok"], "bad": chk["bad"], "until": Time.get_ticks_msec() + 4000}
+		ux.preview = {"to": target_wp, "ok": chk["ok"], "bad": chk["bad"], "until": Time.get_ticks_msec() + 4000}
 	var m: Node = _main()
 	if m != null and m.get("overlay") != null:
 		m.overlay.ripple(wp, "grass_light")
 	var who: String = _who(fids)
-	_cmd("order_fids", [fids, "move", wp, who], func(r: Variant) -> void:
+	var wp_cnt: int = _wp_chain.size() if queue else 0
+	var args: Array = [fids, "move", target_wp, who] if chain_pts.is_empty() else [fids, "move", target_wp, who, Vector2.INF, chain_pts]
+	_cmd("order_fids", args, func(r: Variant) -> void:
 		var d: Dictionary = r if r is Dictionary else {}
 		var n: int = int(d.get("ok", 0))
 		var u2: Node = _ux()
 		if n > 0:
 			var lbl: String = (Loc.t("Армия №%d") % AG.fac(gw, fids[0]).army_no) if fids.size() == 1 and AG.fac(gw, fids[0]) != null else who
-			var t: String = Loc.t("%s: идут %d из %d") % [lbl, n, fids.size()] if n < fids.size() else Loc.t("%s: в путь") % lbl
+			var t: String = ""
+			if wp_cnt >= 2:
+				t = Loc.t("%s: маршрут (%d тчк)") % [lbl, wp_cnt]
+			elif n < fids.size():
+				t = Loc.t("%s: идут %d из %d") % [lbl, n, fids.size()]
+			else:
+				t = Loc.t("%s: в путь") % lbl
 			if u2 != null:
 				u2.toast(t, u2._ok_fids(fids, d))
 			UiKit.snd("ui_build")
@@ -605,17 +840,25 @@ func _act(what: String, arg: int = 0) -> void:
 		_card_sig = ""
 	match what:
 		"stop":
+			_wp_chain.clear()
+			_wp_sig = ""
+			queue_redraw()
 			for fid: int in fids:
 				var f: Facility = AG.fac(gw, fid)
 				if f != null:
 					NetSession.sim("ops", "cancel", [f])
 			_say(Loc.t("%s: стоп") % who)
 		"retreat":
+			_wp_chain.clear()
+			_wp_sig = ""
+			queue_redraw()
 			_cmd("order_fids", [fids, "retreat", Vector2.INF, who], func(r: Variant) -> void:
 				var d: Dictionary = r if r is Dictionary else {}
 				_say(Loc.t("%s: отход к казармам (%d)") % [who, int(d.get("ok", 0))]))
 		"trench":
-			_cmd("trench_in_fids", [fids, who], func(r: Variant) -> void:
+			var t_fn: String = "trench_out_fids" if _trench_want_out else "trench_in_fids"
+			_cmd(t_fn, [fids, who], func(r: Variant) -> void:
+				_card_sig = ""
 				var d: Dictionary = r if r is Dictionary else {}
 				if String(d.get("why", "")) != "":
 					_say(String(d["why"]))
@@ -656,7 +899,7 @@ func _build_card() -> void:
 	hb.add_child(tv)
 	_card_title = UiKit.lbl("", 13, UiKit.TITLE, 3, 3)
 	tv.add_child(_card_title)
-	var hint: Label = UiKit.lbl("ПКМ по карте — идти · Shift+ЛКМ — добавить/убрать · Shift+рамка — выделить · Ctrl+1…9 — запомнить", 9, UiKit.MUTED, 1)
+	var hint: Label = UiKit.lbl("ПКМ — идти · Shift+ПКМ — маршрут · Shift+ЛКМ / рамка — выбор · Ctrl+1…9 — группа", 9, UiKit.MUTED, 1)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tv.add_child(hint)
 	var cb: Button = UiKit.close_btn(36.0)
@@ -665,17 +908,27 @@ func _build_card() -> void:
 		clear()
 		UiKit.snd("ui_close"))
 	hb.add_child(cb)
+	_comp_row = HFlowContainer.new()
+	_comp_row.add_theme_constant_override("h_separation", 8)
+	_comp_row.add_theme_constant_override("v_separation", 2)
+	vb.add_child(_comp_row)
 	var row: = HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 4)
 	row.add_theme_constant_override("v_separation", 4)
 	vb.add_child(row)
-	for it: Array in [["СТОП", "stop", 0, "stone"], ["ОТХОД", "retreat", 0, "stone"], ["ОКОПАТЬСЯ", "trench", 0, "stone"],
+	_stance_btns.clear()
+	_trench_btn = null
+	for it: Array in [["СТОП", "stop", 0, "stone"], ["ОТХОД", "retreat", 0, "stone"], ["В ОКОПЫ", "trench", 0, "stone"],
 			["ЖДУТ", "stance", 0, "blue"], ["ДЕРЖАТ", "stance", 1, "green"], ["НАСТУПАЮТ", "stance", 2, "red"], ["В ГРУППУ", "group", 0, "gold"]]:
 		var b: Button = UiKit.big(String(it[0]), String(it[3]), "", 36.0, 9)
 		b.custom_minimum_size = Vector2(0, 36)
 		var w: String = String(it[1])
 		var a: int = int(it[2])
 		b.pressed.connect(func() -> void: _act(w, a))
+		if w == "stance":
+			_stance_btns.append([b, a, String(it[0])])
+		elif w == "trench":
+			_trench_btn = b
 		row.add_child(b)
 
 
@@ -693,12 +946,64 @@ func _card_tick() -> void:
 	if not want:
 		return
 	var n: int = 0
+	var hp_sum: float = 0.0
+	var dug_cnt: int = 0
+	var free_foot: int = 0
+	var common_st: int = -2
 	for fid: int in fids:
-		n += int(_ux().ast(fid).get("n", 0))
-	var sig: String = "%d|%d" % [fids.size(), n]
+		var st_d: Dictionary = _ux().ast(fid)
+		n += int(st_d.get("n", 0))
+		hp_sum += float(st_d.get("hp", 1.0))
+		if bool(st_d.get("dug", false)):
+			dug_cnt += 1
+		free_foot += maxi(0, int(st_d.get("foot", 0)) - int(st_d.get("inn", 0)))
+		var fs_c: Facility = AG.fac(gw, fid)
+		if fs_c != null:
+			var cst: int = clampi(fs_c.stance, 0, 2)
+			if common_st == -2:
+				common_st = cst
+			elif common_st != cst:
+				common_st = -1
+	var hp_pct: int = roundi(100.0 * hp_sum / float(maxi(1, fids.size())))
+	var want_out: bool = dug_cnt > 0 and dug_cnt * 2 >= fids.size()
+	var sig: String = "%s|%d|%d|%d|%d|%d" % [_fids_sig(fids), n, hp_pct, common_st, 1 if want_out else 0, 1 if free_foot > 0 else 0]
 	if sig != _card_sig:
 		_card_sig = sig
-		_card_title.text = Loc.t("ВЫДЕЛЕНО: %s · %d бойцов") % [Loc.n(fids.size(), "%d армия", "%d армии", "%d армий") % fids.size(), n]
+		_trench_want_out = want_out
+		_card_title.text = Loc.t("ВЫДЕЛЕНО: %s · %d бойцов · %d%%") % [Loc.n(fids.size(), "%d армия", "%d армии", "%d армий") % fids.size(), n, hp_pct]
+		for sb_e: Array in _stance_btns:
+			var b_st: Button = sb_e[0]
+			var s_idx: int = int(sb_e[1])
+			var base_t: String = Loc.t(String(sb_e[2]))
+			var on_st: bool = common_st == s_idx
+			b_st.text = ("● " + base_t) if on_st else base_t
+			b_st.add_theme_color_override("font_color", UiKit.GOLD if on_st else Color.WHITE)
+		if _trench_btn != null:
+			_trench_btn.text = Loc.t("ИЗ ОКОПОВ" if want_out else "В ОКОПЫ")
+			_trench_btn.disabled = not (want_out or free_foot > 0)
+		if _comp_row != null and gw != null and gw.army != null:
+			for ch: Node in _comp_row.get_children():
+				ch.queue_free()
+			var by_t: Dictionary = {}
+			for u: Unit in gw.army.units:
+				if u.home == null or not sel.has(u.home.id) or not u.alive() or u.type == Unit.Type.FPV or u.reinf != 0:
+					continue
+				by_t[u.type] = int(by_t.get(u.type, 0)) + 1
+			var uts: Array = by_t.keys()
+			uts.sort()
+			for ut: int in uts:
+				var c_box: = HBoxContainer.new()
+				c_box.add_theme_constant_override("separation", 3)
+				c_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				if ut >= 0 and ut < Army.UNIT_ICONS.size():
+					c_box.add_child(UiKit.icon_rect(Army.UNIT_ICONS[ut], 15.0))
+				if Army.SPEC.has(ut):
+					c_box.tooltip_text = Loc.t(String(Army.SPEC[ut].get("name", "")))
+				var cl: Label = UiKit.lbl(str(int(by_t[ut])), 10, UiKit.TEXT, 2, 2)
+				cl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				c_box.add_child(cl)
+				_comp_row.add_child(c_box)
+			_comp_row.visible = not by_t.is_empty()
 	var vs: Vector2 = get_viewport_rect().size
 	var w: float = minf(vs.x - 16.0, 600.0)
 	card.size = Vector2(w, 0)
@@ -706,3 +1011,60 @@ func _card_tick() -> void:
 	card.size.x = w
 	var bot: float = hud.holder.get_global_rect().position.y if hud.holder != null else vs.y
 	card.position = Vector2(roundf((vs.x - w) * 0.5), roundf(bot - card.size.y - 8.0))
+
+
+func _ensure_grp_bar() -> void:
+	if _grp_bar != null and is_instance_valid(_grp_bar):
+		return
+	_grp_bar = PanelContainer.new()
+	_grp_bar.name = "PcGroupBar"
+	_grp_bar.add_theme_stylebox_override("panel", UiKit.sb("wb_pill", 5, 3))
+	_grp_bar.mouse_filter = Control.MOUSE_FILTER_STOP
+	_grp_bar.visible = false
+	add_child(_grp_bar)
+	_grp_row = HBoxContainer.new()
+	_grp_row.add_theme_constant_override("separation", 4)
+	_grp_bar.add_child(_grp_row)
+
+
+func _grp_tick() -> void:
+	_ensure_grp_bar()
+	if _grp_bar == null or hud == null or not ok() or not _mode_none():
+		if _grp_bar != null:
+			_grp_bar.visible = false
+		return
+	var busy: bool = (hud.panel != null and is_instance_valid(hud.panel)) or (hud.ops_panel != null and hud.ops_panel.visible) or (hud.ui24_open_now() if hud.has_method("ui24_open_now") else false)
+	var grps: Array[Dictionary] = bound_groups()
+	if busy or grps.is_empty():
+		_grp_bar.visible = false
+		return
+	var sig: String = ""
+	for g: Dictionary in grps:
+		sig += "%d:%d:%s|" % [int(g["k"]), int(g["soldiers"]), str(bool(g["active"]))]
+	if sig != _grp_sig:
+		_grp_sig = sig
+		for ch: Node in _grp_row.get_children():
+			ch.queue_free()
+		for g2: Dictionary in grps:
+			var k: int = int(g2["k"])
+			var men: int = int(g2["soldiers"])
+			var actv: bool = bool(g2["active"])
+			var b: Button = UiKit.big("%d · %d" % [k, men], "gold" if actv else "stone", "", 24.0, 9)
+			b.tooltip_text = Loc.t("Группа %d (%d бойцов): ЛКМ — выбрать · 2×ЛКМ — камера · ПКМ — очистить") % [k, men]
+			b.gui_input.connect(func(ev: InputEvent) -> void:
+				var mb: = ev as InputEventMouseButton
+				if mb != null and mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+					clear_group(k)
+					accept_event())
+			b.pressed.connect(func() -> void:
+				_recall_hit(k, false))
+			_grp_row.add_child(b)
+	_grp_bar.reset_size()
+	var vs: Vector2 = get_viewport_rect().size
+	var bot: float = hud.holder.get_global_rect().position.y if hud.holder != null else vs.y
+	if hud.get("armies_bar") != null and hud.armies_bar.visible:
+		bot = minf(bot, hud.armies_bar.global_position.y)
+	if card != null and card.visible:
+		bot = minf(bot, card.position.y)
+	_grp_bar.position = Vector2(roundf((vs.x - _grp_bar.size.x) * 0.5), roundf(bot - _grp_bar.size.y - 6.0))
+	_grp_bar.visible = true
