@@ -164,3 +164,7 @@ Cleanup мав конкретний trigger і малий compatibility surface;
 ## Критерій завершення саме аудиту
 
 Наявність документів або compiler PASS не означає review всіх gameplay branches. Після steering Phase2 критерій практичного прогресу — закриті критичні потоки/залежності, чесні ranges, невідоме позначене, runtime checks виконані або мають явний FAIL/BLOCKED/NOT RUN, binary metadata окремо, tracked code unchanged. Не перечитувати194 AUTO scripts лише заради100%; повертатися до них за ризиком/завданням. Exhaustive inventory/static index збережений у FILE_COVERAGE; поточний baseline у RUNTIME_BASELINE/CURRENT_STATE.
+
+## CI_RESTORE — новий репозиторій, 2026-11-21
+
+Missing workflow усунуто в ci/restore-build; локально32 Python/2476 regression і Windows package verification PASS. Remote Actions/merge ще визначаються за CI PR, не вважати локальний PASS remote acceptance. Деталі й exact Windows build commands — [CI_RESTORATION](CI_RESTORATION.md). Після успішної integration повторно перевірити PR #1 без зміни його head; Windows GUI/two-peer, updater/save/shutdown/p99 залишаються окремим QA/backlog.

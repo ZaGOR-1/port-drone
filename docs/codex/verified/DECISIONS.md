@@ -98,3 +98,7 @@ Critical81/regression2476/mechanics309/Python17/Windowsbuild-smoke та Main E2E
 ## 2026-11-20 — Phase7: development integration before manual QA
 
 ZaGOR-1 прямо дозволив logical commits, push Codex branch, один cumulative PR1–10 + Phase5–5C та merge commit лише у beta. Manual GUI/full MP переносяться після integration і залишаються NOT RUN. Main/stable/tags/releases/manual workflows/Gemini/OKREDU не змінювати; required reviews/protection не обходити. Beta-only commits0, усі10heads ancestors96053d66, попередні fixes hash-identical. Backup86files реально відновлений; новий Phase7 backup також. Updater off, OPEN risks не приховані. [Mapping/authorization/evidence](PHASE7_BETA_INTEGRATION.md).
+
+## CI_RESTORE — 2026-11-21, нова Git-історія
+
+За окремою командою власника відновлюється CI у ci/restore-build від actual beta: PR→beta і push main/beta запускають tests/build, без Releases/tags/updater. Existing publication policy tests збережено; reserved release guard неактивний (build output=false), publish commands відсутні. Godot4.7.2 verified hashes, artifact provenance та нові negative artifact tests — [CI_RESTORATION](CI_RESTORATION.md). Commit/push/CI PR та merge beta дозволені лише за успішних Actions і виконаних required review/protection. PR #1 не змінювати; після integration лише повторна перевірка його умов.
