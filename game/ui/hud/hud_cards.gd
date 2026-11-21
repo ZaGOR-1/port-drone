@@ -287,7 +287,7 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 						acts.append(_act(Loc.t("МОНО"), "", "nuke_warhead_0", f.nuke_warhead != 0, 1 if f.nuke_warhead == 0 else 0))
 						acts.append(_act(Loc.t("РГЧ +%d Ti") % Nuclear.MIRV_TI_EXTRA, "", "nuke_warhead_1", f.nuke_warhead != 1 and can_mirv, 1 if f.nuke_warhead == 1 else 0))
 						acts.append(_act(Loc.t("ЭМИ-БЧ"), "", "nuke_warhead_2", f.nuke_warhead != 2, 1 if f.nuke_warhead == 2 else 0))
-				detail = Loc.t("Ядерная шахта МБР (сетки/бетон поддерживаются). 1) Сборка МБР (%s, 25 000 + 5 плутония) — мир видит старт. 2) Боеготовность (%s, без электричества на паузе!). БЧ: Моно / РГЧ+ложные (+%d титана против ПРО) / ЭМИ (блек-аут ПВО и сетей на 90 с).") % [Nuclear.fmt_t(Nuclear.SILO_BUILD_T), Nuclear.fmt_t(Nuclear.SILO_ARM_T), Nuclear.MIRV_TI_EXTRA]
+				detail = Loc.t("Ядерная шахта МБР (сетки/бетон поддерживаются). 1) Сборка МБР (%s, 25 000 + 5 плутония) — мир видит старт. 2) Боеготовность (%s, без электричества на паузе!). БЧ: Моно / РГЧ+ложные (+%d титана против ПРО) / ЭМИ (блек-аут ПВО и сетей на 75 с).") % [Nuclear.fmt_t(Nuclear.SILO_BUILD_T), Nuclear.fmt_t(Nuclear.SILO_ARM_T), Nuclear.MIRV_TI_EXTRA]
 			Facility.Kind.SOLAR:
 				info = Loc.t("РЕЗЕРВ ДЛЯ: %s") % (Loc.t(Military.title_of(f.parent.kind)).to_upper() if f.parent != null else "-")
 			Facility.Kind.AIRFIELD:

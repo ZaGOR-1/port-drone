@@ -94,7 +94,7 @@ func open_kind_mass(mode: String) -> void:
 		if cat == "protect":
 			var pn: Dictionary = gw.econ.protect_plan(p, "net")
 			var pc: Dictionary = gw.econ.protect_plan(p, "conc")
-			if int(pn["owned"]) <= 0:
+			if int(pn["owned"]) <= 0 or (_upg_only_aff and int(pn["afford"]) <= 0 and int(pc["afford"]) <= 0):
 				continue
 			any_shown = true
 			vb.add_child(UiKit.lbl("%s ×%d" % [cat_title, int(pn["owned"])], 12, UiKit.TEXT, 2))
@@ -112,7 +112,7 @@ func open_kind_mass(mode: String) -> void:
 		var ckinds: Array = Economy.UPG_CATS.get(cat, [])
 		var cp2: Dictionary = gw.econ.upgrade_plan(p, ckinds, 2)
 		var cp3: Dictionary = gw.econ.upgrade_plan(p, ckinds, 3)
-		if int(cp2["owned"]) <= 0:
+		if int(cp2["owned"]) <= 0 or (_upg_only_aff and int(cp2["afford"]) <= 0 and int(cp3["afford"]) <= 0):
 			continue
 		any_shown = true
 		vb.add_child(UiKit.lbl("%s ×%d" % [cat_title, int(cp2["owned"])], 12, UiKit.TEXT, 2))
@@ -124,11 +124,7 @@ func open_kind_mass(mode: String) -> void:
 		vb.add_child(crow)
 		crow.add_child(_hold_5s_btn(_upg_btn_text(cp2, 2), "cat_upg:%s:2" % cat, int(cp2["afford"]) > 0, "gold"))
 		crow.add_child(_hold_5s_btn(_upg_btn_text(cp3, 3), "cat_upg:%s:3:%d" % [cat, _upg_t3_spec], int(cp3["afford"]) > 0, "gold"))
-		if _upg_only_aff and int(cp2["afford"]) <= 0 and int(cp3["afford"]) <= 0:
-			var wrap_c: Node = crow.get_parent().get_parent() if crow.get_parent() != null and crow.get_parent().get_parent() is PanelContainer else crow.get_parent()
-			if wrap_c is Control:
-				(wrap_c as Control).visible = false
-		elif crow.get_parent() is VBoxContainer:
+		if crow.get_parent() is VBoxContainer:
 			var pv_c: String = _upg_targets_preview(p, ckinds, 3)
 			if pv_c != "":
 				var pvl_c: Label = UiKit.lbl(pv_c, 9, UiKit.MUTED, 1)
@@ -152,7 +148,7 @@ func open_kind_mass(mode: String) -> void:
 		var tname: String = Loc.t(String(sp[2]))
 		var tp2: Dictionary = gw.econ.upgrade_plan(p, [k3], 2, ore)
 		var tp3: Dictionary = gw.econ.upgrade_plan(p, [k3], 3, ore)
-		if int(tp2["owned"]) <= 0:
+		if int(tp2["owned"]) <= 0 or (_upg_only_aff and int(tp2["afford"]) <= 0 and int(tp3["afford"]) <= 0):
 			continue
 		any_shown = true
 		vb.add_child(UiKit.lbl("%s ×%d" % [tname, int(tp2["owned"])], 12, UiKit.TEXT, 2))
@@ -165,11 +161,7 @@ func open_kind_mass(mode: String) -> void:
 		var suf: String = (":" + ore) if ore != "" else ""
 		row.add_child(_hold_5s_btn(_upg_btn_text(tp2, 2), "kind_upg:%d:2%s" % [k3, suf], int(tp2["afford"]) > 0, "gold"))
 		row.add_child(_hold_5s_btn(_upg_btn_text(tp3, 3), "kind_upg:%d:3:%s:%d" % [k3, ore, _upg_t3_spec], int(tp3["afford"]) > 0, "gold"))
-		if _upg_only_aff and int(tp2["afford"]) <= 0 and int(tp3["afford"]) <= 0:
-			var wrap_k: Node = row.get_parent().get_parent() if row.get_parent() != null and row.get_parent().get_parent() is PanelContainer else row.get_parent()
-			if wrap_k is Control:
-				(wrap_k as Control).visible = false
-		elif row.get_parent() is VBoxContainer:
+		if row.get_parent() is VBoxContainer:
 			var pv_k: String = _upg_targets_preview(p, [k3], 3, ore)
 			if pv_k != "":
 				var pvl_k: Label = UiKit.lbl(pv_k, 9, UiKit.MUTED, 1)

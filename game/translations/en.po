@@ -34910,8 +34910,8 @@ msgid "Базовая боеголовка МБР без доплаты тита
 msgstr "Standard ICBM warhead with no titanium surcharge"
 
 #. patch v0.36
-msgid "Боеголовки МБР и физическая логистика топлива — выбор Моно / РГЧ с ложными целями (+6 титана против «Заслона») / Высотный ЭМИ (блек-аут на 90 с); НПЗ копят топливо в буфер и отправляют бензовозы к столице/порту"
-msgstr "ICBM warheads & physical fuel logistics — choose Mono / MIRV decoys (+6 titanium vs Zaslon) / High-Altitude EMP (90 s blackout); refineries buffer fuel and dispatch tanker trucks to capital/port"
+msgid "Боеголовки МБР и физическая логистика топлива — выбор Моно / РГЧ с ложными целями (+6 титана против «Заслона») / Высотный ЭМИ (блек-аут на 75 с); НПЗ копят топливо в буфер и отправляют бензовозы к столице/порту"
+msgstr "ICBM warheads & physical fuel logistics — choose Mono / MIRV decoys (+6 titanium vs Zaslon) / High-Altitude EMP (75 s blackout); refineries buffer fuel and dispatch tanker trucks to capital/port"
 
 #. patch v0.36
 msgid "Бункер (×1.85, бетон Т1, 50%% без сети)"
@@ -34970,8 +34970,8 @@ msgid "Высотный ЭМИ: %s"
 msgstr "High-Altitude EMP: %s"
 
 #. patch v0.36
-msgid "Высотный подрыв без кратера: отключает ПВО, РЛС, РЭБ и электросети в большом радиусе на 90 с"
-msgstr "High-altitude detonation with no crater: disables AD, radar, EW and power grids over a wide radius for 90 s"
+msgid "Высотный подрыв без кратера: отключает ПВО, РЛС, РЭБ и электросети в большом радиусе на 75 с"
+msgstr "High-altitude detonation with no crater: disables AD, radar, EW and power grids over a wide radius for 75 s"
 
 #. patch v0.36
 msgid "ГЛУШЕНИЕ\n%d"
@@ -35194,8 +35194,8 @@ msgid "Специализация Т3: ×2.6 выпуск, +1 ед. электр
 msgstr "T3 Spec: ×2.6 output, +1 power draw and +25% crit vulnerability"
 
 #. patch v0.36
-msgid "Стоит +6 титана: выпускает 3 ложные цели на подлёте, чтобы прорвать ПРО «Заслон»"
-msgstr "Costs +6 titanium: deploys decoys mid-flight to saturate ABM Zaslon"
+msgid "Стоит +6 титана: выпускает 2 ложные цели на подлёте, чтобы прорвать ПРО «Заслон»"
+msgstr "Costs +6 titanium: deploys 2 decoys mid-flight to saturate ABM Zaslon"
 
 #. patch v0.36
 msgid "Столица %s"
@@ -35330,8 +35330,8 @@ msgid "Эк"
 msgstr "Ec"
 
 #. patch v0.36
-msgid "Ядерная шахта МБР (сетки/бетон поддерживаются). 1) Сборка МБР (%s, 25 000 + 5 плутония) — мир видит старт. 2) Боеготовность (%s, без электричества на паузе!). БЧ: Моно / РГЧ+ложные (+%d титана против ПРО) / ЭМИ (блек-аут ПВО и сетей на 90 с)."
-msgstr "Nuclear ICBM Silo (nets/concrete supported). 1) Assemble ICBM (%s, 25,000 + 5 plutonium) — visible globally. 2) Arming (%s, paused without power!). Warheads: Mono / MIRV+decoys (+%d titanium vs ABM) / EMP (90 s grid & AD blackout)."
+msgid "Ядерная шахта МБР (сетки/бетон поддерживаются). 1) Сборка МБР (%s, 25 000 + 5 плутония) — мир видит старт. 2) Боеготовность (%s, без электричества на паузе!). БЧ: Моно / РГЧ+ложные (+%d титана против ПРО) / ЭМИ (блек-аут ПВО и сетей на 75 с)."
+msgstr "Nuclear ICBM Silo (nets/concrete supported). 1) Assemble ICBM (%s, 25,000 + 5 plutonium) — visible globally. 2) Arming (%s, paused without power!). Warheads: Mono / MIRV+decoys (+%d titanium vs ABM) / EMP (75 s grid & AD blackout)."
 
 #. patch v0.36
 msgid "Ядерное оружие отключено"

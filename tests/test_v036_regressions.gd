@@ -27,6 +27,8 @@ func _run() -> void:
 		"hold": _hold()
 		"power": _power()
 		"hash": _hash_state()
+		"upgrades": _upgrades()
+		"tooltips": _tooltips()
 		_: check(false, "Unknown case: " + name)
 	var result: Dictionary = {"passed": failures.is_empty(), "checks": checks, "failures": failures}
 	FileAccess.open(out, FileAccess.WRITE).store_string(JSON.stringify(result))
@@ -300,3 +302,84 @@ func _hash_state() -> void:
 	sh.path = PackedVector2Array([Vector2.ONE])
 	check(NetHash.of(gw) != before, "hash detects navy route before positions diverge")
 	gw.free()
+
+class SheetHud:
+	extends "res://ui/hud/hud_keys.gd"
+	var inner: VBoxContainer
+	func _window(_title: String, _kind: String = "") -> VBoxContainer:
+		# Same inner-VBox-in-ScrollContainer topology as Hud._window.
+		if inner != null:
+			inner.get_parent().free()
+		var scroll := ScrollContainer.new()
+		add_child(scroll)
+		inner = VBoxContainer.new()
+		scroll.add_child(inner)
+		return inner
+
+func _labels(node: Node) -> PackedStringArray:
+	var out := PackedStringArray()
+	if node is Label and (node as Label).is_visible_in_tree():
+		out.append((node as Label).text)
+	for child: Node in node.get_children():
+		out.append_array(_labels(child))
+	return out
+
+func _upgrades() -> void:
+	var gw := _make_world()
+	gw.player = gw.countries[0]
+	var c: Country = gw.player
+	c.money = 100000
+	c.wood = 100
+	c.metal = 0
+	var farm := Facility.new()
+	farm.id = 1
+	farm.country_id = c.id
+	farm.kind = Facility.Kind.FARM
+	var mine := Facility.new()
+	mine.id = 2
+	mine.country_id = c.id
+	mine.kind = Facility.Kind.MINE
+	mine.deposit = {"res": "metal"}
+	gw.mil.facilities.assign([farm, mine])
+	var hud := SheetHud.new()
+	hud.gw = gw
+	root.add_child(hud)
+	hud.set_process(false)
+	hud._upg_only_aff = true
+	hud.open_kind_mass("upgrade")
+	var labels: String = "\n".join(_labels(hud.inner))
+	check(hud.inner.is_visible_in_tree(), "unaffordable category never hides entire list")
+	check(labels.contains(Loc.t(Military.title_of(Facility.Kind.FARM))), "affordable farm row remains visible")
+	check(not labels.contains(Loc.t("Металлический рудник")), "unaffordable mine row filtered")
+	var plan: Dictionary = gw.econ.upgrade_plan(c, [farm.kind], 2)
+	check(plan["afford"] == 1 and plan["ready"] == 1, "eligible affordable upgrade planned")
+	var money: int = c.money
+	var applied: Array = gw.econ.upgrade_kinds(c, [farm.kind], 2)
+	check(applied[0] == plan["afford"] and money - c.money == plan["cost_afford"]["money"], "application matches preview and charges exact cost")
+	farm.level = Economy.MAX_LEVEL
+	var blocked: Dictionary = gw.econ.upgrade_plan(c, [farm.kind], 3)
+	check(blocked["ready"] == 0 and blocked["afford"] == 0, "purchased max level cannot be purchased again")
+	mine.upg_t = 10.0
+	blocked = gw.econ.upgrade_plan(c, [mine.kind], 2)
+	check(blocked["busy"] == 1 and blocked["afford"] == 0, "in-progress upgrade unavailable")
+	c.money = 0
+	hud.open_kind_mass("upgrade")
+	labels = "\n".join(_labels(hud.inner))
+	check(labels.contains(Loc.t("Улучшаемых объектов нет")), "empty filter displays a visible empty-state hint")
+	hud._upg_only_aff = false
+	hud.open_kind_mass("upgrade")
+	labels = "\n".join(_labels(hud.inner))
+	check(labels.contains(Loc.t("Металлический рудник")), "all-types mode retains unavailable owned upgrades")
+	hud.free()
+	gw.free()
+
+func _tooltips() -> void:
+	var tips = load("res://ui/ui24/hold_tip.gd")
+	check(tips.line("nuke_warhead_1").contains(str(Nuclear.MIRV_DECOYS) + " "), "MIRV tooltip matches actual decoy count")
+	check(tips.line("nuke_warhead_2").contains(str(int(Nuclear.EMP_DUR)) + " "), "EMP tooltip matches actual duration")
+	for code: String in ["en", "uk", "es"]:
+		var translation: Translation = load("res://translations/" + code + ".po")
+		var emp: String = translation.get_message(tips.line("nuke_warhead_2"))
+		check(emp.contains(str(int(Nuclear.EMP_DUR))), code + " EMP translation matches duration")
+		var decoys: String = translation.get_message(tips.line("nuke_warhead_1"))
+		check(decoys.contains(str(Nuclear.MIRV_DECOYS)), code + " MIRV translation matches decoys")

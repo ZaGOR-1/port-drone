@@ -65,3 +65,9 @@ class V036RegressionTests(unittest.TestCase):
 
     def test_simulation_hash_coverage(self):
         self.run_case('hash')
+
+    def test_upgrade_filter_and_application(self):
+        self.run_case('upgrades')
+
+    def test_tooltip_rules(self):
+        self.run_case('tooltips')
