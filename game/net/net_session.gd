@@ -72,7 +72,7 @@ const ALLOWED: Dictionary = {
 	"navy.order": -1, "navy.cancel": -1,
 	".cmd_static": -1, ".cmd_strike": -1, ".cmd_refill_all": -1,
 	".cmd_nuke_build": -1, ".cmd_nuke_arm": -1, ".cmd_nuke_launch": -1, ".cmd_nuke_warhead": -1,
-	".cmd_npp_scram": -1, ".cmd_t3_spec": -1, ".cmd_power_prio": 0, ".cmd_fuel_dispatch": -1,
+	".cmd_npp_scram": -1, ".cmd_t3_spec": -1, ".cmd_power_prio": -1, ".cmd_fuel_dispatch": -1,
 	".cmd_zaslon_buy": -1, "defense.buy_zaslon_ammo": -1, "econ.protect_all": -1,
 	"hold.occupy": 2, "hold.leave": 1,  # v0.30.14 R314 (twink): soldiers into / out of a city building (game/urban_hold.gd)
 	"econ.trd.set_sanctions": 0, "econ.trd.contract_offer": 0, "econ.trd.contract_answer": 0, "econ.trd.contract_cancel": 0,  # R331 TRADE (game/trade331.gd; the function checks `me` is a party)
@@ -2074,6 +2074,8 @@ func _exec(cmd: Dictionary) -> void:
 				elif key == "diplo.answer_as" and ((args as Array).size() != 3 or not (args[0] is int) or not (args[1] is String) or not (args[2] is String)):
 					done = false
 				elif key == "mil.build" and not _valid_build_args(args):
+					done = false
+				elif key == ".cmd_power_prio" and ((args as Array).size() != 2 or not (args[0] is Country) or args[0] != issuer or not (args[1] is int) or args[1] < 0 or args[1] > 2):
 					done = false
 				elif key in ["mil.air.rebase", "mil.air.order_airdrop"] and not _valid_air_order_args(m, args):
 					done = false

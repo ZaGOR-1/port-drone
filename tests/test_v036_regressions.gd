@@ -25,6 +25,7 @@ func _run() -> void:
 		"autosave": _autosave()
 		"navy": _navy()
 		"hold": _hold()
+		"power": _power()
 		_: check(false, "Unknown case: " + name)
 	var result: Dictionary = {"passed": failures.is_empty(), "checks": checks, "failures": failures}
 	FileAccess.open(out, FileAccess.WRITE).store_string(JSON.stringify(result))
@@ -211,3 +212,45 @@ func _hold() -> void:
 		check(not Save._sound(body), "malformed hold cooldown rejected before mutation: " + str(bad))
 	gw.free()
 
+func _power_cmd(n: NetSession, slot: int, args: Variant) -> void:
+	n._exec({"k": "call", "s": slot, "q": 0, "o": "", "m": "cmd_power_prio", "a": args})
+
+func _power() -> void:
+	var gw := _make_world()
+	for c: Country in gw.countries:
+		c.is_player = true
+	gw.player = gw.countries[0]
+	var n := NetSession.new()
+	n.gw = gw
+	var owner: Country = gw.countries[0]
+	var other: Country = gw.countries[1]
+	_power_cmd(n, 0, NetCodec.encode([owner, 1]))
+	check(owner.power_prio == 1, "owner command executes")
+	_power_cmd(n, 1, NetCodec.encode([owner, 2]))
+	check(owner.power_prio == 1, "foreign peer cannot modify owner")
+	_power_cmd(n, 0, NetCodec.encode([other, 2]))
+	check(other.power_prio == 0, "owner cannot modify foreign country")
+	for args: Variant in [[], [owner], [owner, 1, 2], [1, 1], [null, 1], [owner, -1], [owner, 3], [owner, true], [owner, 1.0], [owner, "1"], [owner, Vector2.ZERO]]:
+		_power_cmd(n, 0, NetCodec.encode(args))
+		check(owner.power_prio == 1 and other.power_prio == 0, "malformed power arguments rejected: " + str(args))
+	for invalid: Variant in [-1, 999, "1", null, owner]:
+		_power_cmd(n, 0, [{"$e": "C", "i": invalid}, 2])
+		check(owner.power_prio == 1, "invalid country reference rejected: " + str(invalid))
+	_power_cmd(n, 0, [{"$e": "C"}, 2])
+	_power_cmd(n, 0, {"unexpected": 1})
+	check(owner.power_prio == 1, "missing reference ID and non-array command rejected")
+	_power_cmd(n, 1, NetCodec.encode([other, 2]))
+	check(other.power_prio == 2, "second owner command executes")
+	var peer := _make_world()
+	peer.countries[0].is_player = true
+	Save.fill(peer.countries[0], Save._ent_fields(owner))
+	var pn := NetSession.new()
+	pn.gw = peer
+	var command: Variant = NetCodec.encode([owner, 2])
+	_power_cmd(n, 0, command)
+	_power_cmd(pn, 0, command)
+	check(owner.power_prio == peer.countries[0].power_prio and owner.power_prio == 2, "command replays using restored country identity")
+	n.free()
+	pn.free()
+	gw.free()
+	peer.free()

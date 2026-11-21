@@ -60,3 +60,5 @@ class V036RegressionTests(unittest.TestCase):
     def test_urban_hold_restore(self):
         self.run_case('hold')
 
+    def test_power_priority_authorization(self):
+        self.run_case('power')
