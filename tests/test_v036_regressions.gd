@@ -159,6 +159,11 @@ func _navy() -> void:
 	host.game_time += 1.0
 	peer.game_time = host.game_time
 	check(host.navy.sea_path(a, b, 1) == peer.navy.sea_path(a, b, 1), "navy replay routes agree")
+	snapshot = bytes_to_var(var_to_bytes(Save.enc(host.navy.save_state())))
+	for round_i in 3:
+		Save._load_systems(peer, {"navy": snapshot})
+		check(host.navy.sea_path(a, b, 1) == peer.navy.sea_path(a, b, 1), "repeated restore resets threat-weight scratch generation %d" % round_i)
+
 	host.free()
 	peer.free()
 
@@ -241,6 +246,10 @@ func _power() -> void:
 		check(owner.power_prio == 1, "invalid country reference rejected: " + str(invalid))
 	_power_cmd(n, 0, [{"$e": "C"}, 2])
 	_power_cmd(n, 0, {"unexpected": 1})
+	for malformed: Variant in [[{"$a": 1}, 2], [{"$d": []}, 2], {"$a": 1}, [{"$e": [], "i": 1}, 2]]:
+		_power_cmd(n, 0, malformed)
+	check(owner.power_prio == 1, "malformed wire containers rejected without decoding errors")
+
 	check(owner.power_prio == 1, "missing reference ID and non-array command rejected")
 	_power_cmd(n, 1, NetCodec.encode([other, 2]))
 	check(other.power_prio == 2, "second owner command executes")

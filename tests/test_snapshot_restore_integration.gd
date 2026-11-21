@@ -87,6 +87,18 @@ func _run() -> void:
 	else:
 		m.world.player = m.world.countries[0]
 		m.world.player.is_player = true
+		m.world.player.power_prio = 1
+		m.world.player.nuke_pledge_until = 77.0
+		m.world.hold._far_fail = {"1:2": 120.0}
+		var f := Facility.new()
+		f.id = 9000
+		f.country_id = m.world.player.id
+		f.nuke_warhead = 2
+		f.nuke_tt = 120.0
+		f.emp_until = 75.0
+		f.ref_fuel = 10
+		f.t3_spec = 1
+		m.world.mil.facilities.append(f)
 		valid = Save.net_snapshot(m)
 	var wrapper: Array = bytes_to_var(valid)
 	var original: Dictionary = bytes_to_var(wrapper[1].decompress(wrapper[0],FileAccess.COMPRESSION_ZSTD))
@@ -117,6 +129,11 @@ func _run() -> void:
 	frozen(m)
 	check(ok and m.net.exec_turn == 100 and m.net.exec_tick == 0 and m.world.net_tick == 300,"valid: actual loader commits correct clocks")
 	check(m.net.go and not m.net.rejoining and m.successes == 1,"valid: actual Main notified exactly once")
+	if not args.has("checkpoint"):
+		check(m.world.player.power_prio == 1 and m.world.player.nuke_pledge_until == 77.0, "v036: country simulation fields restored")
+		check(m.world.hold._far_fail == {"1:2": 120.0}, "v036: dispatch cooldown restored through actual Main")
+		var restored: Facility = m.world.mil.facilities[-1]
+		check(restored.nuke_warhead == 2 and restored.nuke_tt == 120.0 and restored.emp_until == 75.0 and restored.ref_fuel == 10 and restored.t3_spec == 1, "v036: facility simulation fields restored")
 	var hash1: String = NetHash.of(m.world)
 	var rng1: int = m.world.rng.state
 	check(m.net._pending.size() == 1 and m.net.turns.has(100),"valid: commands and next turn retained")
@@ -167,6 +184,19 @@ func _run() -> void:
 	check(seen == [true,false] and m.net.exec_tick == 1 and m.world.net_tick == 301,"next turn: commands execute once in canonical order at tick zero")
 	m.net._run(NetConfig.SIM_DT,0.0)
 	check(seen == [true,false] and m.net.exec_tick == 2,"next turn: commands are not repeated on subsequent tick")
+	if not args.has("checkpoint"):
+		var legacy: Dictionary = original.duplicate(true)
+		legacy["sys"]["hold"].erase("far_fail")
+		for e: Array in legacy["ents"]:
+			if e[0] == "Country":
+				e[1].erase("power_prio")
+				e[1].erase("nuke_pledge_until")
+			if e[0] == "Facility":
+				for key: String in ["nuke_tt", "nuke_warhead", "emp_until", "ref_fuel", "t3_spec"]:
+					e[1].erase(key)
+		check(await Save.net_restore(m, pack(legacy)), "v036: legacy FORMAT1 loads without optional fields")
+		frozen(m)
+		check(m.world.hold._far_fail.is_empty() and m.world.player.power_prio == 0 and m.world.player.nuke_pledge_until == -1.0, "v036: legacy restore uses defaults, not stale runtime state")
 	# Failed resync must close normally; late snapshots must not reopen that session.
 	m.net.rejoining = false
 	ok = await m.net._restore_from(bad["invalid"],150)

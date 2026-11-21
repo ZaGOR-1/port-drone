@@ -2050,6 +2050,14 @@ static func _valid_air_order_args(method: String, args: Array) -> bool:
 	return args[1] is Vector2 and (args[1] as Vector2).is_finite()
 
 
+static func _valid_power_wire(args: Variant) -> bool:
+	# Inspect this command's wire shape before the general codec can cast containers.
+	if not (args is Array) or args.size() != 2 or not (args[0] is Dictionary):
+		return false
+	var country: Dictionary = args[0]
+	return country.get("$e") is String and country["$e"] == "C" and country.get("i") is int and args[1] is int and args[1] >= 0 and args[1] <= 2
+
+
 func _exec(cmd: Dictionary) -> void:
 	var slot: int = int(cmd.get("s", -1))
 	var issuer: Country = gw.country_by_id(slot + 1) if slot >= 0 else null
@@ -2063,7 +2071,7 @@ func _exec(cmd: Dictionary) -> void:
 			var m: String = String(cmd.get("m", ""))
 			var key: String = "%s.%s" % [path, m]
 			var obj: Object = _target(path)
-			if issuer == null or not issuer.is_player or obj == null or not ALLOWED.has(key) or not obj.has_method(m):
+			if issuer == null or not issuer.is_player or obj == null or not ALLOWED.has(key) or not obj.has_method(m) or (key == ".cmd_power_prio" and not _valid_power_wire(cmd.get("a"))):
 				done = false
 			else:
 				var args: Variant = NetCodec.decode(gw, cmd.get("a", []))

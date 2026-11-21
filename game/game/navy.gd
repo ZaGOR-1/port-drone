@@ -3223,6 +3223,8 @@ func load_state(d: Dictionary) -> void:
 		_id = maxi(_id, s2.id + 1)
 	_pcache.clear()
 	_tw_seq = 0
+	_tw_mark.fill(0)
+	_tw_cnt.fill(0)
 	_tw_cells.clear()
 	_berth.clear()
 	_alive_b.clear()
