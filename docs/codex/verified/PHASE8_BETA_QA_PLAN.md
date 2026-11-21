@@ -1,3 +1,5 @@
+> **HISTORICAL operational paths/build identity.** Старі0.34/SIM_REV/commands/PASS нижче не поточні. Для v0.36.0/7/v036-integration-1 застосовувати [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md); updater off, один exact CI package, GUI/two-peer NOT RUN.
+
 # Phase 8 — QA інтегрованої beta
 
 Це план, не звіт про виконання. Windows GUI18cases/full two-peer/Steam/LAN **NOT RUN**. Exact merged beta SHA буде записаний після Phase7 у local `dist/phase7_20261120-224516/PHASE8_BETA_QA_PLAN.md` та final report. Для нового запуску не довіряти рухомому branch name: `git fetch origin`, `git rev-parse origin/beta`, звірити записаний повний SHA і створити окремий clean QA worktree без переключення Gemini/migration.

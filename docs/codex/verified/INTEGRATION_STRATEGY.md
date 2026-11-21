@@ -1,3 +1,5 @@
+> **HISTORICAL strategy below.** У новій історії PR #2/#4 уже інтегровані; PR #3 marked MERGED через ancestry. Не відновлювати cumulative PR1–11 старого repo. main stable, нові feature/fix/docs від actual beta; merge/push/cleanup лише за окремою командою. [Current policy](../../../AGENTS.md).
+
 # Phase 7 — поточне рішення власника
 
 Спочатку один cumulative merge PR1–10 + Phase5–5C у beta, після нього manual Windows/MP QA. Дозвіл на commits/push/PR/merge beta надано прямо; main/release/tags/manual workflows не дозволені. Required reviews/checks не обходити. [Mapping і план](PHASE7_BETA_INTEGRATION.md), [Phase8](PHASE8_BETA_QA_PLAN.md). Попередні pre-merge GUI gates нижче історичні й superseded для development integration, а не оголошені пройденими. Updater off; дефекти лишаються backlog.

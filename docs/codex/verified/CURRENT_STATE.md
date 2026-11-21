@@ -1,3 +1,64 @@
+# DroneFlames — поточний технічний стан
+
+Оновлено 2026-11-21 після integration PR #4. **READY TO START WINDOWS TWO-PEER QA**; це готовність до тестування, не сертифікація gameplay/multiplayer. Цей документаційний етап не повторює повного аудиту й не запускає GUI/Steam/LAN.
+
+## Repository identity
+
+| Поле | Перевірений checkpoint |
+|---|---|
+| Repository | https://github.com/ZaGOR-1/port-drone.git |
+| Primary root | /home/zagor/projects/port-drone; не припускати шлях іншої сесії |
+| main | `172df65e3bd004efed9a5444e90a284d9d69db10`, не змінюється цією задачею |
+| v0.36 code integration у beta | `0f26040994043827a7c14913d945a3df02e00fdd`, merge PR #4 |
+| Reviewed integration head | `0c92d4c216a281a70fa21869408190b83b42aded` |
+| Beta CI | [push run 44937756401](https://github.com/ZaGOR-1/port-drone/actions/runs/44937756401) — PASS для цього exact commit |
+| Docs PR #1 | `docs/codex-reonboarding` → beta, синхронізовано звичайним merge з v0.36; кінцевий стан і SHA брати з Git/GitHub |
+
+`0f26040994043827a7c14913d945a3df02e00fdd` — зафіксований code/QA checkpoint, **не обіцянка вічного HEAD beta**. Документаційний merge змінить beta SHA без зміни code tree. Кожна сесія: git fetch/status/ls-remote; перевірити actual HEAD і PR. main — прийнята stable база; beta — активна розробка й QA; feature/fix/docs створюються від актуальної beta. Старі SHA/Phase5–7 дозволи не відновлювати.
+
+## Поточні контракти й виправлення
+
+- Godot **4.7.2.stable.official.ed1daf0bf**, editor/template pin та digest у `tools/ci/godot-4.7.2.json`. CI перевіряє actual version/hashes. Локальний cache не tracked: його наявність перевіряти, не припускати й не встановлювати іншу версію.
+- UI `v0.36.0`, `pc/version.cfg=0.36.0`, PROTO **7**, SIM_REV **v036-integration-1**, Save.FORMAT **1**. `build.py --print-version` перевіряє згоду source UI/updater; --version є assertion, не довільною підміною. SIM_REV не content fingerprint; QA exact EXE/DLL SHA256.
+- CI відновлено [PR #2](https://github.com/ZaGOR-1/port-drone/pull/2), merge `145f23418a9a07420a15d6c350ac62c7633e2765`. Workflow PR→beta, push beta/main: tests/build only; release job неактивний, updater repo empty. PR template відсутній.
+- [PR #4](https://github.com/ZaGOR-1/port-drone/pull/4) інтегрував 8 author commits OKREDU/CAFAIML +10 commits fixes/docs, без squash/rebase. PR #3 GitHub автоматично позначив MERGED через включення його head, окремої команди merge/close #3 не було; branch cleanup не переписує ancestry.
+- П’ять HIGH **FIXED**: compatibility identity; повний autosave graph freeze; Navy current-threat routing та repeated-restore scratch reset; UrbanHold far_fail persistence/default/clear/preflight; power priority wire/schema/ownership. Деталі й tests — [V036_FIX_RESULTS](V036_FIX_RESULTS.md).
+- Hash охоплює нові nuclear/EMP/T3/power/convoy/hold/route поля, canonical dictionaries; upgrades filter не ховає VBox; tooltip EMP75s/MIRV2decoys. Це не доказ exhaustive hashing або повного semantic review.
+- Project: binary `game/project.binary` + override.cfg; PcPort/SteamNet → pc/boot → updater bypass → remapped binary main scene → Main/World/Net/Menus. `game/.godot/` потрібний; `game/project.godot` не створювати. Editor/import — лише disposable copy.
+- Save optional land/UrbanHold cooldown: old→new missing defaults перевірені, **new→old downgrade unsupported**. LAN/Steam transport існує; online-only automatic handover не обіцяється LAN/Steam. Chronicle — адаптивні SP keyframes/events, не command replay.
+
+## Фактичні перевірки та межі
+
+| Перевірка | Доказ / статус |
+|---|---|
+| v0.36 final local suite | PASS43; new behavioral fixture108 assertions; це попередня implementation session |
+| CI beta `0f26040` | PASS43 з Godot /179.738s, simulation2476 PASS, Windows x64 build + artifact integrity + packaged identity PASS; release SKIPPED |
+| CI job без Godot | 36 tests,9 engine-dependent skips; не видавати skips за engine PASS |
+| Actual Main restore/legacy/defaults/replay continuation | PASS у targeted fixtures, hash/RNG з різним render schedule |
+| ENet compatibility | PASS двох loopback processes з контрольними cohort identities; не full cross-version match |
+| Native Windows headless | PASS попереднього PR #4 CI package: exit0/48.792s,3 DLL loaded; не GUI/Steam |
+| Windows GUI / real two-PC LAN/Steam / GPU | **NOT RUN** |
+
+PR #1 CI і post-merge CI його нового HEAD — окремі runs; їх перевіряти на GitHub, не успадковувати PASS run вище за самою назвою гілки. [План одного точного Windows комплекту](WINDOWS_TWO_PEER_QA_PLAN.md).
+
+## Відкриті ризики й покриття
+
+1. CPU: current early-world fixed mean0.264–0.313ms/p99=2.084–2.396ms проти beta до v0.36 mean0.197–0.241/p99=1.614–1.810. Workload0units,19–20facilities/SP async variability; загального gain не підтверджено, це не FPS/GPU claim. Потрібний late-war profile.
+2. Inherited clean shutdown **FAIL/OPEN**:10 CanvasItem RID,224 ObjectDB,44 resources-at-exit. Exit0 не закриває leaks.
+3. Windows GUI/Shift/scale/render batching, same-build real LAN/Steam, disconnect/rejoin/resync та довга робота — NOT RUN; це наступний QA.
+4. Updater integrity/atomicity, OS-level save durability/deep corruption та general command schemas/rate budgets поза power guard — OPEN. QA updater off, synthetic/copied saves.
+5. Початковий onboarding при172df65 мав FULL33/PARTIAL16/INDEXED235 GDScript,11886/182509 рядків (6.51%). Ці цифри **історичні**; v0.36 зміни не успадковують старий FULL. [SOURCE_COVERAGE](SOURCE_COVERAGE.md) має dated ledger та freshness overlay; full semantic audit усіх scripts не заявляється.
+
+[Архітектура](ARCHITECTURE_AND_FLOWS.md), [початковий audit і актуалізація](REONBOARDING_AUDIT.md), [backlog](BACKLOG.md), [NEXT_SESSION](NEXT_SESSION.md). Документація й agent rules не надають постійного дозволу на наступні commit/push/merge/main/releases.
+
+---
+
+## HISTORICAL — попередня Git-історія, текст збережено
+
+
+
+Усе нижче описує колишні checkpoints/worktrees/SHA/результати. Це не активний workflow і не дозвіл на Git або release дії. Current facts — вище.
+
 # Поточний checkpoint — Phase 7, integration authorization
 
 2026-11-20. Власник змінив порядок: **спершу інтеграція cumulative PR1–10 + Phase5–5C у development beta, потім Windows GUI/full multiplayer QA**. Дозволено local commits, push Codex branch, один PR і merge виключно в beta без bypass protections. Main/release/tags/manual dispatch/Gemini лишаються недоторканними.

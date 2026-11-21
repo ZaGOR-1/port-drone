@@ -1,3 +1,25 @@
+# Поточний checkpoint рішень — 2026-11-21
+
+PR #2 відновив CI; PR #4 злитий звичайним merge у beta `0f26040994043827a7c14913d945a3df02e00fdd`,8 author +10 fix commits збережено. Beta CI [run 44937756401](https://github.com/ZaGOR-1/port-drone/actions/runs/44937756401) PASS. PR #3 автоматично marked MERGED GitHub через ancestry; його окремо не закривали. П’ять HIGH виправлені; manual GUI/LAN/Steam NOT RUN, performance/shutdown/save/updater/general-schema ризики лишаються.
+
+Власник окремо дозволив завершення PR #1: merge actual beta у docs/codex-reonboarding без rewrite, документаційні commits/push, PR CI, normal merge→beta за успішних checks/reviews, потім видалення лише інтегрованих неактивних remote branches. Main/releases/tags/updater/production changes поза scope. Цей дозвіл не переноситься на наступні задачі. [Поточний контекст](CURRENT_STATE.md), [QA plan](WINDOWS_TWO_PEER_QA_PLAN.md).
+
+Нижче — **HISTORICAL dated decisions**. Формулювання «поточна задача», старі заборони/дозволи, PR/worktree/SHA і неінтегровані fixes стосуються лише відповідного етапу; не тлумачити їх як активні instructions.
+
+---
+
+# Decision update — 2026-11-21, нова Git-історія
+
+- Завершення документаційного етапу: окрема команда власника дозволила commit/push docs/codex-reonboarding і один PR у beta. Merge дозволений лише за успішних checks/review без bypass. GitHub inspection: workflows=0, beta unprotected, active branch rules=[]; через missing CI/FAIL policy tests залишити PR відкритим. Production/main/releases не входять у дозвіл; наступне завдання CI/build лише підготовлене документально.
+- За явною інструкцією ZaGOR-1 актуальний snapshot має нову історію; main/beta на момент перевірки172df65. Попередні PR/SHA/Phase5–7 збережені як історичні документи, не є поточними Git requirements.
+- Чинні branches: main accepted, beta development; feature/fix/docs від actual beta. На первинному етапі re-onboarding Git publication не дозволяли; виняток для завершення цього документаційного PR наведено вище. Старі Phase7 task-specific дозволи не діють, releases/dispatch не дозволені.
+- Re-onboarding — документація й safe checks; код/DLL/gameplay/PROTO7/FORMAT1/SIM_REV/version не змінюються. Actual version mismatch і відсутність CI зафіксовані без fixes.
+- Наступний Windows/two-peer stage лише підготовлений: exact build/SHA, updater off, isolated data. Повного source semantic coverage/runtime PASS не заявляємо; продовжувати за SOURCE_COVERAGE.
+
+Це фіксує рішення поточного завдання, не нову release policy. Нижче попередні рішення **HISTORICAL**, а не поточні task-specific authorizations.
+
+---
+
 # Нові рішення Phase 5 — 2026-11-20
 
 ## D006 — Independent Development Policy

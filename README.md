@@ -4,7 +4,7 @@
 
 **DroneFlames** — стратегія в реальному часі з керуванням державою, економікою, дипломатією та війною на генерованій мапі. Розбудовуйте міста й виробництво, забезпечуйте армію ресурсами, укладайте угоди та розширюйте свій вплив.
 
-Цей репозиторій розвиває власний PC-порт на **Godot 4.7.2**. Цільова платформа — **Windows 11 x64**, середовище розробки й перевіреної збірки — **Ubuntu у WSL2**.
+Цей репозиторій розвиває власний PC-порт на **Godot 4.7.2**. Цільова платформа — **Windows 11 x64**, середовище розробки — **Ubuntu у WSL2**; результати старих збірок є історичними.
 
 > Поточна beta призначена для розробки й тестування. Права на оригінальний код і графіку залишаються за їхніми авторами; умови використання наведено нижче.
 
@@ -21,17 +21,17 @@
 - **Сезони й оформлення:** сезонні зміни, погода, сніг, візуальні ефекти, прапори та емблеми альянсів.
 - **Збереження:** збереження, завантаження й продовження матчу; хроніка зі знімками подій, а не повноцінний повтор команд.
 
-**Мультиплеєр:** реалізовані LAN і Steam-транспорт. Перевірки допуску сумісних збірок та окремих мережевих сценаріїв пройдено автоматично, але повний матч двох незалежних учасників, reconnect/resync і реальний Steam/LAN QA ще **NOT RUN**. Для тесту обидва учасники повинні використовувати один точний комплект EXE/DLL із однаковими SHA256. Steam використовує тестовий Spacewar AppID 480.
+**Мультиплеєр:** реалізовані LAN і Steam-транспорт. У v0.36 автоматичні compatibility/command/snapshot/hash-RNG fixtures проходять CI; loopback admission не замінює матч на двох ПК. Тим часом повний матч двох незалежних учасників, reconnect/resync і реальний Steam/LAN QA ще **NOT RUN**. Для тесту обидва учасники повинні використовувати один точний комплект EXE/DLL із однаковими SHA256. Steam використовує тестовий Spacewar AppID 480.
 
-Докази й межі перевірок: [ігрові системи](docs/codex/verified/GAMEPLAY_SYSTEMS.md), [результати Phase 5C](docs/codex/verified/PHASE5C_INTEGRATION_RESULTS.md).
+Поточні докази й межі перевірок: [re-onboarding audit](docs/codex/verified/REONBOARDING_AUDIT.md), [архітектура та механіки](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md). [Phase 5C](docs/codex/verified/PHASE5C_INTEGRATION_RESULTS.md) — історичний звіт.
 
 ## Поточний стан розробки
 
 - **`main`** — остання прийнята стабільна база; експериментальна розробка сюди не надходить.
-- **`beta`** — активна гілка розробки й тестування. Через [PR #11](https://github.com/ZaGOR-1/port-drone/pull/11) у неї інтегровано PR #1–#10 та виправлення Phase 5–5C.
+- **`beta`** — активна гілка розробки й тестування. Початковий snapshot перенесено у нову Git-історію. У ній PR #2 відновив CI, PR #4 інтегрував v0.36.0 та виправлення. Серія PR #1–#11 у старих Phase-звітах належить попередній історії, не поточній нумерації GitHub. Стан `main`/`beta` перевірено в [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md).
 - Beta **не є стабільним релізом**. Windows GUI та повний multiplayer QA ще належить виконати; частина функцій може містити помилки.
 
-Відкриті задачі охоплюють цілісність і атомарність оновлень, надійність збережень, загальну перевірку мережевих команд, витоки ресурсів при завершенні та затримки симуляції. Докладніше: [backlog](docs/codex/verified/BACKLOG.md) і [план Beta QA](docs/codex/verified/PHASE8_BETA_QA_PLAN.md).
+Відкриті задачі охоплюють цілісність і атомарність оновлень, надійність збережень, загальну перевірку мережевих команд, підтверджені inherited витоки при завершенні та CPU performance regression у ранніх вимірюваннях; потрібний профіль тривалого матчу. Докладніше: [backlog](docs/codex/verified/BACKLOG.md) і [план Beta QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 
 ## Запуск у Windows
 
@@ -47,7 +47,7 @@ Launcher вимикає updater, обходить ініціалізацію Ste
 
 **Не використовуйте автоматичне завантаження й заміну файлів updater у тестовій beta.** Залишайте `DF_NO_UPDATE=1` і порожній updater repository у збірці. Використовуйте копії збережень; завантаження нових saves старішими збірками не підтримується.
 
-Для ручного приймання доступні [18 Windows-сценаріїв](docs/codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) та [інструкція LAN/Steam QA](docs/codex/verified/PHASE8_BETA_QA_PLAN.md) із окремим [multiplayer launcher](tools/qa/Run-MultiplayerQA.ps1).
+Для ручного приймання доступні [18 Windows-сценаріїв](docs/codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) та [інструкція LAN/Steam QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) із окремим [multiplayer launcher](tools/qa/Run-MultiplayerQA.ps1).
 
 ## Збірка з вихідного коду
 
@@ -67,31 +67,31 @@ GODOT_VERSION=4.7.2-stable python3 tools/fetch_godot.py godot_dl
 python3 tools/build.py \
   --godot godot_dl/godot \
   --template godot_dl/windows_release_x86_64.exe \
-  --version 0.34.0 --repo "" --out dist/beta
-cp tools/qa/Run-*.ps1 dist/beta/
+  --version "$(python3 tools/build.py --print-version)" --repo "" --out dist/beta
+cp libs/*.dll tools/qa/Run-*.ps1 dist/beta/
 ```
 
-`0.34.0` тут — наявна назва версії в інтерфейсі beta, а не оголошення нового стабільного випуску. Параметр `--repo ""` вимикає джерело автоматичних оновлень у комплекті.
+`--print-version` бере узгоджену source версію, зараз `0.36.0`; explicit --version лише перевіряє її. Це тестова beta, не новий стабільний реліз. Параметр `--repo ""` вимикає джерело автоматичних оновлень у комплекті.
 
 [tools/build.py](tools/build.py) пакує `game/` у PCK і вбудовує його у Windows EXE. Результат у `dist/beta/`: **EXE з PCK усередині**, ZIP із DLL, контрольні суми та скопійовані launchers. Далі виконайте кроки запуску у Windows. Зберігайте tracked `game/.godot/`: поточна збірка використовує ці імпортовані ресурси.
 
-Windows x64 build і native headless startup підтверджено попередніми перевірками. Це не підтверджує роботу Windows GUI, звуку чи повного мультиплеєра. [Докладний план збірки й QA](docs/codex/verified/PHASE8_BETA_QA_PLAN.md).
+Windows x64 build/integrity/identity і43 Godot/Python tests та2476 simulation checks проходять CI нової beta; native Windows headless попереднього PR #4 package теж PASS. Windows GUI, звук, GPU й повний фізичний multiplayer QA ще **NOT RUN**; shutdown leaks лишаються відкритими. Engine/template cache не tracked, його наявність перевіряйте локально. [Докладний план збірки й QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
 
 ## Розробка та внесок
 
 1. Оновіть локальну `beta` та створіть окрему гілку: `feature/*`, `fix/*` або `docs/*` відповідно до задачі.
 2. Внесіть невелику узгоджену зміну, зберігаючи авторство попередньої роботи.
 3. Виконайте відповідні [перевірки](docs/codex/verified/TEST_MATRIX.md); для документації перевірте посилання та Markdown diff. Непроведені тести позначайте `NOT RUN`, нерелевантні — `N/A` із поясненням.
-4. Створіть Pull Request із цільовою гілкою **`beta`**, використовуючи [PR template](.github/pull_request_template.md).
+4. Після дозволу на публікацію створіть Pull Request із цільовою гілкою **`beta`**. CI запускає tests/build для PR→beta та push beta/main без публікації Releases. PR template відсутній; required checks/reviews перевіряйте на GitHub.
 5. Пройдіть review. Перенесення в `main` і стабільний випуск потребують окремого рішення власника.
 
-Перед роботою прочитайте [AGENTS.md](AGENTS.md). [Архітектура](docs/codex/verified/ARCHITECTURE.md) та [правила співпраці](docs/codex/verified/COLLABORATION_WORKFLOW.md) допоможуть зорієнтуватися. Зміни протоколу, збережень і детермінованої симуляції потребують окремої оцінки сумісності.
+Перед роботою прочитайте [AGENTS.md](AGENTS.md). [Архітектура](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md) та [правила співпраці](docs/codex/verified/COLLABORATION_WORKFLOW.md) допоможуть зорієнтуватися. Зміни протоколу, збережень і детермінованої симуляції потребують окремої оцінки сумісності.
 
 ## Авторство та походження
 
 Порт походить від Android closed-beta APK DroneFlames; у репозиторії є відновлений GDScript і адаптація для PC. **Авторство оригінальної гри, її коду й графіки належить оригінальним авторам.** Повного підтвердженого переліку їхніх імен у наявній документації немає.
 
-Поточний незалежний розвиток порту ведуть [ZaGOR-1](https://github.com/ZaGOR-1) — власник репозиторію — та [OKREDU](https://github.com/OKREDU) — співавтор. Їхній внесок у PC-порт і нові механіки не означає авторства вихідної гри. Історію попередніх внесків збережено в Git.
+Поточний незалежний розвиток порту ведуть [ZaGOR-1](https://github.com/ZaGOR-1) — власник репозиторію — та [OKREDU](https://github.com/OKREDU) — співавтор. Їхній внесок у PC-порт і нові механіки не означає авторства вихідної гри. У новій Git-історії збережено snapshot; попередні внески й рішення описані в історичних звітах docs/codex/verified/, старі коміти навмисно не перенесено.
 
 ## Ліцензія та права використання
 

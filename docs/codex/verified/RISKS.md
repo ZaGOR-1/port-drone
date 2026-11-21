@@ -1,3 +1,5 @@
+> **CURRENT register / HISTORICAL reports below.** Missing CI та п’ять HIGH v0.36 закриті PR #2/#4. CPU regression і inherited shutdown leaks підтверджені; GUI/LAN/Steam, updater integrity, save durability та general schemas відкриті. [CURRENT_STATE](CURRENT_STATE.md), [BACKLOG](BACKLOG.md), [fix evidence](V036_FIX_RESULTS.md) — актуальні scopes.
+
 # Phase 5 status overlay — 2026-11-20
 
 Нова стратегія незалежного порту:0.41 source migration DEFERRED і не поточний blocker. Цільові PR10 PA01/02/03/04/06 закриті локальним uncommitted diff у перевіреному scope. Старі updater R01/R03/R04, save fault matrix, transport admission та R17/R18 не виправлені. **R02 HIGH відтворений:** failed restore помилково advances/rejoins; це integration blocker. Airport/cooldown/cancel також FAIL, GUI/actual2-peer NOT RUN, p99 success не підтверджений. Exact evidence — PR10_REGRESSION_RESULTS, окремі fixes — PHASE5B_PLAN. Нижче історичний baseline risk register, не перелік нових fixes.

@@ -1,3 +1,5 @@
+> **CURRENT identity / HISTORICAL report below.** v0.36.0/PROTO7/SIM_REV `v036-integration-1`. Exact hello/resume gate, power wire/schema/owner guard і canonical hash нових fields перевірені targeted fixtures у PR #4; full physical LAN/Steam NOT RUN. [Current flows](ARCHITECTURE_AND_FLOWS.md), [fixes](V036_FIX_RESULTS.md). Старі revisions/SHA/permissions/results нижче датовані, не поточні.
+
 # Phase 5B.2 — command validation і compatibility boundary
 
 PROTO7/RPC signatures/packet types/command ordering/native DLL/Steam code незмінні. Targeted _exec schema guards до ownership/callv: mil.build(valid enum/cell/Country/optional parent, free=true заборонено для network caller); mil.air.rebase/entity3args; order_airdrop/entity/finiteVector2/optionalCountry. Valid UI commands не змінюють кодування. Internal free spawn/build через прямі calls збережено. Загальне ALLOWED hardening R07 окремо.

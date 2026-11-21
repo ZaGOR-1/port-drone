@@ -1,3 +1,5 @@
+> **DATED REPORT.** PR #4 уже інтегрований у beta `0f26040994043827a7c14913d945a3df02e00fdd`, beta CI PASS. Старі «no merge», pending CI/PR і відкритий #3 нижче — стан до інтеграції, не активна заборона. Актуальний контекст: [CURRENT_STATE](CURRENT_STATE.md), [NEXT_SESSION](NEXT_SESSION.md).
+
 # Review v0.36 — 2026-11-21
 
 > Історичний review початкової feature до виправлень. Поточні integration fixes і нові результати — [V036_FIX_RESULTS](V036_FIX_RESULTS.md).

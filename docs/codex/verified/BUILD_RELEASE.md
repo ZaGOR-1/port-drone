@@ -1,3 +1,5 @@
+> **CURRENT entry / HISTORICAL report below.** Godot4.7.2; CI PR #2 і v0.36 PR #4 інтегровані. Tests/build PASS, release не публікується на жодній події. Source version0.36.0: `python3 tools/build.py --print-version`, explicit --version має збігатися. Поточні команди/manifest — [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md); старі0.34 commands/remote-policy припущення нижче не застосовувати.
+
 # Phase 5C — актуальна local build/CI policy
 
 [Exact artifacts/commands/tests](PHASE5C_INTEGRATION_RESULTS.md). Pinned Godot4.7.2; Windows build/native headless exit0, три original DLL loaded/hash-match. Existing Menus v0.34.0 label не є owner-approved stable; source product number не підвищували.

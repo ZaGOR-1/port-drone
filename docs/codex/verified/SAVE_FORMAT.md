@@ -1,3 +1,5 @@
+> **CURRENT contract / HISTORICAL report below.** FORMAT1, optional land_cooldowns + UrbanHold far_fail, legacy missing defaults і repeated restore перевірені PR #4. Autosave freeze повного encoded graph перед worker; Navy current-threat routes/scratch reset. New→old downgrade unsupported; OS durability не закрита. [Current flows](ARCHITECTURE_AND_FLOWS.md), [tests](V036_FIX_RESULTS.md).
+
 # Phase 5B.2 — явне optional розширення FORMAT1
 
 Число FORMAT=1 і контейнер/entity/reference layout незмінні. Додано `sys.diplo.land_cooldowns: Dictionary[String, float|int]` (directional from:to → simulation game_time успішної угоди), копіювання save/load; відсутнє поле дає empty history і очищає попередній світ. Shared Save._sound перевіряє тип/ключі/finite/nonnegative timestamp<=savedclock до mutation disk/network.

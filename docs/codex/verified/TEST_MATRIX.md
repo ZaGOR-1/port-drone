@@ -1,3 +1,5 @@
+> **CURRENT evidence / HISTORICAL matrix below.** Beta v0.36 CI PASS43 tests з Godot +2476 regression checks +Windows x64 package verification; job без Godot36 tests/9 skips. CI існує PR #2; [CURRENT_STATE](CURRENT_STATE.md) містить exact run/cohort. GUI і real LAN/Steam NOT RUN. Старі кількості tests/PASS/SKIP нижче не є результатами нової сесії.
+
 # Phase 5C — актуальна тестова матриця
 
 [Повна таблиця статусів і логів](PHASE5C_INTEGRATION_RESULTS.md). PASS: 26 Python (включно 4 CI policy methods, real cleanup та revision wrappers); 2476 Godot regression; 309 mechanics; 81 critical; R02 111+41; FIX05–08 21/41/33/33/26; save/continue 23+23. Source та Windows embedded: 269 scripts / 883 hashes; Windows x64 build/native headless exit 0, три DLL loaded/hash-identical.

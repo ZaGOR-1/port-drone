@@ -1,3 +1,5 @@
+> **DATED REPORT.** PR #4 уже інтегрований у beta `0f26040994043827a7c14913d945a3df02e00fdd`, beta CI PASS. Старі «no merge», pending CI/PR і відкритий #3 нижче — стан до інтеграції, не активна заборона. Актуальний контекст: [CURRENT_STATE](CURRENT_STATE.md), [NEXT_SESSION](NEXT_SESSION.md).
+
 # v0.36 — integration fixes, 2026-11-21
 
 Поточна задача: виправлення findings [PR #3](https://github.com/ZaGOR-1/port-drone/pull/3), окремий integration PR → beta, **без merge**. Початковий [review](V036_REVIEW.md) зберігається як історичний доказ RED. Це цільові виправлення, не повний повторний аудит. Compiler/load coverage не означає повне ручне читання всіх sources.

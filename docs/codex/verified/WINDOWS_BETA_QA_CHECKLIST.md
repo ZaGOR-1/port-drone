@@ -1,3 +1,5 @@
+> **v0.36 update —18 manual cases still NOT RUN.** Старі SHA/paths/0.34/SIM_REV та fixed Chronicle interval нижче HISTORICAL. Поточний комплект/identity/commands — [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md). Врахувати Shift/T3/power/fuel, МБР120+120s, EMP75s/2decoys та adaptive Chronicle; TC-WIN-14 потребує двох людей. Headless PASS не є GUI PASS.
+
 # Windows Beta QA — Phase5C candidate
 
 Стан усіх 18 ручних сценаріїв: **NOT RUN**. Code review та headless assertions нижче — підстава очікувань, а не GUI PASS. Походження: reviewed Gemini G03; оригінал у Gemini worktree збережений. Цей checklist замінює його для приймання поточного кандидата.
