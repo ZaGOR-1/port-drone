@@ -24,7 +24,7 @@ const HIT_KAB: int = 5
 const BLAST_R: Array = [3, 7, 3, 7, 7, 4]
 
 
-const ELIGIBLE_NAMES: Array = ["REFINERY", "POWER_PLANT", "CIV_FACTORY", "DRONE_FACTORY", "MISSILE_FACTORY", "OIL_RIG", "PORT"]
+const ELIGIBLE_NAMES: Array = ["REFINERY", "POWER_PLANT", "CIV_FACTORY", "DRONE_FACTORY", "MISSILE_FACTORY", "OIL_RIG", "PORT", "NUCLEAR_PLANT", "NUKE_SILO", "AD_ZASLON"]
 
 
 const NET_MAX: int = 3
@@ -135,6 +135,23 @@ func _init(world: GameWorld) -> void:
 
 func eligible(f: Facility) -> bool:
 	return f != null and f.parent == null and not f.is_line() and _kinds.has(f.kind)
+
+
+## Grants innate Tier 1 concrete protection when a T3 facility picks the Bunker specialization.
+func ensure_bunker(f: Facility) -> void:
+	if f == null:
+		return
+	var s: Dictionary = _state(f)
+	s["bunker"] = true
+	if int(s["cl"]) < 1:
+		s["cl"] = 1
+		s["cs"] = S_OK
+		s["ct"] = 0.0
+		s["cT"] = 0.0
+		s["cc"] = int(CONC_CHARGES[1][0])
+		s["cm"] = int(CONC_CHARGES[1][1])
+		s["ch"] = false
+		ver += 1
 
 
 
@@ -321,7 +338,9 @@ func intercept(f: Facility, kind: int, attacker: int) -> Dictionary:
 		ver += 1
 		out["by"] = "conc"
 		out["dmg_mult"] = CONC_HALF_MULT
-		stats["half"] = int(stats["half"]) + 1
+		stats["half"] = int(stats.get("half", 0)) + 1
+	if f.level >= 3 and f.t3_spec == 1 and not bool(out["blocked"]):
+		out["dmg_mult"] = minf(1.25, float(out["dmg_mult"]) * 1.25)
 	return out
 
 
@@ -334,9 +353,9 @@ func on_impact(p: Vector2, kind: int, by: int) -> Dictionary:
 	_note_victim(cell, kind, by)
 	var r: int = int(BLAST_R[clampi(kind, 0, BLAST_R.size() - 1)])
 	_report_hit(cell, kind, by, r)
-	Nuclear.on_impact(gw, self, cell, kind, r)
 	var res: Dictionary = {"blocked": false, "dmg_mult": 1.0, "by": "", "caught": false, "fac": -1}
 	if st.is_empty():
+		Nuclear.on_impact(gw, self, cell, kind, r, -1)
 		return res
 	var drone: bool = kind == HIT_DRONE or kind == HIT_JET
 
@@ -383,6 +402,8 @@ func on_impact(p: Vector2, kind: int, by: int) -> Dictionary:
 		res["caught"] = String(one["by"]) == "net" and bool(one["blocked"])
 		res["fac"] = f.id
 		res["spared"] = spared
+	var spared_fid: int = int(res.get("fac", -1)) if bool(res.get("spared", false)) else -1
+	Nuclear.on_impact(gw, self, cell, kind, r, spared_fid)
 	return res
 
 

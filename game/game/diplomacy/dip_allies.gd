@@ -125,10 +125,18 @@ func ai_accepts(ai: int, other: int, want: int) -> bool:
 
 
 
-func on_attack(attacker: int, owner: int) -> void:
+func on_attack(attacker: int, owner: int, at_pos: Vector2 = Vector2.INF) -> void:
 	if rq != null and attacker > 0 and owner > 0 and attacker != owner and rq.on_hit(attacker, owner):
 		return
 	if attacker <= 0 or owner <= 0 or attacker == owner or at_war(attacker, owner) or allied(attacker, owner):
+		return
+	if in_grey_zone() and (at_pos == Vector2.INF or is_skirmish_target(attacker, owner, at_pos)):
+		_count("grey_skirmishes")
+		add_opinion(owner, attacker, -3)
+		var gkey: String = "%d>%d" % [attacker, owner]
+		if gw.game_time - float(_sb_said.get("gz:" + gkey, -1e9)) >= 25.0:
+			_sb_said["gz:" + gkey] = gw.game_time
+			gw.say2(attacker, owner, Loc.mk("Серая зона: пограничная стычка у залежи/границы (%s — %s)", [_cname(attacker), _cname(owner)]))
 		return
 	if truce_on(attacker, owner):
 
@@ -302,15 +310,29 @@ func _fulfil(d: Dictionary) -> void:
 				if c3.id != f.id and c3.id != v.id and not c3.eliminated:
 					add_opinion(f.id, c3.id, -3)
 		"halt_nukes":
+			var had_prog: bool = false
 			if gw.mil != null:
 				for sf: Facility in gw.mil.facilities:
 					if sf.country_id == v.id and sf.kind == Facility.Kind.NUKE_SILO:
+						if sf.nuke_state > 0:
+							had_prog = true
 						sf.nuke_state = 0
 						sf.nuke_t = 0.0
+						sf.nuke_tt = 0.0
 						sf.nuke_prog = 0.0
+						sf.nuke_stage_sent = 0
 						Nuclear.refresh_silo_look(gw, sf)
+			if had_prog:
+				v.add_money(int(float(Military.COST_NUKE_MISSILE) * 0.4))
 			v.nuke_ready = false
 			v.plutonium = maxi(0, v.plutonium - 3)
+			v.nuke_pledge_until = gw.game_time + NUKE_PLEDGE_T
+			for di in range(demands.size() - 1, -1, -1):
+				var od: Dictionary = demands[di]
+				if int(od.get("to", -1)) == v.id and String(od.get("kind", "")) == "halt_nukes" and int(od.get("id", -1)) != int(d.get("id", -2)):
+					add_opinion(int(od["from"]), v.id, 6)
+					demands.remove_at(di)
+			pending_changed.emit()
 	add_opinion(f.id, v.id, -4)
 	_count("demands_accepted")
 	gw.news_m(Loc.mk("УЛЬТИМАТУМ ПРИНЯТ: %s → %s", [Loc.name(_name(f.id)), Loc.name(_name(v.id))]), "amber")
@@ -382,6 +404,74 @@ func demand(from: int, to: int, kind: String, params: Dictionary = {}) -> String
 		return ""
 	_refused(d)
 	return Loc.t("%s отвергает требование%s") % [ct.name, Loc.t(" — война") if at_war(from, to) else Loc.t(" — эмбарго")]
+
+
+func clear_halt_nukes_for(victim_id: int) -> void:
+	if gw.mil != null:
+		for sf: Facility in gw.mil.facilities:
+			if sf.country_id == victim_id and sf.kind == Facility.Kind.NUKE_SILO and gw.mil.alive(sf) and sf.nuke_state > 0:
+				return
+	var removed: bool = false
+	for i in range(demands.size() - 1, -1, -1):
+		var d: Dictionary = demands[i]
+		if int(d.get("to", -1)) == victim_id and String(d.get("kind", "")) == "halt_nukes":
+			demands.remove_at(i)
+			removed = true
+	if removed:
+		pending_changed.emit()
+
+
+func on_nuke_pledge_broken(culprit_id: int) -> void:
+	var c: Country = gw.country_by_id(culprit_id)
+	if c == null:
+		return
+	c.nuke_pledge_until = -1.0
+	for o: Country in gw.countries:
+		if o.id != culprit_id and not o.eliminated and not allied(o.id, culprit_id):
+			add_opinion(o.id, culprit_id, -30)
+	gw.news_m(Loc.mk("НАРУШЕН ЯДЕРНЫЙ МЕМОРАНДУМ: %s ВОЗОБНОВИЛА ПРОГРАММУ МБР!", [Loc.name(c.name).to_upper()]), "alert_red")
+
+
+func nuke_alarm(culprit_id: int, stage: int) -> void:
+	var culprit: Country = gw.country_by_id(culprit_id)
+	if culprit == null or culprit.eliminated:
+		return
+	var pen: int = -12 if stage >= 2 else -6
+	var c_str: float = maxf(1.0, strength(culprit_id))
+	var cands: Array[Dictionary] = []
+	for o: Country in gw.countries:
+		if o.id == culprit_id or o.eliminated or o.capital_id < 0:
+			continue
+		if allied(o.id, culprit_id) or subject_of(o.id) == culprit_id:
+			continue
+		add_opinion(o.id, culprit_id, pen)
+		if o.is_player or at_war(o.id, culprit_id) or is_subject(o.id):
+			continue
+		if _has_demand(o.id, culprit_id):
+			continue
+		var o_str: float = strength(o.id)
+		var rel: int = relation(o.id, culprit_id)
+		var P: Dictionary = _p(o.id)
+		if o_str >= c_str * (0.85 if stage >= 2 else 1.05) and (rel < 20 or stage >= 2 or float(P["caution"]) > 0.45):
+			cands.append({"id": o.id, "str": o_str, "rel": rel, "aggr": float(P["aggr"])})
+	if cands.is_empty():
+		gw.relations_changed.emit()
+		return
+	cands.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a["str"]) > float(b["str"]))
+	var picked: Array[int] = [int(cands[0]["id"])]
+	if cands.size() > 1:
+		var rest: Array[Dictionary] = cands.slice(1)
+		rest.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			return int(a["rel"]) < int(b["rel"]))
+		picked.append(int(rest[0]["id"]))
+	for aid: int in picked:
+		var P2: Dictionary = _p(aid)
+		var want_war: bool = stage >= 2 and (float(P2["aggr"]) >= 0.45 or relation(aid, culprit_id) < -15) and war_allowed(aid, culprit_id, false)
+		var d: Dictionary = _make_demand(aid, culprit_id, "halt_nukes", {"conseq": "war" if want_war else "embargo"})
+		if _demand_ok(d) == "":
+			_issue(d)
+	gw.relations_changed.emit()
 
 
 
@@ -952,6 +1042,7 @@ func _ally_fac_tick() -> void:
 				cw.money += pay
 		f.country_id = o
 		f.queued.clear()
+		gw.mil.invalidate_fac_owners()
 		ally_fac.erase(fid)
 		_count("ally_fac_handed")
 		var hk: String = "%d>%d" % [was, o]

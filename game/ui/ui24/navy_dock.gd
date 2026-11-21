@@ -1120,7 +1120,13 @@ func _fill_service(s: Ship) -> void:
 
 
 
+func _shift_held() -> bool:
+	return (DisplayServer.get_name() == "headless" or DisplayServer.window_is_focused()) and Input.is_key_pressed(KEY_SHIFT)
+
+
 func _on_row_tap(sid: int) -> void:
+	if not selecting and _shift_held():
+		set_selecting(true)
 	if selecting:
 		if checked.has(sid):
 			checked.erase(sid)
@@ -1360,7 +1366,9 @@ func map_tap(sp: Vector2, wp: Vector2) -> bool:
 		_hide_confirm()
 	var own: Ship = ship_at(sp, true)
 	if own != null:
-		if selecting:
+		if selecting or _shift_held():
+			if not selecting:
+				set_selecting(true)
 			_on_row_tap(own.id)
 			UiKit.snd("ui_select")
 			return true
@@ -1385,6 +1393,26 @@ func map_tap(sp: Vector2, wp: Vector2) -> bool:
 		return true
 	close()
 	return false
+
+
+## PC port: Shift+LMB on a sea ship enters selecting mode and toggles it cleanly.
+func shift_map_tap(sp: Vector2) -> bool:
+	if _nv() == null or hud == null or hud.main_node == null or hud.main_node.world == null or hud.main_node.world.player == null or hud.main_node.world.player.eliminated:
+		return false
+	var own: Ship = ship_at(sp, true)
+	if own == null:
+		return false
+	if not is_open:
+		open_dock(null)
+	if not selecting:
+		set_selecting(true)
+	if checked.has(own.id):
+		checked.erase(own.id)
+	else:
+		checked[own.id] = true
+	refresh()
+	UiKit.snd("ui_select")
+	return true
 
 
 

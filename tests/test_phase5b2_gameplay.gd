@@ -88,7 +88,7 @@ func _airport() -> void:
 			continue
 		var ap: Facility = w.mil.facilities.back()
 		check(ap.kind == Facility.Kind.AIRPORT and ap.country_id == c.id and c.money < money, "FIX05 airport owner/cost correct")
-		check(main.mode == main.Mode.AIRPORT and key.button_pressed, "FIX05 desktop placement remains selected")
+		check(main.mode == main.Mode.NONE and not key.button_pressed, "FIX05 desktop plain placement exits mode cleanly (Variant 1A)")
 		var foreign: Country = w.countries[1]
 		var count_before: int = w.mil.facilities.size()
 		var before: int = c.money

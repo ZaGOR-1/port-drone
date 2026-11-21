@@ -96,6 +96,8 @@ func _main_menu() -> void:
 	settings = s
 	_deselect()
 	_clear_plan()
+	_reset_input_state()
+	_mp_pend_builds.clear()
 	world.new_world(s)
 	loading.set_progress(0.7, "Страны и города...")
 	await get_tree().process_frame
@@ -250,6 +252,8 @@ func start_world(s: WorldSettings) -> void:
 	loading.show_screen("Генерация мира...")
 	_deselect()
 	_clear_plan()
+	_reset_input_state()
+	_mp_pend_builds.clear()
 	hud.close_panel()
 	loading.set_progress(0.15, "Рельеф, реки и леса...")
 	await get_tree().process_frame
@@ -276,15 +280,16 @@ func _notification(what: int) -> void:
 		if (menus == null or not menus.is_open()) and _army_back():
 			return
 		if menus != null and menus.is_open():
+			if menus.handle_back():
+				return
+			if menus.current == "end" or menus.current == "end_ranked":
+				return
 			if not in_menu:
 				_on_menu("resume")
 		else:
 			_open_pause()
-	elif what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
-		_touches.clear()  # fingers lifted while the app was away never send a release
-		_pinch_d = 0.0
-		_pinch_mid = Vector2.INF
-		_dtz = false
+	elif what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		_reset_input_state()  # fingers/keys lifted while away never send a release
 		if net != null and net.in_match:
 			# NET: no local save, no pause; a host going to the background pauses the match for all.
 			if OS.has_feature("mobile"):
@@ -422,8 +427,23 @@ func _process(delta: float) -> void:
 				pan.x -= 1.0
 			if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 				pan.x += 1.0
+			var pc_n: Node = get_node_or_null("/root/PcPort")
+			if pan == Vector2.ZERO and pc_n != null and bool(pc_n.get("edge_pan")) and DisplayServer.window_is_focused():
+				var vp_r: Rect2 = get_viewport().get_visible_rect()
+				var mp_e: Vector2 = get_viewport().get_mouse_position()
+				if vp_r.has_point(mp_e) and (hud == null or ((hud.panel == null or not is_instance_valid(hud.panel)) and not hud.ui24_open_now())):
+					var em: float = 14.0
+					if mp_e.x <= em:
+						pan.x -= 1.0
+					elif mp_e.x >= vp_r.size.x - em:
+						pan.x += 1.0
+					if mp_e.y <= em:
+						pan.y -= 1.0
+					elif mp_e.y >= vp_r.size.y - em:
+						pan.y += 1.0
 			if pan != Vector2.ZERO:
-				var pan_spd: float = 1150.0 if Input.is_key_pressed(KEY_SHIFT) else 650.0
+				var cmul: float = float(pc_n.call("cam_speed_mul")) if pc_n != null and pc_n.has_method("cam_speed_mul") else 1.0
+				var pan_spd: float = (1150.0 if _shift_down() else 650.0) * cmul
 				cam.pan_screen(-pan.normalized() * pan_spd * delta)
 				if cam_lock:
 					cam_lock = false
@@ -477,10 +497,11 @@ func _process(delta: float) -> void:
 		cam.margin_top_px = mt
 		cam.margin_bottom_px = mb
 		cam.center_on(cam.position)
-	var g_live: bool = not _pend.is_empty() or mode == Mode.TARGET or mode == Mode.NUKE_TARGET or BUILD_KIND.has(mode) or mode == Mode.RAIL_ST or mode == Mode.RAIL_LINE  # R335
+	var g_live: bool = not _pend.is_empty() or mode == Mode.TARGET or mode == Mode.NUKE_TARGET or BUILD_KIND.has(mode) or mode == Mode.MODULE or mode == Mode.TOWN or mode == Mode.CAPITAL or mode == Mode.TRENCH_H or mode == Mode.TEETH_H or mode == Mode.HOLD or mode == Mode.GARRISON or mode == Mode.RAIL_ST or mode == Mode.RAIL_LINE or mode in [Mode.MISSILE, Mode.CR_TARGET, Mode.HYP_TARGET, Mode.SHIP_CR, Mode.RECON, Mode.ORDER, Mode.SATELLITE]  # R335
 	if (g_live or _ghost_live) and _ghost != null:
 		_ghost.queue_redraw()  # R323 PLACE: build modes too (own AD rings before the first tap); one more to clear
 	_ghost_live = g_live
+	_pc_hover_ui()
 	_cam_tick(delta)
 	_prompt_tick(delta)
 	_update_ops(delta)
@@ -645,6 +666,85 @@ func _on_action(nm: String) -> void:
 				_set_mode(Mode.NUKE_TARGET)
 				nuke_silo = nsf2
 				selected_fac = nsf2
+		"zaslon_buy_1", "zaslon_buy_fill":
+			if selected_fac != null and selected_fac.kind == Facility.Kind.AD_ZASLON and world.player != null:
+				var zcnt: int = Defense.ZASLON_CAP if (nm == "zaslon_buy_fill" or _shift_down()) else 1
+				var zf_sel: Facility = selected_fac
+				_sim("", "cmd_zaslon_buy", [zf_sel, world.player, zcnt], func(r: Variant) -> void:
+					if _why(r) != "":
+						hud.show_toast(_why(r))
+						UiKit.snd("ui_error")
+					else:
+						hud.show_toast(Loc.msg(Loc.mk("ПРО «Заслон»: производство БК в очереди (+%d, БК %d/%d)", [zf_sel.zas_q, zf_sel.ammo, Defense.ZASLON_CAP])))
+						UiKit.snd("ui_build")
+					hud.refresh())
+		"nuke_warhead_0", "nuke_warhead_1", "nuke_warhead_2":
+			if selected_fac != null and selected_fac.kind == Facility.Kind.NUKE_SILO and world.player != null:
+				var wh: int = int(nm.right(1))
+				_sim("", "cmd_nuke_warhead", [selected_fac, world.player, wh], func(r: Variant) -> void:
+					if _why(r) != "":
+						hud.show_toast(_why(r))
+						UiKit.snd("ui_error")
+					else:
+						UiKit.snd("ui_select")
+					hud.refresh())
+		"npp_scram":
+			if selected_fac != null and selected_fac.kind == Facility.Kind.NUCLEAR_PLANT and world.player != null:
+				_sim("", "cmd_npp_scram", [selected_fac, world.player], func(r: Variant) -> void:
+					if _why(r) != "":
+						hud.show_toast(_why(r))
+						UiKit.snd("ui_error")
+					else:
+						hud.show_toast(Loc.t("АЭС заглушена: перегрев снят"))
+						UiKit.snd("ui_build")
+					hud.refresh())
+		"power_prio":
+			if world.player != null:
+				var nxt_prio: int = (world.player.power_prio + 1) % 3
+				_sim("", "cmd_power_prio", [world.player, nxt_prio], func(_r: Variant) -> void:
+					UiKit.snd("ui_select")
+					hud.refresh())
+		"fuel_dispatch":
+			if selected_fac != null and selected_fac.kind == Facility.Kind.REFINERY and world.player != null:
+				_sim("", "cmd_fuel_dispatch", [selected_fac, world.player], func(r: Variant) -> void:
+					if _why(r) != "":
+						hud.show_toast(_why(r))
+						UiKit.snd("ui_error")
+					else:
+						hud.show_toast(Loc.t("Конвой топлива отправлен"))
+						UiKit.snd("ui_build")
+					hud.refresh())
+		"t3_spec_1", "t3_spec_2":
+			if selected_fac != null and world.player != null:
+				var sp_t3: int = int(nm.right(1))
+				_sim("", "cmd_t3_spec", [selected_fac, world.player, sp_t3], func(r: Variant) -> void:
+					if _why(r) != "":
+						hud.show_toast(_why(r))
+						UiKit.snd("ui_error")
+					else:
+						UiKit.snd("ui_build")
+					hud.refresh())
+		"nuke_focus":
+			if world != null and world.nuke_warn_target != Vector2.ZERO:
+				cam_lock = false
+				cam.center_on(world.nuke_warn_target)
+				UiKit.snd("ui_click")
+		"strat_cycle":
+			if world != null and world.player != null and world.mil != null:
+				var strats: Array[Facility] = []
+				for sf: Facility in world.mil.facs_of(world.player.id):
+					if sf.country_id == world.player.id and world.mil.alive(sf) and ((sf.kind == Facility.Kind.NUKE_SILO and GameConfig.nukes) or sf.kind == Facility.Kind.AD_ZASLON):
+						strats.append(sf)
+				if not strats.is_empty():
+					strats.sort_custom(func(a: Facility, b: Facility) -> bool: return a.id < b.id)
+					var cur_si: int = strats.find(selected_fac)
+					var nxt_sf: Facility = strats[(cur_si + 1) % strats.size()]
+					_deselect()
+					selected_fac = nxt_sf
+					cam_lock = false
+					cam.center_on(nxt_sf.center_px())
+					hud.refresh()
+					UiKit.snd("ui_select")
 		"store":
 			if mode == Mode.STORE_S or mode == Mode.STORE_M or mode == Mode.STORE_L:
 				_set_mode(Mode.NONE)
@@ -711,13 +811,15 @@ func _on_action(nm: String) -> void:
 		"follow":
 			_cycle_follow()
 		"plan_minus":
-			plan_count = maxi(1, plan_count - 1)
+			var step_m: int = 5 if _shift_down() else 1
+			plan_count = maxi(1, plan_count - step_m)
 			_plan_per_all()
 		"plan_plus":
+			var step_p: int = 5 if _shift_down() else 1
 			if plan_list.is_empty():
-				plan_count = mini(maxi(1, int(_plan_info.get("available", 1))), plan_count + 1)
+				plan_count = mini(maxi(1, int(_plan_info.get("available", 1))), plan_count + step_p)
 			else:
-				plan_count = mini(12, plan_count + 1)
+				plan_count = mini(12, plan_count + step_p)
 				_plan_per_all()
 		"plan_back":
 			if mode == Mode.JET_KAB or mode == Mode.JET_CAS:
@@ -998,8 +1100,19 @@ func _on_action(nm: String) -> void:
 		"buy_bomber", "buy_fighter", "buy_heli", "buy_attack", "buy_transport":
 			if selected_fac != null:
 				var t: int = {"buy_bomber": Aircraft.Type.BOMBER, "buy_fighter": Aircraft.Type.FIGHTER, "buy_heli": Aircraft.Type.HELI, "buy_attack": Aircraft.Type.ATTACK, "buy_transport": Aircraft.Type.TRANSPORT}[nm]
-				_sim("mil.air", "buy", [selected_fac, t, world.player], func(r: Variant) -> void:
-					hud.show_toast(_why(r) if _why(r) != "" else Loc.msg(Loc.mk("Куплен: %s", [Loc.t(String(Air.SPEC[t]["name"]))]))))
+				if _shift_down():
+					_sim("mil.air", "buy_batch", [selected_fac, t, world.player, 0], func(r: Variant) -> void:
+						var res_d: Dictionary = r if r is Dictionary else {}
+						var bought: int = int(res_d.get("bought", 0))
+						var why_b: String = String(res_d.get("why", ""))
+						if bought > 0:
+							hud.show_toast(Loc.msg(Loc.mk("Куплено: %s ×%d", [Loc.t(String(Air.SPEC[t]["name"])), bought])))
+						else:
+							hud.show_toast(why_b if why_b != "" else _why(r))
+							UiKit.snd("ui_error"))
+				else:
+					_sim("mil.air", "buy", [selected_fac, t, world.player], func(r: Variant) -> void:
+						hud.show_toast(_why(r) if _why(r) != "" else Loc.msg(Loc.mk("Куплен: %s", [Loc.t(String(Air.SPEC[t]["name"]))]))))
 		"air_airdrop":
 			if follow is Aircraft:
 				var a_ad: Aircraft = follow as Aircraft
@@ -1107,10 +1220,12 @@ func _on_action(nm: String) -> void:
 					"doc:defend":
 						_sim("", "cmd_field", [p, "army_defend", not p.army_defend], func(_r: Variant) -> void: hud.set_key_pressed("defend", p.army_defend))
 			hud.open_doctrine()
-		"fac_upgrade":
+		"fac_upgrade", "fac_upgrade_1", "fac_upgrade_2":
 			if selected_fac != null and world.econ.has_method("upgrade"):
 				var uf: Facility = selected_fac
-				_sim("econ", "upgrade", [uf, world.player], func(r: Variant) -> void:
+				var spec_u: int = 1 if nm == "fac_upgrade_1" else (2 if nm == "fac_upgrade_2" else 0)
+				var u_args: Array = [uf, world.player, spec_u] if spec_u > 0 else [uf, world.player]
+				_sim("econ", "upgrade", u_args, func(r: Variant) -> void:
 					var whyu: String = _why(r)
 					hud.show_toast(whyu if whyu != "" else (String(world.econ.call("upgrade_toast", uf)) if world.econ.has_method("upgrade_toast") else Loc.msg(Loc.mk("Улучшено: %s, уровень %d", [Loc.t(Military.title_of(uf.kind)), int(world.econ.call("level_of", uf))]))))  # v0.27 ECON27
 					UiKit.snd("ui_error" if whyu != "" else "ui_build"))
@@ -1149,7 +1264,7 @@ func _on_action(nm: String) -> void:
 				hud.open_kind_mass("upgrade")
 		_ when nm.begins_with("dep_build_all:"):
 			_dep_build_all(nm.get_slice(":", 1))
-		_ when nm.begins_with("kind_repair:") or nm.begins_with("kind_upg:"):
+		_ when nm.begins_with("kind_repair:") or nm.begins_with("kind_upg:") or nm.begins_with("cat_upg:") or nm.begins_with("cat_prot:"):
 			_kind_act(nm)
 		"fac_restore":
 			if selected_fac != null:
@@ -1264,6 +1379,19 @@ func _on_action(nm: String) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if in_menu:
 		return
+	if event is InputEventKey:
+		var ek := event as InputEventKey
+		if ek.keycode == KEY_SHIFT and not ek.echo:
+			if not _ui_typing() and (menus == null or not menus.is_open()):
+				if not ek.pressed and _shift_built_in_series and not _mouse_down and (BUILD_KIND.has(mode) or mode in [Mode.MODULE, Mode.TRENCH_H, Mode.TEETH_H, Mode.TOWN, Mode.RECON, Mode.ORDER]):
+					_shift_built_in_series = false
+					_set_mode(Mode.NONE)
+				elif not ek.pressed and not _mouse_down:
+					_shift_built_in_series = false
+				if _ghost != null:
+					_ghost.queue_redraw()
+				_pc_hover_ui()
+			return
 	if event is InputEventKey and event.pressed and not event.echo:
 		var kc: int = (event as InputEventKey).keycode
 		if _rename_ui != null and is_instance_valid(_rename_ui):
@@ -1293,6 +1421,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				UiKit.snd("ui_close")
 				return
 			if menus.is_open():
+				if menus.handle_back():
+					return
+				if menus.current == "end" or menus.current == "end_ranked":
+					return
 				_on_menu("resume")
 			else:
 				_open_pause()
@@ -1374,19 +1506,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		if mb.device == InputEvent.DEVICE_ID_EMULATION:
 			return
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
-			cam.step_zoom(1, mb.position)
+			var pc_w: Node = get_node_or_null("/root/PcPort")
+			var wdir: int = -1 if (pc_w != null and bool(pc_w.get("wheel_invert"))) else 1
+			cam.step_zoom(wdir, mb.position)
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
-			cam.step_zoom(-1, mb.position)
+			var pc_w2: Node = get_node_or_null("/root/PcPort")
+			var wdir2: int = 1 if (pc_w2 != null and bool(pc_w2.get("wheel_invert"))) else -1
+			cam.step_zoom(wdir2, mb.position)
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if _pc_army() != null and bool(_pc_army().lmb(mb)):
 				_mouse_down = false
+				_shift_mouse_tap = false
 				return
 			if mb.pressed:
 				_mouse_down = true
+				_shift_mouse_tap = mb.shift_pressed
 				_begin_press(mb.position)
 			else:
 				_mouse_down = false
-				_release_press(mb.position)
+				var sh_tap: bool = mb.shift_pressed or _shift_mouse_tap
+				_shift_mouse_tap = false
+				_release_press(mb.position, sh_tap)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT or mb.button_index == MOUSE_BUTTON_MIDDLE:
 			_pc_pan = mb.pressed  # PC port: right / middle drag moves the map
 			if mb.button_index == MOUSE_BUTTON_RIGHT:
@@ -1395,7 +1535,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					_rmb_at = mb.position
 					_rmb_path = 0.0
 				elif _rmb_at.is_finite() and _rmb_path < 6.0:
-					if _pc_army() != null and bool(_pc_army().rmb_click(mb.position)):
+					if _pc_army() != null and bool(_pc_army().rmb_click(mb.position, mb.shift_pressed)):
 						pass
 					elif mode != Mode.NONE and pc_cancel_mode():
 						UiKit.snd("ui_close")
@@ -1443,6 +1583,29 @@ func _pc_army() -> Object:
 	return pa as Object if pa != null and is_instance_valid(pa) else null
 
 
+func _reset_input_state() -> void:
+	_mouse_down = false
+	_pc_pan = false
+	_rmb_at = Vector2.INF
+	_rmb_path = 0.0
+	_moved = false
+	_drag_pt = -2
+	_dtz = false
+	_clear_shift_series()
+	line_cells.clear()
+	_touches.clear()
+	_pinch_d = 0.0
+	_pinch_mid = Vector2.INF
+	if cam != null and cam.has_method("clear_held"):
+		cam.call("clear_held")
+	var pa: Object = _pc_army()
+	if pa != null and pa.has_method("cancel_drag"):
+		pa.call("cancel_drag")
+	if _ghost != null:
+		_ghost.queue_redraw()
+	_pc_hover_ui()
+
+
 func _ui_typing() -> bool:
 	var vp: Viewport = get_viewport()
 	if vp == null:
@@ -1481,6 +1644,53 @@ func _pc_hotkey(ev: InputEventKey) -> void:
 		KEY_BRACKETRIGHT:
 			if not (net != null and net.in_match):
 				set_speed_i(_speed_i + 1)
+				get_viewport().set_input_as_handled()
+		KEY_U:
+			if world.player != null and not world.player.eliminated:
+				if hud.panel_kind == "kind_upgrade" and hud.panel != null and is_instance_valid(hud.panel):
+					hud.close_panel()
+				else:
+					hud.open_kind_mass("upgrade")
+				get_viewport().set_input_as_handled()
+		KEY_R:
+			if world.player != null and not world.player.eliminated:
+				if ev.shift_pressed:
+					hud.open_kind_mass("repair")
+				else:
+					_on_action("repair_all")
+				get_viewport().set_input_as_handled()
+		KEY_O:
+			if world.player != null and not world.player.eliminated:
+				hud.toggle_ores()
+				get_viewport().set_input_as_handled()
+		KEY_N:
+			if selected_fac != null and selected_fac.kind == Facility.Kind.NUKE_SILO and world.player != null and selected_fac.country_id == world.player.id:
+				if selected_fac.nuke_state == 0:
+					_on_action("nuke_build")
+				elif selected_fac.nuke_state == 2:
+					_on_action("nuke_arm")
+				elif selected_fac.nuke_state == 3:
+					_on_action("nuke_launch")
+				get_viewport().set_input_as_handled()
+		KEY_Z:
+			if selected_fac != null and selected_fac.kind == Facility.Kind.AD_ZASLON and world.player != null and selected_fac.country_id == world.player.id:
+				_on_action("zaslon_buy_fill" if ev.shift_pressed else "zaslon_buy_1")
+				get_viewport().set_input_as_handled()
+		KEY_TAB:
+			if selected_fac != null and world.player != null and world.mil != null:
+				var same_k: Array[Facility] = []
+				for f_tab: Facility in world.mil.facilities:
+					if f_tab.country_id == world.player.id and f_tab.kind == selected_fac.kind and world.mil.alive(f_tab):
+						same_k.append(f_tab)
+				if same_k.size() > 1:
+					same_k.sort_custom(func(a: Facility, b: Facility) -> bool: return a.id < b.id)
+					var cur_i: int = same_k.find(selected_fac)
+					var nxt_f: Facility = same_k[(cur_i + 1) % same_k.size()]
+					selected_fac = nxt_f
+					cam_lock = false
+					cam.center_on(nxt_f.center_px())
+					hud.refresh()
+					UiKit.snd("ui_select")
 				get_viewport().set_input_as_handled()
 		_:
 			if kc >= KEY_F1 and kc <= KEY_F7:
@@ -1627,6 +1837,8 @@ func net_begin(s: WorldSettings, humans: int, local_slot: int) -> void:
 func net_after_restore() -> void:
 	(load("res://game/front_plan.gd") as GDScript).call("reset")  # FrontPlan has no class_name
 	world.strike_net = null
+	_reset_input_state()
+	_mp_pend_builds.clear()
 	hud.set_net_mode(true)
 	_apply_speed()
 	hud.refresh()
@@ -1760,8 +1972,8 @@ func _kind_act(nm: String) -> void:
 	var p: Country = world.player
 	if p == null or parts.size() < 2:
 		return
-	var kind: int = int(parts[1])
 	if parts[0] == "kind_repair":
+		var kind: int = int(parts[1])
 		_sim("mil", "restore_kinds", [p, [kind]], func(r: Variant) -> void:
 			var rr: Array = r if r is Array else [0, 0, 0, ""]
 			var rwhy: String = String(rr[3]) if rr.size() > 3 else ""
@@ -1773,20 +1985,48 @@ func _kind_act(nm: String) -> void:
 				UiKit.snd("ui_error")
 			if hud.panel_kind == "kind_repair":
 				hud.open_kind_mass("repair"))
-	else:
-		var target: int = int(parts[2])
-		_sim("econ", "upgrade_kinds", [p, [kind], target], func(r: Variant) -> void:
-			var ur: Array = r if r is Array else [0, 0, 0, ""]
-			var uwhy: String = String(ur[3]) if ur.size() > 3 else ""
-			if int(ur[0]) > 0:
-				hud.show_toast(Loc.msg(Loc.mk("Улучшено: %d объект(ов), −%d%s", [int(ur[0]), int(ur[1]), (Loc.t(" · не начато: ") + uwhy) if uwhy != "" else ""])))
+		return
+	if parts[0] == "cat_prot":
+		var what: String = String(parts[1])
+		_sim("econ", "protect_all", [p, what], func(r: Variant) -> void:
+			var pr: Array = r if r is Array else [0, 0, 0, ""]
+			var pwhy: String = String(pr[3]) if pr.size() > 3 else ""
+			if int(pr[0]) > 0:
+				hud.show_toast(Loc.msg(Loc.mk("Защита: %d объект(ов), −%d%s", [int(pr[0]), int(pr[1]), (Loc.t(" · не начато: ") + pwhy) if pwhy != "" else ""])))
 				UiKit.snd("ui_build")
 			else:
-				hud.show_toast((Loc.t("Улучшать нечего: ") + uwhy) if uwhy != "" else Loc.t("Улучшать нечего"))
+				hud.show_toast((Loc.t("Защита не начата: ") + pwhy) if pwhy != "" else Loc.t("Улучшать нечего"))
 				UiKit.snd("ui_error")
 			if hud.panel_kind == "kind_upgrade":
-				hud.open_kind_mass("upgrade")
-			_refresh_res_sheet())
+				hud.open_kind_mass("upgrade"))
+		return
+	var kinds_arr: Array = []
+	var target: int = 2
+	var ore_res: String = ""
+	var spec_m: int = 0
+	if parts[0] == "cat_upg":
+		var cat: String = String(parts[1])
+		kinds_arr = Economy.UPG_CATS.get(cat, [])
+		target = int(parts[2]) if parts.size() > 2 else 2
+		spec_m = int(parts[3]) if parts.size() > 3 else 0
+	else:
+		kinds_arr = [int(parts[1])]
+		target = int(parts[2]) if parts.size() > 2 else 2
+		ore_res = String(parts[3]) if parts.size() > 3 else ""
+		spec_m = int(parts[4]) if parts.size() > 4 else 0
+	var m_args: Array = [p, kinds_arr, target, ore_res, spec_m] if spec_m > 0 else [p, kinds_arr, target, ore_res]
+	_sim("econ", "upgrade_kinds", m_args, func(r: Variant) -> void:
+		var ur: Array = r if r is Array else [0, 0, 0, ""]
+		var uwhy: String = String(ur[3]) if ur.size() > 3 else ""
+		if int(ur[0]) > 0:
+			hud.show_toast(Loc.msg(Loc.mk("Улучшено: %d объект(ов), −%d%s", [int(ur[0]), int(ur[1]), (Loc.t(" · не начато: ") + uwhy) if uwhy != "" else ""])))
+			UiKit.snd("ui_build")
+		else:
+			hud.show_toast((Loc.t("Улучшать нечего: ") + uwhy) if uwhy != "" else Loc.t("Улучшать нечего"))
+			UiKit.snd("ui_error")
+		if hud.panel_kind == "kind_upgrade":
+			hud.open_kind_mass("upgrade")
+		_refresh_res_sheet())
 
 
 func _refresh_res_sheet() -> void:
@@ -1911,3 +2151,151 @@ func _open_city_rename(c: City) -> void:
 	UiKit.pop_in(card)
 	ed.grab_focus.call_deferred()
 	ed.select_all.call_deferred()
+
+
+var _hover_last_mp: Vector2 = Vector2.INF
+var _hover_moved_ms: int = 0
+var _insp_cell: Vector2i = Vector2i(-999, -999)
+var _insp_t_ms: int = 0
+var _insp_txt: String = ""
+
+
+func _pc_hover_ui() -> void:
+	if hud == null:
+		return
+	if not _PcP.desktop() or in_menu or world == null or cam == null or (menus != null and menus.is_open()):
+		hud.set_ghost_tip("", Color.WHITE, Vector2.ZERO)
+		hud.set_map_tip("")
+		return
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	var mp: Vector2 = vp.get_mouse_position()
+	if not Rect2(Vector2.ZERO, vp.get_visible_rect().size).has_point(mp):
+		hud.set_ghost_tip("", Color.WHITE, Vector2.ZERO)
+		hud.set_map_tip("")
+		return
+	var now_ms: int = Time.get_ticks_msec()
+	if not _hover_last_mp.is_finite() or mp.distance_to(_hover_last_mp) > 4.0:
+		_hover_last_mp = mp
+		_hover_moved_ms = now_ms
+	var on_ui: bool = vp.gui_get_hovered_control() != null
+	if on_ui:
+		hud.set_ghost_tip("", Color.WHITE, Vector2.ZERO)
+		hud.set_map_tip("")
+		return
+	var wp: Vector2 = cam.screen_to_world(mp)
+	var cell: Vector2i = Vector2i((wp / GameWorld.CELL).floor())
+	if BUILD_KIND.has(mode) or mode == Mode.MODULE:
+		var k_g: int = module_kind if mode == Mode.MODULE else int(BUILD_KIND[mode])
+		var cell_g: Vector2i = cell
+		if mode != Mode.MODULE and k_g == Facility.Kind.MINE and not world.econ.deposit_near(cell_g, 3, ["uranium"]).is_empty():
+			k_g = Facility.Kind.URANIUM_MINE
+		if k_g == Facility.Kind.NAVAL_BASE and world.get("navy") != null:
+			cell_g = _navy_snap(cell_g)
+		var nw: Vector2i = Military.nw_for(k_g, cell_g)
+		var why_g: String = ghost_place_why(k_g, nw, module_port if mode == Mode.MODULE else null)
+		var sh_g: bool = _shift_down() and not _ui_typing()
+		var sh_tag: String = ("\n" + Loc.t("⇧ серийное строительство")) if sh_g else ""
+		if why_g != "":
+			hud.set_ghost_tip(why_g + sh_tag, UiKit.RED, mp)
+		else:
+			var er_s = load("res://game/econ_rates.gd")
+			var yld: String = String(er_s.call("build_yield", world, world.player, k_g)) if (er_s != null and world.player != null) else ""
+			var ok_txt: String = Loc.t(Military.title_of(k_g)) + ((" · " + yld) if yld != "" else " · " + Loc.t("можно"))
+			if mode != Mode.MODULE and world.mil.has_method("detour_note") and Military.detours(k_g):
+				var dn: String = String(world.mil.detour_note(k_g, nw))
+				if dn != "":
+					ok_txt += " · " + dn
+			hud.set_ghost_tip(ok_txt + sh_tag, UiKit.GREEN, mp)
+		hud.set_map_tip("")
+		return
+	if mode == Mode.TRENCH_H or mode == Mode.TEETH_H:
+		var tk: int = int(BUILD_KIND[mode])
+		var sh_t: bool = _shift_down() and not _ui_typing()
+		var sh_tag_t: String = ("\n" + Loc.t("⇧ серийное строительство")) if sh_t else ""
+		var t_why: String = ghost_place_why(tk, cell, null)
+		if t_why != "":
+			hud.set_ghost_tip(t_why + sh_tag_t, UiKit.RED, mp)
+		else:
+			hud.set_ghost_tip("%s · %d%s" % [Loc.t(Military.title_of(tk)), Military.cost_of(tk), sh_tag_t], UiKit.GREEN, mp)
+		hud.set_map_tip("")
+		return
+	if mode in [Mode.NUKE_TARGET, Mode.MISSILE, Mode.CR_TARGET, Mode.HYP_TARGET, Mode.SHIP_CR, Mode.RECON, Mode.ORDER, Mode.SATELLITE, Mode.TOWN]:
+		var blk_t: String = world.diplo.strike_block_at(world.player.id, wp, false) if (world.diplo != null and world.player != null and mode in [Mode.NUKE_TARGET, Mode.MISSILE, Mode.CR_TARGET, Mode.HYP_TARGET, Mode.SHIP_CR]) else ""
+		var sh_o: bool = _shift_down() and not _ui_typing() and mode in [Mode.TOWN, Mode.RECON, Mode.ORDER]
+		var sh_tag_o: String = ("\n" + Loc.t("⇧ серийное строительство")) if sh_o else ""
+		if blk_t != "":
+			hud.set_ghost_tip(blk_t, UiKit.RED, mp)
+		elif mode == Mode.TOWN:
+			hud.set_ghost_tip("%s · %d (%d, %d)%s" % [Loc.t("Город"), Military.COST_TOWN, cell.x, cell.y, sh_tag_o], UiKit.GOLD, mp)
+		else:
+			hud.set_ghost_tip((Loc.t("Сектор (%d, %d)") % [cell.x, cell.y]) + sh_tag_o, UiKit.GOLD, mp)
+		hud.set_map_tip("")
+		return
+	hud.set_ghost_tip("", Color.WHITE, Vector2.ZERO)
+	var pc_n: Node = get_node_or_null("/root/PcPort")
+	var tips_on: bool = pc_n == null or bool(pc_n.get("hover_tips"))
+	if not tips_on or mode != Mode.NONE or world.player == null or hud.panel != null or hud.ui24_open_now():
+		hud.set_map_tip("")
+		return
+	if now_ms - _hover_moved_ms < 150:
+		return
+	if _insp_cell != cell or now_ms - _insp_t_ms >= 400:
+		_insp_cell = cell
+		_insp_t_ms = now_ms
+		_insp_txt = _build_map_inspect(wp, cell)
+	hud.set_map_tip(_insp_txt)
+
+
+func _build_map_inspect(wp: Vector2, cell: Vector2i) -> String:
+	if world == null or world.data == null or not world.data.inside(cell.x, cell.y):
+		return ""
+	if world.vision != null and world.vision.active() and not world.vision.sees(wp):
+		return "%s · (%d, %d)" % [Loc.t("Туман войны"), cell.x, cell.y]
+	var water: bool = Biome.is_water(world.data.get_biome(cell.x, cell.y))
+	var terr: String = Loc.t("Вода") if water else (Loc.t("Дорога") if world.data.has_flag(cell.x, cell.y, WorldData.F_ROAD) else Loc.t("Суша"))
+	var oid: int = world.data.get_owner_id(cell.x, cell.y)
+	var own_s: String = Loc.t("Нейтр.")
+	if oid > 0:
+		var oc: Country = world.country_by_id(oid)
+		own_s = Loc.name(oc.name) if oc != null else "?"
+		if world.player != null and oid != world.player.id and world.diplo != null:
+			if world.diplo.at_war(world.player.id, oid):
+				own_s += " " + Loc.t("[Война]")
+			elif world.diplo.allied(world.player.id, oid):
+				own_s += " " + Loc.t("[Союз]")
+	var l1: String = "%s · %s · (%d, %d)" % [terr, own_s, cell.x, cell.y]
+	var extra: Array[String] = []
+	var hf: Facility = world.mil.facility_at(cell) if world.mil != null else null
+	if hf != null and (hf.country_id == world.player.id or world.vision == null or world.vision.shows(hf.country_id, hf.center_px())):
+		var fs: String = Loc.t(Military.title_of(hf.kind))
+		if Economy.UPG_RES.has(hf.kind) and world.econ != null:
+			fs += " %s%d" % [Loc.t("ур."), int(world.econ.level_of(hf))]
+			if hf.t3_spec == 1:
+				fs += " ⚡"
+			elif hf.t3_spec == 2:
+				fs += " 🛡"
+		if hf.kind == Facility.Kind.AD_ZASLON:
+			fs += " · %d/%d" % [hf.ammo, Defense.ZASLON_CAP]
+		elif hf.kind == Facility.Kind.NUCLEAR_PLANT and hf.npp_overheat_t >= 0.0:
+			fs += " · " + Loc.t("ПЕРЕГРЕВ %dс") % ceili(hf.npp_overheat_t)
+		elif hf.emp_until > world.game_time:
+			fs += " · " + Loc.t("ЭМИ %dс") % ceili(hf.emp_until - world.game_time)
+		elif not world.mil.alive(hf):
+			fs += " · " + Loc.t("разрушен")
+		elif hf.restore_t > 0.0:
+			fs += " · " + Loc.t("строит. %dс") % ceili(hf.restore_t)
+		extra.append(fs)
+	elif world.econ != null and world.econ.has_method("deposit_at"):
+		var hd: Dictionary = world.econ.deposit_at(cell, 1)
+		if not hd.is_empty():
+			var rname: String = String(Economy.RES_NAMES.get(String(hd.get("res", "")), ""))
+			var left_s: String = "" if GameConfig.infinite_res() else " (%d)" % int(hd.get("left", 0))
+			extra.append(Loc.t("Залежь: %s") % rname + left_s)
+	if extra.is_empty():
+		for ct: City in world.cities:
+			if absf(float(ct.center.x - cell.x)) <= float(ct.radius) and absf(float(ct.center.y - cell.y)) <= float(ct.radius) and Vector2(ct.center).distance_to(Vector2(cell)) <= float(ct.radius):
+				extra.append((Loc.t("Столица %s") if ct.kind == City.Kind.CAPITAL else Loc.t("Город %s")) % Loc.name(ct.name))
+				break
+	return l1 if extra.is_empty() else (l1 + "\n" + " · ".join(extra))

@@ -47,6 +47,13 @@ const EATERS: Dictionary = {"oil": "refinery", "uranium": "npp", "food": "army",
 
 
 static func level_mul(f: Facility) -> float:
+	if f == null:
+		return 1.0
+	if f.level >= Economy.MAX_LEVEL:
+		if f.t3_spec == 1:
+			return 2.6
+		if f.t3_spec == 2:
+			return 1.85
 	return float(Economy.LEVEL_MUL[clampi(f.level, 1, Economy.MAX_LEVEL)])
 
 

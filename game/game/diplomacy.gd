@@ -424,6 +424,10 @@ func _v11_update(dt: float) -> void:
 			demands.remove_at(i)
 			pending_changed.emit()
 			continue
+		if String(d.get("kind", "")) == "halt_nukes" and _demand_ok(d) != "":
+			demands.remove_at(i)
+			pending_changed.emit()
+			continue
 		if not to.is_player and now >= float(d["made"]) + AI_ANSWER_T:
 			demands.remove_at(i)
 			if ai_yields(to.id, int(d["from"]), d):

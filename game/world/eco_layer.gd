@@ -363,29 +363,49 @@ func _ensure_marks() -> void:
 
 
 func _draw_marks() -> void:
-	if gw == null or gw.camera == null:
+	if gw == null or gw.camera == null or _marks_list.is_empty():
 		return
 	var z: float = gw.camera.zoom.x
 	var k: float = 1.0 / z
+	var inv_k: float = z
 	var half: float = float(ORE_ICON) * 0.5
 	var font: Font = UiKit.f_black if UiKit.f_black != null else ThemeDB.fallback_font
 	var ink: = Color(0.043, 0.078, 0.188)
+	var t_anim: float = 0.5 + 0.5 * sin(FxLayer.vt * 4.0)
+	_marks.draw_set_transform(Vector2.ZERO, 0.0, Vector2(k, k))
+	for e0: Array in _marks_list:
+		if bool(e0[5]):
+			_marks.draw_arc((e0[0] as Vector2) * inv_k, half + 2.5 + t_anim * 2.0, 0.0, TAU, 20, Color(1.0, 0.94, 0.75, 0.45 + 0.4 * t_anim), 1.5)
+	var by_tx: Dictionary = {}
+	var badges: Array = []
 	for e: Array in _marks_list:
+		var op: Vector2 = (e[0] as Vector2) * inv_k
 		var a: float = e[3]
 		var v2: int = e[2]
 		var n: int = e[4]
-		_marks.draw_set_transform(e[0] as Vector2, 0.0, Vector2(k, k))
-		if bool(e[5]):
-			var t: float = 0.5 + 0.5 * sin(FxLayer.vt * 4.0)
-			_marks.draw_arc(Vector2.ZERO, half + 2.5 + t * 2.0, 0.0, TAU, 20, Color(1.0, 0.94, 0.75, 0.45 + 0.4 * t), 1.5)
-		_marks.draw_texture(ore_tex(String(e[1]), v2), -Vector2(half, half), Color(1, 1, 1, a))
+		var tex: Texture2D = ore_tex(String(e[1]), v2)
+		var rid_o: int = tex.get_rid().get_id()
+		var bkt: Variant = by_tx.get(rid_o)
+		if bkt == null:
+			bkt = []
+			by_tx[rid_o] = bkt
+		(bkt as Array).append([tex, op - Vector2(half, half), Color(1, 1, 1, a)])
 		if n >= 2:
 			var txt: String = str(n)
 			var tw: float = font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
-			var br: = Rect2(Vector2(half - 4.0, -half - 3.0), Vector2(tw + 4.0, 10.0))
-			_marks.draw_rect(br.grow(1.0), Color(ink, a))
-			_marks.draw_rect(br, Color(0.96, 0.93, 0.82, a) if v2 != 2 else Color(0.62, 0.6, 0.55, a))
-			_marks.draw_string(font, Vector2(br.position.x + 2.0, br.end.y - 1.5), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(ink, a))
+			var br: = Rect2(op + Vector2(half - 4.0, -half - 3.0), Vector2(tw + 4.0, 10.0))
+			badges.append([br, a, v2, txt])
+	for rk: Variant in by_tx:
+		for ot: Array in (by_tx[rk] as Array):
+			_marks.draw_texture(ot[0] as Texture2D, ot[1] as Vector2, ot[2] as Color)
+	for bd: Array in badges:
+		var br2: Rect2 = bd[0] as Rect2
+		var a2: float = float(bd[1])
+		_marks.draw_rect(br2.grow(1.0), Color(ink, a2))
+		_marks.draw_rect(br2, Color(0.96, 0.93, 0.82, a2) if int(bd[2]) != 2 else Color(0.62, 0.6, 0.55, a2))
+	for bd2: Array in badges:
+		var br3: Rect2 = bd2[0] as Rect2
+		_marks.draw_string(font, Vector2(br3.position.x + 2.0, br3.end.y - 1.5), String(bd2[3]), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(ink, float(bd2[1])))
 	_marks.draw_set_transform(Vector2.ZERO)
 
 

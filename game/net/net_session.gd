@@ -37,7 +37,7 @@ const ALLOWED: Dictionary = {
 	"mil.set_auto_strike": 0, "mil.set_auto_kab": 0, "mil.set_auto_drones": 0, "mil.launch": -1,
 	"mil.launch_multi_ex": -1, "mil.launch_missiles": -1, "mil.launch_missiles_multi": -1,
 	"mil.retarget": -1, "mil.order_move": -1,
-	"mil.air.set_pylon": -1, "mil.air.buy": -1, "mil.air.order_land": -1, "mil.air.upgrade": -1,
+	"mil.air.set_pylon": -1, "mil.air.buy": -1, "mil.air.buy_batch": -1, "mil.air.order_land": -1, "mil.air.upgrade": -1,
 	"mil.air.set_payload": -1, "mil.air.order_patrol": -1, "mil.air.order_fly": -1,
 	"mil.air.launch_kab": -1, "mil.air.launch_cruise": -1, "mil.air.multi_launch": -1,
 	"mil.air.kab_strike": 0, "mil.air.cas_support": 0, "mil.air.sell": -1, "mil.air.rebase": -1,
@@ -71,7 +71,9 @@ const ALLOWED: Dictionary = {
 	"diplo.conf.demand_surrender": 0, "diplo.conf.pick": 3, "diplo.conf.reset_picks": 1, "diplo.conf.confirm": 1,
 	"navy.order": -1, "navy.cancel": -1,
 	".cmd_static": -1, ".cmd_strike": -1, ".cmd_refill_all": -1,
-	".cmd_nuke_build": -1, ".cmd_nuke_arm": -1, ".cmd_nuke_launch": -1,
+	".cmd_nuke_build": -1, ".cmd_nuke_arm": -1, ".cmd_nuke_launch": -1, ".cmd_nuke_warhead": -1,
+	".cmd_npp_scram": -1, ".cmd_t3_spec": -1, ".cmd_power_prio": 0, ".cmd_fuel_dispatch": -1,
+	".cmd_zaslon_buy": -1, "defense.buy_zaslon_ammo": -1, "econ.protect_all": -1,
 	"hold.occupy": 2, "hold.leave": 1,  # v0.30.14 R314 (twink): soldiers into / out of a city building (game/urban_hold.gd)
 	"econ.trd.set_sanctions": 0, "econ.trd.contract_offer": 0, "econ.trd.contract_answer": 0, "econ.trd.contract_cancel": 0,  # R331 TRADE (game/trade331.gd; the function checks `me` is a party)
 	"rail.set_rail_ok": -1,  # R332b RAIL332: «ЖД: РАЗРЕШЕНО / ЗАПРЕЩЕНО» (args[0] = the author's Country; the barracks are checked to be his)

@@ -330,6 +330,8 @@ func _setup() -> void:
 	_dead = PackedByteArray()
 	_pos = PackedVector2Array()
 	_seen_t = PackedFloat32Array()
+	_sync_n = 0
+	_sync_wait.clear()
 	_news_q.clear()
 	reveals.clear()
 	_pid = -1
@@ -432,21 +434,40 @@ func _recompute() -> void:
 	vis = img.get_data()
 	air = air_img.get_data()
 	vis_ver += 1
+	_sync_wait.clear()
 	for f: Facility in mil.facilities:
 		_eval(f)
+		if f.id < _shown.size() and _shown[f.id] == 0:
+			_sync_wait.append(f)
+	_sync_n = mil.facilities.size()
 	ms = float(Time.get_ticks_usec() - t0) / 1000.0
 	ms_max = maxf(ms_max, ms)
 
 
 
 
+var _sync_n: int = 0
+var _sync_wait: Array = []
+
+
 func _sync() -> void:
+	var facs: Array[Facility] = gw.mil.facilities
+	var total: int = facs.size()
+	if _sync_n > total:
+		_sync_n = 0
+		_sync_wait.clear()
+	for i in range(_sync_n, total):
+		var f: Facility = facs[i]
+		_eval(f)
+		if f.id < _shown.size() and _shown[f.id] == 0:
+			_sync_wait.append(f)
+	_sync_n = total
 	var n: int = _known.size()
-	for f: Facility in gw.mil.facilities:
-		if f.id >= n:
-			_eval(f)
-		elif _shown[f.id] == 0 and not f.obj_ids.is_empty():
-			_hide_objs(f)
+	for f2: Facility in _sync_wait:
+		if f2.id >= n:
+			_eval(f2)
+		elif _shown[f2.id] == 0 and not f2.obj_ids.is_empty():
+			_hide_objs(f2)
 
 
 

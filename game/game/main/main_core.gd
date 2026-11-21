@@ -49,10 +49,31 @@ func pc_cancel_mode() -> bool:
 	return false
 
 
+func _shift_down(ev: InputEvent = null) -> bool:
+	if ev is InputEventWithModifiers:
+		return (ev as InputEventWithModifiers).shift_pressed
+	var focused: bool = DisplayServer.get_name() == "headless" or DisplayServer.window_is_focused()
+	return focused and Input.is_key_pressed(KEY_SHIFT)
+
+
+func _clear_shift_series() -> void:
+	_shift_built_in_series = false
+	_shift_mouse_tap = false
+
+
+func _desktop_shift_suffix() -> String:
+	return (" · " + Loc.t("[Shift] серия · ПКМ выход")) if _PcP.desktop() else ""
+
+
 func _set_mode(m: int) -> void:
+	var prev_mode: int = mode
 	if strike.active and not _strike_sw and not _is_strike_mode(m):
 		strike.end(_plan_targets(), false)
 	mode = m
+	if m == Mode.NONE or m != prev_mode:
+		_clear_shift_series()
+		_ghost_place_cache.clear()
+		_gw_t = 0
 	if not _pend.is_empty() and not _confirming:
 		_pend = {}
 		hud.hide_confirm()
@@ -96,22 +117,31 @@ func _set_mode(m: int) -> void:
 	if m != Mode.NONE and m != Mode.MODULE and m != Mode.NUKE_TARGET:
 		selected_fac = null
 	hud.set_key_pressed("route", route_mode)
-	match m:
+	_refresh_mode_hint(m)
+	_sel_hint = ""
+	if _ghost != null:
+		_ghost.queue_redraw()
+
+
+func _refresh_mode_hint(m: int = -1) -> void:
+	var cm: int = mode if m < 0 else m
+	var suf: String = _desktop_shift_suffix()
+	match cm:
 		Mode.CAPITAL:
 			hud.set_hint("ВЫБЕРИТЕ МЕСТО ДЛЯ СТОЛИЦЫ")
 		Mode.TOWN:
-			hud.set_hint(Loc.t("ГОРОД %d: СВОБОДНАЯ ЗЕМЛЯ ДО 360 М ОТ СТРАНЫ") % Military.COST_TOWN)
+			hud.set_hint((Loc.t("ГОРОД %d: СВОБОДНАЯ ЗЕМЛЯ ДО 360 М ОТ СТРАНЫ") % Military.COST_TOWN) + suf)
 		Mode.STRIKE:
 			hud.set_hint("ТЕСТОВЫЙ УДАР: НАЖМИТЕ НА ЦЕЛЬ")
-		Mode.FACTORY, Mode.DRONEPORT, Mode.TEL, Mode.MFACTORY, Mode.REFINERY, Mode.POWER, Mode.AIRFIELD, Mode.AIRPORT, Mode.SAWMILL, Mode.OIL_RIG, Mode.PORT, Mode.SOLAR_FARM, Mode.NAVBASE, Mode.NPP, Mode.UMINE:
-			var kind: int = BUILD_KIND[m]
+		Mode.FACTORY, Mode.DRONEPORT, Mode.TEL, Mode.MFACTORY, Mode.REFINERY, Mode.POWER, Mode.AIRFIELD, Mode.AIRPORT, Mode.SAWMILL, Mode.OIL_RIG, Mode.PORT, Mode.SOLAR_FARM, Mode.NAVBASE, Mode.NPP, Mode.UMINE, Mode.FARM, Mode.CIV, Mode.MINE, Mode.BARRACKS, Mode.AD_MFG, Mode.AD_SPAAG, Mode.AD_SAM, Mode.AD_PATRIOT, Mode.AD_INT, Mode.AD_RADAR, Mode.AD_EW, Mode.DUGOUT, Mode.COASTAL_ASM, Mode.DEPOT_S, Mode.DEPOT_M, Mode.DEPOT_L, Mode.STORE_S, Mode.STORE_M, Mode.STORE_L, Mode.NUKE_SILO, Mode.AD_ZASLON:
+			var kind: int = BUILD_KIND[cm]
 			var bc1: Dictionary = Economy.build_cost(kind)
 			if world.player != null and world.mil.has_method("price_of") and bc1.has("money"):
 				bc1 = bc1.duplicate()
 				bc1["money"] = world.mil.price_of(kind, world.player)
-			hud.set_hint("%s (%s): %s" % [Military.title_of(kind).to_upper(), Economy.cost_text(bc1).to_upper(), _where(m)])
+			hud.set_hint("%s (%s): %s%s" % [Military.title_of(kind).to_upper(), Economy.cost_text(bc1).to_upper(), _where(cm), suf])
 		Mode.MODULE:
-			hud.set_hint(Loc.t("%s, %d: РЯДОМ (ДО %d М)") % [Loc.t(Military.title_of(module_kind)).to_upper(), Military.cost_of(module_kind), Military.MODULE_R * GameWorld.CELL])
+			hud.set_hint((Loc.t("%s, %d: РЯДОМ (ДО %d М)") % [Loc.t(Military.title_of(module_kind)).to_upper(), Military.cost_of(module_kind), Military.MODULE_R * GameWorld.CELL]) + suf)
 		Mode.TARGET:
 			hud.set_hint("ЦЕЛЬ И ТОЧКИ МОЖНО ПЕРЕТАСКИВАТЬ")
 		Mode.MOVE_ALL:
@@ -124,9 +154,9 @@ func _set_mode(m: int) -> void:
 			hud.set_hint("ДВИЖЕНИЕ: ПРОВЕДИТЕ ПАЛЬЦЕМ ОТ КАЗАРМЫ К ЦЕЛИ (ИЛИ ТАП ПО ЦЕЛИ)")
 		Mode.ORDER:
 			var oi: Dictionary = world.ops.order_info(order_kind)
-			hud.set_hint(Loc.t("%s (%s): ТАП ПО МЕСТУ") % [Loc.t(String(oi.get("name", ""))).to_upper(), Loc.t(String(oi.get("cost_text", ""))).to_upper()])
+			hud.set_hint((Loc.t("%s (%s): ТАП ПО МЕСТУ") % [Loc.t(String(oi.get("name", ""))).to_upper(), Loc.t(String(oi.get("cost_text", ""))).to_upper()]) + suf)
 		Mode.RECON:
-			hud.set_hint("РАЗВЕДДРОН: ТАП ПО ТОЧКЕ ДО 4.5 КМ ОТ ДРОНОПОРТА")
+			hud.set_hint(Loc.t("РАЗВЕДДРОН: ТАП ПО ТОЧКЕ ДО 4.5 КМ ОТ ДРОНОПОРТА") + suf)
 		Mode.EXPEDITION:
 			hud.set_hint("КОЛОНИЯ: ТАП ПО СВОБОДНОМУ БЕРЕГУ")
 		Mode.SATELLITE:
@@ -150,21 +180,13 @@ func _set_mode(m: int) -> void:
 		Mode.ATTACK:
 			hud.set_hint(Loc.t("НАСТУПЛЕНИЕ: ТАП ПО ЧУЖОМУ ГОРОДУ") if attack_from == null else Loc.t("АТАКА ИЗ КАЗАРМ: ТАП ПО ГОРОДУ"))
 		Mode.RAIL_ST, Mode.RAIL_LINE:
-			hud.set_hint(RB.hint(self, m))
+			hud.set_hint(RB.hint(self, cm))
 		Mode.TRENCH_H, Mode.TEETH_H:
-			hud.set_hint(Loc.t("%s: ВЕДИТЕ ПАЛЬЦЕМ ПО СВОЕЙ ЗЕМЛЕ (%d/КЛЕТКА). КАРТА - ДВУМЯ ПАЛЬЦАМИ") % [Loc.t("ОКОП") if m == Mode.TRENCH_H else Loc.t("ЗУБЫ ДРАКОНА"), Military.cost_of(BUILD_KIND[m])])
-		Mode.FARM, Mode.CIV, Mode.MINE, Mode.BARRACKS, Mode.AD_MFG, Mode.AD_SPAAG, Mode.AD_SAM, Mode.AD_PATRIOT, Mode.AD_INT, Mode.AD_RADAR, Mode.AD_EW, Mode.DUGOUT, Mode.COASTAL_ASM, Mode.DEPOT_S, Mode.DEPOT_M, Mode.DEPOT_L, Mode.STORE_S, Mode.STORE_M, Mode.STORE_L, Mode.NUKE_SILO, Mode.AD_ZASLON:
-			var kind2: int = BUILD_KIND[m]
-			var bc2: Dictionary = Economy.build_cost(kind2)
-			if world.player != null and world.mil.has_method("price_of") and bc2.has("money"):
-				bc2 = bc2.duplicate()
-				bc2["money"] = world.mil.price_of(kind2, world.player)
-			hud.set_hint("%s (%s): %s" % [Military.title_of(kind2).to_upper(), Economy.cost_text(bc2).to_upper(), _where(m)])
+			hud.set_hint((Loc.t("%s: ВЕДИТЕ ПАЛЬЦЕМ ПО СВОЕЙ ЗЕМЛЕ (%d/КЛЕТКА). КАРТА - ДВУМЯ ПАЛЬЦАМИ") % [Loc.t("ОКОП") if cm == Mode.TRENCH_H else Loc.t("ЗУБЫ ДРАКОНА"), Military.cost_of(BUILD_KIND[cm])]) + suf)
 		Mode.NUKE_TARGET:
 			hud.set_hint(Loc.t("ЯДЕРНЫЙ УДАР: ТАП ПО ЛЮБОЙ ТОЧКЕ КАРТЫ (ПЕРЕХВАТЫВАЕТ ТОЛЬКО ПРО «ЗАСЛОН»)"))
 		_:
 			hud.set_hint("")
-	_sel_hint = ""
 
 
 func _where(m: int) -> String:
@@ -591,10 +613,22 @@ func _confirm_mode(m: int) -> bool:
 	return BUILD_KIND.has(m) or m in [Mode.CAPITAL, Mode.TOWN, Mode.SATELLITE, Mode.OPERATION, Mode.ORDER, Mode.RECON, Mode.ATTACK, Mode.MODULE, Mode.MOVE_ALL, Mode.EXPEDITION]
 
 
-func _build_line_now(kind: int, cells: Array[Vector2i]) -> void:
+func _build_line_now(kind: int, cells: Array[Vector2i], from_shift: bool = false) -> void:
+	if from_shift:
+		_shift_built_in_series = true
+	_ghost_place_cache.clear()
+	_gw_t = 0
 	_sim("mil", "build_line", [kind, cells, world.player], func(r: Variant) -> void:
+		_ghost_place_cache.clear()
 		if r != null:
-			hud.show_toast(Loc.n(cells.size(), "%s: копают %d клетку", "%s: копают %d клетки", "%s: копают %d клеток") % [Loc.t("Окоп") if kind == Facility.Kind.TRENCH_H else Loc.t("Зубы дракона"), cells.size()]))
+			hud.show_toast(Loc.n(cells.size(), "%s: копают %d клетку", "%s: копают %d клетки", "%s: копают %d клеток") % [Loc.t("Окоп") if kind == Facility.Kind.TRENCH_H else Loc.t("Зубы дракона"), cells.size()])
+			UiKit.snd("ui_build")
+			if _PcP.desktop() and from_shift and _shift_down() and (mode == Mode.TRENCH_H or mode == Mode.TEETH_H):
+				_refresh_mode_hint()
+			else:
+				_set_mode(Mode.NONE)
+		else:
+			UiKit.snd("ui_error"))
 
 
 
@@ -766,18 +800,97 @@ func _ghost_why(kind: int, nw: Vector2i) -> String:
 
 
 
+var _mp_pend_seq: int = 1
+func _mp_pend_prune() -> void:
+	if net == null or not net.in_match or world == null or world.player == null:
+		_mp_pend_builds.clear()
+		return
+	var now_ms: int = Time.get_ticks_msec()
+	for i in range(_mp_pend_builds.size() - 1, -1, -1):
+		if now_ms - int(_mp_pend_builds[i].get("ms", 0)) > 1500:
+			_mp_pend_builds.remove_at(i)
+
+
+func _mp_pend_record(kind: int, nw: Vector2i, pl: Country) -> int:
+	if net == null or not net.in_match or pl == null:
+		return -1
+	_mp_pend_prune()
+	var tok: int = _mp_pend_seq
+	_mp_pend_seq += 1
+	var pm: int = int(world.mil.price_of(kind, pl)) if world.mil != null else 0
+	var pr: Dictionary = Economy.res_cost("build_%d" % kind)
+	_mp_pend_builds.append({"tok": tok, "ms": Time.get_ticks_msec(), "nw": nw, "sz": Military.size_of(kind), "money": pm, "res": pr})
+	return tok
+
+
+func _mp_pend_record_town(cell: Vector2i) -> int:
+	if net == null or not net.in_match:
+		return -1
+	_mp_pend_prune()
+	var tok: int = _mp_pend_seq
+	_mp_pend_seq += 1
+	_mp_pend_builds.append({"tok": tok, "ms": Time.get_ticks_msec(), "nw": cell, "sz": Vector2i(1, 1), "money": Military.COST_TOWN, "res": {}})
+	return tok
+
+
+func _mp_pend_done(tok: int) -> void:
+	if tok < 0:
+		return
+	for i in range(_mp_pend_builds.size() - 1, -1, -1):
+		if int(_mp_pend_builds[i].get("tok", -1)) == tok:
+			_mp_pend_builds.remove_at(i)
+			break
+
+
+func _mp_pend_why(kind: int, nw: Vector2i) -> String:
+	if net == null or not net.in_match or _mp_pend_builds.is_empty():
+		return ""
+	_mp_pend_prune()
+	var r: = Rect2i(nw, Military.size_of(kind))
+	for pe: Dictionary in _mp_pend_builds:
+		var er: = Rect2i(pe["nw"] as Vector2i, pe["sz"] as Vector2i)
+		if r.intersects(er):
+			return Loc.t("Место занято: в очереди")
+	return ""
+
+
+func _build_res_why(kind: int, pl: Country) -> String:
+	if pl == null or world == null or world.mil == null:
+		return ""
+	var need_m: int = int(world.mil.price_of(kind, pl))
+	var bres: Dictionary = Economy.res_cost("build_%d" % kind)
+	var res_m: int = 0
+	var res_r: Dictionary = {}
+	if net != null and net.in_match:
+		_mp_pend_prune()
+		for e: Dictionary in _mp_pend_builds:
+			res_m += int(e.get("money", 0))
+			var er: Dictionary = e.get("res", {})
+			for rk: String in er:
+				res_r[rk] = int(res_r.get(rk, 0)) + int(er[rk])
+	if pl.money - res_m < need_m:
+		return Loc.t("Не хватает денег: нужно %d") % need_m
+	if not pl.has_res(bres):
+		return Loc.t("Не хватает: %s") % pl.missing_res(bres)
+	for rk2: String in bres:
+		if int(pl.get(rk2)) - int(res_r.get(rk2, 0)) < int(bres[rk2]):
+			return Loc.t("Не хватает: %s") % Economy.cost_text({rk2: int(bres[rk2])})
+	return ""
+
+
 func _draw_ghost() -> void:
 	if world.player == null:
 		return
 	_ghost_own_rings()
 	if RB.draw(self, _ghost):
 		return
-	if _pend.is_empty():
-		return
 	var C: float = float(GameWorld.CELL)
-	var m: int = int(_pend.get("mode", mode))
 	var ok_col: = Color(0.35, 1.0, 0.45, 0.45)
 	var bad_col: = Color(1.0, 0.3, 0.25, 0.45)
+	if _pend.is_empty():
+		_draw_hover_ghost(C, ok_col, bad_col)
+		return
+	var m: int = int(_pend.get("mode", mode))
 	match String(_pend["kind"]):
 		"demolish":
 			var gf: Facility = _pend["fac"]
@@ -795,38 +908,95 @@ func _draw_ghost() -> void:
 		"op":
 			return
 	var wp: Vector2 = _pend["wp"]
-	var cell: = Vector2i(floori(wp.x / C), floori(wp.y / C))
 	if BUILD_KIND.has(m) or m == Mode.MODULE:
-		var kind: int = module_kind if m == Mode.MODULE else int(BUILD_KIND[m])
-		if kind == Facility.Kind.NAVAL_BASE and world.get("navy") != null:
-			cell = _navy_snap(cell)
-		var nw: Vector2i = Military.nw_for(kind, cell)
-		var sz: Vector2i = Military.size_of(kind)
-		var why: String = _ghost_why(kind, nw) if m != Mode.MODULE and Military.detours(kind) else world.mil.check_place(kind, nw, world.player, module_port if m == Mode.MODULE else null, false)
-		var r: = Rect2(Vector2(nw) * C, Vector2(sz) * C)
-		var spr_ok: bool = false
-		if kind == Facility.Kind.NAVAL_BASE and world.get("atlas_navy1") is SpriteAtlas:
-
-			var na: SpriteAtlas = world.atlas_navy1
-			var vs: String = Navy.variant_sprite(Navy.cur)
-			if na.has(vs):
-				var ni: Dictionary = na.info(vs)
-				var nr: Rect2 = na.rect(vs, 0)
-				var org: Vector2 = Vector2(r.position.x, r.end.y) - Vector2(float(ni.get("ax", 0)), float(ni.get("ay", nr.size.y)))
-				_ghost.draw_rect(r, Color(ok_col, 0.14) if why == "" else Color(bad_col, 0.2))
-				_ghost.draw_texture_rect_region(na.texture, Rect2(org, nr.size), nr, Color(0.72, 1.0, 0.78, 0.66) if why == "" else Color(1.0, 0.48, 0.42, 0.66))
-				spr_ok = true
-		if not spr_ok:
-			_ghost.draw_rect(r, ok_col if why == "" else bad_col)
-		if kind == Facility.Kind.NAVAL_BASE and r.get_center().distance_to(wp) > C * 3.0:
-
-			_ghost.draw_line(wp, r.get_center(), Color(1, 1, 1, 0.7), 2.0 / cam.zoom.x)
-			_ghost.draw_circle(wp, 4.0 / cam.zoom.x, Color(1, 1, 1, 0.8))
-		var edge: Color = (Color(0.75, 1.0, 0.8) if why == "" else Color(1.0, 0.55, 0.5))
-		_ghost.draw_rect(r, edge, false, 2.0 / cam.zoom.x)
-		if m != Mode.MODULE:
-			_ghost_cover(kind, r.get_center())
+		_draw_fac_ghost(m, wp, ok_col, bad_col, false)
 		return
+	_draw_reticle(m, wp)
+
+
+func _draw_hover_ghost(C: float, ok_col: Color, bad_col: Color) -> void:
+	if net != null and net.in_match and not _mp_pend_builds.is_empty() and (BUILD_KIND.has(mode) or mode == Mode.MODULE or mode == Mode.TOWN):
+		_mp_pend_prune()
+		for pe: Dictionary in _mp_pend_builds:
+			var pr: = Rect2(Vector2(pe["nw"] as Vector2i) * C, Vector2(pe["sz"] as Vector2i) * C)
+			_ghost.draw_rect(pr, Color(UiKit.GOLD, 0.22))
+			_ghost.draw_rect(pr, UiKit.GOLD, false, 1.5 / cam.zoom.x)
+	if not _PcP.desktop() or in_menu or cam == null or (menus != null and menus.is_open()):
+		return
+	if DisplayServer.get_name() != "headless" and not DisplayServer.window_is_focused():
+		return
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	var fw: Control = vp.gui_get_focus_owner()
+	if fw is LineEdit or fw is TextEdit:
+		return
+	var mp: Vector2 = vp.get_mouse_position()
+	if not Rect2(Vector2.ZERO, vp.get_visible_rect().size).has_point(mp) or vp.gui_get_hovered_control() != null:
+		return
+	var wp: Vector2 = cam.screen_to_world(mp)
+	var cell: = Vector2i(floori(wp.x / C), floori(wp.y / C))
+	if not world.data.inside(cell.x, cell.y):
+		return
+	var sh_on: bool = _shift_down()
+	if (BUILD_KIND.has(mode) and mode != Mode.TRENCH_H and mode != Mode.TEETH_H) or mode == Mode.MODULE:
+		_draw_fac_ghost(mode, wp, ok_col, bad_col, sh_on)
+		return
+	if (mode == Mode.TRENCH_H or mode == Mode.TEETH_H) and line_cells.is_empty():
+		var tk: int = int(BUILD_KIND[mode])
+		var why_t: String = ghost_place_why(tk, cell, null)
+		var rt: = Rect2(Vector2(cell) * C, Vector2(C, C))
+		_ghost.draw_rect(rt, ok_col if why_t == "" else bad_col)
+		var z: float = cam.zoom.x
+		var te: Color = UiKit.GOLD if (why_t == "" and sh_on) else (Color(0.75, 1.0, 0.8) if why_t == "" else Color(1.0, 0.55, 0.5))
+		_ghost.draw_rect(rt, te, false, 2.0 / z)
+		if why_t == "" and sh_on:
+			_ghost.draw_rect(rt.grow(3.0 / z), Color(UiKit.GOLD, 0.75), false, 1.0 / z)
+		return
+	if mode in [Mode.TOWN, Mode.CAPITAL, Mode.RECON, Mode.ORDER, Mode.NUKE_TARGET]:
+		_draw_reticle(mode, wp)
+
+
+func _draw_fac_ghost(m: int, wp: Vector2, ok_col: Color, bad_col: Color, sh_on: bool) -> void:
+	var C: float = float(GameWorld.CELL)
+	var cell: = Vector2i(floori(wp.x / C), floori(wp.y / C))
+	var kind: int = module_kind if m == Mode.MODULE else int(BUILD_KIND[m])
+	if m != Mode.MODULE and kind == Facility.Kind.MINE and not world.econ.deposit_near(cell, 3, ["uranium"]).is_empty():
+		kind = Facility.Kind.URANIUM_MINE
+	if kind == Facility.Kind.NAVAL_BASE and world.get("navy") != null:
+		cell = _navy_snap(cell)
+	var nw: Vector2i = Military.nw_for(kind, cell)
+	var sz: Vector2i = Military.size_of(kind)
+	var why: String = ghost_place_why(kind, nw, module_port if m == Mode.MODULE else null)
+	var r: = Rect2(Vector2(nw) * C, Vector2(sz) * C)
+	var spr_ok: bool = false
+	if kind == Facility.Kind.NAVAL_BASE and world.get("atlas_navy1") is SpriteAtlas:
+		var na: SpriteAtlas = world.atlas_navy1
+		var vs: String = Navy.variant_sprite(Navy.cur)
+		if na.has(vs):
+			var ni: Dictionary = na.info(vs)
+			var nr: Rect2 = na.rect(vs, 0)
+			var org: Vector2 = Vector2(r.position.x, r.end.y) - Vector2(float(ni.get("ax", 0)), float(ni.get("ay", nr.size.y)))
+			_ghost.draw_rect(r, Color(ok_col, 0.14) if why == "" else Color(bad_col, 0.2))
+			_ghost.draw_texture_rect_region(na.texture, Rect2(org, nr.size), nr, Color(0.72, 1.0, 0.78, 0.66) if why == "" else Color(1.0, 0.48, 0.42, 0.66))
+			spr_ok = true
+	if not spr_ok:
+		_ghost.draw_rect(r, ok_col if why == "" else bad_col)
+	if kind == Facility.Kind.NAVAL_BASE and r.get_center().distance_to(wp) > C * 3.0:
+		_ghost.draw_line(wp, r.get_center(), Color(1, 1, 1, 0.7), 2.0 / cam.zoom.x)
+		_ghost.draw_circle(wp, 4.0 / cam.zoom.x, Color(1, 1, 1, 0.8))
+	var z: float = cam.zoom.x
+	var edge: Color = UiKit.GOLD if (why == "" and sh_on) else (Color(0.75, 1.0, 0.8) if why == "" else Color(1.0, 0.55, 0.5))
+	_ghost.draw_rect(r, edge, false, 2.0 / z)
+	if why == "" and sh_on:
+		_ghost.draw_rect(r.grow(3.0 / z), Color(UiKit.GOLD, 0.75), false, 1.0 / z)
+	if m == Mode.MODULE and module_port != null and world.mil.alive(module_port):
+		_ghost.draw_line(module_port.center_px(), r.get_center(), Color(edge, 0.45), 1.0 / z)
+	elif m != Mode.MODULE:
+		_ghost_cover(kind, r.get_center())
+
+
+func _draw_reticle(m: int, wp: Vector2) -> void:
 	var rad: float = 40.0
 	match m:
 		Mode.CAPITAL, Mode.TOWN:
@@ -841,10 +1011,34 @@ func _draw_ghost() -> void:
 		Mode.NUKE_TARGET:
 			rad = float(Nuclear.NUKE_R_CELLS * GameWorld.CELL)
 			_ghost.draw_circle(wp, rad, Color("e8402a", 0.16))
+		Mode.MISSILE, Mode.CR_TARGET, Mode.HYP_TARGET, Mode.SHIP_CR:
+			rad = 30.0
+			_ghost.draw_circle(wp, rad, Color(1.0, 0.55, 0.2, 0.14))
 	_ghost.draw_arc(wp, rad, 0.0, TAU, 48, Color(1.0, 0.85, 0.3, 0.9), 2.0 / cam.zoom.x)
 	var k: float = 10.0 / cam.zoom.x
 	_ghost.draw_line(wp - Vector2(k, 0), wp + Vector2(k, 0), Color(1, 0.85, 0.3), 2.0 / cam.zoom.x)
 	_ghost.draw_line(wp - Vector2(0, k), wp + Vector2(0, k), Color(1, 0.85, 0.3), 2.0 / cam.zoom.x)
+
+
+var _ghost_place_cache: Dictionary = {}
+func ghost_place_why(kind: int, nw: Vector2i, mod_port: Facility = null) -> String:
+	var now_ms: int = Time.get_ticks_msec()
+	var mid_id: int = mod_port.id if mod_port != null else -1
+	var why: String = ""
+	var cached: bool = false
+	if not _ghost_place_cache.is_empty():
+		if int(_ghost_place_cache.get("k", -1)) == kind and (_ghost_place_cache.get("nw") as Vector2i) == nw and int(_ghost_place_cache.get("m", -2)) == mid_id and now_ms - int(_ghost_place_cache.get("ms", 0)) < 250:
+			why = String(_ghost_place_cache.get("why", ""))
+			cached = true
+	if not cached:
+		why = _ghost_why(kind, nw) if mod_port == null and Military.detours(kind) else world.mil.check_place(kind, nw, world.player, mod_port, false)
+		_ghost_place_cache = {"k": kind, "nw": nw, "m": mid_id, "ms": now_ms, "why": why}
+	if why != "":
+		return why
+	var mp_w: String = _mp_pend_why(kind, nw)
+	if mp_w != "":
+		return mp_w
+	return _build_res_why(kind, world.player)
 
 
 
@@ -1012,15 +1206,28 @@ func _why(r: Variant) -> String:
 
 
 
-func _on_built(r: Variant, kind: int) -> void:
+func _on_built(r: Variant, kind: int, from_shift: bool = false, prev_series: bool = false) -> void:
+	_ghost_place_cache.clear()
+	_gw_t = 0
 	var f: Facility = r as Facility
 	if f == null:
+		if from_shift and (net == null or not net.in_match):
+			_shift_built_in_series = prev_series
 		return
 	hud.show_toast(Loc.msg(Loc.mk("Построено: %s", [Loc.t(Military.title_of(kind))])))
 	UiKit.snd("ui_build")
-	if _PcP.desktop() and BUILD_KIND.has(mode):
-		# PC port: the building stays picked — place the next one; RMB / Esc leaves the mode
+	if _PcP.desktop() and from_shift and BUILD_KIND.has(mode):
+		if _shift_down():
+			_shift_built_in_series = true
+			_refresh_mode_hint()
+			if _ghost != null:
+				_ghost.queue_redraw()
+			return
+		# Shift was lifted right as click completed -> end Shift series cleanly (Variant 1A)
+		_shift_built_in_series = false
+		_set_mode(Mode.NONE)
 		return
+	_shift_built_in_series = false
 	_set_mode(Mode.NONE)
 	if kind == Facility.Kind.DRONE_PORT or kind == Facility.Kind.MISSILE_FACTORY or kind == Facility.Kind.AIRFIELD or kind == Facility.Kind.AIRPORT or kind == Facility.Kind.BARRACKS or kind == Facility.Kind.PORT or kind == Facility.Kind.DRONE_FACTORY:
 		selected_fac = f

@@ -156,14 +156,26 @@ func _fac_icon(kind: int) -> String:
 
 func show_facility(f: Facility, mil: Military, player: Country) -> void:
 	var alive: bool = mil.alive(f)
-	var show_bars: bool = alive and ((gw.econ.has_method("deep_card") and Economy.is_deep(f.kind) and not f.deposit.is_empty()) or (f.kind == Facility.Kind.NUKE_SILO and (f.nuke_state == 1 or f.nuke_state == 4 or (f.nuke_state == 0 and f.nuke_cd > 0.0))))
-	_card("fac%d" % f.id, _fac_icon(f.kind), (Loc.t("Казармы армии №%d") % f.army_no) if f.kind == Facility.Kind.BARRACKS and f.army_no > 0 else Loc.t(Military.title_of(f.kind)), "" if f.kind == Facility.Kind.BARRACKS else _sentence(String(Military.PURPOSE.get(f.kind, ""))), false,
+	var zas_bar: bool = f.kind == Facility.Kind.AD_ZASLON and (f.restore_t > 0.0 or f.zas_q > 0)
+	var show_bars: bool = alive and ((gw.econ.has_method("deep_card") and Economy.is_deep(f.kind) and not f.deposit.is_empty()) or (f.kind == Facility.Kind.NUKE_SILO and (f.nuke_state == 1 or f.nuke_state == 4 or (f.nuke_state == 0 and f.nuke_cd > 0.0))) or zas_bar)
+	var fsub: String = "" if f.kind == Facility.Kind.BARRACKS else _sentence(String(Military.PURPOSE.get(f.kind, "")))
+	if player != null and f.country_id == player.id and alive and _PcPortS.desktop():
+		var same_cnt: int = 0
+		for fb: Facility in mil.facs_of(player.id):
+			if fb.country_id == player.id and fb.kind == f.kind and mil.alive(fb):
+				same_cnt += 1
+				if same_cnt > 1:
+					break
+		if same_cnt > 1:
+			var tab_s: String = Loc.t("Tab · след.")
+			fsub = (fsub + " · " + tab_s) if fsub != "" else tab_s
+	_card("fac%d" % f.id, _fac_icon(f.kind), (Loc.t("Казармы армии №%d") % f.army_no) if f.kind == Facility.Kind.BARRACKS and f.army_no > 0 else Loc.t(Military.title_of(f.kind)), fsub, false,
 		show_bars, true)
 	var info: String = ""
 	var detail: String = ""
 	var acts: Array = []
 	var bar_lite: bool = false
-	if f.restore_t > 0.0:
+	if f.restore_t > 0.0 and f.kind != Facility.Kind.AD_ZASLON:
 		info = (Loc.t("СТРОИТСЯ %s") if mil.get("constructing") is Dictionary and (mil.constructing as Dictionary).has(f.id) else Loc.t("ВОССТАНОВЛЕНИЕ %s")) % _mmss(f.restore_t)
 	elif not alive:
 		info = Loc.t("РАЗРУШЕН")
@@ -207,21 +219,35 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 				_solar_act(f, mil, player, acts)
 				detail = Loc.t("%s — %s. Цена %d, %d с, на складе %d из %d. Цифра на кнопке — запас на складе. «+Солнце» — резервное питание завода.") % [_sentence(Loc.t(String(Military.MT_NAMES[t]))), String(MT_PURPOSE[t]), int(Military.MT_COST[t]), int(Military.MT_TIME[t]), player.missile_stock[t], Military.DepotS.missile_cap(mil, player, t)]
 			Facility.Kind.REFINERY:
-				info = Loc.t("%s · ПРОДАНО НА %d") % [_rate_line(f, player), player.fuel_sold]
+				info = Loc.t("%s · ПРОДАНО НА %d\nБУФЕР ТОПЛИВА: %d/%d") % [_rate_line(f, player), player.fuel_sold, f.ref_fuel, Military.REFINERY_TANK_CAP]
 				if player.oil <= 0:
 					info += Loc.t("\nНЕТ НЕФТИ: НЕФТЕВЫШКА ИЛИ ПОКУПКА")
-				detail = Loc.t("Перерабатывает нефть в топливо, топливо продаётся само по мировой цене. ") + _upgrade_act(f, player, acts)
+				if f.country_id == player.id:
+					acts.append(_act(Loc.t("КОНВОЙ\n%d/%d") % [f.ref_fuel, Military.REFINERY_TANK_CAP], "res_fuel" if UiKit.has("res_fuel") else "icon_trade", "fuel_dispatch", f.ref_fuel > 0))
+				detail = (Loc.t("Перерабатывает нефть в топливо; при ≥%d т танкер везёт партию в столицу или порт. ") % Military.FUEL_CONVOY_MIN) + _upgrade_act(f, player, acts)
 				_solar_act(f, mil, player, acts)
-			Facility.Kind.POWER_PLANT:
-				info = Loc.t("СЕТЬ: %d / %d (+%d ОТ ЭТОЙ ТЭЦ)") % [player.power_use, player.power_cap, Military.PLANT_CAP]
+			Facility.Kind.POWER_PLANT, Facility.Kind.SOLAR_FARM:
+				var pcap_el: int = Military.PLANT_CAP if f.kind == Facility.Kind.POWER_PLANT else Military.SOLAR_FARM_CAP
+				var pname: String = Loc.t("ЭТОЙ ТЭЦ") if f.kind == Facility.Kind.POWER_PLANT else Loc.t("ЭТОЙ СЭС")
+				info = Loc.t("СЕТЬ: %d / %d (+%d ОТ %s)\nПРИОРИТЕТ: %s") % [player.power_use, player.power_cap, pcap_el, pname, _power_prio_name(player)]
+				if f.country_id == player.id:
+					acts.append(_power_prio_act(player))
 			Facility.Kind.NUCLEAR_PLANT:
 				var pcap: int = gw.econ.res_cap(player, "plutonium") if gw.econ != null else 12
-				info = Loc.t("%s\nСЕТЬ %d / %d · УРАН %d (НА %d МИН)%s") % [Nuclear.status(gw, f), player.power_use, player.power_cap, player.uranium, int(Nuclear.fuel_minutes(gw, player)), (Loc.t(" · ПЛУТОНИЙ %d/%d") % [player.plutonium, pcap]) if GameConfig.nukes else ""]
+				info = Loc.t("%s\nСЕТЬ %d / %d · УРАН %d (НА %d МИН)%s\nПРИОРИТЕТ: %s") % [Nuclear.status(gw, f), player.power_use, player.power_cap, player.uranium, int(Nuclear.fuel_minutes(gw, player)), (Loc.t(" · ПЛУТОНИЙ %d/%d") % [player.plutonium, pcap]) if GameConfig.nukes else "", _power_prio_name(player)]
+				if f.npp_overheat_t >= 0.0:
+					info = (Loc.t("⚠ ПЕРЕГРЕВ! ВЗРЫВ ЧЕРЕЗ %s — ГЛУШИТЕ!") % _mmss(f.npp_overheat_t)) + "\n" + info
+					if f.country_id == player.id:
+						var scram_a: Dictionary = _act(Loc.t("ГЛУШЕНИЕ\n%d") % Nuclear.NPP_SCRAM_COST, "icon_power", "npp_scram", player.money >= Nuclear.NPP_SCRAM_COST)
+						scram_a["red"] = true
+						acts.append(scram_a)
+				if f.country_id == player.id:
+					acts.append(_power_prio_act(player))
 				if mil.can_restore(f):
 					var nrc: int = Military.restore_cost(f) + mil.restore_buy(f, player)
 					acts.append(_act(Loc.t("РЕМОНТ\n%d") % nrc, "icon_restore", "fac_restore", player.money >= nrc))
 				acts.append(_act("РЫНОК", "icon_relations", "trade", true))
-				detail = Loc.t("Сетки и бетон АЭС не защищают: держите рядом ЗРК и ПРО. Вырабатывает +%d энергии и плутоний для ядерных МБР (1 за %d с, лимит %d). Корпус выдерживает 2 удара дронов/КР (−25 %% мощности каждый), баллистика рушит его сразу. Без урана АЭС стоит.") % [Nuclear.NPP_CAP, int(Nuclear.PLUTONIUM_S), pcap]
+				detail = Loc.t("Стратегическая защита: сетки и бетон работают. Вырабатывает +%d энергии и плутоний для ядерных МБР (1 за %d с, лимит %d). 2-й удар дрона/КР запускает 60 с перегрев (глушение %d или расплавление). Без урана АЭС стоит.") % [Nuclear.NPP_CAP, int(Nuclear.PLUTONIUM_S), pcap, Nuclear.NPP_SCRAM_COST]
 			Facility.Kind.NUKE_SILO:
 				var pcap2: int = gw.econ.res_cap(player, "plutonium") if gw.econ != null else 12
 				var rc_m: Dictionary = Economy.res_cost("nuke_missile")
@@ -232,28 +258,36 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 							var cd_tot: float = 3.0 if GameConfig.creative and player.is_player else Nuclear.SILO_RELOAD_CD
 							_set_bar(0, clampf(1.0 - f.nuke_cd / maxf(1.0, cd_tot), 0.0, 1.0), "icon_nuke_silo")
 							(ops_bars[1][0] as Control).visible = false
-							acts.append(_act(Loc.t("КД ПОДГ.\n%d С") % ceili(f.nuke_cd), "icon_nuke_silo", "nuke_build", false))
+							acts.append(_act(Loc.t("КД ПОДГ.\n%s") % Nuclear.fmt_t(f.nuke_cd), "icon_nuke_silo", "nuke_build", false))
 						else:
 							var can_b: bool = player.money >= Military.COST_NUKE_MISSILE and (GameConfig.creative or player.has_res(rc_m))
-							acts.append(_act(Loc.t("СОБРАТЬ\nМБР"), "icon_nuke_missile", "nuke_build", can_b))
+							var b_act: Dictionary = _act(Loc.t("СОБРАТЬ\nМБР"), "icon_nuke_missile", "nuke_build", can_b)
+							if GameConfig.confirm_actions:
+								b_act["hold"] = true
+							acts.append(b_act)
 					elif f.nuke_state == 1:
 						_set_bar(0, f.nuke_prog, "icon_nuke_missile")
 						(ops_bars[1][0] as Control).visible = false
-						acts.append(_act(Loc.t("СБОРКА\n%d С") % ceili(f.nuke_t), "icon_nuke_missile", "nuke_build", false))
+						acts.append(_act(Loc.t("ЭТАП 1/2\n%s") % Nuclear.fmt_t(f.nuke_t), "icon_nuke_missile", "nuke_build", false))
 					elif f.nuke_state == 2:
-						var arm_a: Dictionary = _act(Loc.t("БОЕГОТ.\n%d С") % int(Nuclear.SILO_ARM_T), "icon_nuke_silo", "nuke_arm", true, 1)
+						var arm_a: Dictionary = _act(Loc.t("БОЕГОТ.\n%s") % Nuclear.fmt_t(Nuclear.SILO_ARM_T), "icon_nuke_silo", "nuke_arm", true, 1)
 						arm_a["hold"] = true
 						acts.append(arm_a)
 					elif f.nuke_state == 4:
 						_set_bar(0, f.nuke_prog, "icon_nuke_silo")
 						(ops_bars[1][0] as Control).visible = false
-						acts.append(_act(Loc.t("ВЗВОД\n%d С") % ceili(f.nuke_t), "icon_nuke_silo", "nuke_arm", false, 1))
+						acts.append(_act(Loc.t("ЭТАП 2/2\n%s") % Nuclear.fmt_t(f.nuke_t), "icon_nuke_silo", "nuke_arm", false, 1))
 					elif f.nuke_state == 3:
 						var ln_a: Dictionary = _act(Loc.t("ЯДЕРНЫЙ\nПУСК"), "icon_nuke_missile", "nuke_launch", true)
 						ln_a["red"] = true
 						ln_a["hold"] = true
 						acts.append(ln_a)
-				detail = Loc.t("Ядерная шахта МБР. Этапы: 1) Собрать МБР (%d с, деньги и 5 плутония от АЭС). 2) Привести в боеготовность (%d с). 3) Пуск на любую дистанцию — после удара шахта перезаряжается %d с. Перехватывает только ПРО «Заслон».") % [int(Nuclear.SILO_BUILD_T), int(Nuclear.SILO_ARM_T), int(Nuclear.SILO_RELOAD_CD)]
+					if f.country_id == player.id and f.nuke_state in [2, 3, 4]:
+						var can_mirv: bool = f.nuke_warhead == 1 or GameConfig.creative or player.titanium >= Nuclear.MIRV_TI_EXTRA
+						acts.append(_act(Loc.t("МОНО"), "", "nuke_warhead_0", f.nuke_warhead != 0, 1 if f.nuke_warhead == 0 else 0))
+						acts.append(_act(Loc.t("РГЧ +%d Ti") % Nuclear.MIRV_TI_EXTRA, "", "nuke_warhead_1", f.nuke_warhead != 1 and can_mirv, 1 if f.nuke_warhead == 1 else 0))
+						acts.append(_act(Loc.t("ЭМИ-БЧ"), "", "nuke_warhead_2", f.nuke_warhead != 2, 1 if f.nuke_warhead == 2 else 0))
+				detail = Loc.t("Ядерная шахта МБР (сетки/бетон поддерживаются). 1) Сборка МБР (%s, 25 000 + 5 плутония) — мир видит старт. 2) Боеготовность (%s, без электричества на паузе!). БЧ: Моно / РГЧ+ложные (+%d титана против ПРО) / ЭМИ (блек-аут ПВО и сетей на 90 с).") % [Nuclear.fmt_t(Nuclear.SILO_BUILD_T), Nuclear.fmt_t(Nuclear.SILO_ARM_T), Nuclear.MIRV_TI_EXTRA]
 			Facility.Kind.SOLAR:
 				info = Loc.t("РЕЗЕРВ ДЛЯ: %s") % (Loc.t(Military.title_of(f.parent.kind)).to_upper() if f.parent != null else "-")
 			Facility.Kind.AIRFIELD:
@@ -407,15 +441,45 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 				var sp: Dictionary = Defense.SPEC[f.kind]
 				var r: String = Loc.t("РАДИУС %d М") % int(float(sp["range"]))
 				var ms: Dictionary = gw.defense.site_state(f)
-				r += Loc.t(" · ЗАРЯД %d/%d") % [int(ms["left"]), int(ms["cap"])]
-				r += Loc.t(" · ВЫСТРЕЛ: РАКЕТА СО СКЛАДА") if bool(ms["stock"]) else Loc.t(" · ВЫСТРЕЛ %d") % int(ms["shot_cost"])
-				if float(sp["range"]) > float(sp["detect"]) and not gw.defense.covered(f.country_id, f.center_px()):
-					r += Loc.t(" · НУЖНА РЛС")
-				info = r + (Loc.t("\nПЕРЕХВАТ ЯДЕРНЫХ МБР И ГИПЕРЗВУКА") if f.kind == Facility.Kind.AD_ZASLON else Loc.t("\nВ МИРЕ: САМОЛЁТЫ — ПОСЛЕ %d М ВГЛУБЬ") % int(Defense.PEACE_DEPTH))
-				if player != null and f.country_id == player.id and gw.defense.has_method("preset_of"):
-					acts.append(_act(Loc.t("ЦЕЛИ ПВО\n%s") % String(AD_PRESET_SHORT.get(gw.defense.preset_of(player), "")), "u335_ad_rules", "ad_rules", true))
 				if f.kind == Facility.Kind.AD_ZASLON:
-					detail = Loc.t("Стратегическая ПРО «Заслон» — единственная система, способная сбивать ядерные МБР в верхних слоях атмосферы.")
+					var zcap: int = int(ms["cap"])
+					var zleft: int = int(ms["left"])
+					var zq: int = int(ms.get("queued", f.zas_q))
+					var nopwr_z: String = Loc.t(" · НЕТ ЭНЕРГИИ ×0.5") if bool(ms.get("no_power", false)) else ""
+					if f.restore_t > 0.0:
+						var btot: float = float(Military.CRIT_RESTORE.get(Facility.Kind.AD_ZASLON, 120.0))
+						_set_bar(0, clampf(1.0 - f.restore_t / maxf(1.0, btot), 0.0, 1.0), "icon_ad_zaslon")
+						(ops_bars[1][0] as Control).visible = false
+						r += Loc.t(" · СТРОИТСЯ: %s · БК 0/%d") % [_mmss(f.restore_t), zcap]
+					elif zq > 0:
+						_set_bar(0, float(ms.get("prod_prog", 0.0)), "icon_ad_zaslon")
+						(ops_bars[1][0] as Control).visible = false
+						r += Loc.t(" · ЗАРЯД %d/%d · ПРОИЗВОДСТВО БК +%d (%s)%s") % [zleft, zcap, zq, _mmss(float(ms.get("prod_left", f.zas_t))), nopwr_z]
+					elif zleft <= 0:
+						r += Loc.t(" · ПУСТОЙ: ЗАРЯД 0/%d — ТРЕБУЕТСЯ ПРОИЗВОДСТВО БК") % zcap
+					else:
+						r += Loc.t(" · БОЕГОТОВ: ЗАРЯД %d/%d") % [zleft, zcap]
+					if float(sp["range"]) > float(sp["detect"]) and not gw.defense.covered(f.country_id, f.center_px()):
+						r += Loc.t(" · НУЖНА РЛС")
+					var zrc: Dictionary = Economy.res_cost("zaslon_charge")
+					info = r + "\n" + Loc.t("ПЕРЕХВАТ МБР И ГИПЕРЗВУКА · 1 ЗАРЯД: %d + %s (%d С)") % [Military.COST_ZASLON_CHARGE, Economy.cost_text(zrc).to_upper(), int(Defense.ZASLON_CHARGE_T)]
+					if player != null and f.country_id == player.id:
+						var room: int = maxi(0, zcap - zleft - zq)
+						var can_one: bool = f.restore_t <= 0.0 and room > 0 and ((GameConfig.creative and player.is_player) or (player.money >= Military.COST_ZASLON_CHARGE and player.has_res(zrc)))
+						acts.append(_act(Loc.t("+1 ЗАРЯД\n%d") % Military.COST_ZASLON_CHARGE, "icon_ad_zaslon", "zaslon_buy_1", can_one, 1 if zq > 0 else -1, "%d/%d" % [zleft, zcap]))
+						if room > 1:
+							acts.append(_act(Loc.t("ЗАПОЛНИТЬ\n×%d") % room, "icon_ad_zaslon", "zaslon_buy_fill", can_one, -1, ("+%d" % zq) if zq > 0 else ""))
+						if gw.defense.has_method("preset_of"):
+							acts.append(_act(Loc.t("ЦЕЛИ ПВО\n%s") % String(AD_PRESET_SHORT.get(gw.defense.preset_of(player), "")), "u335_ad_rules", "ad_rules", true))
+					detail = Loc.t("Стратегическая ПРО «Заслон» строится 2 мин и сдаётся без боекомплекта (0/%d). Противоракеты производятся отдельно в этом комплексе: %d денег + %s, %d с за каждый заряд.") % [zcap, Military.COST_ZASLON_CHARGE, Economy.cost_text(zrc), int(Defense.ZASLON_CHARGE_T)]
+				else:
+					r += Loc.t(" · ЗАРЯД %d/%d") % [int(ms["left"]), int(ms["cap"])]
+					r += Loc.t(" · ВЫСТРЕЛ: РАКЕТА СО СКЛАДА") if bool(ms["stock"]) else Loc.t(" · ВЫСТРЕЛ %d") % int(ms["shot_cost"])
+					if float(sp["range"]) > float(sp["detect"]) and not gw.defense.covered(f.country_id, f.center_px()):
+						r += Loc.t(" · НУЖНА РЛС")
+					info = r + Loc.t("\nВ МИРЕ: САМОЛЁТЫ — ПОСЛЕ %d М ВГЛУБЬ") % int(Defense.PEACE_DEPTH)
+					if player != null and f.country_id == player.id and gw.defense.has_method("preset_of"):
+						acts.append(_act(Loc.t("ЦЕЛИ ПВО\n%s") % String(AD_PRESET_SHORT.get(gw.defense.preset_of(player), "")), "u335_ad_rules", "ad_rules", true))
 			Facility.Kind.TRENCH_H, Facility.Kind.DUGOUT:
 				var occ: Array[Unit] = gw.army.occupants(f)
 				var cap2: int = gw.army.capacity(f)
@@ -648,6 +712,8 @@ func _deep_card(f: Facility, player: Country, acts: Array) -> String:
 	if bool(dc["busy"]):
 		_set_bar(1, float(dc["progress"]), "res_level")
 		acts.append(_act(Loc.t("ИДЁТ\n%s") % _mmss(float(dc["eta"])), "icon_upgrade", "fac_upgrade", false))
+		if f.upg_to == Economy.MAX_LEVEL:
+			_t3_spec_acts(f, player, acts)
 		return String(dc["detail"])
 	if player == null or f.country_id != player.id:
 		return String(dc["detail"])
@@ -680,16 +746,43 @@ func _rate_line(f: Facility, p: Country) -> String:
 
 
 
+func _power_prio_name(p: Country) -> String:
+	return [Loc.t("БАЛАНС"), Loc.t("ВОЕН.+ПВО"), Loc.t("ЭКОН.")][clampi(p.power_prio, 0, 2)]
+
+
+func _power_prio_act(p: Country) -> Dictionary:
+	return _act(Loc.t("ПРИОРИТЕТ\nСЕТИ"), "icon_power", "power_prio", true, -1, [Loc.t("Ба"), Loc.t("Во"), Loc.t("Эк")][clampi(p.power_prio, 0, 2)])
+
+
+func _t3_spec_acts(f: Facility, player: Country, acts: Array) -> void:
+	if player == null or f.country_id != player.id or not Economy.UPG_RES.has(f.kind):
+		return
+	var sw_fee: int = 0 if f.t3_spec == 0 or (GameConfig.creative and player.is_player) else 300
+	var b1_txt: String = Loc.t("⚡ ФОРСАЖ") if f.t3_spec == 1 else (Loc.t("⚡ ФОРСАЖ\n%d") % sw_fee if sw_fee > 0 else Loc.t("⚡ ФОРСАЖ\nБЕСПЛ."))
+	var b2_txt: String = Loc.t("🛡 БУНКЕР") if f.t3_spec == 2 else (Loc.t("🛡 БУНКЕР\n%d") % sw_fee if sw_fee > 0 else Loc.t("🛡 БУНКЕР\nБЕСПЛ."))
+	acts.append(_act(b1_txt, "", "t3_spec_1", f.t3_spec != 1 and player.money >= sw_fee, 1 if f.t3_spec == 1 else 0))
+	acts.append(_act(b2_txt, "", "t3_spec_2", f.t3_spec != 2 and player.money >= sw_fee, 1 if f.t3_spec == 2 else 0))
+
+
 func _upgrade_act(f: Facility, player: Country, acts: Array) -> String:
 	if not gw.econ.has_method("upgrade_cost"):
 		return ""
 	var lv: int = int(gw.econ.call("level_of", f))
 	var uc: Dictionary = gw.econ.call("upgrade_cost", f)
 	if uc.is_empty():
+		if lv >= Economy.MAX_LEVEL and Economy.UPG_RES.has(f.kind):
+			_t3_spec_acts(f, player, acts)
+			return Loc.t("Т3 спец.: [⚡ Форсаж: ×2.6 вып., +1 сеть, +25%% крит] / [🛡 Бункер: ×1.85 вып., 50%% без сети, бетон].")
 		acts.append(_act(Loc.t("УР %d\nМАКС") % lv, "icon_upgrade", "fac_upgrade", false))
 		return Loc.t("Максимальный уровень.")
-	acts.append(_act(Loc.t("УР %d→%d\n%d") % [lv, lv + 1, int(uc.get("money", 0))], "icon_upgrade", "fac_upgrade", player.has_res(uc), -1, "%d" % lv))
 	var miss: String = player.missing_res(uc)
+	if lv + 1 == Economy.MAX_LEVEL and Economy.UPG_RES.has(f.kind) and f.upg_t <= 0.0:
+		var mc: int = int(uc.get("money", 0))
+		var ok: bool = player.has_res(uc)
+		acts.append(_act(Loc.t("УР 2→3⚡\n%d") % mc, "icon_upgrade", "fac_upgrade_1", ok, -1, Loc.t("Ф")))
+		acts.append(_act(Loc.t("УР 2→3🛡\n%d") % mc, "icon_prot_conc" if UiKit.has("icon_prot_conc") else "icon_upgrade", "fac_upgrade_2", ok, -1, Loc.t("Б")))
+		return Loc.t("Т3 (%s): ⚡ Форсаж (×2.6 вып., +1 сеть, +25%% крит) или 🛡 Бункер (×1.85 вып., 50%% без сети, врожд. бетон).%s") % [Economy.cost_text(uc), (Loc.t(" Не хватает: ") + miss + ".") if miss != "" else ""]
+	acts.append(_act(Loc.t("УР %d→%d\n%d") % [lv, lv + 1, int(uc.get("money", 0))], "icon_upgrade", "fac_upgrade", player.has_res(uc), -1, "%d" % lv))
 	var nx: int = EconRates.next_per_min(gw, f) if f.kind != Facility.Kind.SAWMILL else -1
 	return Loc.t("Улучшение до уровня %d: %s.%s%s") % [lv + 1, Economy.cost_text(uc), (Loc.t(" Выпуск станет +%d/мин.") % nx) if nx > 0 else "", (Loc.t(" Не хватает: ") + miss + ".") if miss != "" else ""]
 

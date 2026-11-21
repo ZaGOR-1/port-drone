@@ -1174,6 +1174,7 @@ func _split_rest(cf: Dictionary, d: Country, pre: PackedInt32Array) -> void:
 			if _mk[hi] == 1 and int(_own[hi]) != d.id and int(_own[hi]) > 0:
 				f.country_id = int(_own[hi])
 				f.queued.clear()
+				gw.mil.invalidate_fac_owners()
 		for t2 in 256:
 			if tfl[t2] != 0:
 				touched[t2] = true

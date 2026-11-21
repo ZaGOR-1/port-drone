@@ -106,8 +106,8 @@ static func enemy_groups(gw: GameWorld, c: Country) -> Array:
 static func armies(gw: GameWorld, c: Country) -> void:
 	var groups: Array = []
 	var got: bool = false
-	for f: Facility in gw.mil.facilities:
-		if f.kind != Facility.Kind.BARRACKS or f.country_id != c.id or f.stance <= 0 or not gw.mil.alive(f):
+	for f: Facility in gw.mil.facs_of_kind(Facility.Kind.BARRACKS):
+		if f.country_id != c.id or f.stance <= 0 or not gw.mil.alive(f):
 			continue
 		if not got:
 			got = true
@@ -478,7 +478,7 @@ static func drones(gw: GameWorld, c: Country) -> bool:
 
 
 
-static func summary(gw: GameWorld, country_id: int) -> Dictionary:
+static func summary(gw: GameWorld, country_id: int, armies_only: bool = false) -> Dictionary:
 	var c: Country = gw.country_by_id(country_id)
 	var out: Dictionary = {"armies": [], "orders": [], "missiles": [], "drones": {"stock": 0, "jets": 0, "in_air": 0},
 		"auto_orders": false, "auto_strike": 0, "auto_drones": false, "threats": [], "at_war": []}
@@ -500,19 +500,21 @@ static func summary(gw: GameWorld, country_id: int) -> Dictionary:
 	var armies: Array = []
 	var jets: int = 0
 	var stock: int = 0
-	for f: Facility in mil.facilities:
-		if f.country_id != country_id:
-			continue
-		if f.kind == Facility.Kind.DRONE_PORT and mil.alive(f):
-			stock += mil.parked_at(f, 0)
-			jets += mil.parked_at(f, 2)
-		if f.kind != Facility.Kind.BARRACKS or not mil.alive(f):
+	if not armies_only:
+		for fp: Facility in mil.facs_of_kind(Facility.Kind.DRONE_PORT):
+			if fp.country_id == country_id and mil.alive(fp):
+				stock += mil.parked_at(fp, 0)
+				jets += mil.parked_at(fp, 2)
+	for f: Facility in mil.facs_of_kind(Facility.Kind.BARRACKS):
+		if f.country_id != country_id or not mil.alive(f):
 			continue
 		var e2: Array = per.get(f, [0, 0.0, 0.0])
 		armies.append({"fid": f.id, "no": f.army_no, "name": String(gw.army.build_of(f)["name"]), "n": int(e2[0]), "cap": Army.BARRACKS_CAP,
-			"hp_frac": float(e2[1]) / maxf(1.0, float(e2[2])) if int(e2[0]) > 0 else 0.0, "stance": f.stance, "op": ops.of(f), "pos": f.center_px(), "doing": ops.doing_text(f)})
+			"hp_frac": float(e2[1]) / maxf(1.0, float(e2[2])) if int(e2[0]) > 0 else 0.0, "stance": f.stance, "op": ops.of(f), "pos": f.center_px(), "doing": "" if armies_only else ops.doing_text(f)})
 	armies.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["no"]) < int(b["no"]))
 	out["armies"] = armies
+	if armies_only:
+		return out
 	for k in Operations.ORDERS.size():
 		var s: Dictionary = Operations.ORDERS[k]
 		var left: float = ops.cooldown_left(country_id, k)

@@ -84,23 +84,44 @@ func _zones(sp: Supply, view: Rect2, k: float, now: float) -> void:
 		var col: Color = amb.lerp(red, clampf(lv, 0.0, 1.0))
 		var a: float = 0.16 + 0.26 * lv
 
+		var lw: float = maxf(1.0, 1.5 * k)
+		var ring_pts := PackedVector2Array()
+		ring_pts.resize(160)
+		var step_a: float = TAU / 40.0
+		var span_a: float = step_a * 0.55
 		for i in 40:
-			var a0: float = TAU * float(i) / 40.0 + now * 0.02
-			draw_arc(p, r, a0, a0 + TAU / 40.0 * 0.55, 4, Color(col, a), maxf(1.0, 1.5 * k))
+			var a0: float = step_a * float(i) + now * 0.02
+			var am: float = a0 + span_a * 0.5
+			var a1: float = a0 + span_a
+			var p0: Vector2 = p + Vector2(cos(a0), sin(a0)) * r
+			var pm: Vector2 = p + Vector2(cos(am), sin(am)) * r
+			var p1: Vector2 = p + Vector2(cos(a1), sin(a1)) * r
+			var b: int = i * 4
+			ring_pts[b] = p0
+			ring_pts[b + 1] = pm
+			ring_pts[b + 2] = pm
+			ring_pts[b + 3] = p1
+		draw_multiline(ring_pts, Color(col, a), lw)
 
 		if lv < 0.3:
 			continue
 		var step: float = maxf(36.0, 20.0 * k)
 		var ha: float = 0.05 + 0.07 * lv
 		var y: float = p.y - r
+		var hatch_pts := PackedVector2Array()
+		var h_off := Vector2(4, -4) * maxf(1.0, k)
+		var r_cut2: float = (r - 4.0) * (r - 4.0)
 		while y <= p.y + r:
 			var x: float = p.x - r
 			while x <= p.x + r:
 				var q2: = Vector2(x, y)
-				if q2.distance_to(p) < r - 4.0 and view.has_point(q2):
-					draw_line(q2, q2 + Vector2(4, -4) * maxf(1.0, k), Color(col, ha), maxf(1.0, k))
+				if q2.distance_squared_to(p) < r_cut2 and view.has_point(q2):
+					hatch_pts.append(q2)
+					hatch_pts.append(q2 + h_off)
 				x += step
 			y += step
+		if not hatch_pts.is_empty():
+			draw_multiline(hatch_pts, Color(col, ha), maxf(1.0, k))
 
 
 
@@ -113,15 +134,30 @@ func _blockades(sp: Supply, view: Rect2, k: float, now: float, font: Font) -> vo
 			continue
 		var r: float = 300.0
 		var pulse: float = 0.55 + 0.25 * sin(now * 3.0)
+		var b_pts := PackedVector2Array()
+		b_pts.resize(120)
+		var b_step: float = TAU / 30.0
+		var b_span: float = b_step * 0.6
 		for i in 30:
-			var a0: float = TAU * float(i) / 30.0
-			draw_arc(p, r, a0, a0 + TAU / 30.0 * 0.6, 5, Color(red, pulse), maxf(1.0, 2.5 * k))
+			var a0: float = b_step * float(i)
+			var am: float = a0 + b_span * 0.5
+			var a1: float = a0 + b_span
+			var bp0: Vector2 = p + Vector2(cos(a0), sin(a0)) * r
+			var bpm: Vector2 = p + Vector2(cos(am), sin(am)) * r
+			var bp1: Vector2 = p + Vector2(cos(a1), sin(a1)) * r
+			var bi: int = i * 4
+			b_pts[bi] = bp0
+			b_pts[bi + 1] = bpm
+			b_pts[bi + 2] = bpm
+			b_pts[bi + 3] = bp1
+		draw_multiline(b_pts, Color(red, pulse), maxf(1.0, 2.5 * k))
 		draw_arc(p, r * 0.18, 0.0, TAU, 24, Color(red, 0.35 + 0.2 * pulse), maxf(1.0, 1.5 * k))
 		draw_set_transform(p + Vector2(0, -34.0 * k), 0.0, Vector2(k, k))
 		var txt: String = Loc.t("БЛОКАДА · %s") % Loc.t(String(bk.get("name", ""))).to_upper()
 		var tw: float = font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
-		draw_rect(Rect2(Vector2(-tw * 0.5 - 5.0, -12.0), Vector2(tw + 10.0, 15.0)), Color(0.08, 0.03, 0.03, 0.85))
-		draw_rect(Rect2(Vector2(-tw * 0.5 - 5.0, -12.0), Vector2(tw + 10.0, 15.0)), Color(red, 0.95), false, 1.0)
+		var br_bx := Rect2(Vector2(-tw * 0.5 - 5.0, -12.0), Vector2(tw + 10.0, 15.0))
+		draw_rect(br_bx, Color(red, 0.95))
+		draw_rect(br_bx.grow(-1.0), Color(0.08, 0.03, 0.03, 0.85))
 		draw_string(font, Vector2(-tw * 0.5, 0.0), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 0.86, 0.8))
 		draw_set_transform(Vector2.ZERO)
 

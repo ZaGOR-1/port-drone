@@ -1,7 +1,7 @@
 extends "res://game/main/main_strike.gd"
 
 
-func _tap(pos: Vector2) -> void:
+func _tap(pos: Vector2, shift_held: bool = false) -> void:
 	_auto_card = null
 	var wp: Vector2 = cam.screen_to_world(pos)
 
@@ -69,7 +69,8 @@ func _tap(pos: Vector2) -> void:
 			hud.open_my_state()
 			UiKit.snd("ui_open")
 			return
-	if not _confirming and _confirm_mode(mode):
+	var skip_confirm: bool = shift_held and (BUILD_KIND.has(mode) or mode in [Mode.MODULE, Mode.TOWN, Mode.RECON, Mode.ORDER]) and mode != Mode.NUKE_TARGET
+	if not _confirming and not skip_confirm and _confirm_mode(mode):
 
 		_pend = {"kind": "tap", "wp": wp, "mode": mode}
 		if mode == Mode.OPERATION and op_from != null:
@@ -93,12 +94,33 @@ func _tap(pos: Vector2) -> void:
 			else:
 				on_cap.call(world.place_player_capital(cell))
 		Mode.TOWN:
+			var prev_s_town: bool = _shift_built_in_series
+			if shift_held:
+				var pl_t: Country = world.player
+				var res_m_t: int = 0
+				if net != null and net.in_match:
+					_mp_pend_prune()
+					for pe_t: Dictionary in _mp_pend_builds:
+						res_m_t += int(pe_t.get("money", 0))
+				if pl_t != null and pl_t.money - res_m_t < Military.COST_TOWN:
+					hud.show_toast(Loc.t("Не хватает денег: нужно %d") % Military.COST_TOWN)
+					UiKit.snd("ui_error")
+					return
+				_shift_built_in_series = true
+			var ttok: int = _mp_pend_record_town(cell)
 			var on_town: Callable = func(r: Variant) -> void:
+				_mp_pend_done(ttok)
 				var t: City = r as City
 				if t != null:
 					hud.show_toast(Loc.msg(Loc.mk("Основан город %s (-%d)", [Loc.name(t.name), Military.COST_TOWN])))
-					_set_mode(Mode.NONE)
+					UiKit.snd("ui_build")
 					hud.refresh()
+					if not (_PcP.desktop() and shift_held and _shift_down() and mode == Mode.TOWN):
+						_set_mode(Mode.NONE)
+				else:
+					UiKit.snd("ui_error")
+					if shift_held and (net == null or not net.in_match):
+						_shift_built_in_series = prev_s_town
 			if net.in_match:
 				net.issue({"k": "town", "cell": cell}, on_town)
 			else:
@@ -168,14 +190,20 @@ func _tap(pos: Vector2) -> void:
 			_op_start(wp)
 		Mode.ORDER:
 			var ok_k: int = order_kind
+			var prev_s_ord: bool = _shift_built_in_series
+			if shift_held:
+				_shift_built_in_series = true
 			_sim("ops", "order", [world.player.id, ok_k, wp], func(r: Variant) -> void:
 				if _why(r) != "":
 					hud.show_toast(_why(r))
 					UiKit.snd("ui_error")
+					if shift_held and (net == null or not net.in_match):
+						_shift_built_in_series = prev_s_ord
 				else:
 					hud.show_toast(Loc.msg(Loc.mk("Приказ: %s", [Loc.t(String(world.ops.order_info(ok_k).get("name", "")))])))
 					overlay.ripple(wp, "alert_red")
-					_set_mode(Mode.NONE))
+					if not (_PcP.desktop() and shift_held and _shift_down() and mode == Mode.ORDER):
+						_set_mode(Mode.NONE))
 		Mode.EXPEDITION:
 			if exp_port == null:
 				hud.show_toast("Нет порта")
@@ -190,14 +218,20 @@ func _tap(pos: Vector2) -> void:
 					overlay.ripple(wp, "amber")
 					_set_mode(Mode.NONE))
 		Mode.RECON:
+			var prev_s_rec: bool = _shift_built_in_series
+			if shift_held:
+				_shift_built_in_series = true
 			_sim("recon", "launch", [world.player.id, wp], func(r: Variant) -> void:
 				if _why(r) != "":
 					hud.show_toast(_why(r))
 					UiKit.snd("ui_error")
+					if shift_held and (net == null or not net.in_match):
+						_shift_built_in_series = prev_s_rec
 				else:
 					overlay.ripple(wp, "intercept_cyan")
 					UiKit.snd("radar_ping")
-					_set_mode(Mode.NONE))
+					if not (_PcP.desktop() and shift_held and _shift_down() and mode == Mode.RECON):
+						_set_mode(Mode.NONE))
 		Mode.ATTACK:
 			var tc: City = world.city_at_cell(cell)
 			if tc == null:
@@ -231,36 +265,89 @@ func _tap(pos: Vector2) -> void:
 			var kind: int = BUILD_KIND[mode]
 			if kind == Facility.Kind.MINE and not world.econ.deposit_near(cell, 3, ["uranium"]).is_empty():
 				kind = Facility.Kind.URANIUM_MINE
+			var snap_c: Vector2i = _navy_snap(cell) if (kind == Facility.Kind.NAVAL_BASE and world.get("navy") != null) else cell
+			var nw_b: Vector2i = Military.nw_for(kind, snap_c)
 			var bcost: Dictionary = Economy.build_cost(kind)
 			var pl: Country = world.player
 			if not pl.has_res(bcost) and world.econ.has_method("can_substitute") and world.econ.can_substitute(bcost, pl):
-
+				if shift_held:
+					var place_w: String = world.mil.place_why(kind, cell, pl, null, false)
+					hud.show_toast(place_w if place_w != "" else Loc.msg(Loc.mk("Не хватает: %s (без Shift — замена)", [pl.missing_res(bcost)])))
+					UiKit.snd("ui_error")
+					if _ghost != null:
+						_ghost.queue_redraw()
+					return
 				var placing: String = world.mil.place_why(kind, cell, pl, null, false)
 				if placing != "":
 					hud.show_toast(placing)
 				elif _confirming or (_sub_confirm.size() == 3 and int(_sub_confirm[0]) == kind and (_sub_confirm[1] as Vector2i).distance_to(cell) < 3.0 and Time.get_ticks_msec() - int(_sub_confirm[2]) < 8000):
 					_sub_confirm = []
-					_sim("", "cmd_build_sub", [kind, cell, pl], _on_built.bind(kind))
+					_ghost_place_cache.clear()
+					_gw_t = 0
+					_sim("", "cmd_build_sub", [kind, cell, pl], func(r: Variant) -> void: _on_built(r, kind, false, false))
 				else:
 					_sub_confirm = [kind, cell, Time.get_ticks_msec()]
 					hud.show_toast(Loc.msg(Loc.mk("Не хватает: %s. Тапните ещё раз — %s", [pl.missing_res(bcost), world.econ.substitute_note(bcost, pl).to_lower()])))
 					UiKit.snd("ui_error")
 			else:
+				if shift_held:
+					var why_s: String = ghost_place_why(kind, nw_b, null)
+					if why_s != "":
+						hud.show_toast(why_s)
+						UiKit.snd("ui_error")
+						if _ghost != null:
+							_ghost.queue_redraw()
+						return
+				var prev_series: bool = _shift_built_in_series
+				if shift_held:
+					_shift_built_in_series = true
+				_ghost_place_cache.clear()
+				_gw_t = 0
+				var btok: int = _mp_pend_record(kind, nw_b, pl)
 				_sim("mil", "build", [kind, cell, world.player], func(r: Variant) -> void:
-					if r == null and not pl.has_res(bcost):
-						_offer_buy(bcost)
-					_on_built(r, kind))
+					_mp_pend_done(btok)
+					if r == null:
+						UiKit.snd("ui_error")
+						if not shift_held and not pl.has_res(bcost):
+							_offer_buy(bcost)
+					_on_built(r, kind, shift_held, prev_series))
 		Mode.MODULE:
 			if module_port == null or not world.mil.alive(module_port):
 				_set_mode(Mode.NONE)
 				return
 			var mk: int = module_kind
 			var mport: Facility = module_port
+			var mnw: Vector2i = Military.nw_for(mk, cell)
+			var prev_s_mod: bool = _shift_built_in_series
+			if shift_held:
+				var mwhy: String = ghost_place_why(mk, mnw, mport)
+				if mwhy != "":
+					hud.show_toast(mwhy)
+					UiKit.snd("ui_error")
+					if _ghost != null:
+						_ghost.queue_redraw()
+					return
+				_shift_built_in_series = true
+			_ghost_place_cache.clear()
+			_gw_t = 0
+			var mtok: int = _mp_pend_record(mk, mnw, world.player)
 			_sim("mil", "build", [mk, cell, world.player, mport], func(r: Variant) -> void:
+				_mp_pend_done(mtok)
+				_ghost_place_cache.clear()
+				_gw_t = 0
 				if r != null:
 					hud.show_toast(Loc.msg(Loc.mk("Модуль: %s", [Loc.t(Military.title_of(mk))])))
+					UiKit.snd("ui_build")
 					selected_fac = mport
-					_set_mode(Mode.NONE))
+					if _PcP.desktop() and shift_held and _shift_down() and mode == Mode.MODULE:
+						if _ghost != null:
+							_ghost.queue_redraw()
+					else:
+						_set_mode(Mode.NONE)
+				else:
+					UiKit.snd("ui_error")
+					if shift_held and (net == null or not net.in_match):
+						_shift_built_in_series = prev_s_mod)
 		Mode.TARGET:
 			_plan_tap(pos, wp)
 		Mode.CR_TARGET:
@@ -613,7 +700,7 @@ func _begin_press(pos: Vector2) -> void:
 		_drag_pt = _press_hit(pos)
 
 
-func _release_press(pos: Vector2) -> void:
+func _release_press(pos: Vector2, shift_held: bool = false) -> void:
 	if _dtz:
 		_dtz = false
 		if not _moved and hud.get("army_dock") != null and hud.army_dock.front_dbl(pos):
@@ -626,7 +713,7 @@ func _release_press(pos: Vector2) -> void:
 		else:
 			cam.settle_zoom(_dtz_anchor, int(signf(cam.zoom.x - _dtz_z0)))
 		_last_tap_ms = -10000
-		_end_drag()
+		_end_drag(shift_held)
 		return
 	if not _moved and Time.get_ticks_msec() - _press_ms < 450:
 		_last_tap_ms = Time.get_ticks_msec()
@@ -636,8 +723,8 @@ func _release_press(pos: Vector2) -> void:
 			_strat_tap_ms = _last_tap_ms
 			_strat_tap_w = cam.screen_to_world(pos)
 		else:
-			_tap(pos)
-	_end_drag()
+			_tap(pos, shift_held)
+	_end_drag(shift_held)
 
 
 func _dtz_drag(pos: Vector2) -> void:

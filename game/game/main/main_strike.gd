@@ -1,7 +1,7 @@
 extends "res://game/main/main_core.gd"
 
 
-func _end_drag() -> void:
+func _end_drag(shift_held: bool = false) -> void:
 	if _drag_pt == -12:
 		_drag_pt = -2
 		if _moved and hud.get("navy_dock") != null:
@@ -45,13 +45,14 @@ func _end_drag() -> void:
 		var cells: Array[Vector2i] = line_cells.duplicate()
 		line_cells.clear()
 		_drag_pt = -2
+		var sh_line: bool = shift_held or _shift_down()
 		_set_mode(mode)
 		if cells.size() >= 2 and world.player != null:
-			if GameConfig.confirm_actions:
+			if GameConfig.confirm_actions and not sh_line:
 				_pend = {"kind": "line", "cells": cells, "mode": mode}
 				_show_pend()
 			else:
-				_build_line_now(int(BUILD_KIND[mode]), cells)
+				_build_line_now(int(BUILD_KIND[mode]), cells, sh_line)
 		return
 	if (_drag_pt == -3 or _drag_pt == -4) and _moved:
 		var d: Drone = follow as Drone

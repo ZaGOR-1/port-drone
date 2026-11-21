@@ -28,6 +28,9 @@ var last_screen: Vector2 = Vector2.ZERO
 var prev_screen: Vector2 = Vector2.ZERO
 var hyper: bool = false
 var nuke: bool = false
+var warhead: int = 0
+var decoy: bool = false
+var mirv_split: bool = false
 var whistled: bool = false
 
 

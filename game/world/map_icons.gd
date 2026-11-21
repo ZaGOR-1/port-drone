@@ -222,17 +222,172 @@ func _draw() -> void:
 			a2 = minf(a2, MD.KEEP_A)
 		MD.note("icon_faint" if a2 <= MD.KEEP_A + 0.01 else ("icon_dot" if dot else "icon"), rr)
 		drawn.append([it, rr, bs, a2, dot])
+	# Pass 1a: all pointer triangles merged into 1 draw call via triangle array
+	var tri_pts := PackedVector2Array()
+	var tri_cols := PackedColorArray()
+	var tri_idx := PackedInt32Array()
+	for d0: Array in drawn:
+		if bool(d0[4]):
+			continue
+		var f0: Facility = (d0[0] as Array)[2]
+		var tip0: Vector2 = (d0[0] as Array)[1] as Vector2
+		var a0: float = float(d0[3])
+		var c0: Country = gw.country_by_id(f0.country_id)
+		var ccol0: Color = c0.color if c0 != null else Color.WHITE
+		var o0: = Color(OUTLINE, a0)
+		var fg0: = Color(ccol0, a0)
+		var b0: int = tri_pts.size()
+		tri_pts.append(tip0 + Vector2(-5.5, -4.5) * sc)
+		tri_pts.append(tip0 + Vector2(5.5, -4.5) * sc)
+		tri_pts.append(tip0 + Vector2(0, 2.0) * sc)
+		tri_pts.append(tip0 + Vector2(-4, -4.5) * sc)
+		tri_pts.append(tip0 + Vector2(4, -4.5) * sc)
+		tri_pts.append(tip0 + Vector2(0, 0.5) * sc)
+		tri_cols.append(o0); tri_cols.append(o0); tri_cols.append(o0)
+		tri_cols.append(fg0); tri_cols.append(fg0); tri_cols.append(fg0)
+		tri_idx.append(b0); tri_idx.append(b0 + 1); tri_idx.append(b0 + 2)
+		tri_idx.append(b0 + 3); tri_idx.append(b0 + 4); tri_idx.append(b0 + 5)
+	if not tri_idx.is_empty():
+		RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), tri_idx, tri_pts, tri_cols)
+	# Pass 1b: all pin/dot backgrounds, borders & badge boxes (pure draw_rect batch)
+	var txt_pins: Array = []
 	for d: Array in drawn:
 		var it2: Array = d[0]
 		var f3: Facility = it2[2]
-		draw_set_transform((it2[1] as Vector2), 0.0, Vector2(sc, sc))
+		var tip: Vector2 = it2[1]
+		var a2: float = float(d[3])
 		if bool(d[4]):
-			_dot(f3, float(d[3]))
+			var col_d: Color = category_color(f3.kind)
+			draw_rect(Rect2(tip + Vector2(-3.0, -7.0) * sc, Vector2(6.0, 6.0) * sc), Color(OUTLINE, a2))
+			draw_rect(Rect2(tip + Vector2(-2.0, -6.0) * sc, Vector2(4.0, 4.0) * sc), Color(col_d, a2) if gw.mil.alive(f3) else Color(0.55, 0.55, 0.55, a2))
 		else:
-			_marker(f3, float(d[2]), f3.country_id == pid, int(it2[3]), f3 == sel, float(d[3]), font)
-			if int(it2[3]) >= 3 and lv < 2 and float(d[3]) > MD.KEEP_A:
-				MD.tap_add("icon", d[1], it2[1])
-	draw_set_transform(Vector2.ZERO)
+			if int(it2[3]) >= 3 and lv < 2 and a2 > MD.KEEP_A:
+				MD.tap_add("icon", d[1], tip)
+			_marker_bg(f3, tip, sc, float(d[2]), f3.country_id == pid, int(it2[3]), f3 == sel, a2, font, txt_pins)
+	# Pass 2: group facility icons by Texture2D RID so identical icons batch together, then Pass 2b: ruined red crosses
+	var by_ic: Dictionary = {}
+	var crosses: Array = []
+	for d2: Array in drawn:
+		if bool(d2[4]):
+			continue
+		var it3: Array = d2[0]
+		var f4: Facility = it3[2]
+		var bs4: float = float(d2[2])
+		var a4: float = float(d2[3])
+		var tip4: Vector2 = it3[1] as Vector2
+		var own4: bool = f4.country_id == pid
+		var alive4: bool = gw.mil.alive(f4)
+		var r4: = Rect2(Vector2(-bs4 * 0.5, -bs4 - 4.0), Vector2(bs4, bs4))
+		var isz4: float = minf(ICON if own4 else ICON - 2.0, bs4 - 4.0)
+		var ir4: = Rect2(r4.position + (Vector2(bs4, bs4 - 2.0) - Vector2(isz4, isz4)) * 0.5, Vector2(isz4, isz4))
+		var sr4: Rect2 = _sr(tip4, sc, ir4)
+		var ic4: Texture2D = _icon(f4.kind)
+		if ic4 != null:
+			var is_at4: bool = ic4 is AtlasTexture and (ic4 as AtlasTexture).atlas != null
+			var base_tex4: Texture2D = (ic4 as AtlasTexture).atlas if is_at4 else ic4
+			var reg4: Rect2 = (ic4 as AtlasTexture).region if is_at4 else Rect2()
+			var rid4: int = base_tex4.get_rid().get_id()
+			var bucket: Variant = by_ic.get(rid4)
+			if bucket == null:
+				bucket = []
+				by_ic[rid4] = bucket
+			var mod4: = Color(1, 1, 1, a4) if alive4 else Color(0.55, 0.55, 0.55, a4)
+			(bucket as Array).append([base_tex4, reg4, sr4, mod4])
+		if not alive4:
+			crosses.append([tip4 + ir4.position * sc, tip4 + ir4.end * sc, tip4 + Vector2(ir4.end.x, ir4.position.y) * sc, tip4 + Vector2(ir4.position.x, ir4.end.y) * sc, Color(0.91, 0.25, 0.165, a4)])
+	for rid_k: Variant in by_ic:
+		for e_ic: Array in (by_ic[rid_k] as Array):
+			var reg_k: Rect2 = e_ic[1] as Rect2
+			if reg_k.size.x > 0.0:
+				draw_texture_rect_region(e_ic[0] as Texture2D, e_ic[2] as Rect2, reg_k, e_ic[3] as Color)
+			else:
+				draw_texture_rect(e_ic[0] as Texture2D, e_ic[2] as Rect2, false, e_ic[3] as Color)
+	if not crosses.is_empty():
+		var cr_pts := PackedVector2Array()
+		var cr_cols := PackedColorArray()
+		var cr_idx := PackedInt32Array()
+		var hw_cr: float = sc
+		for cr: Array in crosses:
+			var cc_col: Color = cr[4] as Color
+			for pair_i in 2:
+				var p0: Vector2 = cr[pair_i * 2] as Vector2
+				var p1: Vector2 = cr[pair_i * 2 + 1] as Vector2
+				var dv: Vector2 = p1 - p0
+				var ln: float = dv.length()
+				if ln < 0.001:
+					continue
+				var nv := Vector2(-dv.y, dv.x) * (hw_cr / ln)
+				var cb: int = cr_pts.size()
+				cr_pts.append(p0 - nv); cr_pts.append(p1 - nv); cr_pts.append(p1 + nv); cr_pts.append(p0 + nv)
+				cr_cols.append(cc_col); cr_cols.append(cc_col); cr_cols.append(cc_col); cr_cols.append(cc_col)
+				cr_idx.append(cb); cr_idx.append(cb + 1); cr_idx.append(cb + 2)
+				cr_idx.append(cb); cr_idx.append(cb + 2); cr_idx.append(cb + 3)
+		if not cr_idx.is_empty():
+			RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), cr_idx, cr_pts, cr_cols)
+	# Pass 3: single shared transform for all badge texts
+	if not txt_pins.is_empty():
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(sc, sc))
+		var inv_sc: float = 1.0 / sc
+		for tp: Array in txt_pins:
+			draw_string(font, (tp[0] as Vector2) * inv_sc + (tp[1] as Vector2), String(tp[2]), HORIZONTAL_ALIGNMENT_LEFT, -1, int(tp[3]), tp[4] as Color)
+		draw_set_transform(Vector2.ZERO)
+
+
+func _sr(tip: Vector2, sc: float, r: Rect2) -> Rect2:
+	return Rect2(tip + r.position * sc, r.size * sc)
+
+
+func _rrect_at(tip: Vector2, sc: float, r: Rect2, col: Color) -> void:
+	draw_rect(_sr(tip, sc, Rect2(r.position.x + 1.0, r.position.y, r.size.x - 2.0, r.size.y)), col)
+	draw_rect(_sr(tip, sc, Rect2(r.position.x, r.position.y + 1.0, 1.0, r.size.y - 2.0)), col)
+	draw_rect(_sr(tip, sc, Rect2(r.end.x - 1.0, r.position.y + 1.0, 1.0, r.size.y - 2.0)), col)
+
+
+func _marker_bg(f: Facility, tip: Vector2, sc: float, bs: float, own: bool, count: int, selected: bool, alpha: float, font: Font, txt_pins: Array) -> void:
+	var c: Country = gw.country_by_id(f.country_id)
+	var ccol: Color = c.color if c != null else Color.WHITE
+	var frame: Color = Color.WHITE if selected else category_color(f.kind)
+	if not selected and not f.deposit.is_empty() and (f.kind == Facility.Kind.MINE or f.kind == Facility.Kind.OIL_RIG):
+		frame = MapModeLayer.ORE_COLORS.get(String(f.deposit.get("res", "")), frame)
+	var alive: bool = gw.mil.alive(f)
+	var r: = Rect2(Vector2(-bs * 0.5, -bs - 4.0), Vector2(bs, bs))
+	var o: = Color(OUTLINE, alpha)
+	_rrect_at(tip, sc, r.grow(2.0), o)
+	_rrect_at(tip, sc, r.grow(1.0), Color(frame, alpha))
+	draw_rect(_sr(tip, sc, r), Color(BG, BG.a * alpha))
+	draw_rect(_sr(tip, sc, Rect2(r.position.x, r.end.y - 2.0, r.size.x, 2.0)), Color(ccol, alpha))
+	if count > 1:
+		var txt: String = "%d" % count
+		var bp: = Vector2(r.end.x - 1.0, r.position.y + 1.0)
+		var tw: float = font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
+		var br: = Rect2(bp - Vector2(tw * 0.5 + 2.0, 5.0), Vector2(tw + 4.0, 10.0))
+		_rrect_at(tip, sc, br.grow(1.0), o)
+		draw_rect(_sr(tip, sc, br), Color(frame, alpha))
+		txt_pins.append([tip, Vector2(br.position.x + 2.0, br.end.y - 1.5), txt, 9, Color(OUTLINE, alpha)])
+	elif own and alive and f.kind == Facility.Kind.AD_ZASLON:
+		var ztxt: String = "⏳" if f.restore_t > 0.0 else (("%d+%d" % [f.ammo, f.zas_q]) if f.zas_q > 0 else ("%d" % f.ammo))
+		var zcol: Color = CAT_ECO if (f.restore_t > 0.0 or f.zas_q > 0) else (CAT_MIL if f.ammo <= 0 else CAT_AD)
+		var bp2: = Vector2(r.end.x - 1.0, r.position.y + 1.0)
+		var tw2: float = font.get_string_size(ztxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+		var br2: = Rect2(bp2 - Vector2(tw2 * 0.5 + 2.0, 4.5), Vector2(tw2 + 4.0, 9.0))
+		_rrect_at(tip, sc, br2.grow(1.0), o)
+		draw_rect(_sr(tip, sc, br2), Color(zcol, alpha))
+		txt_pins.append([tip, Vector2(br2.position.x + 2.0, br2.end.y - 1.5), ztxt, 8, Color(OUTLINE, alpha)])
+
+
+func _marker_fg(f: Facility, tip: Vector2, sc: float, bs: float, own: bool, alpha: float) -> void:
+	var alive: bool = gw.mil.alive(f)
+	var r: = Rect2(Vector2(-bs * 0.5, -bs - 4.0), Vector2(bs, bs))
+	var ic: Texture2D = _icon(f.kind)
+	var isz: float = minf(ICON if own else ICON - 2.0, bs - 4.0)
+	var ir: = Rect2(r.position + (Vector2(bs, bs - 2.0) - Vector2(isz, isz)) * 0.5, Vector2(isz, isz))
+	if ic != null:
+		var mod: = Color(1, 1, 1, alpha) if alive else Color(0.55, 0.55, 0.55, alpha)
+		draw_texture_rect(ic, _sr(tip, sc, ir), false, mod)
+	if not alive:
+		var red: = Color(0.91, 0.25, 0.165, alpha)
+		draw_line(tip + ir.position * sc, tip + ir.end * sc, red, 2.0 * sc)
+		draw_line(tip + Vector2(ir.end.x, ir.position.y) * sc, tip + Vector2(ir.position.x, ir.end.y) * sc, red, 2.0 * sc)
 
 
 
@@ -294,6 +449,15 @@ func _marker(f: Facility, bs: float, own: bool, count: int, selected: bool, alph
 		_rrect(br.grow(1.0), o)
 		draw_rect(br, Color(frame, alpha))
 		draw_string(font, Vector2(br.position.x + 2.0, br.end.y - 1.5), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(OUTLINE, alpha))
+	elif own and alive and f.kind == Facility.Kind.AD_ZASLON:
+		var ztxt: String = "⏳" if f.restore_t > 0.0 else (("%d+%d" % [f.ammo, f.zas_q]) if f.zas_q > 0 else ("%d" % f.ammo))
+		var zcol: Color = CAT_ECO if (f.restore_t > 0.0 or f.zas_q > 0) else (CAT_MIL if f.ammo <= 0 else CAT_AD)
+		var bp2: = Vector2(r.end.x - 1.0, r.position.y + 1.0)
+		var tw2: float = font.get_string_size(ztxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+		var br2: = Rect2(bp2 - Vector2(tw2 * 0.5 + 2.0, 4.5), Vector2(tw2 + 4.0, 9.0))
+		_rrect(br2.grow(1.0), o)
+		draw_rect(br2, Color(zcol, alpha))
+		draw_string(font, Vector2(br2.position.x + 2.0, br2.end.y - 1.5), ztxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(OUTLINE, alpha))
 
 
 
