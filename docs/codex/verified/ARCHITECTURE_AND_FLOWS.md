@@ -49,7 +49,7 @@ UI читає caches світу, simulation викликає signals/VFX/audio; 
 
 ## Реальна команда: будівництво Airport
 
-1. HUD action `airport` → [Main._on_action](../../../game/game/main.gd) (match-list624) → BUILD_KEYS.AIRPORT і локальний placement mode.
+1. HUD action `airport` → [Main._on_action](../../../game/game/main.gd) (case airport) → BUILD_KEYS.AIRPORT і локальний placement mode.
 2. Map input → [main_input._tap](../../../game/game/main/main_input.gd) → BUILD_KIND.AIRPORT; звичайний шлях `_sim("mil","build",[kind,cell,world.player],callback)`. Resource substitution має окрему `.cmd_build_sub` route.
 3. `_sim` → `NetSession.call_sim`. Offline: прямий target.callv; MP: NetCodec.encode entity refs → dedup400ms → `issue` із seq q.
 4. Guest reliable `_cmd_rq` до host; host визначає sender slot, перезаписує s, прибирає чужий c, додає pending. Host cuts canonical `_turn(n,cmds,speed)`; кожен peer виконує той самий список.
