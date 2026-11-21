@@ -4,7 +4,7 @@
 
 ## Workflow і межі публікації
 
-`.github/workflows/build.yml`: push main/beta, PR із base beta, optional manual build. Автоматичних tag triggers, Releases, тегів і updater activation немає. Усі робочі jobs мають contents:read, checkout не зберігає credentials; actions pinned до SHA.
+`.github/workflows/build.yml`: push main/beta, PR із base beta, optional manual build. Автоматичних tag triggers, Releases, тегів і updater activation немає. Усі робочі jobs мають contents:read, checkout не зберігає credentials; actions pinned до SHA. Після Node20 deprecation annotation першого PR run перевірено офіційні action.yml та закріплено Node24 actions: checkout7.0.1, setup-python7.1.0, upload-artifact7.0.2. Фінальні checks оцінюються лише на новому head.
 
 - Python job: повний unittest discovery;7 Godot fixtures SKIP у чистому runner без engine, вони виконуються в build job.
 - Build job: existing fetch_godot.py → перевірка SHA256/version → повний unittest із Godot → existing simulation regression → existing build.py з --repo "" → package verification → Actions artifacts на7days.
