@@ -40,6 +40,9 @@ func _autosave() -> void:
 	var b := Facility.new()
 	a.obj_ids = PackedInt32Array([10, 11])
 	b.obj_ids = PackedInt32Array([20, 21])
+	a.spots = PackedVector2Array([Vector2(10, 10)])
+	a.modules = [b]
+	b.parent = a
 	# Exercise the real entity codec, including references and typed packed arrays.
 	var c := Country.new()
 	c.city_ids = PackedInt32Array([10])
@@ -50,7 +53,7 @@ func _autosave() -> void:
 		ents.append([String((entity.get_script() as Script).get_global_name()), Save._ent_fields(entity)])
 	var packed := PackedInt32Array([10])
 	var typed: Array[PackedInt32Array] = [packed]
-	var nested: Dictionary = {"array": [{"packed": packed}], "typed": typed}
+	var nested: Dictionary = {"array": [{"packed": packed}], "typed": typed, "bytes": PackedByteArray([10]), "floats": PackedFloat64Array([10.0]), "vectors": PackedVector3Array([Vector3(10, 10, 10)])}
 	var padding := PackedByteArray()
 	padding.resize(32 * 1024 * 1024) # Hold the worker before it reaches entity fields.
 	var body: Dictionary = {"padding": padding, "core": {}, "ents": ents, "refs": refs, "nested": nested}
@@ -59,6 +62,10 @@ func _autosave() -> void:
 		var h: Dictionary = {"format": 1, "slot": 1, "seq": round_i + 1, "t_ms": round_i + 1}
 		var task: int = Save._queue_write(h, body)
 		a.obj_ids[0] = 99 + round_i
+		a.spots[0] = Vector2(99, 99)
+		nested["bytes"][0] = 99
+		nested["floats"][0] = 99.0
+		nested["vectors"][0] = Vector3(99, 99, 99)
 		b.obj_ids[1] = 99 + round_i
 		c.city_ids[0] = 99 + round_i
 		packed[0] = 99 + round_i
@@ -78,7 +85,12 @@ func _autosave() -> void:
 		var decoded: Array = Save.dec(saved["body"]["refs"])
 		check(decoded[0] == decoded[3], "entity reference identity restored round %d" % round_i)
 		check(decoded[1].obj_ids[0] == (10 if round_i == 0 else 99), "entity loaded from frozen save round %d" % round_i)
+		check(decoded[2].parent == decoded[1] and decoded[1].modules[0] == decoded[2], "entity cycle restored round %d" % round_i)
+		decoded[1].modules.clear()
+		decoded[2].parent = null
 		Save._dec.clear()
+	a.modules.clear()
+	b.parent = null
 
 func _make_world(size: int = 64) -> GameWorld:
 	var gw := GameWorld.new()
