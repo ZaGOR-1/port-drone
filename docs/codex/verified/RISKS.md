@@ -1,4 +1,5 @@
-> **CURRENT register / HISTORICAL reports below.** Missing CI та п’ять HIGH v0.36 закриті PR #2/#4. CPU regression і inherited shutdown leaks підтверджені; GUI/LAN/Steam, updater integrity, save durability та general schemas відкриті. [CURRENT_STATE](CURRENT_STATE.md), [BACKLOG](BACKLOG.md), [fix evidence](V036_FIX_RESULTS.md) — актуальні scopes.
+> Історичний реєстр. Поточні пріоритети, невиконані перевірки й ризики наведено в [PROJECT_STATE](../../PROJECT_STATE.md), [Windows QA](../../WINDOWS_QA.md) та [BACKLOG](BACKLOG.md).
+
 
 # Phase 5 status overlay — 2026-11-20
 

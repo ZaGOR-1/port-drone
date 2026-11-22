@@ -1,3 +1,5 @@
+> Основну карту механік звіряй з [потоками v0.36](ARCHITECTURE_AND_FLOWS.md), `GameWorld.new_world()` і `GameWorld._sim_step()`. Нижче збережено деталізацію та історичні Phase 5B.2 overlays.
+
 # Phase 5B.2 — інтеграційні fixes наявних механік
 
 Airport button доходить до чинного AIRPORT placement/build, ownership/cost перевіряє simulation. REBASE/AIRDROP додані в existing PC cancel allowlist; до target це local mode/ref без resource reservation, після submission команда вже canonical і local cancel її не відкликає. Save/load active action зберігає transit/base/payload, local mode скидається. Refund/abort feature не додано.

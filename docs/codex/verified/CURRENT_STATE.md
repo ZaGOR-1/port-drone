@@ -1,3 +1,5 @@
+> Історичний snapshot від 2026-11-21 і попередні checkpoints. Поточні refs, QA й handoff ведуться в [PROJECT_STATE.md](../../PROJECT_STATE.md).
+
 # DroneFlames — поточний технічний стан
 
 Оновлено 2026-11-21 після integration PR #4. **READY TO START WINDOWS TWO-PEER QA**; це готовність до тестування, не сертифікація gameplay/multiplayer. Цей документаційний етап не повторює повного аудиту й не запускає GUI/Steam/LAN.

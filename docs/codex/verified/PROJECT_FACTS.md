@@ -1,3 +1,5 @@
+> Історичний onboarding. Відомості про походження збережено нижче. Поточний стан гілок, оточення й QA наведено в [PROJECT_STATE](../../PROJECT_STATE.md).
+
 # Факти про checkout DroneFlames
 
 Дата аудиту: 2026-11-19 UTC. Джерело істини — файли робочого дерева на HEAD `af1b4c975564bac916db079d8470c2394d4920e5`, гілка `main`, origin `https://github.com/ZaGOR-1/port-drone.git`. Віддалений стан і CI цього коміту не перевірялися.

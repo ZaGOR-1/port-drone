@@ -677,12 +677,17 @@ func save_state() -> Dictionary:
 
 
 
-func net_rebind(keep: Dictionary) -> void:
-	load_state(keep.get("state", {}))
+func net_rebind(keep: Dictionary) -> bool:
+	var state: Variant = keep.get("state", {})
+	var sig: Variant = keep.get("sig", {})
+	if not (state is Dictionary) or not (sig is Dictionary) or gw.mil == null:
+		return false
+	load_state(state)
+	if _shown.size() != _known.size() or _dead.size() != _known.size() or _pos.size() != _known.size() or _seen_t.size() != _known.size():
+		return false
 	_pid = -1
 	_all_shown = false
 
-	var sig: Dictionary = keep.get("sig", {})
 	var now: Dictionary = {}
 	for f0: Facility in gw.mil.facilities:
 		now[f0.id] = _sig_of(f0)
@@ -695,11 +700,12 @@ func net_rebind(keep: Dictionary) -> void:
 				_pos[i] = Vector2.ZERO
 				_seen_t[i] = -1.0
 	if not enabled:
-		return
+		return true
 	for f: Facility in gw.mil.facilities:
 		if f.id < _shown.size():
 			_apply(f, _shown[f.id] == 1)
 	ver += 1
+	return true
 
 
 

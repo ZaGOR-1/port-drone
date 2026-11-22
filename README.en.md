@@ -21,61 +21,17 @@ The current beta implements the following systems. Their presence in the code do
 - **Seasons and presentation:** seasonal changes, weather, snow, visual effects, flags and alliance emblems.
 - **Saves:** save, load and continue a match; a Chronicle of recorded snapshots rather than a full command replay.
 
-**Multiplayer:** LAN and Steam transports are implemented. Current v0.36 compatibility, command, snapshot and hash/RNG fixtures pass CI; loopback admission does not replace a match on two PCs. A full match between two independent peers, reconnect/resync and real Steam/LAN acceptance testing are still **NOT RUN**. Both test peers must use the same exact EXE/DLL set with matching SHA256 hashes. Steam integration uses the Spacewar test AppID 480.
-
-For current evidence and coverage limits, see the [re-onboarding audit](docs/codex/verified/REONBOARDING_AUDIT.md) and [architecture and mechanics](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md). [Phase 5C results](docs/codex/verified/PHASE5C_INTEGRATION_RESULTS.md) are historical.
+**Multiplayer.** LAN and Steam transports are implemented. Both test peers should use an identical EXE/DLL set with matching SHA256 hashes. Full matches on two physical PCs and reconnect/resync still need acceptance testing. Steam uses test AppID 480. [Current QA evidence](docs/WINDOWS_QA.md)
 
 ## Development status
 
-- **`main`** holds the last accepted stable baseline and is kept separate from experimental development.
-- **`beta`** is the active development and testing branch. The owner imported the initial snapshot into a new Git history. PR #2 restored CI and PR #4 integrated v0.36.0 with regression fixes. The PR #1–#11 series mentioned in older Phase reports belongs to the earlier history, not the current GitHub numbering. Verified branch state is recorded in [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md).
-- The beta is **not a stable release**. Windows GUI and full multiplayer QA are still pending, and some features may contain bugs.
+`main` is the stable baseline and `beta` is the development and QA branch. The current source identity is `v0.36.0 / PROTO 7 / v036-integration-1 / Save.FORMAT 1`. R02, UI and input fixes were tested together in the Windows QA package. SFX and MinGW remain a separate packaging and test path. [Project state](docs/PROJECT_STATE.md)
 
-Open work includes update integrity and atomicity, save durability, general network command validation, confirmed inherited shutdown leaks and CPU regressions in early-world measurements requiring a controlled late-game profile. See the [backlog](docs/codex/verified/BACKLOG.md) and [Beta QA plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+## Running and building on Windows
 
-## Running on Windows
+For the tracked build process, use the [Windows build guide](docs/codex/verified/BUILD_RELEASE.md). The usual build embeds the game PCK in `DroneFlames.exe` and ships three DLLs alongside it. Run the direct package with the [single-player launcher](tools/qa/Run-DroneFlames.ps1) or follow the [two-PC test plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md). The separate local SFX candidate unpacks its payload to a private cache. Use its exact hash and checklist from the [Windows QA record](docs/WINDOWS_QA.md).
 
-1. Prepare an agreed beta test package, or build one using the instructions below: `DroneFlames.exe`, `DroneFlames-libs-r1.zip` and `SHA256SUMS.txt`.
-2. Verify the EXE and ZIP against `SHA256SUMS.txt`. Extract the three DLLs beside the EXE. Copy [Run-DroneFlames.ps1](tools/qa/Run-DroneFlames.ps1) from this repository into the same directory.
-3. Open PowerShell in the package directory and run:
-
-```powershell
-& .\Run-DroneFlames.ps1 -Mode Gui
-```
-
-The launcher disables the updater, bypasses Steam initialization, and keeps test data and logs in `test-user/` and `test-logs/` beside the build. This is a single-player launch, not a Steam test. Copy the logs before another run so you retain the previous results.
-
-**Do not use the updater to download or replace files in this test beta.** Keep `DF_NO_UPDATE=1` and an empty updater repository in the build. Use copies of saves; loading new saves in older builds is unsupported.
-
-Manual acceptance uses the [18 Windows scenarios](docs/codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) and [LAN/Steam QA instructions](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md), with a separate [multiplayer launcher](tools/qa/Run-MultiplayerQA.ps1).
-
-## Building from source
-
-### Requirements
-
-- Ubuntu under WSL2, Git and Python 3. The build scripts use the Python standard library.
-- **Godot 4.7.2**: the Linux x86_64 editor and matching Windows x64 release export template.
-- The three existing Windows DLLs in [libs/](libs/): GodotSteam, WebRTC and `steam_api64.dll`. A normal build does not require replacing them.
-- Network access to obtain Godot if you do not already have the verified editor and template locally.
-
-### Ubuntu / WSL2 commands
-
-Run these from the root of a `beta` checkout:
-
-```bash
-GODOT_VERSION=4.7.2-stable python3 tools/fetch_godot.py godot_dl
-python3 tools/build.py \
-  --godot godot_dl/godot \
-  --template godot_dl/windows_release_x86_64.exe \
-  --version "$(python3 tools/build.py --print-version)" --repo "" --out dist/beta
-cp libs/*.dll tools/qa/Run-*.ps1 dist/beta/
-```
-
-`--print-version` reads the checked source version, currently `0.36.0`; explicit --version asserts that value. This is a test beta, not a new stable release. Passing `--repo ""` leaves the package without an automatic update source.
-
-[tools/build.py](tools/build.py) packs `game/` into a PCK and embeds it in the Windows EXE. The output in `dist/beta/` contains the **EXE with its embedded PCK**, the DLL ZIP, checksums and copied launchers. Follow the Windows launch steps next. Keep the tracked `game/.godot/` files: the current build depends on these imported resources.
-
-The new beta passes CI:43 Godot/Python tests,2476 simulation checks, Windows x64 build/integrity/identity. Native Windows headless startup of the earlier PR #4 package also passed. Windows GUI, audio, GPU and full physical multiplayer QA remain **NOT RUN**; inherited shutdown leaks are open. Engine/template caches are not tracked; check local availability. See the [detailed build and QA plan](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+Keep the tracked `game/.godot/` assets and the binary project configuration. Keep the updater disabled for QA and use an isolated profile. [Documentation index](docs/INDEX.md)
 
 ## Development and contributions
 

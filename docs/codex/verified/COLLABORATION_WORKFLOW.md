@@ -1,6 +1,6 @@
 # Співпраця в новому репозиторії DroneFlames
 
-CURRENT, 2026-11-21. Source of truth: actual Git/code/tests, [AGENTS](../../../AGENTS.md), [CURRENT_STATE](CURRENT_STATE.md), [NEXT_SESSION](NEXT_SESSION.md).
+Поточні правила визначає [AGENTS.md](../../../AGENTS.md), стан — [PROJECT_STATE.md](../../PROJECT_STATE.md). Історія workflow наведена нижче.
 
 - ZaGOR-1 — власник і release decision maker; OKREDU — довірений співавтор. Зберігати авторство і погоджені механіки людей.
 - main — прийнята база; beta — development/integration/testing. Нові feature/*, fix/*, docs/* від актуальної beta. Не переписувати спільні branches/історію; великі shared files — погодити ownership.
@@ -52,9 +52,9 @@ Codex поважає функції й авторство друга, поясн
 
 ## Документація та передача контексту
 
-AGENTS.md — постійна політика, CURRENT_STATE — поточний worktree/branch/tests/blockers, BACKLOG — задачі, DECISIONS — обґрунтовані рішення. Функціональна зміна оновлює відповідний system doc і tests; старі результати зберігають дату/scope. Migration docs не видаляти, позначити DEFERRED. Product version без фактичної зміни продукту й рішення власника не підвищувати.
+AGENTS.md — постійна політика, PROJECT_STATE.md — поточний worktree/branch/tests/blockers, BACKLOG — задачі, DECISIONS — обґрунтовані рішення. Функціональна зміна оновлює відповідний system doc і tests; старі результати зберігають дату/scope. Migration docs не видаляти, позначити DEFERRED. Product version без фактичної зміни продукту й рішення власника не підвищувати.
 
-Наступна сесія читає AGENTS/CURRENT_STATE/Phase5 docs, перевіряє status/HEAD/refs і продовжує існуючий uncommitted candidate. Не відновлювати стару стратегію й не повторювати повний аудит без причини. Untracked overlay включати у майбутній commit тільки після дозволу, не втрачати при зміні worktree.
+Наступна сесія читає AGENTS і PROJECT_STATE, перевіряє status/HEAD/refs і відкриває документи своєї задачі. Не відновлювати стару стратегію й не повторювати повний аудит без причини. Untracked overlay включати у майбутній commit тільки після дозволу, не втрачати при зміні worktree.
 
 ## Phase 5C — передача Gemini та final QA
 

@@ -930,6 +930,7 @@ func _reset_lockstep() -> void:
 	_gparts.clear()
 	desync_parts.clear()
 	_resync_q.clear()
+	_resume_q.clear()
 	_snap = {}
 	_snap_next = []
 	_last_snap = -1
@@ -3121,21 +3122,21 @@ func _restore_from(buf: PackedByteArray, n: int) -> bool:
 	var ok: bool = await _restore_snapshot(buf, current)
 	if epoch != _restore_epoch or not in_match:
 		return false # A late completion must not touch the new/closed session.
-	if not ok or gw.country_by_id(local_slot + 1) == null:
+	var player: Country = gw.country_by_id(local_slot + 1) if ok else null
+	if player == null or not is_instance_valid(main):
 		_restore_failed("Не удалось восстановить снимок")
 		return false
 	gw.net_driven = true
-	gw.player = gw.country_by_id(local_slot + 1)
+	gw.player = player
 	var errors := Save.RestoreErrors.new()
 	OS.add_logger(errors)
-	if gw.vision != null:
-		gw.vision.net_rebind(gw.vision.net_keep() if _own_fog else keep_vis)  # NET 35: a resumed host's snapshot holds its own fog
-	if is_instance_valid(main) and main.has_method("net_after_restore"):
-		main.net_after_restore() # Clears authoritative FrontPlan/strike caches as well as refreshing UI.
+	# NET 35: a resumed host's snapshot holds its own fog.
+	var rebound: bool = gw.vision == null or gw.vision.net_rebind(gw.vision.net_keep() if _own_fog else keep_vis) == true
+	var prepared: bool = rebound and main.has_method("net_prepare_restore") and main.net_prepare_restore() == true
 	OS.remove_logger(errors)
 	if epoch != _restore_epoch or not in_match:
 		return false
-	if errors.failed():
+	if not prepared or errors.failed():
 		_restore_failed("Не удалось завершить восстановление снимка")
 		return false
 	gw.net_tick = (n + 1) * NetConfig.TICKS_PER_TURN
@@ -3145,13 +3146,19 @@ func _restore_from(buf: PackedByteArray, n: int) -> bool:
 	stall_t = 0.0
 	resyncs += 1
 	_restored_turn = n
-	print("[Net] resync to turn %d: %s, %d ms" % [n, "ok" if ok else "FAILED", Time.get_ticks_msec() - t0])
+	print("[Net] resync to turn %d: ok, %d ms" % [n, Time.get_ticks_msec() - t0])
 	_restoring = false
-	if rejoining:  # NET 32: back in the match
+	var was_rejoining: bool = rejoining
+	if was_rejoining:  # NET 32: back in the match
 		rejoining = false
 		go = true
-		if main != null and main.has_method("net_toast"):
-			main.net_toast("ВЫ СНОВА В ПАРТИИ")
+	gw.set_process(true)
+	if main.has_method("net_after_restore"):
+		main.net_after_restore()
+	if epoch != _restore_epoch or not in_match:
+		return false
+	if was_rejoining and main.has_method("net_toast"):
+		main.net_toast("ВЫ СНОВА В ПАРТИИ")
 	if not _snap_next.is_empty():
 		var nx: Array = _snap_next
 		_snap_next = []

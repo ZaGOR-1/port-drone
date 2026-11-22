@@ -1,3 +1,5 @@
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # Фактичні тести Phase4
 
 2026-11-20. Detached worktree `/home/zagor/projects/port-drone-pr-audit-96053d66`, HEAD `96053d66eb984cc24e3acce647a55a195136abd2`. Primary `af1b4c975564bac916db079d8470c2394d4920e5` не переключали. Godot **4.7.2.stable.official.ed1daf0bf**, той самий pinned editor/template, що в Phase2. Ubuntu WSL2 / Windows11 Pro x64; engine та DLL не оновлювали. Історичні baseline2458 не видаються за тести latest.
@@ -6,26 +8,26 @@
 
 | Перевірка | Статус | Відтворений результат | Доказ |
 |---|---|---|---|
-| Python unittest, detached latest | PASS | 16 tests /26.831s;15 release і1 Godot wrapper | [tests/python_units.log](../../../dist/phase4_pr_audit/tests/python_units.log), [tests/python_units_result.json](../../../dist/phase4_pr_audit/tests/python_units_result.json) |
-| Godot regression suite | PASS |2476 checks,0 failures /13.818s | [tests/regression/regression.json](../../../dist/phase4_pr_audit/tests/regression/regression.json) |
-| Persistent latest mechanic suite | PASS |309 assertions,0 failures /15.424s | [mechanics_suite.json](../../../dist/phase4_pr_audit/mechanics_suite.json), [logs/mechanics_suite.log](../../../dist/phase4_pr_audit/logs/mechanics_suite.log) |
-| Runtime GDScript load/can_instantiate | PASS |269 runtime scripts,0 load failures; main scene instantiate | [compile_pack.json](../../../dist/phase4_pr_audit/compile_pack.json) |
-| PCK inventory/hash | PASS |883/883 packaged files match worktree manifest; latest.pck105713244 bytes | [pack_manifest.json](../../../dist/phase4_pr_audit/pack_manifest.json), [compile_pack.json](../../../dist/phase4_pr_audit/compile_pack.json) |
-| Нові atlas JSON/PNG | PASS metadata |7 pairs,97 named sprites, frame rectangles у bounds, PNG dimensions=metadata | [atlas_validation.json](../../../dist/phase4_pr_audit/atlas_validation.json) |
-| Normal Linux headless startup240frames | PASS startup |exit0 /26.536s; відомі missing Linux native extensions | [headless_startup_result.json](../../../dist/phase4_pr_audit/headless_startup_result.json), [logs/headless_startup.log](../../../dist/phase4_pr_audit/logs/headless_startup.log) |
-| Clean shutdown Linux/Windows | FAIL |RID/ObjectDB/resources-at-exit, Windows11/226/44 | [windows_logs/smoke-stderr.log](../../../dist/phase4_pr_audit/windows_logs/smoke-stderr.log) |
-| Legacy synthetic + new-field disk/codec save/load | PASS у межі fixture |17 checks /16.533s; country, silo, carrier, planes, zones, seasons, Chronicle event | [save_roundtrip.json](../../../dist/phase4_pr_audit/save_roundtrip.json), [logs/save_roundtrip.log](../../../dist/phase4_pr_audit/logs/save_roundtrip.log) |
-| Land deal cooldown after restore | FAIL product |TRADE_COOLDOWN_RETAINED=false, окремо від17 positive assertions | [logs/save_roundtrip.log](../../../dist/phase4_pr_audit/logs/save_roundtrip.log) |
-| Seasons/frame schedule determinism | FAIL product |farm0.5 vs1.0, equal NetHash/time, PA01 | [audit_probes.json](../../../dist/phase4_pr_audit/audit_probes.json) |
-| Human land trade consent | FAIL product |owner2→1 без accept, PA02 | [audit_probes.json](../../../dist/phase4_pr_audit/audit_probes.json) |
-| Carrier command ownership | FAIL product |int(null) SCRIPT ERROR, allowed=false, PA03 | [logs/audit_probes.log](../../../dist/phase4_pr_audit/logs/audit_probes.log) |
-| Chronicle + live Ship | FAIL product |country_id missing, frames0, PA04 | [logs/audit_probes.log](../../../dist/phase4_pr_audit/logs/audit_probes.log) |
-| Airport action dispatch | FAIL product |mode0 замість64, positive airfield control, PA05 | [airport_probe.json](../../../dist/phase4_pr_audit/airport_probe.json) |
-| Carrier sink + airborne/no-base | FAIL product |origin_px on Nil, PA06 | [logs/carrier_sink_probe.log](../../../dist/phase4_pr_audit/logs/carrier_sink_probe.log) |
-| Upkeep eager fallback | FAIL performance contract |fallback викликається і з наявним key, PA08 | [audit_probes.json](../../../dist/phase4_pr_audit/audit_probes.json) |
-| REBASE/AIRDROP cancellation | FAIL product |обидва false, PA09 | [cancel_probe.json](../../../dist/phase4_pr_audit/cancel_probe.json) |
-| Windows x64 local build | PASS |214981736-byte EXE, version0.34.0/repo="" у build copy | [windows_build_result.json](../../../dist/phase4_pr_audit/windows_build_result.json) |
-| Windows11 isolated headless startup | PASS startup |exit0 /22.616s,3 DLL реально завантажені, test user dir exists | [windows_logs/smoke-result.json](../../../dist/phase4_pr_audit/windows_logs/smoke-result.json) |
+| Python unittest, detached latest | PASS | 16 tests /26.831s;15 release і1 Godot wrapper | tests/python_units.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/tests/python_units.log`), tests/python_units_result.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/tests/python_units_result.json`) |
+| Godot regression suite | PASS |2476 checks,0 failures /13.818s | tests/regression/regression.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/tests/regression/regression.json`) |
+| Persistent latest mechanic suite | PASS |309 assertions,0 failures /15.424s | mechanics_suite.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/mechanics_suite.json`), logs/mechanics_suite.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/mechanics_suite.log`) |
+| Runtime GDScript load/can_instantiate | PASS |269 runtime scripts,0 load failures; main scene instantiate | compile_pack.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/compile_pack.json`) |
+| PCK inventory/hash | PASS |883/883 packaged files match worktree manifest; latest.pck105713244 bytes | pack_manifest.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/pack_manifest.json`), compile_pack.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/compile_pack.json`) |
+| Нові atlas JSON/PNG | PASS metadata |7 pairs,97 named sprites, frame rectangles у bounds, PNG dimensions=metadata | atlas_validation.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/atlas_validation.json`) |
+| Normal Linux headless startup240frames | PASS startup |exit0 /26.536s; відомі missing Linux native extensions | headless_startup_result.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/headless_startup_result.json`), logs/headless_startup.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/headless_startup.log`) |
+| Clean shutdown Linux/Windows | FAIL |RID/ObjectDB/resources-at-exit, Windows11/226/44 | windows_logs/smoke-stderr.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/windows_logs/smoke-stderr.log`) |
+| Legacy synthetic + new-field disk/codec save/load | PASS у межі fixture |17 checks /16.533s; country, silo, carrier, planes, zones, seasons, Chronicle event | save_roundtrip.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/save_roundtrip.json`), logs/save_roundtrip.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/save_roundtrip.log`) |
+| Land deal cooldown after restore | FAIL product |TRADE_COOLDOWN_RETAINED=false, окремо від17 positive assertions | logs/save_roundtrip.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/save_roundtrip.log`) |
+| Seasons/frame schedule determinism | FAIL product |farm0.5 vs1.0, equal NetHash/time, PA01 | audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`) |
+| Human land trade consent | FAIL product |owner2→1 без accept, PA02 | audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`) |
+| Carrier command ownership | FAIL product |int(null) SCRIPT ERROR, allowed=false, PA03 | logs/audit_probes.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/audit_probes.log`) |
+| Chronicle + live Ship | FAIL product |country_id missing, frames0, PA04 | logs/audit_probes.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/audit_probes.log`) |
+| Airport action dispatch | FAIL product |mode0 замість64, positive airfield control, PA05 | airport_probe.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/airport_probe.json`) |
+| Carrier sink + airborne/no-base | FAIL product |origin_px on Nil, PA06 | logs/carrier_sink_probe.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/carrier_sink_probe.log`) |
+| Upkeep eager fallback | FAIL performance contract |fallback викликається і з наявним key, PA08 | audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`) |
+| REBASE/AIRDROP cancellation | FAIL product |обидва false, PA09 | cancel_probe.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/cancel_probe.json`) |
+| Windows x64 local build | PASS |214981736-byte EXE, version0.34.0/repo="" у build copy | windows_build_result.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/windows_build_result.json`) |
+| Windows11 isolated headless startup | PASS startup |exit0 /22.616s,3 DLL реально завантажені, test user dir exists | windows_logs/smoke-result.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/windows_logs/smoke-result.json`) |
 | Same-checkpoint1024 CPU simulation benchmark | PASS execution / mixed performance |4 measured runs по300 ticks; p99 у latest гірший | таблиця нижче |
 | GPU shader compilation/visual output/audio/DPI/mouse/keyboard | NOT RUN |Headless renderer не перевіряє GUI/GPU, helpers не замінюють input tests | Windows checklist нижче |
 | Real Steam / invite /2-peer/reconnect/resync | NOT RUN |Реальні акаунти не використовували; component PA01/03 вже блокують готовність | PA01/03, baseline R02/R17 |
@@ -50,9 +52,9 @@ python3 tools/check_performance.py --godot /home/zagor/projects/port-drone/godot
 /home/zagor/projects/port-drone/godot_dl/godot --headless --main-pack /home/zagor/projects/port-drone/dist/phase4_pr_audit/latest.pck --script tests/test_godot_suite.gd -- --out=/home/zagor/projects/port-drone/dist/phase4_pr_audit/mechanics_suite.json
 ```
 
-Ці команди запускалися harness із окремими XDG_DATA_HOME/CONFIG/CACHE, DF_NO_UPDATE=1. Перший Python driver мав DF_STEAM_MOCK=1 (локальний mock, без real Steam); подальші direct probes/smokes — DF_STEAM_MOCK=0, invalid-ID bypass до filesystem/network init. Для відтворення використовувати збережений [run_local_checks.py](../../../dist/phase4_pr_audit/run_local_checks.py) та fixture argv у reports; не запускати на реальних user saves.
+Ці команди запускалися harness із окремими XDG_DATA_HOME/CONFIG/CACHE, DF_NO_UPDATE=1. Перший Python driver мав DF_STEAM_MOCK=1 (локальний mock, без real Steam); подальші direct probes/smokes — DF_STEAM_MOCK=0, invalid-ID bypass до filesystem/network init. Для відтворення використовувати збережений run_local_checks.py (`port-drone.tar.gz` → `dist/phase4_pr_audit/run_local_checks.py`) та fixture argv у reports; не запускати на реальних user saves.
 
-Додаткові fixtures (усі ignored, production source не змінено): [probe.gd](../../../dist/phase4_pr_audit/probe.gd), [carrier_sink_probe.gd](../../../dist/phase4_pr_audit/carrier_sink_probe.gd), [airport_probe.gd](../../../dist/phase4_pr_audit/airport_probe.gd), [cancel_probe.gd](../../../dist/phase4_pr_audit/cancel_probe.gd), [compile_probe.gd](../../../dist/phase4_pr_audit/compile_probe.gd), [save_probe.gd](../../../dist/phase4_pr_audit/save_probe.gd). Save test читає копію синтетичного Phase2 checkpoint, пише тільки isolated user://. Invalid compressed payload відхиляється; invalid net wrapper не змінює sampled world. Це не Main.load_slot GUI та не proof transactional _restore_from.
+Додаткові fixtures (усі ignored, production source не змінено): probe.gd (`port-drone.tar.gz` → `dist/phase4_pr_audit/probe.gd`), carrier_sink_probe.gd (`port-drone.tar.gz` → `dist/phase4_pr_audit/carrier_sink_probe.gd`), airport_probe.gd (`port-drone.tar.gz` → `dist/phase4_pr_audit/airport_probe.gd`), cancel_probe.gd (`port-drone.tar.gz` → `dist/phase4_pr_audit/cancel_probe.gd`), compile_probe.gd (`port-drone.tar.gz` → `dist/phase4_pr_audit/compile_probe.gd`), save_probe.gd (`port-drone.tar.gz` → `dist/phase4_pr_audit/save_probe.gd`). Save test читає копію синтетичного Phase2 checkpoint, пише тільки isolated user://. Invalid compressed payload відхиляється; invalid net wrapper не змінює sampled world. Це не Main.load_slot GUI та не proof transactional _restore_from.
 
 ## Порівняння продуктивності
 
@@ -67,7 +69,7 @@ python3 tools/check_performance.py --godot /home/zagor/projects/port-drone/godot
 
 Latest mean поліпшився приблизно3.2%/5.8%, median2.4%/2.0%; p99 **погіршився10.0%/23.9%**. Два повтори не дають статистичної гарантії. Кінцеві facilities185 у base та183 у latest показують змінену симуляційну поведінку; однаковий input не означає однакову роботу після balance/AI/seasons changes. Autosave main-thread snapshot у latest≈70–94ms, у base≈54–75ms. Це окремі pauses поза timed `_sim_step`; пропускати їх у full-frame оцінці не можна. Global late-game improvement не підтверджений.
 
-Ignored benchmark_samples.gd — копія незмінного trusted benchmark; p50/raw samples додані тільки до result після timed loop. Production benchmark script не редагували. Дані й повні system totals: [late_base_a.json](../../../dist/phase4_pr_audit/late_base_a.json), [late_latest_a.json](../../../dist/phase4_pr_audit/late_latest_a.json), [late_base_b.json](../../../dist/phase4_pr_audit/late_base_b.json), [late_latest_b.json](../../../dist/phase4_pr_audit/late_latest_b.json). Seed/argv — [late_seed_baseline_result.json](../../../dist/phase4_pr_audit/late_seed_baseline_result.json). В усіх чотирьох timed logs SCRIPT ERROR не знайдено. Авторські PR3 mean3.35→2.62 і PR10 mean5.265→4.800 мають інші/ненадані checkpoint/conditions; їх не зараховано як наші результати.
+Ignored benchmark_samples.gd — копія незмінного trusted benchmark; p50/raw samples додані тільки до result після timed loop. Production benchmark script не редагували. Дані й повні system totals: late_base_a.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/late_base_a.json`), late_latest_a.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/late_latest_a.json`), late_base_b.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/late_base_b.json`), late_latest_b.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/late_latest_b.json`). Seed/argv — late_seed_baseline_result.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/late_seed_baseline_result.json`). В усіх чотирьох timed logs SCRIPT ERROR не знайдено. Авторські PR3 mean3.35→2.62 і PR10 mean5.265→4.800 мають інші/ненадані checkpoint/conditions; їх не зараховано як наші результати.
 
 ## Windows build і ручний наступний тест
 
@@ -87,7 +89,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Users\ZaGOR\AppData\
 
 ## Збереження робочого стану та інструменти
 
-[preservation.json](../../../dist/phase4_pr_audit/preservation.json):881/881 source hashes і123/123 Phase2 artifacts збігаються; primary HEAD/main/migration незмінні, tracked diff порожній; detached head також clean. Rollback bundle/tars залишаються на місці. GitHub final head check:10/10 SHA/base незмінні.
+preservation.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/preservation.json`):881/881 source hashes і123/123 Phase2 artifacts збігаються; primary HEAD/main/migration незмінні, tracked diff порожній; detached head також clean. Rollback bundle/tars залишаються на місці. GitHub final head check:10/10 SHA/base незмінні.
 
 Використані Git/gh API (read-only metadata/history/fetch), Python standard library, pinned Godot, PowerShell/WSL interop; Context7 official Godot4.7 docs для `_process` та eager Dictionary.get. Діаграма — drawio skill, native XML і Mermaid source. Playwright/Chrome/Figma/Semgrep не викликали, бо web UI/дизайн/зміна production code не були предметом перевірки. GitHub comments/CI/publishing tools не запускали.
 

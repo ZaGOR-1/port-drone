@@ -79,7 +79,6 @@ func _set_mode(m: int) -> void:
 		hud.hide_confirm()
 	hud.set_key_pressed("capital", m == Mode.CAPITAL)
 	hud.set_key_pressed("town", m == Mode.TOWN)
-	hud.set_key_pressed("strike", m == Mode.STRIKE)
 	for k: String in BUILD_KEYS:
 		hud.set_key_pressed(k, m == int(BUILD_KEYS[k]))
 	hud.set_key_pressed("depot", m == Mode.DEPOT_S or m == Mode.DEPOT_M or m == Mode.DEPOT_L)
@@ -131,8 +130,6 @@ func _refresh_mode_hint(m: int = -1) -> void:
 			hud.set_hint("ВЫБЕРИТЕ МЕСТО ДЛЯ СТОЛИЦЫ")
 		Mode.TOWN:
 			hud.set_hint((Loc.t("ГОРОД %d: СВОБОДНАЯ ЗЕМЛЯ ДО 360 М ОТ СТРАНЫ") % Military.COST_TOWN) + suf)
-		Mode.STRIKE:
-			hud.set_hint("ТЕСТОВЫЙ УДАР: НАЖМИТЕ НА ЦЕЛЬ")
 		Mode.FACTORY, Mode.DRONEPORT, Mode.TEL, Mode.MFACTORY, Mode.REFINERY, Mode.POWER, Mode.AIRFIELD, Mode.AIRPORT, Mode.SAWMILL, Mode.OIL_RIG, Mode.PORT, Mode.SOLAR_FARM, Mode.NAVBASE, Mode.NPP, Mode.UMINE, Mode.FARM, Mode.CIV, Mode.MINE, Mode.BARRACKS, Mode.AD_MFG, Mode.AD_SPAAG, Mode.AD_SAM, Mode.AD_PATRIOT, Mode.AD_INT, Mode.AD_RADAR, Mode.AD_EW, Mode.DUGOUT, Mode.COASTAL_ASM, Mode.DEPOT_S, Mode.DEPOT_M, Mode.DEPOT_L, Mode.STORE_S, Mode.STORE_M, Mode.STORE_L, Mode.NUKE_SILO, Mode.AD_ZASLON:
 			var kind: int = BUILD_KIND[cm]
 			var bc1: Dictionary = Economy.build_cost(kind)
@@ -230,10 +227,16 @@ func _apply_speed() -> void:
 	hud.set_speed_text("II" if _paused else ("x0.5" if spd < 1.0 else "x%d" % int(spd)))
 
 
-func _on_zoom(z: float) -> void:
-	(world.territory.material as ShaderMaterial).set_shader_parameter("fill_scale", maxf(1.0, 1.0 / z))
+func _on_zoom(z: float) -> bool:
+	if not is_instance_valid(world) or not is_instance_valid(world.territory) or not is_instance_valid(world.objects) or not is_finite(z) or z <= 0.0:
+		return false
+	var material: ShaderMaterial = world.territory.material as ShaderMaterial
+	if material == null:
+		return false
+	material.set_shader_parameter("fill_scale", maxf(1.0, 1.0 / z))
 	world.objects.visible = z >= 0.5
 	world.objects.sway_enabled = z >= 1.0
+	return true
 
 
 
@@ -705,6 +708,11 @@ func _show_pend() -> void:
 	var txt: String = _pend_text()
 	var ok: bool = why == ""
 	var pm: int = int(_pend.get("mode", mode))
+	if pm == Mode.CAPITAL and String(_pend.get("kind", "")) == "tap":
+		var point: Vector2 = _pend["wp"]
+		var cell := Vector2i((point / float(GameWorld.CELL)).floor())
+		if world.can_found_city(cell, City.Kind.CAPITAL, true).ok:
+			_pend["capital_preview"] = point
 	if ok and String(_pend.get("kind", "")) == "tap" and world.player != null and (pm == Mode.OPERATION or pm == Mode.MOVE_ALL):
 
 		var pv: Dictionary = {}
@@ -879,10 +887,14 @@ func _build_res_why(kind: int, pl: Country) -> String:
 
 
 func _draw_ghost() -> void:
-	if world.player == null:
+	if world.player != null:
+		_ghost_own_rings()
+	# SP creates the player on confirmation, after this preview is shown.
+	if int(_pend.get("mode", Mode.NONE)) == Mode.CAPITAL:
+		if _pend.has("capital_preview"):
+			_draw_reticle(Mode.CAPITAL, _pend["capital_preview"])
 		return
-	_ghost_own_rings()
-	if RB.draw(self, _ghost):
+	if world.player == null or RB.draw(self, _ghost):
 		return
 	var C: float = float(GameWorld.CELL)
 	var ok_col: = Color(0.35, 1.0, 0.45, 0.45)

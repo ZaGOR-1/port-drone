@@ -169,27 +169,51 @@ func _gliding_at(p: Vector2) -> bool:
 
 
 
-func scroll_at(p: Vector2) -> ScrollContainer:
-	var best: ScrollContainer = null
-	var best_a: float = INF
-	for e: Array in _scrolls:
-		var scv: Variant = e[0]
-		if not is_instance_valid(scv):
-			continue
-		var sc: ScrollContainer = scv
-		if not sc.is_visible_in_tree():
-			continue
-		var r: Rect2 = sc.get_global_rect()
-		if not r.has_point(p):
-			continue
-		var vb: ScrollBar = sc.get_v_scroll_bar()
-		var hb: ScrollBar = sc.get_h_scroll_bar()
-		var can: bool = (vb != null and vb.max_value > vb.page + 1.0 and sc.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED) or (hb != null and hb.max_value > hb.page + 1.0 and sc.horizontal_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED)
+static func _hit_control(control: Control, point: Vector2) -> bool:
+	return Rect2(Vector2.ZERO, control.size).has_point(control.make_canvas_position_local(point))
 
-		if can and r.get_area() < best_a:
-			best_a = r.get_area()
-			best = sc
-	return best
+
+static func over_scrollbar(scroll: ScrollContainer, point: Vector2) -> bool:
+	for bar: ScrollBar in [scroll.get_v_scroll_bar(), scroll.get_h_scroll_bar()]:
+		if bar.is_visible_in_tree() and _hit_control(bar, point):
+			return true
+	return false
+
+
+static func can_scroll(bar: ScrollBar) -> bool:
+	return bar.max_value - bar.page > bar.min_value
+
+
+static func contains_scroll_point(scroll: ScrollContainer, point: Vector2) -> bool:
+	if not scroll.is_visible_in_tree() or not _hit_control(scroll, point):
+		return false
+	var parent: Node = scroll.get_parent()
+	while parent is Control:
+		var control: Control = parent
+		if control.clip_contents and not _hit_control(control, point):
+			return false
+		parent = parent.get_parent()
+	return true
+
+
+func scroll_at(point: Vector2, scope: Control) -> ScrollContainer:
+	var best: ScrollContainer = null
+	var best_area: float = INF
+	for entry: Array in _scrolls:
+		if not is_instance_valid(entry[0]):
+			continue
+		var scroll: ScrollContainer = entry[0]
+		if not scope.is_ancestor_of(scroll) or not contains_scroll_point(scroll, point):
+			continue
+		var vertical: bool = scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED and can_scroll(scroll.get_v_scroll_bar())
+		var horizontal: bool = scroll.horizontal_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED and can_scroll(scroll.get_h_scroll_bar())
+		if best != null and scroll.is_ancestor_of(best):
+			continue
+		var area: float = scroll.get_global_rect().get_area()
+		if (vertical or horizontal or over_scrollbar(scroll, point)) and (area < best_area or (best != null and best.is_ancestor_of(scroll))):
+			best_area = area
+			best = scroll
+	return best if best != null and not over_scrollbar(best, point) else null
 
 
 func _hold_begin() -> void:

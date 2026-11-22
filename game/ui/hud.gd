@@ -3,6 +3,8 @@ extends "res://ui/hud/hud_lane.gd"
 
 const Seasons: = preload("res://game/seasons.gd")
 const _PcPortH = preload("res://pc/pc_port.gd")
+var _ghost_tip_width: float = 0.0
+var _ghost_tip_cursor: Vector2 = Vector2.ZERO
 
 
 
@@ -49,9 +51,12 @@ func setup(m: Node, world: GameWorld) -> void:
 	ghost_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ghost_tip.visible = false
 	ghost_tip_lbl = UiKit.lbl("", 10, UiKit.TEXT, 2, 2)
+	ghost_tip_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ghost_tip_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ghost_tip.add_child(ghost_tip_lbl)
 	root.add_child(ghost_tip)
+	ghost_tip.minimum_size_changed.connect(_layout_ghost_tip, CONNECT_DEFERRED)
+	root.resized.connect(_layout_ghost_tip)
 	busy = Control.new()
 	if gw.has_signal("nuke_detonated"):
 		gw.nuke_detonated.connect(_on_nuke_detonated)
@@ -427,9 +432,15 @@ func _build_bottom() -> void:
 		grid.add_theme_constant_override("v_separation", 2)
 		grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		for it: Array in def[1]:
-			grid.add_child(_cell(String(it[0]), String(it[1]), bool(it[2])))
+			var cell := _cell(String(it[0]), String(it[1]), bool(it[2]))
+			grid.add_child(cell)
 		stack.add_child(grid)
 		pages.append(grid)
+		if _PcPortH.desktop():
+			for cell: Control in grid.get_children():
+				cell.visibility_changed.connect(_update_command_badges.bind(grid))
+				cell.get_child(0).visibility_changed.connect(_update_command_badges.bind(grid))
+			_update_command_badges(grid)
 
 	tip_pc = _tooltip_panel()
 	tip_pc.visible = false
@@ -463,6 +474,53 @@ func _build_bottom() -> void:
 	_select_page(0, false)
 
 
+
+
+func _visible_commands(grid: Control) -> Array[Button]:
+	var buttons: Array[Button] = []
+	for cell: Control in grid.get_children():
+		var button := cell.get_child(0) as Button if cell.get_child_count() > 0 else null
+		if cell.visible and button != null and button.visible:
+			buttons.append(button)
+	return buttons
+
+
+func _update_command_badges(grid: Control) -> void:
+	var buttons := _visible_commands(grid)
+	for index in buttons.size():
+		var button := buttons[index]
+		if index < 9:
+			set_hk_badge(button, str(index + 1), true, false, "NumberBadge")
+		else:
+			var badge := button.get_node_or_null("NumberBadge")
+			if badge != null:
+				button.remove_child(badge)
+				badge.queue_free()
+
+
+func command_numbers_open() -> bool:
+	return _PcPortH.desktop() and bottom_panel != null and bottom_panel.is_visible_in_tree() and not _spect
+
+
+func press_command_number(number: int) -> void:
+	var buttons := _visible_commands(pages[_page])
+	if number > buttons.size():
+		return
+	var button := buttons[number - 1]
+	if button.disabled:
+		return
+	if button.toggle_mode:
+		button.button_pressed = not button.button_pressed
+	button.pressed.emit()
+
+
+func gameplay_modal_open() -> bool:
+	if (is_instance_valid(panel) and panel.is_visible_in_tree()) or (is_instance_valid(prompt_panel) and prompt_panel.is_visible_in_tree()):
+		return true
+	if not ui24_open_now():
+		return false
+	# The ordinary army card follows the current selection and permits recalling another group.
+	return not (is_instance_valid(army_ux) and army_ux.sheet == ui24_sheet and army_ux.view in ["army", "group"])
 
 
 func _build_toast() -> void:
@@ -691,13 +749,7 @@ func _process(delta: float) -> void:
 			tw3.tween_property(sel_card, "position:x", 4.0, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_cmd_process(delta)
 
-	if bottom_panel != null and ops_panel != null:
-		var fold: bool = keys_collapsed and not _tut_on()
-		var want_bp: bool = not ops_panel.visible and not ui24_open_now() and not fold
-		if bottom_panel.visible != want_bp:
-			bottom_panel.visible = want_bp
-		if _fold_pad != null and _fold_pad.visible != (fold and not ops_panel.visible):
-			_fold_pad.visible = fold and not ops_panel.visible
+	_sync_command_panel()
 	_cc_process(delta)
 	_plan_process(delta)
 	_perf_process(delta)
@@ -763,26 +815,7 @@ func _process(delta: float) -> void:
 
 
 func _scroll_under(p: Vector2) -> ScrollContainer:
-	var cands: Array = []
-	if panel != null and is_instance_valid(panel) and panel.visible and panel.has_meta("scroll"):
-		cands.append(panel.get_meta("scroll"))
-	if ore_scroll != null and ore_panel.visible:
-		cands.append(ore_scroll)
-	if ui24_open_now() and ui24_sheet.has_method("scroll_area"):
-		var u24: Variant = ui24_sheet.call("scroll_area")
-		if u24 is ScrollContainer:
-			cands.append(u24)
-	if armies_bar != null and armies_bar.visible and armies_bar.get_child_count() > 0 and armies_bar.get_child(0) is ScrollContainer:
-		cands.append(armies_bar.get_child(0))
-	for scv: Variant in cands:
-		if not is_instance_valid(scv) or not (scv is ScrollContainer):
-			continue
-		var sc: ScrollContainer = scv
-		if sc.is_visible_in_tree() and sc.get_global_rect().has_point(p):
-			return sc
-	if tap_guard != null:
-		return tap_guard.call("scroll_at", p)
-	return null
+	return tap_guard.call("scroll_at", p, root) if is_instance_valid(tap_guard) else null
 
 
 func _input(event: InputEvent) -> void:
@@ -826,18 +859,19 @@ func _input(event: InputEvent) -> void:
 			_sd_moved = false
 	elif event is InputEventScreenDrag and _sd_sc != null:
 		var sd: = event as InputEventScreenDrag
-		if sd.index != 0 or not is_instance_valid(_sd_sc):
+		if sd.index != 0 or not is_instance_valid(_sd_sc) or not _sd_sc.is_visible_in_tree():
 			return
 		var d: Vector2 = sd.position - _sd_start
-		var horiz: bool = _sd_sc.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED
+		var horiz: bool = _sd_sc.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED or not TapGuardScript.can_scroll(_sd_sc.get_v_scroll_bar())
 		if not _sd_moved and (absf(d.x) if horiz else absf(d.y)) > 10.0:
 			_sd_moved = true
 			_cancel_tap()
 		if _sd_moved:
+			var local_delta: Vector2 = _sd_sc.make_canvas_position_local(sd.position) - _sd_sc.make_canvas_position_local(_sd_start)
 			if horiz:
-				_sd_sc.scroll_horizontal = int(_sd_origin.x - d.x)
+				_sd_sc.scroll_horizontal = roundi(_sd_origin.x - local_delta.x)
 			else:
-				_sd_sc.scroll_vertical = int(_sd_origin.y - d.y)
+				_sd_sc.scroll_vertical = roundi(_sd_origin.y - local_delta.y)
 			get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and _sd_eat_release:
 		var mb: = event as InputEventMouseButton
@@ -918,13 +952,30 @@ func set_ghost_tip(txt: String, col: Color, screen_pos: Vector2) -> void:
 		if ghost_tip.visible:
 			ghost_tip.visible = false
 		return
-	if ghost_tip_lbl.text != txt:
+	var text_changed: bool = ghost_tip_lbl.text != txt
+	if text_changed:
 		ghost_tip_lbl.text = txt
-		ghost_tip.reset_size()
+		var font: Font = ghost_tip_lbl.get_theme_font("font")
+		var font_size: int = ghost_tip_lbl.get_theme_font_size("font_size")
+		var padding: float = ghost_tip.get_theme_stylebox("panel").get_minimum_size().x
+		_ghost_tip_width = ceilf(font.get_multiline_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + padding)
 	ghost_tip_lbl.add_theme_color_override("font_color", col)
-	if not ghost_tip.visible:
-		ghost_tip.visible = true
-		ghost_tip.reset_size()
-	var px: float = clampf(screen_pos.x + 18.0, 6.0, maxf(6.0, root.size.x - ghost_tip.size.x - 6.0))
-	var py: float = clampf(screen_pos.y + 18.0, 6.0, maxf(6.0, (holder.position.y if holder != null else root.size.y) - ghost_tip.size.y - 6.0))
+	ghost_tip.visible = true
+	_ghost_tip_cursor = screen_pos
+	_layout_ghost_tip()
+
+
+func _layout_ghost_tip() -> void:
+	if not is_instance_valid(ghost_tip) or not ghost_tip.visible:
+		return
+	var width: float = minf(_ghost_tip_width, maxf(0.0, root.size.x - 12.0))
+	if ghost_tip.custom_minimum_size.x != width:
+		ghost_tip.custom_minimum_size.x = width
+	var minimum: Vector2 = ghost_tip.get_combined_minimum_size()
+	if not ghost_tip.size.is_equal_approx(minimum):
+		ghost_tip.size = minimum
+	var at: Vector2 = root.make_canvas_position_local(_ghost_tip_cursor)
+	var px: float = clampf(at.x + 18.0, 6.0, maxf(6.0, root.size.x - ghost_tip.size.x - 6.0))
+	var bottom: float = minf(root.size.y, holder.position.y) if holder != null else root.size.y
+	var py: float = clampf(at.y + 18.0, 6.0, maxf(6.0, bottom - ghost_tip.size.y - 6.0))
 	ghost_tip.position = Vector2(roundf(px), roundf(py))

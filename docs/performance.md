@@ -1,5 +1,7 @@
 # Performance validation
 
+The reproducible commands below are supported by `tools/check_performance.py`. Project priorities and open full-frame Windows profiling are listed in [Project state](PROJECT_STATE.md). The separate [MinGW comparison](WINDOWS_QA.md#godot-mingw) measures Windows process CPU time and tick durations. The 0.33.2.2 optimization and results below are historical.
+
 The 0.33.2.2 changes target CPU stalls on large maps rather than lowering detail or the simulation rate:
 
 - Colony-site searches keep their candidate order and run one probe per simulation step, round-robin across bots. Completed, captured, eliminated, human-controlled, or unaffordable searches are cancelled. Pending searches survive saves. The scheduler uses operation counts, not wall-clock time, so peer CPU speed does not affect its decisions.
@@ -36,7 +38,7 @@ python3 tools/check_performance.py --mode benchmark \
 
 `--dt 0.2` is an accelerated-simulation stress workload. Use `--dt 0.0166666666666667 --seconds 10` with `--load ... --warmup 0` for a short 1x-style workload. These measurements time `_sim_step`, not the complete rendered frame. Background jobs, rendering, HUD work and OS scheduling can affect a running game separately.
 
-## Checks and limits
+## Historical checks and limits for 0.33.2.2
 
 The regressions compare water/bridge and ownership sampling against the original algorithms, including out-of-map coordinates; spatial query membership/order; inventories after ownership/build changes; bounded, fair colony probes and cancellation; reference/cycle preservation for every save entity type; save/load of pending searches; and save/thumbnail isolation while the live state changes.
 

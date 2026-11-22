@@ -1,6 +1,8 @@
-# Поточний backlog — beta v0.36
+> Поточний порядок робіт наведено в [PROJECT_STATE](../../PROJECT_STATE.md#next-steps). R02, UI й INPUT мають інтеграційні коміти з автоматичними доказами. Ручне приймання exact SFX, фізичний LAN/Steam і late-game FPS відкриті. Наступні етапи — Linux-порт після Windows-профілювання, потім перепроєктування UI. Нижче збережено попередні triage й рішення.
 
-2026-11-21 після PR #4. Поточний стан і code checkpoint — [CURRENT_STATE](CURRENT_STATE.md); наступна сесія — [NEXT_SESSION](NEXT_SESSION.md). Цей список не надає дозволів на implementation або publication.
+## Стан backlog на 2026-11-21
+
+2026-11-21 після PR #4. Code checkpoint того дня — у [звіті CURRENT_STATE](CURRENT_STATE.md). Цей список не надає дозволів на implementation або publication.
 
 | Робота | Статус / критерій |
 |---|---|

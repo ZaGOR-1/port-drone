@@ -1,8 +1,10 @@
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # Phase 5B.2 — фактичні regression results
 
 2026-11-20. **READY FOR NEXT STAGE** у локальному scope FIX05–08. Не READY FOR BETA: compatibility revision gate, Windows GUI/full multiplayer та інші HIGH risks відкриті. No commit/push/merge/PR/release/CI dispatch.
 
-Артефакти/точні argv/cwd/exit/elapsed/stdout/stderr: [final_results.json](/home/zagor/projects/port-drone-pr10-critical/dist/phase5b2_20261120-181631/final_results.json), `/home/zagor/projects/port-drone-pr10-critical/dist/phase5b2_20261120-181631/logs/`, `*_result.json`. Current source candidate: **candidate_review.pck**, SHA256 `b113844ea3f41635e0fa2fc6df6ffd8c39d2f257ebb86f43cc061ac7047e5bbc`. Immutable candidate.pck — раніший пакет для FIX08 benchmark, до додаткової command validation, не фінальний review package. Source manifest: pack_manifest_review.json. Godot4.7.2.stable.official.ed1daf0bf, copied synthetic legacy checkpoint, ізольовані XDG/APPDATA/TMPDIR, updater off/Steam init bypassed; реальні saves/accounts не використовувалися. Усі нові артефакти всередині цього worktree.
+Артефакти/точні argv/cwd/exit/elapsed/stdout/stderr: final_results.json (`port-drone-pr10-critical.tar.gz` → `dist/phase5b2_20261120-181631/final_results.json`), `/home/zagor/projects/port-drone-pr10-critical/dist/phase5b2_20261120-181631/logs/`, `*_result.json`. Current source candidate: **candidate_review.pck**, SHA256 `b113844ea3f41635e0fa2fc6df6ffd8c39d2f257ebb86f43cc061ac7047e5bbc`. Immutable candidate.pck — раніший пакет для FIX08 benchmark, до додаткової command validation, не фінальний review package. Source manifest: pack_manifest_review.json. Godot4.7.2.stable.official.ed1daf0bf, copied synthetic legacy checkpoint, ізольовані XDG/APPDATA/TMPDIR, updater off/Steam init bypassed; реальні saves/accounts не використовувалися. Усі нові артефакти всередині цього worktree.
 
 ## RED / GREEN
 

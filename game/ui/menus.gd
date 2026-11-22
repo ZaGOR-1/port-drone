@@ -3,6 +3,7 @@ extends CanvasLayer
 
 const Ideology: = preload("res://game/ideology.gd")
 const ChronicleViewerS: = preload("res://ui/chronicle_viewer.gd")
+const ScrollInput = preload("res://ui/ui24/tap_guard.gd")
 
 
 
@@ -465,10 +466,10 @@ func _exit_tree() -> void:
 
 
 
-func _selector(parent: Control, title: String, values: Array, get_i: Callable, set_i: Callable, vw: float = 100.0, icon: String = "") -> void:
+func _selector(parent: Control, title: String, values: Array, get_i: Callable, set_i: Callable, vw: float = 100.0, icon: String = "", wrap: bool = true) -> Label:
 	if values.size() == 2 and "ВКЛ" in values and "ВЫКЛ" in values:
 		_toggle(parent, title, values, get_i, set_i, icon)
-		return
+		return null
 	var pc: = PanelContainer.new()
 	pc.add_theme_stylebox_override("panel", UiKit.sb("wb_panel_dark", 8, 2))
 	parent.add_child(pc)
@@ -508,18 +509,26 @@ func _selector(parent: Control, title: String, values: Array, get_i: Callable, s
 		v.text = str(values[clampi(int(get_i.call()), 0, values.size() - 1)])
 		v.add_theme_color_override("font_color", UiKit.MUTED if v.text in ["ВЫКЛ", "НЕТ"] else UiKit.TITLE)
 	upd.call()
-	left.pressed.connect(func() -> void:
-		set_i.call(posmod(int(get_i.call()) - 1, values.size()))
+	var step := func(delta: int) -> void:
+		var next: int = int(get_i.call()) + delta
+		set_i.call(posmod(next, values.size()) if wrap else clampi(next, 0, values.size() - 1))
 		_prefs_dirty = _prefs_dirty or current.begins_with("settings")
 		upd.call()
-		_rule_hint(pc, title))
-	right.pressed.connect(func() -> void:
-		set_i.call(posmod(int(get_i.call()) + 1, values.size()))
-		_prefs_dirty = _prefs_dirty or current.begins_with("settings")
-		upd.call()
-		_rule_hint(pc, title))
+		_rule_hint(pc, title)
+	left.pressed.connect(step.bind(-1))
+	right.pressed.connect(step.bind(1))
+	return v
 
 
+func _pc_scale_selector(parent: Control, pc_port: PcPortS) -> void:
+	var label: Label = _selector(parent, "МАСШТАБ ИНТЕРФЕЙСА", PcPortS.SCALE_NAMES,
+		func() -> int: return pc_port.scale_i, pc_port.set_scale_i, VW_SHORT, "", false)
+	var sync := func(_scale: float) -> void:
+		label.text = PcPortS.SCALE_NAMES[pc_port.scale_i]
+	pc_port.scale_changed.connect(sync)
+	label.tree_exiting.connect(func() -> void:
+		if is_instance_valid(pc_port):
+			pc_port.scale_changed.disconnect(sync), CONNECT_ONE_SHOT)
 
 
 func _toggle(parent: Control, title: String, values: Array, get_i: Callable, set_i: Callable, icon: String = "") -> void:
@@ -749,8 +758,7 @@ func _input(event: InputEvent) -> void:
 				hc = hc.get_parent() as Control
 
 			_sd_sc = _wn_scroll if _wn != null and is_instance_valid(_wn) and _wn_scroll != null and is_instance_valid(_wn_scroll) else _scroll
-			_sd_on = screen != null and _sd_sc != null and is_instance_valid(_sd_sc) and _sd_sc.is_visible_in_tree() and _sd_sc.get_v_scroll_bar().max_value > _sd_sc.size.y + 1.0 and _sd_sc.get_global_rect().has_point(st.position)
-
+			_sd_on = screen != null and is_instance_valid(_sd_sc) and ScrollInput.contains_scroll_point(_sd_sc, st.position) and ScrollInput.can_scroll(_sd_sc.get_v_scroll_bar()) and not ScrollInput.over_scrollbar(_sd_sc, st.position)
 			_sd_start = st.position
 			_sd_moved = false
 			if _sd_on:
@@ -762,7 +770,7 @@ func _input(event: InputEvent) -> void:
 			_sd_moved = false
 	elif event is InputEventScreenDrag and _sd_on:
 		var sd: = event as InputEventScreenDrag
-		if sd.index != 0 or _sd_sc == null or not is_instance_valid(_sd_sc):
+		if sd.index != 0 or not is_instance_valid(_sd_sc) or not _sd_sc.is_visible_in_tree():
 			return
 		var dy: float = sd.position.y - _sd_start.y
 		if not _sd_moved and absf(dy) > 10.0:
@@ -773,7 +781,8 @@ func _input(event: InputEvent) -> void:
 				_tap_btn.disabled = false
 			_tap_btn = null
 		if _sd_moved:
-			_sd_sc.scroll_vertical = int(float(_sd_origin) - dy)
+			var local_dy: float = (_sd_sc.make_canvas_position_local(sd.position) - _sd_sc.make_canvas_position_local(_sd_start)).y
+			_sd_sc.scroll_vertical = roundi(float(_sd_origin) - local_dy)
 			get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and _sd_eat:
 		var mb: = event as InputEventMouseButton
@@ -1269,12 +1278,24 @@ func _show_whats_new() -> void:
 		_wn = null)
 	pv.add_child(b)
 
-	var fixed: float = (logo.custom_minimum_size.y if logo != null else 0.0) + 40.0 + 46.0 + 20.0 + 28.0 + 20.0 + sm.x + sm.y
 	var fit: = func() -> void:
-		if is_instance_valid(sc) and is_instance_valid(list):
-			sc.custom_minimum_size.y = clampf(list.size.y, 120.0, maxf(120.0, root.size.y - fixed - 24.0))
-	list.resized.connect(fit)
-	sc.custom_minimum_size.y = clampf(root.size.y - fixed - 24.0, 120.0, 520.0)
+		if not is_instance_valid(sc) or sc.is_queued_for_deletion():
+			return
+		col.custom_minimum_size.x = minf(_menu_panel_w(), maxf(0.0, bg.size.x - 20.0))
+		var chrome: float = 20.0 + sm.x + sm.y + hr.get_combined_minimum_size().y + b.get_combined_minimum_size().y
+		chrome += panel.get_theme_stylebox("panel").get_minimum_size().y + pv.get_theme_constant("separation")
+		chrome += col.get_theme_constant("separation") * (col.get_child_count() - 1)
+		var room: float = maxf(0.0, bg.size.y - chrome)
+		if logo != null:
+			var natural: Vector2 = lt.get_size()
+			var ratio: float = minf(1.25 if bg.size.y >= 700.0 else 1.0, col.custom_minimum_size.x / natural.x)
+			ratio = minf(ratio, maxf(0.0, room - 48.0) / natural.y)
+			logo.custom_minimum_size = natural * ratio
+			room -= logo.custom_minimum_size.y
+		sc.custom_minimum_size.y = maxf(0.0, minf(room, list.get_combined_minimum_size().y))
+	bg.resized.connect(fit)
+	list.minimum_size_changed.connect(fit)
+	fit.call_deferred()
 	for tr2: TextureRect in drone_layer:
 		bg.add_child(tr2)
 
@@ -2587,9 +2608,9 @@ func show_settings_sub(kind: String) -> void:
 	current = "settings_" + kind
 	_sheet = kind != "gfx" and kind != "ui"
 	if kind == "ui":
-		var pc_port_u: Node = get_node_or_null("/root/PcPort")
+		var pc_port_u := get_node_or_null("/root/PcPort") as PcPortS
 		if pc_port_u != null and PcPortS.desktop():
-			_selector(vb, "МАСШТАБ ИНТЕРФЕЙСА", PcPortS.SCALE_NAMES, func() -> int: return int(pc_port_u.get("scale_i")), func(i: int) -> void: pc_port_u.call("set_scale_i", i), VW_SHORT)
+			_pc_scale_selector(vb, pc_port_u)
 			_selector(vb, "ПОЛНЫЙ ЭКРАН · F11", ["ВЫКЛ", "ВКЛ"], func() -> int: return 0 if get_window().mode == Window.MODE_WINDOWED else 1, func(i: int) -> void: pc_port_u.call("set_fullscreen", i == 1), VW_SHORT)
 			_selector(vb, "НАВЕДЕНИЕ МЫШИ (ТУЛТИПЫ)", ["ВКЛ", "ВЫКЛ"], func() -> int: return 0 if bool(pc_port_u.get("hover_tips")) else 1, func(i: int) -> void: pc_port_u.call("set_hover_tips", i == 0), VW_SHORT)
 			_selector(vb, "ЗАДЕРЖКА ПОДСКАЗОК", PcPortS.TIP_DELAY_NAMES, func() -> int: return int(pc_port_u.get("tip_delay_i")), func(i: int) -> void: pc_port_u.call("set_tip_delay_i", i), VW_SHORT)
@@ -2641,10 +2662,10 @@ func show_settings_sub(kind: String) -> void:
 		_selector(vb, "НЕ ЗАМЕДЛЯТЬ ИГРУ", ["ВЫКЛ", "ВКЛ"], func() -> int: return 1 if GameConfig.no_slow else 0, func(i: int) -> void:
 			GameConfig.no_slow = i == 1
 			Save.save_prefs(), VW_SHORT)
-		var pc_port: Node = get_node_or_null("/root/PcPort")
+		var pc_port := get_node_or_null("/root/PcPort") as PcPortS
 		if pc_port != null and PcPortS.desktop():  # PC port: the window and the UI size
 			_selector(vb, "ПОЛНЫЙ ЭКРАН · F11", ["ВЫКЛ", "ВКЛ"], func() -> int: return 0 if get_window().mode == Window.MODE_WINDOWED else 1, func(i: int) -> void: pc_port.call("set_fullscreen", i == 1), VW_SHORT)
-			_selector(vb, "МАСШТАБ ИНТЕРФЕЙСА", PcPortS.SCALE_NAMES, func() -> int: return int(pc_port.get("scale_i")), func(i: int) -> void: pc_port.call("set_scale_i", i), VW_SHORT)
+			_pc_scale_selector(vb, pc_port)
 		if GameConfig.dev_mode:
 			_selector(vb, "СЧЁТЧИК FPS", ["ВЫКЛ", "ВКЛ"], func() -> int: return 1 if GameConfig.perf_hud else 0, func(i: int) -> void: GameConfig.perf_hud = i == 1, VW_SHORT)
 

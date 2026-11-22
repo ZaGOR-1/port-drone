@@ -21,61 +21,17 @@
 - **Сезони й оформлення:** сезонні зміни, погода, сніг, візуальні ефекти, прапори та емблеми альянсів.
 - **Збереження:** збереження, завантаження й продовження матчу; хроніка зі знімками подій, а не повноцінний повтор команд.
 
-**Мультиплеєр:** реалізовані LAN і Steam-транспорт. У v0.36 автоматичні compatibility/command/snapshot/hash-RNG fixtures проходять CI; loopback admission не замінює матч на двох ПК. Тим часом повний матч двох незалежних учасників, reconnect/resync і реальний Steam/LAN QA ще **NOT RUN**. Для тесту обидва учасники повинні використовувати один точний комплект EXE/DLL із однаковими SHA256. Steam використовує тестовий Spacewar AppID 480.
-
-Поточні докази й межі перевірок: [re-onboarding audit](docs/codex/verified/REONBOARDING_AUDIT.md), [архітектура та механіки](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md). [Phase 5C](docs/codex/verified/PHASE5C_INTEGRATION_RESULTS.md) — історичний звіт.
+**Мультиплеєр.** Реалізовано LAN і Steam. Обидва учасники тесту мають використовувати однаковий комплект EXE/DLL зі спільними SHA256. Повні матчі на двох фізичних ПК і reconnect/resync ще потребують приймання. Steam використовує тестовий AppID 480. [Результати QA](docs/WINDOWS_QA.md)
 
 ## Поточний стан розробки
 
-- **`main`** — остання прийнята стабільна база; експериментальна розробка сюди не надходить.
-- **`beta`** — активна гілка розробки й тестування. Початковий snapshot перенесено у нову Git-історію. У ній PR #2 відновив CI, PR #4 інтегрував v0.36.0 та виправлення. Серія PR #1–#11 у старих Phase-звітах належить попередній історії, не поточній нумерації GitHub. Стан `main`/`beta` перевірено в [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md).
-- Beta **не є стабільним релізом**. Windows GUI та повний multiplayer QA ще належить виконати; частина функцій може містити помилки.
+`main` — стабільна база, `beta` — гілка розробки й QA. Контракти поточного коду — `v0.36.0 / PROTO 7 / v036-integration-1 / Save.FORMAT 1`. R02, UI й INPUT перевірено на суміщеному Windows QA-комплекті. SFX і MinGW лишаються окремим способом пакування й тестування. [Стан проєкту](docs/PROJECT_STATE.md)
 
-Відкриті задачі охоплюють цілісність і атомарність оновлень, надійність збережень, загальну перевірку мережевих команд, підтверджені inherited витоки при завершенні та CPU performance regression у ранніх вимірюваннях; потрібний профіль тривалого матчу. Докладніше: [backlog](docs/codex/verified/BACKLOG.md) і [план Beta QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+## Запуск і збірка у Windows
 
-## Запуск у Windows
+Використайте [інструкцію збірки Windows](docs/codex/verified/BUILD_RELEASE.md). Звичайна збірка вбудовує PCK у `DroneFlames.exe` і постачається з трьома DLL поруч. Прямий комплект запускайте через [лаунчер одиночної гри](tools/qa/Run-DroneFlames.ps1) або за [планом QA двох ПК](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md). Окремий локальний SFX розпаковує payload у приватний кеш. Його SHA256 і ручний чекліст наведено в [Windows QA](docs/WINDOWS_QA.md).
 
-1. Підготуйте узгоджений тестовий комплект beta або зберіть його за інструкцією нижче: `DroneFlames.exe`, `DroneFlames-libs-r1.zip` та `SHA256SUMS.txt`.
-2. Звірте контрольні суми EXE й ZIP із `SHA256SUMS.txt`. Витягніть три DLL з архіву поруч з EXE. Скопіюйте туди [Run-DroneFlames.ps1](tools/qa/Run-DroneFlames.ps1) із цього репозиторію.
-3. Відкрийте PowerShell у каталозі комплекту й запустіть:
-
-```powershell
-& .\Run-DroneFlames.ps1 -Mode Gui
-```
-
-Launcher вимикає updater, обходить ініціалізацію Steam і зберігає тестові дані та логи в `test-user/` і `test-logs/` поруч зі збіркою. Це запуск для одиночної гри, а не перевірка Steam. Копіюйте логи перед повторним запуском, щоб не втратити попередній результат.
-
-**Не використовуйте автоматичне завантаження й заміну файлів updater у тестовій beta.** Залишайте `DF_NO_UPDATE=1` і порожній updater repository у збірці. Використовуйте копії збережень; завантаження нових saves старішими збірками не підтримується.
-
-Для ручного приймання доступні [18 Windows-сценаріїв](docs/codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) та [інструкція LAN/Steam QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) із окремим [multiplayer launcher](tools/qa/Run-MultiplayerQA.ps1).
-
-## Збірка з вихідного коду
-
-### Вимоги
-
-- Ubuntu у WSL2, Git і Python 3. Скрипти збірки використовують стандартну бібліотеку Python.
-- **Godot 4.7.2**: Linux x86_64 editor і відповідний Windows x64 release export template.
-- Три наявні Windows DLL у [libs/](libs/): GodotSteam, WebRTC і `steam_api64.dll`. Їх не потрібно замінювати для звичайної збірки.
-- Мережевий доступ для отримання Godot, якщо перевірених editor/template ще немає локально.
-
-### Команди для Ubuntu / WSL2
-
-Виконуйте з кореня checkout гілки `beta`:
-
-```bash
-GODOT_VERSION=4.7.2-stable python3 tools/fetch_godot.py godot_dl
-python3 tools/build.py \
-  --godot godot_dl/godot \
-  --template godot_dl/windows_release_x86_64.exe \
-  --version "$(python3 tools/build.py --print-version)" --repo "" --out dist/beta
-cp libs/*.dll tools/qa/Run-*.ps1 dist/beta/
-```
-
-`--print-version` бере узгоджену source версію, зараз `0.36.0`; explicit --version лише перевіряє її. Це тестова beta, не новий стабільний реліз. Параметр `--repo ""` вимикає джерело автоматичних оновлень у комплекті.
-
-[tools/build.py](tools/build.py) пакує `game/` у PCK і вбудовує його у Windows EXE. Результат у `dist/beta/`: **EXE з PCK усередині**, ZIP із DLL, контрольні суми та скопійовані launchers. Далі виконайте кроки запуску у Windows. Зберігайте tracked `game/.godot/`: поточна збірка використовує ці імпортовані ресурси.
-
-Windows x64 build/integrity/identity і43 Godot/Python tests та2476 simulation checks проходять CI нової beta; native Windows headless попереднього PR #4 package теж PASS. Windows GUI, звук, GPU й повний фізичний multiplayer QA ще **NOT RUN**; shutdown leaks лишаються відкритими. Engine/template cache не tracked, його наявність перевіряйте локально. [Докладний план збірки й QA](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
+Зберігайте tracked `game/.godot/` і бінарну конфігурацію гри. Для QA вимикайте updater і використовуйте окремий профіль. [Індекс документації](docs/INDEX.md)
 
 ## Розробка та внесок
 

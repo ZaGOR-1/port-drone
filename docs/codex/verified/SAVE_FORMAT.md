@@ -1,4 +1,6 @@
-> **CURRENT contract / HISTORICAL report below.** FORMAT1, optional land_cooldowns + UrbanHold far_fail, legacy missing defaults і repeated restore перевірені PR #4. Autosave freeze повного encoded graph перед worker; Navy current-threat routes/scratch reset. New→old downgrade unsupported; OS durability не закрита. [Current flows](ARCHITECTURE_AND_FLOWS.md), [tests](V036_FIX_RESULTS.md).
+> Поточний контракт — `Save.FORMAT=1` ([save.gd](../../../game/game/save.gd)). У `beta` зберігаються optional `land_cooldowns` і `far_fail` з порожнім default при відсутності. R02 додає release failure propagation без зміни формату. Перевірки restore й обсяг сумісності — у [Windows QA](../../WINDOWS_QA.md#перевірки). Старі Phase overlays лишаються історичними.
+
+> **Підтвердження PR #4 і попередні звіти.** FORMAT1, optional land_cooldowns + UrbanHold far_fail, legacy missing defaults і repeated restore перевірені PR #4. Autosave freeze повного encoded graph перед worker; Navy current-threat routes/scratch reset. New→old downgrade unsupported; OS durability не закрита. [Current flows](ARCHITECTURE_AND_FLOWS.md), [tests](V036_FIX_RESULTS.md).
 
 # Phase 5B.2 — явне optional розширення FORMAT1
 

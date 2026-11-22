@@ -1,3 +1,5 @@
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # Phase5C — integration results / точний checkpoint
 
 2026-11-20. **READY FOR FINAL QA**, виключно ізольований Windows/Multiplayer QA; **не READY FOR BETA MERGE**. [Gemini review](PHASE5C_GEMINI_REVIEW.md), [18 ручних сценаріїв](WINDOWS_BETA_QA_CHECKLIST.md). Відомі HIGH updater integrity/network validation risks, shutdown FAIL і непроведений full two-peer залишаються gates перед beta.
@@ -5,9 +7,9 @@
 ## Робочий стан та артефакти
 
 - Worktree `/home/zagor/projects/port-drone-pr10-critical`; branch `codex/fix-pr10-critical`; HEAD `96053d66eb984cc24e3acce647a55a195136abd2` + **uncommitted Phase5/R02/5B2/5C**. Не checkout/reset/stash/rebase/clean; голий HEAD не містить fixes.
-- Усі нові stage artifacts тут: `/home/zagor/projects/port-drone-pr10-critical/dist/phase5c_20261120-220811/`; [machine-readable final report](/home/zagor/projects/port-drone-pr10-critical/dist/phase5c_20261120-220811/final_results.json), `*_result.json` містять argv/cwd/exit/time, `logs/` — stdout/stderr. Command files `run_checks.py`, `run_final_checks.py`, `run_admission.py`, `run_windows.py`, `run_cleanup_windows.py` відтворюють локальні дії, **не** CI/release scripts.
+- Усі нові stage artifacts тут: `/home/zagor/projects/port-drone-pr10-critical/dist/phase5c_20261120-220811/`; machine-readable final report (`port-drone-pr10-critical.tar.gz` → `dist/phase5c_20261120-220811/final_results.json`), `*_result.json` містять argv/cwd/exit/time, `logs/` — stdout/stderr. Command files `run_checks.py`, `run_final_checks.py`, `run_admission.py`, `run_windows.py`, `run_cleanup_windows.py` відтворюють локальні дії, **не** CI/release scripts.
 - Source PCK `candidate_review.pck` SHA256 **`5ed8822e33cf9d59dd033f9ad2391ac4b0cb566123d060d586aa5d6452f8e35e`**. Manifest883files. Це source candidate, окремий від disposable cleanup fixture PCK.
-- Windows комплект `windows-release/DroneFlames.exe`, три оригінальні DLL, `SHA256SUMS.txt`, два manual launchers. EXE SHA256 **`53d73aa29733efd46d962cdb3ae2a2a3af6cdd7b46ac30f300e6f06a191887f6`**,215004264bytes. Embedded PCK105735772bytes. [Integrity](/home/zagor/projects/port-drone-pr10-critical/dist/phase5c_20261120-220811/windows_integrity.json).
+- Windows комплект `windows-release/DroneFlames.exe`, три оригінальні DLL, `SHA256SUMS.txt`, два manual launchers. EXE SHA256 **`53d73aa29733efd46d962cdb3ae2a2a3af6cdd7b46ac30f300e6f06a191887f6`**,215004264bytes. Embedded PCK105735772bytes. Integrity (`port-drone-pr10-critical.tar.gz` → `dist/phase5c_20261120-220811/windows_integrity.json`).
 - Build використовує наявний Menus label `0.34.0`, repo порожній; це **не** затверджений новий stable release і не source version bump. `game/pc/version.cfg` лишається0.33.2.3, Menus.VERSION лишаєтьсяv0.34.0. Build-time normalization у disposable copy задокументований у `windows_manifest.json`.
 - Godot **4.7.2.stable.official.ed1daf0bf**, pinned editor/template з primary `godot_dl/`. Native modules/templates не змінювали.
 
@@ -24,7 +26,7 @@
 
 `NetConfig.version()` дає `Menus.VERSION/7/pr10-phase5b2-1`. Production `_on_connected` надсилає його в `_hello`; `_hello` спочатку порівнює exact identity, **до** token rejoin/in-match bypass. Steam lobby metadata `v` та join callback теж порівнюють identity; `resume_host()` відхиляє old saved-match `v` **до** leave/config/reset/snapshot mutation. Жодних нових packet kinds, protocol changes або weakening до «достатньо Protocol7».
 
-**RED** actual ENet: перед bump host `pr10-critical-1` прийняв Phase5B2 та R02 з тим самим identity, хоча semantics різні. OriginalPR10 без revision уже відхилявся. [RED results](/home/zagor/projects/port-drone-pr10-critical/dist/phase5c_20261120-220811/admission_red/).
+**RED** actual ENet: перед bump host `pr10-critical-1` прийняв Phase5B2 та R02 з тим самим identity, хоча semantics різні. OriginalPR10 без revision уже відхилявся. RED results (`port-drone-pr10-critical.tar.gz` → `dist/phase5c_20261120-220811/admission_red/`).
 
 **GREEN** actual два loopback процеси / production RPC:
 
@@ -36,7 +38,7 @@
 | Phase5C → R02 `/7/pr10-critical-1` | REJECT; roster1 |
 | Phase5B2 old host → Phase5C guest | REJECT; roster1 |
 
-[П’ять result.json і логи обох процесів](/home/zagor/projects/port-drone-pr10-critical/dist/phase5c_20261120-220811/admission_green/). Saved match identity tests:30checks, missing/old/protocol-only/future identities, repeated refusal, unchanged session/turn/tick/flags/queues. Saved old network sessions тепер очікувано не resume; SP saves лишаються FORMAT1 з попередньою optional-field policy.
+П’ять result.json і логи обох процесів (`port-drone-pr10-critical.tar.gz` → `dist/phase5c_20261120-220811/admission_green/`). Saved match identity tests:30checks, missing/old/protocol-only/future identities, repeated refusal, unchanged session/turn/tick/flags/queues. Saved old network sessions тепер очікувано не resume; SP saves лишаються FORMAT1 з попередньою optional-field policy.
 
 **Обмеження:** SIM_REV є задекларованою сумісністю, не fingerprint і не доказом ідентичного executable. Дві різні модифікації можуть навмисно/помилково мати однаковий рядок; crypto/content gate не додано. Однаковий revision не сертифікує determinism. Приймати QA лише за exact same EXE+DLL SHA на обох peers. Loopback lobby admission не перевіряє gameplay lockstep, Steam/LAN end-to-end, reconnect/resync чи host migration.
 
@@ -82,7 +84,7 @@
 
 ## Determinism та сумісність
 
-Main/HUD контрольний continuation: обидва render cadences дають hash **`9c88c42bb828b5fc`**, RNG**1905021893**, snow**0.5**, simulation time**170.666666666666**. [Preservation](/home/zagor/projects/port-drone-pr10-critical/dist/phase5c_20261120-220811/preservation.json): **881/883 source files byte-identical до5B2**, відрізняються тільки `net/net_config.gd` і `pc/updater.gd`. Отже Phase5/R02/FIX05–08 implementation збережена; suites підтверджені. Це scoped evidence, не доказ усіх multiplayer states.
+Main/HUD контрольний continuation: обидва render cadences дають hash **`9c88c42bb828b5fc`**, RNG**1905021893**, snow**0.5**, simulation time**170.666666666666**. Preservation (`port-drone-pr10-critical.tar.gz` → `dist/phase5c_20261120-220811/preservation.json`): **881/883 source files byte-identical до5B2**, відрізняються тільки `net/net_config.gd` і `pc/updater.gd`. Отже Phase5/R02/FIX05–08 implementation збережена; suites підтверджені. Це scoped evidence, не доказ усіх multiplayer states.
 
 Protocol7, FORMAT1 number, native DLL, Steam implementation, command ordering та snapshot restore code не змінені в5C. Optional FORMAT1 cooldown field з5B2 лишається: old→new defaults, new→old втрачає cooldown. New revision gate відділяє мережеві cohorts, але **не захищає offline save від downgrade**. Старі network save v відхиляються до mutation.
 

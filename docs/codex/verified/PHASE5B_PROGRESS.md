@@ -1,3 +1,5 @@
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # Phase 5C — передача поточного кандидата
 
 Phase 5 / R02 / 5B.2 code збережений: із 883 game files у 5C відрізняються лише updater.gd/net_config.gd. 26 Python / 2476 regression / 309 mechanics / 81 critical / R02 111+41 / FIX05–08 suites PASS. Windows build/native headless/embedded hashes PASS. [Exact checkpoint](PHASE5C_INTEGRATION_RESULTS.md), [Gemini review](PHASE5C_GEMINI_REVIEW.md).
@@ -39,15 +41,15 @@ PROTO7/FORMAT1 number/nativeDLL/Steam/source identifiers незмінні; optio
 - HEAD: `96053d66eb984cc24e3acce647a55a195136abd2` + uncommitted Phase5/R02 source/tests/docs.
 - Primary: `/home/zagor/projects/port-drone`, migration branch/HEADaf1b4c975564bac916db079d8470c2394d4920e5 незмінні. main/beta/OKREDU refs не пересувалися. Не переносити нову роботу checkout/reset/stash/clean/rebase.
 - Immutable backup перед R02: `/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/backup/working_files.tar.gz`, tracked.patch, inventory.json, status.txt, heads.txt, worktrees.txt. 10 dirty tracked +40 untracked =50 файлів. Старі backup не перезаписані.
-- [R02-only.patch](/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/R02-only.patch): **лише три production-файли від pre-R02 dirty state**, SHA256 `8bcc2542ba90c25d7f67058af0e75399db445ab4f553299a974532ae3295eb35`. Це не commit і не standalone result без Phase5. Для full source див. candidate manifest/working review checkpoint.
-- Exact source PCK: [candidate_release.pck](/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/candidate_release.pck), SHA256 `b52be533b369a18c57d70e869567da06f984a2ca8974638a696179aeeb2e8388`; pack_manifest_release.json883files,269scripts. Версія продукту не підвищувалася, SIM_REVpr10-critical-1/PROTO7/FORMAT1 незмінні.
-- [preservation.json](/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/preservation.json): 9 Phase5 production-файлів byte-identical; net_session Phase5 command handlers/hot functions збережено; попередні3tests/policy незмінні; всі50initialfilesіснують; Githeadsidentical, primarytrackedclean, native/track.godotunchanged.
+- R02-only.patch (`port-drone.tar.gz` → `dist/phase5b1_r02_20261120-170307/R02-only.patch`): **лише три production-файли від pre-R02 dirty state**, SHA256 `8bcc2542ba90c25d7f67058af0e75399db445ab4f553299a974532ae3295eb35`. Це не commit і не standalone result без Phase5. Для full source див. candidate manifest/working review checkpoint.
+- Exact source PCK: candidate_release.pck (`port-drone.tar.gz` → `dist/phase5b1_r02_20261120-170307/candidate_release.pck`), SHA256 `b52be533b369a18c57d70e869567da06f984a2ca8974638a696179aeeb2e8388`; pack_manifest_release.json883files,269scripts. Версія продукту не підвищувалася, SIM_REVpr10-critical-1/PROTO7/FORMAT1 незмінні.
+- preservation.json (`port-drone.tar.gz` → `dist/phase5b1_r02_20261120-170307/preservation.json`): 9 Phase5 production-файлів byte-identical; net_session Phase5 command handlers/hot functions збережено; попередні3tests/policy незмінні; всі50initialfilesіснують; Githeadsidentical, primarytrackedclean, native/track.godotunchanged.
 
 ## Зміни саме R02
 
 Production: game/game/save.gd, game/net/net_session.gd, game/game/main.gd. Нові4tests: test_snapshot_restore.gd, test_snapshot_restore_integration.gd, test_snapshot_restore.py, test_network_admission.gd. Новіdocs: R02_SNAPSHOT_RESTORE_FIX, R02_FAILURE_INJECTION_TESTS, цей progress та редагована draw.io карта. Updated CURRENT_STATE/BACKLOG/TEST_MATRIX/PR_RISKS/PHASE5B_PLAN/MULTIPLAYER_PROTOCOL/SAVE_FORMAT/INTEGRATION_STRATEGY/DECISIONS.
 
-[Root cause, lifecycle, exact success point, failure policy](R02_SNAPSHOT_RESTORE_FIX.md). [RED/GREEN і limits](R02_FAILURE_INJECTION_TESTS.md). [Фінальний machine-readable звіт](/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/final_results.json), logs та *_result.json містять конкретні команди. Історичні candidate/RED залишені для порівняння, не підміняти ними candidate_release.
+[Root cause, lifecycle, exact success point, failure policy](R02_SNAPSHOT_RESTORE_FIX.md). [RED/GREEN і limits](R02_FAILURE_INJECTION_TESTS.md). Фінальний machine-readable звіт (`port-drone.tar.gz` → `dist/phase5b1_r02_20261120-170307/final_results.json`), logs та *_result.json містять конкретні команди. Історичні candidate/RED залишені для порівняння, не підміняти ними candidate_release.
 
 ## Перед beta integration
 
