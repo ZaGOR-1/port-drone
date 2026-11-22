@@ -1,3 +1,5 @@
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # Git-історія та залежності PR
 
 2026-11-20. Base `af1b4c975564bac916db079d8470c2394d4920e5`; latest `96053d66eb984cc24e3acce647a55a195136abd2`. Primary checkout лишається на migration branch; local main/migration і remote beta snapshot однакові. Локальної beta гілки на старті немає. Fetch створив тільки `refs/audit/phase4/*` і remote-tracking origin/beta; не пересунув робочі branches.
@@ -59,4 +61,4 @@ flowchart TD
 
 Після узгоджених fixes використати одну cumulative integration branch від10 і один integration PR до beta, зі збереженням ancestry. Не cherry-pick/squash десять cumulative diff по черзі. Альтернатива — спочатку окремі1–4 зі збереженням parents, далі descendants; вона потребує більше merge/retest кроків. Закриття redundant PR — лише після погодження з OKREDU; тут нічого на GitHub не змінювали.
 
-Повний план і gates: [INTEGRATION_STRATEGY](INTEGRATION_STRATEGY.md). Докази: [history.json](../../../dist/phase4_pr_audit/history.json), [history_graph.txt](../../../dist/phase4_pr_audit/history_graph.txt), [ancestry_path.txt](../../../dist/phase4_pr_audit/ancestry_path.txt), [range_diff.txt](../../../dist/phase4_pr_audit/range_diff.txt), [patch_ids.json](../../../dist/phase4_pr_audit/patch_ids.json).
+Повний план і gates: [INTEGRATION_STRATEGY](INTEGRATION_STRATEGY.md). Докази: history.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/history.json`), history_graph.txt (`port-drone.tar.gz` → `dist/phase4_pr_audit/history_graph.txt`), ancestry_path.txt (`port-drone.tar.gz` → `dist/phase4_pr_audit/ancestry_path.txt`), range_diff.txt (`port-drone.tar.gz` → `dist/phase4_pr_audit/range_diff.txt`), patch_ids.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/patch_ids.json`).

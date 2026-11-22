@@ -1,3 +1,5 @@
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # R02 — Network Snapshot Restore Stabilization
 
 2026-11-20. Локальний набір Phase 5B.1 поверх незакоміченого Phase 5; не merge і не новий реліз. Рішення та фактичні результати: [тести](R02_FAILURE_INJECTION_TESTS.md), [checkpoint](PHASE5B_PROGRESS.md).
@@ -8,7 +10,7 @@
 
 Переглянуто: disconnect → `_start_reconnect` → saved seat/host checkpoint → `_resume_restore`; `_snap_begin`/`_snap_part`/`_apply_snapshot`; host `_send_snapshot` → локальний `_restore_from`; newest queued snapshot; Save wrapper/decompression/Variant/refs → `_load_pack` → new_world → core → systems → finish → local player/fog/cache/UI → lockstep resume. `Save._load_slot` уже враховує bool, але глибокі disk-load failure не сертифіковані цим мережевим fix. Інші fire-and-forget `_restore_from` call sites не мають окремих success-продовжень: success/failure тепер обробляє сам метод.
 
-Карта: [редагований draw.io](r02-snapshot-restore-lifecycle.drawio), [перегляд](/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/r02-snapshot-restore-lifecycle.drawio.png).
+Карта: [редагований draw.io](r02-snapshot-restore-lifecycle.drawio), перегляд (`port-drone.tar.gz` → `dist/phase5b1_r02_20261120-170307/r02-snapshot-restore-lifecycle.drawio.png`).
 
 ## Межа успіху і failure policy
 

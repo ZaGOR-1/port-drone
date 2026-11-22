@@ -1,3 +1,5 @@
+> Поточні межі desktop scale — 70/80/90/100/115/130% ([PcPort](../../../game/pc/pc_port.gd)). Контекстні цифрові команди й обмежені стрілки масштабу реалізовано в Windows QA-дереві. [Керування й результати](../../WINDOWS_QA.md). Нижче збережено карту ресурсів Phase 2.
+
 # Ресурси, presentation і desktop UX
 
 Карта на `af1b4c9`, 2026-11-19. Phase2 виконав engine file reads, scene instantiate і headless startup; GPU shader compilation, audio/video playback і GUI **NOT RUN**. Точне ручне покриття — FILE_COVERAGE; поточні runtime результати — RUNTIME_BASELINE.

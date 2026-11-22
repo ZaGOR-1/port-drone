@@ -1,14 +1,18 @@
+> PR та SHA в цьому звіті належать історії до нового snapshot. [Актуальні refs](../../PROJECT_STATE.md).
+
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # Review PR #1–#10 OKREDU
 
 Стан GitHub перевірено на початку та повторно наприкінці аудиту 2026-11-20; SHA не змінилися. Base усіх PR — `beta` на `af1b4c975564bac916db079d8470c2394d4920e5`. Усі автори — OKREDU, усі open / non-draft, mergeable=true, mergeable_state=clean на момент snapshot. Це не гарантія runtime readiness.
 
-API evidence: [github/final_head_check.json](../../../dist/phase4_pr_audit/github/final_head_check.json), [history.json](../../../dist/phase4_pr_audit/history.json). У кожного PR **0 check runs, 0 workflow runs для head, 0 reviews, 0 review comments, 0 issue comments** у отриманих відповідях. Combined commit status `pending` має порожній statuses[]: це відсутність статусів, а не підтверджений активний CI. Тексти Verification у PR — заяви автора; наші фактичні тести у [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+API evidence: github/final_head_check.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/github/final_head_check.json`), history.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/history.json`). У кожного PR **0 check runs, 0 workflow runs для head, 0 reviews, 0 review comments, 0 issue comments** у отриманих відповідях. Combined commit status `pending` має порожній statuses[]: це відсутність статусів, а не підтверджений активний CI. Тексти Verification у PR — заяви автора; наші фактичні тести у [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 Review розділяє повний cumulative diff проти beta і унікальний incremental diff. Зміни source/hunks і критичні виклики аналізували семантично; binary assets — metadata/hash/bounds. Незмінені 174k+ рядків усієї гри повторно не оголошуються ручним FULL review. Compile/load не дорівнює gameplay correctness; старі PR окремими binaries не тестували, тестувався їх cumulative10.
 
 ## PR #1 — Phase 0: Windows test harness, MP/sim quick wins, render/shader fast paths
 
-[PR #1](https://github.com/ZaGOR-1/port-drone/pull/1) · author **OKREDU** · status **open** · updated **2026-11-19T23:27:38Z**.
+PR #1 · author **OKREDU** · status **open** · updated **2026-11-19T23:27:38Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-phase0-tooling-quickwins` / `d6383064276c13863b3d540ccf4e461408db3d69`.
 
@@ -32,11 +36,11 @@ Review: Збережено command ordering у suite. Новий wrapper пер�
 - **Assets / translations (0)**: немає.
 - **Tests / tooling / інше (3)**: [tests/test_godot.py](https://github.com/ZaGOR-1/port-drone/blob/d6383064276c13863b3d540ccf4e461408db3d69/tests/test_godot.py) (+85/−0); [tests/test_godot_suite.gd](https://github.com/ZaGOR-1/port-drone/blob/d6383064276c13863b3d540ccf4e461408db3d69/tests/test_godot_suite.gd) (+228/−0); [tools/check_performance.py](https://github.com/ZaGOR-1/port-drone/blob/d6383064276c13863b3d540ccf4e461408db3d69/tools/check_performance.py) (+35/−4).
 
-Докази diff: [diffs/pr_01_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_01_cumulative.diff), [diffs/pr_01_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_01_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_01_*.json`.
+Докази diff: diffs/pr_01_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_01_cumulative.diff`), diffs/pr_01_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_01_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_01_*.json`.
 
 ## PR #2 — Phase 1: World render batching, idle redraw skip, and shader fetch pruning
 
-[PR #2](https://github.com/ZaGOR-1/port-drone/pull/2) · author **OKREDU** · status **open** · updated **2026-11-19T23:30:58Z**.
+PR #2 · author **OKREDU** · status **open** · updated **2026-11-19T23:30:58Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-phase1-render-opt` / `50efdbac3c860f0a5e8ed63e5c465f2e3f2ddfef`.
 
@@ -60,11 +64,11 @@ Review: Рішення відповідають поточному rendering pip
 - **Assets / translations (0)**: немає.
 - **Tests / tooling / інше (0)**: немає.
 
-Докази diff: [diffs/pr_02_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_02_cumulative.diff), [diffs/pr_02_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_02_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_02_*.json`.
+Докази diff: diffs/pr_02_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_02_cumulative.diff`), diffs/pr_02_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_02_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_02_*.json`.
 
 ## PR #3 — Phase 2: Simulation & AI hot-loop optimizations
 
-[PR #3](https://github.com/ZaGOR-1/port-drone/pull/3) · author **OKREDU** · status **open** · updated **2026-11-19T23:34:13Z**.
+PR #3 · author **OKREDU** · status **open** · updated **2026-11-19T23:34:13Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-phase2-sim-perf` / `0a6225c9f6c6c4d7770ce127846b3f65e30cae2c`.
 
@@ -88,11 +92,11 @@ Review: Поліпшує asymptotic cost без нового framework. Scratch 
 - **Assets / translations (0)**: немає.
 - **Tests / tooling / інше (0)**: немає.
 
-Докази diff: [diffs/pr_03_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_03_cumulative.diff), [diffs/pr_03_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_03_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_03_*.json`.
+Докази diff: diffs/pr_03_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_03_cumulative.diff`), diffs/pr_03_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_03_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_03_*.json`.
 
 ## PR #4 — Phase 3 (beta): Steam+LAN enforcement, unified PC UI scale, and FrontPlan reset
 
-[PR #4](https://github.com/ZaGOR-1/port-drone/pull/4) · author **OKREDU** · status **open** · updated **2026-11-19T23:41:22Z**.
+PR #4 · author **OKREDU** · status **open** · updated **2026-11-19T23:41:22Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-phase3-steam-lan-and-ui` / `bb77603d9734ed1b729c3932a9a0ed0267a4a7ad`.
 
@@ -116,11 +120,11 @@ Review: Статично усуває baseline R12 scale overwrite. Видале
 - **Assets / translations (0)**: немає.
 - **Tests / tooling / інше (0)**: немає.
 
-Докази diff: [diffs/pr_04_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_04_cumulative.diff), [diffs/pr_04_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_04_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_04_*.json`.
+Докази diff: diffs/pr_04_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_04_cumulative.diff`), diffs/pr_04_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_04_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_04_*.json`.
 
 ## PR #5 — Step 1 (beta): AD priority, aircraft sell/rebase, bulk deposits, 11 bots, city rename, no-slow
 
-[PR #5](https://github.com/ZaGOR-1/port-drone/pull/5) · author **OKREDU** · status **open** · updated **2026-11-20T01:12:24Z**.
+PR #5 · author **OKREDU** · status **open** · updated **2026-11-20T01:12:24Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-step1-qol-and-systems` / `1806831cd2bcf934e45af7fd89cbf1c64bc262ef`.
 
@@ -149,11 +153,11 @@ Review: Backend Step1 cases PASS у latest suite. PA09 REBASE cancel; shader/arr
 - **Assets / translations (0)**: немає.
 - **Tests / tooling / інше (3)**: [tests/test_godot.py](https://github.com/ZaGOR-1/port-drone/blob/1806831cd2bcf934e45af7fd89cbf1c64bc262ef/tests/test_godot.py) (+85/−0); [tests/test_godot_suite.gd](https://github.com/ZaGOR-1/port-drone/blob/1806831cd2bcf934e45af7fd89cbf1c64bc262ef/tests/test_godot_suite.gd) (+468/−0); [tools/check_performance.py](https://github.com/ZaGOR-1/port-drone/blob/1806831cd2bcf934e45af7fd89cbf1c64bc262ef/tools/check_performance.py) (+35/−4).
 
-Докази diff: [diffs/pr_05_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_05_cumulative.diff), [diffs/pr_05_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_05_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_05_*.json`.
+Докази diff: diffs/pr_05_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_05_cumulative.diff`), diffs/pr_05_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_05_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_05_*.json`.
 
 ## PR #6 — Step 2 (beta): Nuclear program, plutonium chain, ICBM silo & ABM Zaslon
 
-[PR #6](https://github.com/ZaGOR-1/port-drone/pull/6) · author **OKREDU** · status **open** · updated **2026-11-20T02:31:35Z**.
+PR #6 · author **OKREDU** · status **open** · updated **2026-11-20T02:31:35Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-step2-nukes-and-zaslon` / `f8e42970fe336fcd308fd92ee9e2671293265a7e`.
 
@@ -183,11 +187,11 @@ Review: У latest Step2 PASS; PR10 істотно змінює arming/reload/rad
 - **Assets / translations (4)**: [game/assets/sprites/atlas_nuke2.json](https://github.com/ZaGOR-1/port-drone/blob/f8e42970fe336fcd308fd92ee9e2671293265a7e/game/assets/sprites/atlas_nuke2.json) (+209/−0); [game/assets/sprites/atlas_nuke2.png](https://github.com/ZaGOR-1/port-drone/blob/f8e42970fe336fcd308fd92ee9e2671293265a7e/game/assets/sprites/atlas_nuke2.png) (+0/−0); [game/assets/sprites/atlas_nuke2ui.json](https://github.com/ZaGOR-1/port-drone/blob/f8e42970fe336fcd308fd92ee9e2671293265a7e/game/assets/sprites/atlas_nuke2ui.json) (+40/−0); [game/assets/sprites/atlas_nuke2ui.png](https://github.com/ZaGOR-1/port-drone/blob/f8e42970fe336fcd308fd92ee9e2671293265a7e/game/assets/sprites/atlas_nuke2ui.png) (+0/−0).
 - **Tests / tooling / інше (3)**: [tests/test_godot.py](https://github.com/ZaGOR-1/port-drone/blob/f8e42970fe336fcd308fd92ee9e2671293265a7e/tests/test_godot.py) (+85/−0); [tests/test_godot_suite.gd](https://github.com/ZaGOR-1/port-drone/blob/f8e42970fe336fcd308fd92ee9e2671293265a7e/tests/test_godot_suite.gd) (+585/−0); [tools/check_performance.py](https://github.com/ZaGOR-1/port-drone/blob/f8e42970fe336fcd308fd92ee9e2671293265a7e/tools/check_performance.py) (+35/−4).
 
-Докази diff: [diffs/pr_06_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_06_cumulative.diff), [diffs/pr_06_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_06_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_06_*.json`.
+Докази diff: diffs/pr_06_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_06_cumulative.diff`), diffs/pr_06_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_06_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_06_*.json`.
 
 ## PR #7 — Step 3: Aircraft Carriers, Deck Aviation, Escort Formations, Airports & Airborne Drops
 
-[PR #7](https://github.com/ZaGOR-1/port-drone/pull/7) · author **OKREDU** · status **open** · updated **2026-11-20T09:17:45Z**.
+PR #7 · author **OKREDU** · status **open** · updated **2026-11-20T09:17:45Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-step3-carriers-and-airborne` / `877355144ad6322ac7b00ae4a1de185fe4440b63`.
 
@@ -218,11 +222,11 @@ Review: Позитивний прямий backend test PASS, але PA03 Ship ow
 - **Assets / translations (8)**: [game/assets/sprites/atlas_carrier3.json](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/game/assets/sprites/atlas_carrier3.json) (+1147/−0); [game/assets/sprites/atlas_carrier3.png](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/game/assets/sprites/atlas_carrier3.png) (+0/−0); [game/assets/sprites/atlas_carrier3ui.json](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/game/assets/sprites/atlas_carrier3ui.json) (+90/−0); [game/assets/sprites/atlas_carrier3ui.png](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/game/assets/sprites/atlas_carrier3ui.png) (+0/−0); [game/assets/sprites/atlas_nuke2.json](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/game/assets/sprites/atlas_nuke2.json) (+209/−0); [game/assets/sprites/atlas_nuke2.png](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/game/assets/sprites/atlas_nuke2.png) (+0/−0); [game/assets/sprites/atlas_nuke2ui.json](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/game/assets/sprites/atlas_nuke2ui.json) (+40/−0); [game/assets/sprites/atlas_nuke2ui.png](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/game/assets/sprites/atlas_nuke2ui.png) (+0/−0).
 - **Tests / tooling / інше (3)**: [tests/test_godot.py](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/tests/test_godot.py) (+85/−0); [tests/test_godot_suite.gd](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/tests/test_godot_suite.gd) (+730/−0); [tools/check_performance.py](https://github.com/ZaGOR-1/port-drone/blob/877355144ad6322ac7b00ae4a1de185fe4440b63/tools/check_performance.py) (+35/−4).
 
-Докази diff: [diffs/pr_07_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_07_cumulative.diff), [diffs/pr_07_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_07_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_07_*.json`.
+Докази diff: diffs/pr_07_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_07_cumulative.diff`), diffs/pr_07_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_07_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_07_*.json`.
 
 ## PR #8 — Step 4: Seasons, Ideologies + Monuments, Pixel Flags, 40 Alliance Emblems
 
-[PR #8](https://github.com/ZaGOR-1/port-drone/pull/8) · author **OKREDU** · status **open** · updated **2026-11-20T09:36:16Z**.
+PR #8 · author **OKREDU** · status **open** · updated **2026-11-20T09:36:16Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-step4-seasons-ideology-flags` / `299800d9fd2294fa022e84d373969fb6b17160a9`.
 
@@ -254,11 +258,11 @@ Review: Є реальний код і Step4 component tests, а не лише о
 - **Assets / translations (12)**: [game/assets/sprites/atlas_carrier3.json](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_carrier3.json) (+1147/−0); [game/assets/sprites/atlas_carrier3.png](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_carrier3.png) (+0/−0); [game/assets/sprites/atlas_carrier3ui.json](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_carrier3ui.json) (+90/−0); [game/assets/sprites/atlas_carrier3ui.png](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_carrier3ui.png) (+0/−0); [game/assets/sprites/atlas_nuke2.json](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_nuke2.json) (+209/−0); [game/assets/sprites/atlas_nuke2.png](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_nuke2.png) (+0/−0); [game/assets/sprites/atlas_nuke2ui.json](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_nuke2ui.json) (+40/−0); [game/assets/sprites/atlas_nuke2ui.png](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_nuke2ui.png) (+0/−0); [game/assets/sprites/atlas_step4.json](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_step4.json) (+110/−0); [game/assets/sprites/atlas_step4.png](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_step4.png) (+0/−0); [game/assets/sprites/atlas_step4ui.json](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_step4ui.json) (+440/−0); [game/assets/sprites/atlas_step4ui.png](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/game/assets/sprites/atlas_step4ui.png) (+0/−0).
 - **Tests / tooling / інше (3)**: [tests/test_godot.py](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/tests/test_godot.py) (+85/−0); [tests/test_godot_suite.gd](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/tests/test_godot_suite.gd) (+862/−0); [tools/check_performance.py](https://github.com/ZaGOR-1/port-drone/blob/299800d9fd2294fa022e84d373969fb6b17160a9/tools/check_performance.py) (+35/−4).
 
-Докази diff: [diffs/pr_08_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_08_cumulative.diff), [diffs/pr_08_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_08_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_08_*.json`.
+Докази diff: diffs/pr_08_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_08_cumulative.diff`), diffs/pr_08_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_08_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_08_*.json`.
 
 ## PR #9 — Step 5: Match Chronicle Replay, Peaceful Land Transfers, Ultimatum Map Highlights
 
-[PR #9](https://github.com/ZaGOR-1/port-drone/pull/9) · author **OKREDU** · status **open** · updated **2026-11-20T09:56:11Z**.
+PR #9 · author **OKREDU** · status **open** · updated **2026-11-20T09:56:11Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-step5-chronicle-and-territory` / `84f95c9c76db802f2774a8201850f3817bfae9e2`.
 
@@ -292,11 +296,11 @@ Review: PA02 human consent, PA04 Ship у Chronicle, PA07 lost cooldown, PA12 fra
 - **Assets / translations (14)**: [game/assets/sprites/atlas_carrier3.json](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_carrier3.json) (+1147/−0); [game/assets/sprites/atlas_carrier3.png](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_carrier3.png) (+0/−0); [game/assets/sprites/atlas_carrier3ui.json](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_carrier3ui.json) (+90/−0); [game/assets/sprites/atlas_carrier3ui.png](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_carrier3ui.png) (+0/−0); [game/assets/sprites/atlas_nuke2.json](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_nuke2.json) (+209/−0); [game/assets/sprites/atlas_nuke2.png](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_nuke2.png) (+0/−0); [game/assets/sprites/atlas_nuke2ui.json](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_nuke2ui.json) (+40/−0); [game/assets/sprites/atlas_nuke2ui.png](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_nuke2ui.png) (+0/−0); [game/assets/sprites/atlas_step4.json](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_step4.json) (+110/−0); [game/assets/sprites/atlas_step4.png](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_step4.png) (+0/−0); [game/assets/sprites/atlas_step4ui.json](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_step4ui.json) (+440/−0); [game/assets/sprites/atlas_step4ui.png](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_step4ui.png) (+0/−0); [game/assets/sprites/atlas_step5ui.json](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_step5ui.json) (+90/−0); [game/assets/sprites/atlas_step5ui.png](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/game/assets/sprites/atlas_step5ui.png) (+0/−0).
 - **Tests / tooling / інше (3)**: [tests/test_godot.py](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/tests/test_godot.py) (+85/−0); [tests/test_godot_suite.gd](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/tests/test_godot_suite.gd) (+1007/−0); [tools/check_performance.py](https://github.com/ZaGOR-1/port-drone/blob/84f95c9c76db802f2774a8201850f3817bfae9e2/tools/check_performance.py) (+35/−4).
 
-Докази diff: [diffs/pr_09_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_09_cumulative.diff), [diffs/pr_09_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_09_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_09_*.json`.
+Докази diff: diffs/pr_09_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_09_cumulative.diff`), diffs/pr_09_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_09_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_09_*.json`.
 
 ## PR #10 — Step 6 (beta): Nuclear Cooldowns & VFX, Adaptive PC UI/UX, and Late-Game Optimization
 
-[PR #10](https://github.com/ZaGOR-1/port-drone/pull/10) · author **OKREDU** · status **open** · updated **2026-11-20T10:57:31Z**.
+PR #10 · author **OKREDU** · status **open** · updated **2026-11-20T10:57:31Z**.
 
 Base `beta` / `af1b4c975564bac916db079d8470c2394d4920e5`; head `beta-step6-nukes-pc-perf` / `96053d66eb984cc24e3acce647a55a195136abd2`.
 
@@ -332,4 +336,4 @@ Review: Усі попередні heads є ancestors, cumulative129 files. PA08 
 - **Assets / translations (17)**: [game/assets/sprites/atlas_carrier3.json](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_carrier3.json) (+1147/−0); [game/assets/sprites/atlas_carrier3.png](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_carrier3.png) (+0/−0); [game/assets/sprites/atlas_carrier3ui.json](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_carrier3ui.json) (+90/−0); [game/assets/sprites/atlas_carrier3ui.png](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_carrier3ui.png) (+0/−0); [game/assets/sprites/atlas_nuke2.json](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_nuke2.json) (+209/−0); [game/assets/sprites/atlas_nuke2.png](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_nuke2.png) (+0/−0); [game/assets/sprites/atlas_nuke2ui.json](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_nuke2ui.json) (+40/−0); [game/assets/sprites/atlas_nuke2ui.png](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_nuke2ui.png) (+0/−0); [game/assets/sprites/atlas_step4.json](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_step4.json) (+110/−0); [game/assets/sprites/atlas_step4.png](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_step4.png) (+0/−0); [game/assets/sprites/atlas_step4ui.json](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_step4ui.json) (+440/−0); [game/assets/sprites/atlas_step4ui.png](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_step4ui.png) (+0/−0); [game/assets/sprites/atlas_step5ui.json](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_step5ui.json) (+90/−0); [game/assets/sprites/atlas_step5ui.png](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/assets/sprites/atlas_step5ui.png) (+0/−0); [game/translations/en.po](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/translations/en.po) (+48/−0); [game/translations/es.po](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/translations/es.po) (+48/−0); [game/translations/uk.po](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/translations/uk.po) (+48/−0).
 - **Tests / tooling / інше (3)**: [tests/test_godot.py](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/tests/test_godot.py) (+85/−0); [tests/test_godot_suite.gd](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/tests/test_godot_suite.gd) (+1122/−0); [tools/check_performance.py](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/tools/check_performance.py) (+35/−4).
 
-Докази diff: [diffs/pr_10_cumulative.diff](../../../dist/phase4_pr_audit/diffs/pr_10_cumulative.diff), [diffs/pr_10_incremental.diff](../../../dist/phase4_pr_audit/diffs/pr_10_incremental.diff). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_10_*.json`.
+Докази diff: diffs/pr_10_cumulative.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_10_cumulative.diff`), diffs/pr_10_incremental.diff (`port-drone.tar.gz` → `dist/phase4_pr_audit/diffs/pr_10_incremental.diff`). API metadata/comments/checks збережені у `dist/phase4_pr_audit/github/pr_10_*.json`.

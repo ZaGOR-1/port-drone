@@ -1,3 +1,5 @@
+> PR та SHA в цьому звіті належать історії до нового snapshot. [Актуальні refs](../../PROJECT_STATE.md).
+
 # Phase 7 — консолідована інтеграція в beta
 
 2026-11-20. Власник ZaGOR-1 прямо дозволив commit, push гілки Codex, один integration PR та merge **лише в beta**, без force push, release/tags/dispatch або зміни branch protection. Рішення supersedes попередню вимогу чекати manual GUI/MP перед development integration. Це не stable release і не приймання неперевірених функцій як PASS.
@@ -8,16 +10,16 @@
 
 | PR | Актуальний head SHA | Head ancestor PR10/candidate | Відсутні коміти |
 |---|---|---|---|
-| [#1](https://github.com/ZaGOR-1/port-drone/pull/1) | `d6383064276c13863b3d540ccf4e461408db3d69` | YES | 0 |
-| [#2](https://github.com/ZaGOR-1/port-drone/pull/2) | `50efdbac3c860f0a5e8ed63e5c465f2e3f2ddfef` | YES | 0 |
-| [#3](https://github.com/ZaGOR-1/port-drone/pull/3) | `0a6225c9f6c6c4d7770ce127846b3f65e30cae2c` | YES | 0 |
-| [#4](https://github.com/ZaGOR-1/port-drone/pull/4) | `bb77603d9734ed1b729c3932a9a0ed0267a4a7ad` | YES | 0 |
-| [#5](https://github.com/ZaGOR-1/port-drone/pull/5) | `1806831cd2bcf934e45af7fd89cbf1c64bc262ef` | YES | 0 |
-| [#6](https://github.com/ZaGOR-1/port-drone/pull/6) | `f8e42970fe336fcd308fd92ee9e2671293265a7e` | YES | 0 |
-| [#7](https://github.com/ZaGOR-1/port-drone/pull/7) | `877355144ad6322ac7b00ae4a1de185fe4440b63` | YES | 0 |
-| [#8](https://github.com/ZaGOR-1/port-drone/pull/8) | `299800d9fd2294fa022e84d373969fb6b17160a9` | YES | 0 |
-| [#9](https://github.com/ZaGOR-1/port-drone/pull/9) | `84f95c9c76db802f2774a8201850f3817bfae9e2` | YES | 0 |
-| [#10](https://github.com/ZaGOR-1/port-drone/pull/10) | `96053d66eb984cc24e3acce647a55a195136abd2` | YES | 0 |
+| #1 | `d6383064276c13863b3d540ccf4e461408db3d69` | YES | 0 |
+| #2 | `50efdbac3c860f0a5e8ed63e5c465f2e3f2ddfef` | YES | 0 |
+| #3 | `0a6225c9f6c6c4d7770ce127846b3f65e30cae2c` | YES | 0 |
+| #4 | `bb77603d9734ed1b729c3932a9a0ed0267a4a7ad` | YES | 0 |
+| #5 | `1806831cd2bcf934e45af7fd89cbf1c64bc262ef` | YES | 0 |
+| #6 | `f8e42970fe336fcd308fd92ee9e2671293265a7e` | YES | 0 |
+| #7 | `877355144ad6322ac7b00ae4a1de185fe4440b63` | YES | 0 |
+| #8 | `299800d9fd2294fa022e84d373969fb6b17160a9` | YES | 0 |
+| #9 | `84f95c9c76db802f2774a8201850f3817bfae9e2` | YES | 0 |
+| #10 | `96053d66eb984cc24e3acce647a55a195136abd2` | YES | 0 |
 
 Докази: `git merge-base`, `git merge-base --is-ancestor`, `git rev-list <head> --not <candidate>`, graph і GitHub REST PR metadata у `dist/phase7_20261120-224516/ancestry.json`, `history_graph.txt`, `pr_01.json`…`pr_10.json`. Старі PR не merge/cherry-pick/squash окремо. Історія й commit authors OKREDU збережені без rewriting.
 

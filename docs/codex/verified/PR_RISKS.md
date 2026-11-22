@@ -1,3 +1,7 @@
+> PR та SHA в цьому звіті належать історії до нового snapshot. [Актуальні refs](../../PROJECT_STATE.md).
+
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # Phase 5C — актуальні ризики
 
 R01 startup suffix cleanup виправлений у локальному targeted scope: actual Linux 35 / native Windows 36 checks PASS. Усі .old retained; невідомі staging files, links, directories та paths захищені. Windows symlink creation SKIP. Це не закриває R03/R04 download integrity/atomic activation — **OPEN HIGH**. [Review](PHASE5C_GEMINI_REVIEW.md).
@@ -49,24 +53,24 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 | ID | Severity | Проблема | Поява | Доказ |
 |---|---|---|---|---|
-| PA01 | HIGH | [Сезони змінюють економіку з render delta](#pa01) | [PR #8](https://github.com/ZaGOR-1/port-drone/pull/8) | [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json) |
-| PA02 | HIGH | [Території та гроші іншого human змінюються без його згоди](#pa02) | [PR #9](https://github.com/ZaGOR-1/port-drone/pull/9) | [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json) |
-| PA03 | HIGH | [MP відхиляє власний Ship у купівлі палубного літака](#pa03) | [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7) | [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json) |
-| PA04 | HIGH | [Хроніка не записує кадр за наявності живого корабля](#pa04) | [PR #9](https://github.com/ZaGOR-1/port-drone/pull/9) | [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json) |
-| PA05 | MEDIUM | [Кнопка будівництва AIRPORT не диспетчеризується](#pa05) | [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7) | [airport_probe.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/airport_probe.json) |
-| PA06 | HIGH | [Після загибелі авіаносця airborne wing лишається без бази](#pa06) | [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7) | [carrier_sink_probe.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/carrier_sink_probe.json) |
-| PA07 | MEDIUM | [Cooldown land deals не переживає save/load](#pa07) | [PR #9](https://github.com/ZaGOR-1/port-drone/pull/9) | [logs/save_roundtrip.log](/home/zagor/projects/port-drone/dist/phase4_pr_audit/logs/save_roundtrip.log) |
-| PA08 | MEDIUM | [Новий upkeep tally зберіг дорогий старий fallback](#pa08) | [PR #10](https://github.com/ZaGOR-1/port-drone/pull/10) | [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json) |
-| PA09 | MEDIUM | [RMB/Esc не скасовують REBASE та AIRDROP](#pa09) | [PR #5](https://github.com/ZaGOR-1/port-drone/pull/5) | [cancel_probe.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/cancel_probe.json) |
-| PA10 | LOW | [Опис націоналізму обіцяє не підключений бонус оборони](#pa10) | [PR #8](https://github.com/ZaGOR-1/port-drone/pull/8) | STATIC / NOT RUN runtime |
-| PA11 | HIGH | [Номер protocol 7 не засвідчує сумісність різних builds](#pa11) | [PR #1](https://github.com/ZaGOR-1/port-drone/pull/1) | STATIC / NOT RUN runtime |
-| PA12 | MEDIUM | [Хроніка має неповне покриття довгих і мережевих матчів](#pa12) | [PR #9](https://github.com/ZaGOR-1/port-drone/pull/9) | STATIC / NOT RUN runtime |
+| PA01 | HIGH | [Сезони змінюють економіку з render delta](#pa01) | PR #8 | audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`) |
+| PA02 | HIGH | [Території та гроші іншого human змінюються без його згоди](#pa02) | PR #9 | audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`) |
+| PA03 | HIGH | [MP відхиляє власний Ship у купівлі палубного літака](#pa03) | PR #7 | audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`) |
+| PA04 | HIGH | [Хроніка не записує кадр за наявності живого корабля](#pa04) | PR #9 | audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`) |
+| PA05 | MEDIUM | [Кнопка будівництва AIRPORT не диспетчеризується](#pa05) | PR #7 | airport_probe.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/airport_probe.json`) |
+| PA06 | HIGH | [Після загибелі авіаносця airborne wing лишається без бази](#pa06) | PR #7 | carrier_sink_probe.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/carrier_sink_probe.json`) |
+| PA07 | MEDIUM | [Cooldown land deals не переживає save/load](#pa07) | PR #9 | logs/save_roundtrip.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/save_roundtrip.log`) |
+| PA08 | MEDIUM | [Новий upkeep tally зберіг дорогий старий fallback](#pa08) | PR #10 | audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`) |
+| PA09 | MEDIUM | [RMB/Esc не скасовують REBASE та AIRDROP](#pa09) | PR #5 | cancel_probe.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/cancel_probe.json`) |
+| PA10 | LOW | [Опис націоналізму обіцяє не підключений бонус оборони](#pa10) | PR #8 | STATIC / NOT RUN runtime |
+| PA11 | HIGH | [Номер protocol 7 не засвідчує сумісність різних builds](#pa11) | PR #1 | STATIC / NOT RUN runtime |
+| PA12 | MEDIUM | [Хроніка має неповне покриття довгих і мережевих матчів](#pa12) | PR #9 | STATIC / NOT RUN runtime |
 
 <a id="pa01"></a>
 
 ## PA01 — HIGH: Сезони змінюють економіку з render delta
 
-[game/game/game_world.gd:391–395](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/game_world.gd#L391-L395), [game/game/game_world.gd:523–526](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/game_world.gd#L523-L526), [game/game/seasons.gd:32–96](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/seasons.gd#L32-L96), [game/game/economy.gd:75–90](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/economy.gd#L75-L90). Походження: [PR #8](https://github.com/ZaGOR-1/port-drone/pull/8).
+[game/game/game_world.gd:391–395](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/game_world.gd#L391-L395), [game/game/game_world.gd:523–526](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/game_world.gd#L523-L526), [game/game/seasons.gd:32–96](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/seasons.gd#L32-L96), [game/game/economy.gd:75–90](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/economy.gd#L75-L90). Походження: PR #8.
 
 Сценарій: Два однакові світи, game_time=160, два nuke_zones, snow=0.44. Обидва виконують step(1/30); тільки один отримує додатковий step(0.1), як у net-driven _process.
 
@@ -74,13 +78,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Оновлювати gameplay season/snow лише фіксованим simulation tick; відділити візуальне згладжування. Додати різні frame schedules, economic output і повний state hash у 2-peer тест.
 
-Доказ: [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa02"></a>
 
 ## PA02 — HIGH: Території та гроші іншого human змінюються без його згоди
 
-[game/game/land_trade.gd:133–200](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/land_trade.gd#L133-L200), [game/net/net_session.gd:2070–2090](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_session.gd#L2070-L2090). Походження: [PR #9](https://github.com/ZaGOR-1/port-drone/pull/9).
+[game/game/land_trade.gd:133–200](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/land_trade.gd#L133-L200), [game/net/net_session.gd:2070–2090](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_session.gd#L2070-L2090). Походження: PR #9.
 
 Сценарій: Дві human країни з money=8000; issuer slot0 виконує дозволену diplo.land_deal(1,2,"buy","dep:20:20","",1000).
 
@@ -88,13 +92,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Для human контрагента створювати пропозицію; виконувати лише його окрему авторизовану accept-команду з повторною перевіркою власності, ціни й строку. До цього блокувати buy/sell/swap із human.
 
-Доказ: [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa03"></a>
 
 ## PA03 — HIGH: MP відхиляє власний Ship у купівлі палубного літака
 
-[game/ui/ui24/navy_dock.gd:1054–1066](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/ui/ui24/navy_dock.gd#L1054-L1066), [game/net/net_session.gd:2077–2089](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_session.gd#L2077-L2089), [game/game/ship.gd:9–18](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/ship.gd#L9-L18). Походження: [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7).
+[game/ui/ui24/navy_dock.gd:1054–1066](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/ui/ui24/navy_dock.gd#L1054-L1066), [game/net/net_session.gd:2077–2089](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_session.gd#L2077-L2089), [game/game/ship.gd:9–18](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/ship.gd#L9-L18). Походження: PR #7.
 
 Сценарій: Ship.c=issuer.id=1; викликати _owns(issuer,[ship,DECK_JET,issuer],-1), як у NetSession.sim купівлі літака.
 
@@ -102,13 +106,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Зробити явний ownership accessor для Ship.c та решти entity.country_id; перевірити NetCodec→_exec для власного/чужого Ship.
 
-Доказ: [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa04"></a>
 
 ## PA04 — HIGH: Хроніка не записує кадр за наявності живого корабля
 
-[game/game/chronicle.gd:156–163](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/chronicle.gd#L156-L163), [game/game/ship.gd:9–18](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/ship.gd#L9-L18). Походження: [PR #9](https://github.com/ZaGOR-1/port-drone/pull/9).
+[game/game/chronicle.gd:156–163](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/chronicle.gd#L156-L163), [game/game/ship.gd:9–18](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/ship.gd#L9-L18). Походження: PR #9.
 
 Сценарій: Додати один живий Ship до gw.navy.ships і викликати Chronicle.record_frame; SP step викликає його кожні 4 simulation секунди.
 
@@ -116,13 +120,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Читати Ship.c, перевірити змішаний флот, sunk/живі кораблі, disk record і viewer. Не оголошувати всю гру crash: помилка перериває цю функцію.
 
-Доказ: [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa05"></a>
 
 ## PA05 — MEDIUM: Кнопка будівництва AIRPORT не диспетчеризується
 
-[game/game/main.gd:620–632](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/main.gd#L620-L632), [game/game/main/main_base.gd:10–20](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/main/main_base.gd#L10-L20), [game/ui/hud/hud_base.gd:190–195](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/ui/hud/hud_base.gd#L190-L195). Походження: [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7).
+[game/game/main.gd:620–632](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/main.gd#L620-L632), [game/game/main/main_base.gd:10–20](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/main/main_base.gd#L10-L20), [game/ui/hud/hud_base.gd:190–195](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/ui/hud/hud_base.gd#L190-L195). Походження: PR #7.
 
 Сценарій: Main subclass із _has_capital=true та контрольним _set_mode виконує _on_action("airport"); контроль — _on_action("airfield").
 
@@ -130,13 +134,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Включити airport у dispatch або використовувати BUILD_KEYS як єдине джерело; додати action→mode→map build тест.
 
-Доказ: [airport_probe.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/airport_probe.json). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: airport_probe.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/airport_probe.json`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa06"></a>
 
 ## PA06 — HIGH: Після загибелі авіаносця airborne wing лишається без бази
 
-[game/game/navy.gd:3178–3197](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/navy.gd#L3178-L3197), [game/game/air.gd:185–186](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/air.gd#L185-L186), [game/game/air.gd:749–759](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/air.gd#L749-L759). Походження: [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7).
+[game/game/navy.gd:3178–3197](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/navy.gd#L3178-L3197), [game/game/air.gd:185–186](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/air.gd#L185-L186), [game/game/air.gd:749–759](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/air.gd#L749-L759). Походження: PR #7.
 
 Сценарій: Палубний DECK_JET у повітрі, land airfields відсутні; _sink_carrier_wing скидає carrier_id=0, залишає base=null і RTB; наступний _fly.
 
@@ -144,13 +148,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Ввести явний emergency/no-home стан із контрольованою втратою/пошуком сумісної бази. Тестувати carrier sink із parked/airborne wing, нульовою/повною/несумісною альтернативою.
 
-Доказ: [carrier_sink_probe.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/carrier_sink_probe.json). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: carrier_sink_probe.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/carrier_sink_probe.json`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa07"></a>
 
 ## PA07 — MEDIUM: Cooldown land deals не переживає save/load
 
-[game/game/land_trade.gd:9–9](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/land_trade.gd#L9-L9), [game/game/land_trade.gd:115–121](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/land_trade.gd#L115-L121), [game/game/save.gd:33–36](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/save.gd#L33-L36), [game/game/save.gd:389–433](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/save.gd#L389-L433). Походження: [PR #9](https://github.com/ZaGOR-1/port-drone/pull/9).
+[game/game/land_trade.gd:9–9](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/land_trade.gd#L9-L9), [game/game/land_trade.gd:115–121](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/land_trade.gd#L115-L121), [game/game/save.gd:33–36](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/save.gd#L33-L36), [game/game/save.gd:389–433](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/save.gd#L389-L433). Походження: PR #9.
 
 Сценарій: У синтетичному світі встановити diplo.land._last_deal={"1:2":game_time}, зробити disk save та restore core/systems.
 
@@ -158,13 +162,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Явно серіалізувати last_deal у diplomacy state із дефолтом для старих saves; roundtrip і snapshot/resync тест. Зміну формату планувати окремо.
 
-Доказ: [logs/save_roundtrip.log](/home/zagor/projects/port-drone/dist/phase4_pr_audit/logs/save_roundtrip.log). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: logs/save_roundtrip.log (`port-drone.tar.gz` → `dist/phase4_pr_audit/logs/save_roundtrip.log`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa08"></a>
 
 ## PA08 — MEDIUM: Новий upkeep tally зберіг дорогий старий fallback
 
-[game/game/upkeep335.gd:415–434](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/upkeep335.gd#L415-L434). Походження: [PR #10](https://github.com/ZaGOR-1/port-drone/pull/10).
+[game/game/upkeep335.gd:415–434](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/upkeep335.gd#L415-L434). Походження: PR #10.
 
 Сценарій: Dictionary {1:42}.get(1,fallback()) викликає fallback навіть за наявного ключа; той самий шаблон у tallies.get(c.id,tally(c.id)).
 
@@ -172,13 +176,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Використати has()+умовний вираз; перевірити еквівалентність значень і момент обліку реактивації, потім повторити профіль.
 
-Доказ: [audit_probes.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/audit_probes.json). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: audit_probes.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/audit_probes.json`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa09"></a>
 
 ## PA09 — MEDIUM: RMB/Esc не скасовують REBASE та AIRDROP
 
-[game/game/main/main_core.gd:41–50](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/main/main_core.gd#L41-L50), [game/game/main.gd:1003–1030](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/main.gd#L1003-L1030). Походження: [PR #5](https://github.com/ZaGOR-1/port-drone/pull/5).
+[game/game/main/main_core.gd:41–50](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/main/main_core.gd#L41-L50), [game/game/main.gd:1003–1030](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/main.gd#L1003-L1030). Походження: PR #5.
 
 Сценарій: Встановити Main.mode=REBASE, потім AIRDROP і викликати pc_cancel_mode у desktop середовищі.
 
@@ -186,13 +190,13 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 Рекомендоване виправлення: Додати обидва режими з очищенням refs/preview; GUI тестувати скасування до й після map tap, із відкритими панелями.
 
-Доказ: [cancel_probe.json](/home/zagor/projects/port-drone/dist/phase4_pr_audit/cancel_probe.json). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
+Доказ: cancel_probe.json (`port-drone.tar.gz` → `dist/phase4_pr_audit/cancel_probe.json`). Команди і harness — [PR_TEST_RESULTS](PR_TEST_RESULTS.md).
 
 <a id="pa10"></a>
 
 ## PA10 — LOW: Опис націоналізму обіцяє не підключений бонус оборони
 
-[game/game/ideology.gd:22–29](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/ideology.gd#L22-L29), [game/game/ideology.gd:97–107](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/ideology.gd#L97-L107). Походження: [PR #8](https://github.com/ZaGOR-1/port-drone/pull/8).
+[game/game/ideology.gd:22–29](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/ideology.gd#L22-L29), [game/game/ideology.gd:97–107](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/ideology.gd#L97-L107). Походження: PR #8.
 
 Сценарій: Обрати ideology=4 і звірити DESCS із усіма Ideology hooks у military/army/defense.
 
@@ -204,7 +208,7 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 ## PA11 — HIGH: Номер protocol 7 не засвідчує сумісність різних builds
 
-[game/net/net_config.gd:8–8](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_config.gd#L8-L8), [game/net/net_config.gd:84–85](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_config.gd#L84-L85), [game/net/net_hash.gd:9–57](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_hash.gd#L9-L57), [game/pc/version.cfg:1–7](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/pc/version.cfg#L1-L7), [game/ui/menus.gd:12–12](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/ui/menus.gd#L12-L12). Походження: [PR #1](https://github.com/ZaGOR-1/port-drone/pull/1).
+[game/net/net_config.gd:8–8](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_config.gd#L8-L8), [game/net/net_config.gd:84–85](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_config.gd#L84-L85), [game/net/net_hash.gd:9–57](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/net/net_hash.gd#L9-L57), [game/pc/version.cfg:1–7](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/pc/version.cfg#L1-L7), [game/ui/menus.gd:12–12](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/ui/menus.gd#L12-L12). Походження: PR #1.
 
 Сценарій: Порівняти baseline з PR1–9: змінені NetHash/команди/симуляція, але Menus.VERSION до останнього commit PR10 і PROTO мають старі значення. У PR10 Menus=v0.34.0, version.cfg досі 0.33.2.3.
 
@@ -216,7 +220,7 @@ R02 HIGH root cause виправлено локально в targeted/fault-inje
 
 ## PA12 — MEDIUM: Хроніка має неповне покриття довгих і мережевих матчів
 
-[game/game/chronicle.gd:3–6](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/chronicle.gd#L3-L6), [game/game/chronicle.gd:105–127](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/chronicle.gd#L105-L127), [game/game/chronicle.gd:201–225](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/chronicle.gd#L201-L225). Походження: [PR #9](https://github.com/ZaGOR-1/port-drone/pull/9).
+[game/game/chronicle.gd:3–6](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/chronicle.gd#L3-L6), [game/game/chronicle.gd:105–127](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/chronicle.gd#L105-L127), [game/game/chronicle.gd:201–225](https://github.com/ZaGOR-1/port-drone/blob/96053d66eb984cc24e3acce647a55a195136abd2/game/game/chronicle.gd#L201-L225). Походження: PR #9.
 
 Сценарій: Матч >450 кадрів по 4s або net_driven=true; після цього finalize_and_save.
 

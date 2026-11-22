@@ -1,4 +1,6 @@
-> **v0.36 update —18 manual cases still NOT RUN.** Старі SHA/paths/0.34/SIM_REV та fixed Chronicle interval нижче HISTORICAL. Поточний комплект/identity/commands — [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md). Врахувати Shift/T3/power/fuel, МБР120+120s, EMP75s/2decoys та adaptive Chronicle; TC-WIN-14 потребує двох людей. Headless PASS не є GUI PASS.
+> Чекліст виник для Phase 5C. Повторно використай сценарії з точним комплектом і актуальними контрактами з [Windows QA](../../WINDOWS_QA.md) та [PROJECT_STATE](../../PROJECT_STATE.md). Старий PASS або NOT RUN стосується лише свого артефакту. Для локального SFX додавай його MANUAL_QA.md, де є контекстні цифри та обмеження масштабу.
+
+> **Оновлення на checkpoint v0.36.** На його CI-комплекті 18 сценаріїв ще не запускали. Старі SHA/paths/0.34/SIM_REV та fixed Chronicle interval нижче HISTORICAL. Вибір комплекту та identity — [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md). Врахувати Shift/T3/power/fuel, МБР120+120s, EMP75s/2decoys та adaptive Chronicle; TC-WIN-14 потребує двох людей. Headless PASS не є GUI PASS.
 
 # Windows Beta QA — Phase5C candidate
 

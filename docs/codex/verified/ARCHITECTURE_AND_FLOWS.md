@@ -1,6 +1,8 @@
+> Поточний boot на `beta` звірено за [override.cfg](../../../game/override.cfg) і [main.tscn.remap](../../../game/game/main.tscn.remap). PcPort і SteamNet — autoloads, `pc/boot.tscn` запускає updater і remapped main scene. Зміни R02 та HUD описано в [Windows QA](../../WINDOWS_QA.md).
+
 # DroneFlames — архітектура та потоки beta v0.36
 
-2026-11-21. Карта початкового onboarding172df65 актуалізована для code checkpoint `0f26040994043827a7c14913d945a3df02e00fdd` (PR #4). Startup/extends лишилися; змінені contracts нижче звірені з v0.36 sources/fixes. Це цільове оновлення, **не повний semantic audit**. [SOURCE_COVERAGE](SOURCE_COVERAGE.md) відділяє старе читання від змінених files. Runtime evidence: beta CI43 tests/2476 checks/build PASS, попередній native Windows headless PASS; GUI/real LAN/Steam NOT RUN. Старий [ARCHITECTURE](ARCHITECTURE.md) — історичний report.
+2026-11-21. Карта початкового onboarding172df65 актуалізована для code checkpoint `0f26040994043827a7c14913d945a3df02e00fdd` (PR #4). Startup/extends лишилися; змінені contracts нижче звірені з v0.36 sources/fixes. Це цільове оновлення, **не повний semantic audit**. [SOURCE_COVERAGE](SOURCE_COVERAGE.md) відділяє старе читання від змінених files. Runtime evidence: beta CI43 tests/2476 checks/build PASS, попередній native Windows headless PASS. Ручний GUI та фізичні LAN/Steam peers не перевіряли в цьому звіті. Старий [ARCHITECTURE](ARCHITECTURE.md) — історичний report.
 
 ## Запуск і ownership
 

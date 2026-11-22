@@ -1,3 +1,5 @@
+> Рішення 2026-11-22. Чинний QA-кандидат пакує R02/UI/INPUT зміни, SFX і перевірений MinGW шаблон без підвищення PROTO, SIM_REV чи FORMAT. F2 нумерується за видимими кнопками. Межі масштабу 70–130% без циклу. Власник погодив інтеграцію після зеленого CI й виконання правил PR. [Докази й provenance](../../WINDOWS_QA.md)
+
 # Поточний checkpoint рішень — 2026-11-21
 
 PR #2 відновив CI; PR #4 злитий звичайним merge у beta `0f26040994043827a7c14913d945a3df02e00fdd`,8 author +10 fix commits збережено. Beta CI [run 44937756401](https://github.com/ZaGOR-1/port-drone/actions/runs/44937756401) PASS. PR #3 автоматично marked MERGED GitHub через ancestry; його окремо не закривали. П’ять HIGH виправлені; manual GUI/LAN/Steam NOT RUN, performance/shutdown/save/updater/general-schema ризики лишаються.

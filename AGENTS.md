@@ -14,15 +14,13 @@
 - Репозиторій: <https://github.com/ZaGOR-1/port-drone>. Власник навмисно почав **нову Git-історію зі snapshot**. Не вимагай старої ancestry, не відновлюй старі branches/PR.
 - ZaGOR-1 — власник і координатор, ухвалює stable/release рішення; OKREDU — співавтор; Codex — основний агент; Gemini — допоміжні ізольовані задачі. Зберігай авторство та provenance.
 - Порядок джерел: **фактичні files/HEAD/status і поточні тести → verified docs з урахуванням scope → README → історичні звіти**. `verified` не означає сертифікацію всього продукту.
-- **Контекст на 2026-11-22, не незмінний pin:** `beta` `e1e435511e715b3c1216c7f5128090af69818217`, v0.36.0, CI PASS, PR #1/#4 merged, remote `main`/`beta`. Перед дією перевір актуальний стан; локальні SFX/native experiments не обов'язково інтегровані.
+- Поточні SHA, результати QA і статус локальних патчів веди в [PROJECT_STATE.md](docs/PROJECT_STATE.md) та відповідних звітах.
 
 ## 3. Початок сесії
 
-1. Перевір `pwd`, `git rev-parse --show-toplevel`, `git status --short`, `git branch -vv`, `git worktree list`, `git log -1 --format='%h %s'`, `git remote -v`. Не припускай чисте дерево або постійний шлях.
-2. Прочитай [NEXT_SESSION](docs/codex/verified/NEXT_SESSION.md), [CURRENT_STATE](docs/codex/verified/CURRENT_STATE.md), релевантний README і docs цільової системи. Для v0.36: [V036_FIX_RESULTS](docs/codex/verified/V036_FIX_RESULTS.md); архітектура: [ARCHITECTURE_AND_FLOWS](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md); coverage: [SOURCE_COVERAGE](docs/codex/verified/SOURCE_COVERAGE.md), [REONBOARDING_AUDIT](docs/codex/verified/REONBOARDING_AUDIT.md); Windows: [WINDOWS_TWO_PEER_QA_PLAN](docs/codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md).
-3. За потреби `git ls-remote --heads origin main beta` (без переміщення refs). Нові `feature/*`, `fix/*`, `docs/*` — від **актуальної** `beta`, не від історичного SHA. За dirty checkout користуйся окремим worktree, не чіпай чужі зміни.
-4. Перед редагуванням прочитай повністю змінювані файли, їх `extends`, прямі залежності, тести та serialization contracts. Попередній частковий source coverage не замінює перевірку.
-5. Старих `docs/codex/01_ARCHITECTURE.md`, `04_BUILD_RELEASE.md`, `05_TESTING.md`, `06_GUARDRAILS.md` і `tools/codex/repository_audit.py` у snapshot немає: не запускай відсутні інструменти.
+1. Прочитай цей файл і [PROJECT_STATE.md](docs/PROJECT_STATE.md).
+2. Звір корінь repo, `git status --short`, branch, HEAD і `git worktree list` зі станом у документі. За потреби перевір `git ls-remote --heads origin main beta`. Створюй нові гілки від актуальної `beta` та бережи незакомічені зміни.
+3. За [INDEX.md](docs/INDEX.md) відкрий документацію поточної задачі. Точково перевір реалізацію, прямі залежності, контракти й тести перед редагуванням. Для фактичного стану пріоритет мають Git, код і докази.
 
 ## 4. Git safety
 
@@ -50,11 +48,8 @@
 
 - **One-file для користувача = SFX**, який містить Godot runtime + PCK та розпаковує DLL до приватного versioned cache. Це не «бездисковий» EXE. Для two-peer діагностики зберігай також portable ZIP з EXE + DLL. Не називай prototype production-ready.
 - DLL: `libgodotsteam.windows.template_release.x86_64.dll`, `libwebrtc_native.windows.template_release.x86_64.dll`, `steam_api64.dll`. Зміни — лише з дозволом, provenance/ліцензійною перевіркою. Steam AppID `480` — тестовий, не доказ production Steam.
-- У Godot 4.7.2 виявлено **GDScript operator-cache race** (upstream Issue #124010, native `0xC0000005`). Локальний C++17 patch `df-godot472-operator-side-cache-v1` (aligned side-cache, acquire/release, writer-only mutex) пройшов concurrent reproducer і Windows startup matrix. Але **custom runtime ще не прийнято**.
-- MSVC patched vs офіційний Windows runtime: близько **+21,5% mean/+26,4% p99** CPU у контрольному сценарії, тоді як patch overhead проти того самого MSVC toolchain близько **+0,02% mean**. Наступна перевірка — optimized **MinGW Windows template** з патчем, same-toolchain controls, runtime regressions і performance parity. Не припускай, що патч сам спричинив регресію; не приймай повільний runtime без обґрунтування.
-- Окремий **restore failure (4 assertions)** є також у original runtime; потрібен triage. Успадковані shutdown leaks не закрито. Native dumps/символи приватні; не приховуй crash чи exit code.
-- SFX tooling і діагностичні EXE могли залишитися локальними у `feature/windows-portable-sfx`/scratch. Не припускай, що вони в `beta`. Updater для QA вимкнений (`DF_NO_UPDATE=1`, build `--repo ""`); перевір фактичну поведінку. Профілі/сейви ізолюй, чужі дані не видаляй.
-- **NOT RUN, доки не протестовано:** Windows GUI/audio/input, звичайний non-admin account, фізичні LAN/Steam peers, WebRTC, Defender/SmartScreen GUI, signing. Headless startup і тестовий Steam init їх не замінюють.
+- Native race, патч MinGW, SFX provenance, CPU benchmark, R02 та межі перевірок веди в [Windows QA](docs/WINDOWS_QA.md). Розрізняй tracked офіційний CI-процес і локальні QA-комплекти.
+- Для QA вимикай updater (`DF_NO_UPDATE=1`, `--repo ""`) та ізолюй профілі. CI і headless startup підтверджують лише перевірені сценарії. Ручний Windows GUI, Steam/LAN, non-admin, SmartScreen, DPI й FPS прив’язуй до конкретного EXE.
 
 ## 8. Performance + архітектура
 
@@ -74,5 +69,7 @@
 - Release tests: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_release.py' -v`; повний discovery: `-p 'test_*.py'`. `SKIP` ≠ `PASS`.
 - Godot regression: `python3 tools/check_performance.py --godot <editor> --mode regression --out <fresh-output>`; build identity: `python3 tools/build.py --print-version`. Export template має відповідати editor/runtime, build `--version` — source. Godot Editor/import тільки в shadow-копії.
 - Відповідні UI/simulation/network/save/native зміни перевіряй відповідними fixtures, Windows native tests і ручним QA. На відсутній platform/engine став `NOT RUN`, не імітуй PASS. Benchmark: однакове навантаження, кількість samples та відмінності toolchain фіксуй.
-- До змін: scope, короткий план, ризики, acceptance. Після: що/чому/змінені шляхи; PASS/FAIL/SKIP/NOT RUN із доказами; FPS/CPU до/після; save/MP/compatibility наслідки; залишкові ризики. Актуалізуй verified docs і DECISIONS/BACKLOG за зміною поведінки; історичні звіти не переписуй як поточні.
+- До змін визнач scope і критерій перевірки. У звіті вкажи фактичні результати, докази, сумісність і відкриті питання.
+- Після суттєвої роботи перевір документацію в остаточному checklist. Онови зачеплені документи про поведінку, API, архітектуру, налаштування, збірку чи тести. У [PROJECT_STATE.md](docs/PROJECT_STATE.md) зафіксуй завершене, перевірене, відкриті проблеми, точний worktree та наступні кроки.
+- Зберігай один основний документ на тему. Посилайся на докази замість копіювання логів. Позначай непроведені перевірки як NOT RUN. Зберігай історичні звіти з їхніми датами й межами. Дрібні команди та локальні експерименти без зміни стану документації не потребують.
 - Не публікуй tokens, `account.bin`, rejoin seats, Steam secrets, приватні dumps/дані. Авторські права code/art збережені; публічний доступ не дорівнює праву розповсюдження.

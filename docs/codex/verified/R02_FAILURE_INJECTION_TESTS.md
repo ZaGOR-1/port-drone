@@ -1,3 +1,5 @@
+> Архівні докази зазначено як шляхи до файлів. [Розташування архівів](../../DOCUMENTATION_AUDIT.md#архівні-посилання).
+
 # R02 — failure injection і фактичні перевірки
 
 2026-11-20, Godot 4.7.2.stable.official.ed1daf0bf, Ubuntu WSL2; native Windows 11 headless окремо. Повні argv/cwd/exit/час: `/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/*_result.json`, stdout/stderr: `/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/logs/`. Ізольовані XDG/APPDATA, updater disabled, Steam initialization bypassed, тільки synthetic/копія baseline checkpoint. Реальні saves не використовувалися.
@@ -43,7 +45,7 @@ Unit snapshots перевіряють turn/tick/net_tick/time/RNG/NetHash, flags
 
 ## Остаточний source candidate
 
-Результати exact candidate_release.pck і source manifest — у [checkpoint](PHASE5B_PROGRESS.md). Автогенерований підсумок: [final_results.json](/home/zagor/projects/port-drone/dist/phase5b1_r02_20261120-170307/final_results.json).
+Результати exact candidate_release.pck і source manifest — у [checkpoint](PHASE5B_PROGRESS.md). Автогенерований підсумок: final_results.json (`port-drone.tar.gz` → `dist/phase5b1_r02_20261120-170307/final_results.json`).
 
 - Python discover: 18 tests, включно release/mechanics/critical/R02 wrappers.
 - Godot deterministic regression: 2476 checks.

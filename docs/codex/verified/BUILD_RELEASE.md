@@ -1,6 +1,32 @@
-> **CURRENT entry / HISTORICAL report below.** Godot4.7.2; CI PR #2 і v0.36 PR #4 інтегровані. Tests/build PASS, release не публікується на жодній події. Source version0.36.0: `python3 tools/build.py --print-version`, explicit --version має збігатися. Поточні команди/manifest — [WINDOWS_TWO_PEER_QA_PLAN](WINDOWS_TWO_PEER_QA_PLAN.md); старі0.34 commands/remote-policy припущення нижче не застосовувати.
+# Windows: збірка, CI та реліз
 
-# Phase 5C — актуальна local build/CI policy
+## Офіційний Windows x64 комплект
+
+Виконуй з кореня ізольованого checkout актуальної `beta`. Старий `main` має власний build script і не підтримує `--print-version`. Потрібні Python 3, Linux editor Godot 4.7.2 і Windows x64 release template із [CI-піна](../../../tools/ci/godot-4.7.2.json). [Перевірені локальні MinGW/SFX кандидати](../../WINDOWS_QA.md) використовують окремий процес.
+
+```bash
+GODOT_VERSION=4.7.2-stable python3 tools/fetch_godot.py godot_dl
+python3 tools/ci/verify_build.py --godot-dir godot_dl --out dist/qa/engine.json
+python3 tools/build.py --godot godot_dl/godot \
+  --template godot_dl/windows_release_x86_64.exe \
+  --version "$(python3 tools/build.py --print-version)" --repo "" --out dist/qa/package
+cp libs/*.dll tools/qa/Run-*.ps1 dist/qa/package/
+python3 tools/ci/verify_build.py --godot-dir godot_dl \
+  --package dist/qa/package --out dist/qa/build.json
+(cd dist/qa/package && sha256sum -c SHA256SUMS.txt && sha256sum -c QA-SHA256SUMS.txt)
+```
+
+[tools/build.py](../../../tools/build.py) перевіряє згоду версій UI і updater, пакує копію `game/`, додає PCK до EXE та створює ZIP із трьома DLL. `--version` звіряє номер у джерелі. `--repo ""` залишає порожню адресу updater. Зберігай `game/project.binary`, `game/override.cfg` і tracked `game/.godot/`. Порядок пакування без bit-for-bit гарантії, тому ідентифікуй фактично створений артефакт.
+
+[CI](../../../.github/workflows/build.yml) перевіряє PR до `beta` та push у `beta`/`main`. Workflow dispatch запускає той самий build/test workflow. Параметри публікації зарезервовано, build завжди повертає `release=false`, команди публікації немає. Успіх CI належить його source SHA. [Поточний статус](../../PROJECT_STATE.md)
+
+[Run-DroneFlames.ps1](../../../tools/qa/Run-DroneFlames.ps1) запускає прямий EXE із DLL поруч, ізолює userdata, вимикає updater і обходить Steam init. [Run-MultiplayerQA.ps1](../../../tools/qa/Run-MultiplayerQA.ps1) використовує нативний Steam лише з `-Transport Steam`. Для локального SFX у [Windows QA](../../WINDOWS_QA.md) наведено окремі artifact, provenance, приватний кеш і відмінності від звичайного комплекту. Реліз потребує рішення власника.
+
+## Архів попередніх build-процесів
+
+Далі зафіксовано історичні версії, команди й політику їхніх гілок.
+
+### Phase 5C — тодішня local build/CI policy
 
 [Exact artifacts/commands/tests](PHASE5C_INTEGRATION_RESULTS.md). Pinned Godot4.7.2; Windows build/native headless exit0, три original DLL loaded/hash-match. Existing Menus v0.34.0 label не є owner-approved stable; source product number не підвищували.
 
