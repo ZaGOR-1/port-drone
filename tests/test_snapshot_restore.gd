@@ -11,10 +11,11 @@ class MainStub:
 	var closed: int = 0
 	var toasts: Array = []
 	var inject_error: bool = false
-	func net_after_restore() -> void:
+	func net_prepare_restore() -> bool:
 		if inject_error:
 			push_error("R02_INJECTED_POST_LOAD_FAILURE")
-			return
+		return true
+	func net_after_restore() -> void:
 		successes += 1
 	func net_match_closed() -> void:
 		closed += 1

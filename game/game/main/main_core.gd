@@ -230,10 +230,16 @@ func _apply_speed() -> void:
 	hud.set_speed_text("II" if _paused else ("x0.5" if spd < 1.0 else "x%d" % int(spd)))
 
 
-func _on_zoom(z: float) -> void:
-	(world.territory.material as ShaderMaterial).set_shader_parameter("fill_scale", maxf(1.0, 1.0 / z))
+func _on_zoom(z: float) -> bool:
+	if not is_instance_valid(world) or not is_instance_valid(world.territory) or not is_instance_valid(world.objects) or not is_finite(z) or z <= 0.0:
+		return false
+	var material: ShaderMaterial = world.territory.material as ShaderMaterial
+	if material == null:
+		return false
+	material.set_shader_parameter("fill_scale", maxf(1.0, 1.0 / z))
 	world.objects.visible = z >= 0.5
 	world.objects.sway_enabled = z >= 1.0
+	return true
 
 
 

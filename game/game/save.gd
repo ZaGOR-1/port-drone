@@ -28,8 +28,7 @@ const MAGIC: int = 827541060
 const FORMAT: int = 1
 const NET_MAX_BYTES: int = 1 << 30 # Same raw-size bound as disk saves; no wire-format change.
 
-## Script errors in a nested void load_state() do not propagate as exceptions in GDScript.
-## Observe them during this transaction; never suppress the engine's own diagnostics.
+## Supplemental diagnostics: release templates do not report every script error.
 class RestoreErrors extends Logger:
 	var _mutex := Mutex.new()
 	var _failed: bool = false
@@ -67,6 +66,7 @@ const AUTOSAVE_IDLE_S: float = 20.0
 static var _ents: Array = []
 static var _ent_ix: Dictionary = {}
 static var _dec: Array = []
+static var _loading: bool = false
 static var _names_c: Dictionary = {}
 static var _cls: Dictionary = {}
 static var dropped: Dictionary = {}
@@ -251,6 +251,8 @@ static func load_game(m: Node) -> bool:
 
 
 static func load_slot(m: Node, n: int, key: String = "") -> bool:
+	if _loading:
+		return false
 	_wait()
 	var pack: Dictionary = {}
 	for p: String in SaveSlots.load_order(n, key):
@@ -288,17 +290,15 @@ static func net_snapshot(m: Node) -> PackedByteArray:
 
 
 
+## Prepare a frozen world; NetSession alone commits and enables processing.
 static func net_restore(m: Node, bytes: PackedByteArray, current: Callable = Callable()) -> bool:
+	if _loading:
+		return false
 	_wait()
 	var body: Dictionary = _net_body(bytes)
 	if body.is_empty() or not _load_current(m, current):
 		return false
-	var errors := RestoreErrors.new()
-	OS.add_logger(errors)
-	var guard := func() -> bool: return _load_current(m, current) and not errors.failed()
-	var result: Variant = await _load_pack(m, {"path":"net", "header":{}, "body":body}, true, guard)
-	OS.remove_logger(errors)
-	return result == true and not errors.failed() and _load_current(m, current)
+	return await _load_pack(m, {"path":"net", "header":{}, "body":body}, true, current)
 
 
 static func _load_current(m: Node, current: Callable) -> bool:
@@ -385,13 +385,35 @@ static func _net_refs_ok(v: Variant, count: int, depth: int = 0) -> bool:
 
 
 static func _load_pack(m: Node, pack: Dictionary, net: bool, current: Callable = Callable()) -> bool:
-	if not _load_current(m, current):
+	if _loading or not _load_current(m, current):
 		return false
+	_loading = true
+	var errors := RestoreErrors.new()
+	OS.add_logger(errors)
+	var guard := func() -> bool: return _load_current(m, current) and not errors.failed()
+	var result: Variant = await _apply_pack(m, pack, net, guard)
+	OS.remove_logger(errors)
+	_dec = []
+	_loading = false
+	if result != true or not guard.call():
+		return false
+	if not net:
+		var gw: GameWorld = m.get("world")
+		gw.set_process(true)
+	return true
+
+
+static func _apply_pack(m: Node, pack: Dictionary, net: bool, current: Callable) -> bool:
 	var t0: int = Time.get_ticks_usec()
 	var body: Dictionary = pack["body"]
 	var core: Dictionary = body["core"]
 	var gw: GameWorld = m.get("world")
 	var mm: Variant = m
+	if not is_instance_valid(gw) or not is_instance_valid(mm.cam) or not is_instance_valid(mm.hud) or not is_instance_valid(mm.tutorial) or not is_instance_valid(mm.loading):
+		return false
+	var tree: SceneTree = m.get_tree()
+	gw.set_process(false)
+	gw.time_scale = 0.0
 	var cfg_in: Dictionary = core.get("cfg", {})
 	_set_cfg(cfg_in)
 	if not cfg_in.has("creative"):
@@ -413,26 +435,24 @@ static func _load_pack(m: Node, pack: Dictionary, net: bool, current: Callable =
 	mm._clear_plan()
 	mm.hud.close_panel()
 	mm.loading.set_progress(0.12, Loc.t("Рельеф, реки и леса..."))
-	await m.get_tree().process_frame
-	await m.get_tree().process_frame
+	await tree.process_frame
+	await tree.process_frame
 	if not _load_current(m, current):
 		return false
 	var t1: int = Time.get_ticks_usec()
-	gw.set_process(false)
 	if not net:
 		gw.net_driven = false
-	gw.time_scale = 0.0
+	var previous_data: WorldData = gw.data
 	gw.new_world(s, true)
-	if not _load_current(m, current) or gw.data == null or gw.data.w != s.size or gw.data.h != s.size:
+	if not _load_current(m, current) or gw.data == null or gw.data == previous_data or gw.data.w != s.size or gw.data.h != s.size:
 		return false
 	var t2: int = Time.get_ticks_usec()
 	mm.loading.set_progress(0.55, Loc.t("Страны, города и границы..."))
-	await m.get_tree().process_frame
+	await tree.process_frame
 	if not _load_current(m, current):
 		return false
 	var t3: int = Time.get_ticks_usec()
-	_load_core(gw, body)
-	if not _load_current(m, current) or gw.player == null or gw.rng == null:
+	if _load_core(gw, body) != true or not _load_current(m, current):
 		return false
 	for c316: Country in gw.countries:
 		while c316.missile_stock.size() < Military.MT_CAP.size():
@@ -441,12 +461,13 @@ static func _load_pack(m: Node, pack: Dictionary, net: bool, current: Callable =
 		GameConfig.creative = gw.player.money >= 900000
 	var t4: int = Time.get_ticks_usec()
 	mm.loading.set_progress(0.72, Loc.t("Предприятия, армии, торговля..."))
-	await m.get_tree().process_frame
+	await tree.process_frame
 	if not _load_current(m, current):
 		return false
 	var t5: int = Time.get_ticks_usec()
-	_load_systems(gw, body.get("sys", {}))
-	if not _load_current(m, current):
+	if gw.mil == null or gw.econ == null or gw.army == null or gw.diplo == null or gw.vision == null:
+		return false
+	if _load_systems(gw, body.get("sys", {})) != true or not _load_current(m, current):
 		return false
 	if not net:
 		Military.unpave_cells(gw, gw.data.dirty_cells.duplicate())
@@ -454,22 +475,23 @@ static func _load_pack(m: Node, pack: Dictionary, net: bool, current: Callable =
 			gw.mil.heal_partial(true)
 	var t6: int = Time.get_ticks_usec()
 	mm.loading.set_progress(0.88, Loc.t("Готовим карту..."))
-	await m.get_tree().process_frame
+	await tree.process_frame
 	if not _load_current(m, current):
 		return false
 	var t7: int = Time.get_ticks_usec()
 	gw.terrain.flush()
 	var t7b: int = Time.get_ticks_usec()
 	var t7c: int = t7b
-	_finish(gw, core)
-	if not _load_current(m, current):
+	if _finish(gw, core) != true or not _load_current(m, current):
 		return false
-	gw.set_process(true)
 	var cam: MapCamera = mm.cam
+	if not is_instance_valid(cam) or not is_instance_valid(mm.hud) or not is_instance_valid(mm.loading):
+		return false
 	var z: float = keep_z if net else float(core.get("zoom", 1.0))
 	cam.set_zoom_at(z, cam.view_size() * 0.5)
 	cam.position = keep_cam if net else core.get("cam", cam.position)
-	mm._on_zoom(z)
+	if mm._on_zoom(z) != true or not _load_current(m, current):
+		return false
 	if not net:
 		var speeds: Array = mm.SPEEDS
 		mm._speed_i = clampi(int(core.get("speed_i", 0)), 0, speeds.size() - 1)
@@ -484,6 +506,8 @@ static func _load_pack(m: Node, pack: Dictionary, net: bool, current: Callable =
 	mm._set_mode(0)
 	if not net:
 		mm.hud.select_page(1)
+	if not _load_current(m, current):
+		return false
 	_auto_t = 0.0
 	last["load_read_ms"] = (t1 - t0) / 1000.0
 	last["load_world_ms"] = (t2 - t1) / 1000.0
@@ -1194,16 +1218,17 @@ static func _set_cfg(cfg: Dictionary) -> void:
 	GameConfig.limit_i = clampi(int(GameConfig.limit_i), 0, GameConfig.TIMES.size() - 1)
 
 
-static func _load_core(gw: GameWorld, body: Dictionary) -> void:
+static func _load_core(gw: GameWorld, body: Dictionary) -> bool:
 	var core: Dictionary = body["core"]
 	var d: WorldData = gw.data
 
 	d.dirty_cells.clear()
-	if (core["biome"] as PackedByteArray).size() == d.biome.size():
-		_biome_diff(d, d.biome, core["biome"])
-		d.biome = core["biome"]
-		d.flags = core["flags"]
-		d.owners = core["owners"]
+	if (core["biome"] as PackedByteArray).size() != d.biome.size():
+		return false
+	_biome_diff(d, d.biome, core["biome"])
+	d.biome = core["biome"]
+	d.flags = core["flags"]
+	d.owners = core["owners"]
 	d.owners_dirty = true
 
 	var spr: PackedInt32Array = core["obj_spr"]
@@ -1214,7 +1239,7 @@ static func _load_core(gw: GameWorld, body: Dictionary) -> void:
 		for i in names.size():
 			remap[i] = int(gw.spr_index.get(names[i], 0))
 		for i in spr.size():
-			spr[i] = remap[spr[i]] if spr[i] < remap.size() else 0
+			spr[i] = remap[spr[i]] if spr[i] >= 0 and spr[i] < remap.size() else 0
 	gw.obj_spr = spr
 	gw.obj_x = core["obj_x"]
 	gw.obj_y = core["obj_y"]
@@ -1224,7 +1249,8 @@ static func _load_core(gw: GameWorld, body: Dictionary) -> void:
 	gw.obj_hidden.resize(gw.obj_spr.size())
 	gw._free_ids = core["free_ids"]
 	gw.obj_fix = core.get("obj_fix", {})
-	_rebuild_objects(gw)
+	if _rebuild_objects(gw) != true:
+		return false
 
 	var ents: Array = body["ents"]
 	_dec = []
@@ -1238,9 +1264,10 @@ static func _load_core(gw: GameWorld, body: Dictionary) -> void:
 		else:
 			var sc: Script = _class_script(cn)
 			_dec[i] = sc.new() if sc != null else null
+		if _dec[i] == null:
+			return false
 	for i in ents.size():
-		if _dec[i] != null:
-			fill(_dec[i], ents[i][1])
+		fill(_dec[i], ents[i][1])
 	for i9 in ents.size():
 		if _dec[i9] is Country and (_dec[i9] as Country).flag_spec != "":
 			gw.apply_flag(_dec[i9] as Country, (_dec[i9] as Country).flag_spec, false)
@@ -1266,8 +1293,9 @@ static func _load_core(gw: GameWorld, body: Dictionary) -> void:
 	gw.bridges = bs
 	gw.player = dec(core["player"])
 	var r: Variant = dec(core["rng"])
-	if r is Rng:
-		gw.rng = r
+	if gw.player == null or not (r is Rng):
+		return false
+	gw.rng = r
 	gw._update_territory_colors()
 	gw.id_style = -1
 	if gw.player != null and not gw.net_driven:
@@ -1323,6 +1351,7 @@ static func _load_core(gw: GameWorld, body: Dictionary) -> void:
 	for dl: Array in core.get("delayed", []):
 		var args: Array = dec(dl[2])
 		gw._delayed.append([float(dl[0]), Callable(gw, String(dl[1])).bindv(args)])
+	return true
 
 
 
@@ -1345,7 +1374,7 @@ static func _biome_diff(d: WorldData, gen: PackedByteArray, saved: PackedByteArr
 
 
 
-static func _rebuild_objects(gw: GameWorld) -> void:
+static func _rebuild_objects(gw: GameWorld) -> bool:
 	for ck: ObjChunk in gw.objects.chunks:
 		ck.ids = PackedInt32Array()
 	gw.tree_at.clear()
@@ -1369,6 +1398,8 @@ static func _rebuild_objects(gw: GameWorld) -> void:
 			continue
 		var x: int = xs[id]
 		var y: int = ys[id]
+		if sp[id] < 0 or sp[id] >= fd.size():
+			return false
 		var k: int = clampi((y + fd[sp[id]] - 1) / cc, 0, chn - 1) * cw + clampi(x / cc, 0, cw - 1)
 		(lists[k] as Array).append(id)
 		if kd[id] == GameWorld.KIND_TREE:
@@ -1377,20 +1408,27 @@ static func _rebuild_objects(gw: GameWorld) -> void:
 		var ck2: ObjChunk = gw.objects.chunks[i]
 		ck2.ids = PackedInt32Array(lists[i])
 		ck2.mark()
+	return true
 
 
-static func _load_systems(gw: GameWorld, sys: Dictionary) -> void:
+static func _load_systems(gw: GameWorld, sys: Dictionary) -> bool:
 	for n: String in _system_names(gw):
 		var o: Object = gw.get(n)
 		if sys.has("$gen:" + n):
-			fill(o, sys["$gen:" + n])
-		if sys.has(n) and o.has_method("load_state"):
+			var fields: Variant = sys["$gen:" + n]
+			if not (fields is Dictionary):
+				return false
+			fill(o, fields)
+		if sys.has(n):
 			var st: Variant = dec(sys[n])
-			o.call("load_state", st if st is Dictionary else {})
+			if not (st is Dictionary) or not o.has_method("load_state"):
+				return false
+			o.call("load_state", st)
+	return true
 
 
 
-static func _finish(gw: GameWorld, core: Dictionary) -> void:
+static func _finish(gw: GameWorld, core: Dictionary) -> bool:
 	gw.data.owners_dirty = true
 	gw._flush_territory()
 	gw.ground.queue_redraw()
@@ -1407,6 +1445,8 @@ static func _finish(gw: GameWorld, core: Dictionary) -> void:
 		gw.mil.air.after_load()
 
 	var ag: Variant = load("res://game/army_groups.gd")
-	if ag != null:
-		ag.sanitize(gw)
+	if ag == null:
+		return false
+	ag.sanitize(gw)
 	gw.changed.emit()
+	return true

@@ -33,34 +33,37 @@ class SnapshotRestoreTests(unittest.TestCase):
                 cwd=ROOT, env=env, capture_output=True, text=True, timeout=60,
             )
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-            for name in ("test_snapshot_restore", "test_snapshot_restore_integration"):
-                with self.subTest(fixture=name):
-                    report = work / (name + ".json")
+            scenarios = (
+                ("test_snapshot_restore", ()),
+                ("test_snapshot_restore_integration", ()),
+                ("test_snapshot_restore_integration", ("--fault=disk",)),
+            )
+            for name, args in scenarios:
+                label = "test_disk_restore_recovery" if args else name
+                with self.subTest(fixture=label):
+                    report = work / (label + ".json")
                     proc = subprocess.run(
                         [str(godot), "--headless", "--main-pack", str(pack),
-                         "--script", str(ROOT / "tests" / (name + ".gd")), "--", f"--out={report}"],
+                         "--script", str(ROOT / "tests" / (name + ".gd")), "--", f"--out={report}", *args],
                         cwd=ROOT, env=env, capture_output=True, text=True, timeout=180,
                     )
                     log = proc.stdout + proc.stderr
                     if env.get("DF_TEST_LOG_DIR"):
                         logs = Path(env["DF_TEST_LOG_DIR"])
                         logs.mkdir(parents=True, exist_ok=True)
-                        (logs / (name + ".log")).write_text(log)
+                        (logs / (label + ".log")).write_text(log)
                         if report.exists():
                             shutil.copyfile(report, logs / report.name)
                     self.assertEqual(proc.returncode, 0, log)
                     self.assertTrue(report.exists(), log)
                     data = json.loads(report.read_text())
                     self.assertTrue(data["passed"], data)
-                    script_errors = [line for line in log.splitlines() if line.startswith("SCRIPT ERROR:")]
-                    expected = data.get("expected_injected_script_errors", 0)
-                    self.assertEqual(len(script_errors), expected, log)
-                    self.assertTrue(all("r02_injected_ui_failure" in line for line in script_errors), log)
+                    self.assertNotIn("SCRIPT ERROR:", log)
                     unexpected = _unexpected_errors(log)
                     post_errors = [line for line in unexpected if line == "ERROR: R02_INJECTED_POST_LOAD_FAILURE"]
                     self.assertEqual(len(post_errors), data.get("expected_post_load_errors", 0), log)
                     unexpected = [line for line in unexpected if line not in post_errors]
-                    if expected:
+                    if name == "test_snapshot_restore_integration":
                         # Deliberately malformed Variants and the already known dummy-renderer exit leak.
                         known = (r'^ERROR: Condition "count < 0 \|\| count > len"',
                                  r'^ERROR: Error when trying to decode Variant\.$',

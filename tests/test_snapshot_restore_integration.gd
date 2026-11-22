@@ -1,5 +1,5 @@
 extends SceneTree
-## Real FORMAT1 decoder + Main loader. Only the error injection overrides a UI callback.
+## Real FORMAT1 decoder + Main loader, with a finalization fault after core and systems.
 var checks: int = 0
 var failures: Array = []
 var cases: Dictionary = {}
@@ -7,18 +7,13 @@ var args: Dictionary = {}
 
 class RestoreMain:
 	extends "res://game/main.gd"
-	var inject_error: bool = false
 	var successes: int = 0
 	var close_pending: bool = false
 	var close_done: bool = false
-	func _on_zoom(z: float) -> void:
-		if inject_error:
-			inject_error = false
-			var missing: Variant = null
-			missing.r02_injected_ui_failure() # Runtime error also in release builds (asserts may be stripped).
-		super._on_zoom(z)
+	var success_turns: Array[int] = []
 	func net_after_restore() -> void:
 		successes += 1
+		success_turns.append(net.exec_turn)
 		super.net_after_restore()
 	func net_match_closed() -> void:
 		close_pending = true
@@ -68,6 +63,40 @@ func menu_done(m: RestoreMain) -> void:
 			return
 	check(false,"Main menu did not recover after failed restore")
 
+func disk_recovery(m: RestoreMain) -> void:
+	m.world.player = m.world.countries[0]
+	m.world.player.is_player = true
+	m.world.game_time = 42.0
+	m.in_menu = false
+	GameConfig.no_save = false
+	Save.use_slot(1)
+	Save.begin_new()
+	check(Save.save_game(m), "disk recovery: wrote a FORMAT1 save")
+	var before: String = FileAccess.get_sha256(Save.PATH)
+	var material: Material = m.world.territory.material
+	var injected: Array[bool] = []
+	m.cam.zoom_changed.connect(func(_z: float) -> void:
+		injected.append(not m.world.is_processing() and m.world.player != null and m.world.game_time == 42.0)
+		m.world.territory.material = null
+		(func() -> void: m.world.territory.material = material).call_deferred()
+	, CONNECT_ONE_SHOT)
+	Save.want = [1, ""]
+	await m._on_menu("load_save")
+	await menu_done(m)
+	check(injected == [true], "disk recovery: fault occurred on the frozen loaded world")
+	check(m.in_menu and m.world.player == null and m.world.is_processing(), "disk recovery: new menu world processes")
+	check(FileAccess.get_sha256(Save.PATH) == before and not before.is_empty(), "disk recovery: original save is intact")
+	check(Save._dec.is_empty() and not Save._loading, "disk recovery: decoder is clear")
+	check(await Save.load_slot(m, 1) and m.world.is_processing() and m.world.game_time == 42.0,
+		"disk recovery: explicit retry restores the playable world")
+	frozen(m)
+	var result := {"checks":checks,"passed":failures.is_empty(),"failures":failures}
+	if args.has("out"):
+		FileAccess.open(args["out"],FileAccess.WRITE).store_string(JSON.stringify(result,"\t"))
+	print("DISK_RESTORE_RECOVERY ",JSON.stringify(result))
+	quit(0 if failures.is_empty() else 1)
+
+
 func _run() -> void:
 	var user: String = OS.get_user_data_dir()
 	if not (user.contains("phase5b1") or user.contains("df_snapshot_test_")):
@@ -81,6 +110,9 @@ func _run() -> void:
 	current_scene = m
 	await menu_done(m)
 	frozen(m)
+	if args.get("fault") == "disk":
+		await disk_recovery(m)
+		return
 	var valid: PackedByteArray
 	if args.has("checkpoint"):
 		valid = FileAccess.get_file_as_bytes(args["checkpoint"])
@@ -142,8 +174,25 @@ func _run() -> void:
 	# Error occurs after core/systems were already replaced. It must not become a success.
 	configure(m)
 	var successes: int = m.successes
-	m.inject_error = true
+	var injected: Array[bool] = []
+	var with_signal: bool = args.get("fault") == "signal"
+	var material: Material = m.world.territory.material
+	var previous_data: WorldData = m.world.data
+	m.net._resume_q.append([1, 2])
+	m.net._cbs[1] = func(_value: Variant) -> void: check(false, "cancelled gameplay callback ran")
+	m.cam.zoom_changed.connect(func(_z: float) -> void:
+		injected.append(not m.world.is_processing() and m.world.player != null and m.world.data != previous_data and m.world.game_time == original["core"]["game_time"])
+		if with_signal:
+			push_error("R02_INJECTED_POST_LOAD_FAILURE")
+		else:
+			m.world.territory.material = null
+	, CONNECT_ONE_SHOT)
 	ok = await m.net._restore_from(valid,5)
+	m.world.territory.material = material
+	check(injected == [true], "fault injected during finalization of the frozen, decoded world")
+	check(Save._dec.is_empty() and not Save._loading and m.net._resume_q.is_empty() and m.net._cbs.is_empty(),
+		"failed restore clears decoder references and temporary session queues")
+	check(m.success_turns == [100], "the only success callback observed the committed turn")
 	check(not ok and not m.net.in_match and not m.net.go,"intermediate script error: session ended safely")
 	check(m.successes == successes and m.net._pending.is_empty() and m.net.turns.is_empty(),"intermediate script error: no success/queued gameplay")
 	check(not m.world.is_processing(),"intermediate script error: partial world frozen until fresh menu")
@@ -208,7 +257,7 @@ func _run() -> void:
 	await menu_done(m)
 	frozen(m)
 	var result := {"checks":checks,"passed":failures.is_empty(),"failures":failures,"cases":cases,
-		"restored_hash":hash1,"replay_hash":continued,"replay_rng":continued_rng,"expected_injected_script_errors":1,"user_data_dir":user}
+		"restored_hash":hash1,"replay_hash":continued,"replay_rng":continued_rng,"expected_post_load_errors":int(with_signal),"user_data_dir":user}
 	if args.has("out"):
 		FileAccess.open(args["out"],FileAccess.WRITE).store_string(JSON.stringify(result,"\t"))
 	print("SNAPSHOT_INTEGRATION ",JSON.stringify(result))

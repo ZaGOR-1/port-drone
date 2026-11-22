@@ -113,6 +113,7 @@ func _main_menu() -> void:
 	if not caps.is_empty():
 		cam.center_on(Vector2((caps[0] as City).center * GameWorld.CELL))
 	mode = Mode.NONE
+	world.set_process(true)  # The fresh menu world replaces any frozen restore state.
 	loading.finish()
 	_snd("music", ["menu"])
 	_snd("loop", ["amb_wind", "ambient_wind_loop", true, Vector2.INF, -16.0])
@@ -1832,24 +1833,32 @@ func net_begin(s: WorldSettings, humans: int, local_slot: int) -> void:
 	hud.show_toast("Мультиплеер: выберите место для столицы")
 
 
-## After a resync snapshot was restored (NetSession._apply_snapshot). NET 29: the snapshot has no
-## FrontPlan caches / timers and no staggered УДАР launches - every device drops them the same way.
-func net_after_restore() -> void:
-	(load("res://game/front_plan.gd") as GDScript).call("reset")  # FrontPlan has no class_name
+## Prepare the local view before committing the resync. NET 29: every peer drops FrontPlan
+## caches and staggered УДАР launches, which are not in the snapshot.
+func net_prepare_restore() -> bool:
+	var front := load("res://game/front_plan.gd") as GDScript
+	if front == null or not is_instance_valid(hud) or not is_instance_valid(cam):
+		return false
+	front.call("reset")
 	world.strike_net = null
 	_reset_input_state()
 	_mp_pend_builds.clear()
 	hud.set_net_mode(true)
 	_apply_speed()
+	return true
+
+
+func net_after_restore() -> void:
 	hud.refresh()
 
 
 ## The network match is over for this device (left, host lost, kicked): back to the menu.
 func net_match_closed() -> void:
 	hud.set_net_mode(false)
-	if not in_menu:
+	if not in_menu or loading.visible:
 		await _main_menu()
-	world.set_process(true) # A failed snapshot froze the old world; the menu is rebuilt now.
+	else:
+		world.set_process(true) # The menu world was already ready.
 	menus.show_mp()
 
 
