@@ -466,10 +466,10 @@ func _exit_tree() -> void:
 
 
 
-func _selector(parent: Control, title: String, values: Array, get_i: Callable, set_i: Callable, vw: float = 100.0, icon: String = "") -> void:
+func _selector(parent: Control, title: String, values: Array, get_i: Callable, set_i: Callable, vw: float = 100.0, icon: String = "", wrap: bool = true) -> Label:
 	if values.size() == 2 and "ВКЛ" in values and "ВЫКЛ" in values:
 		_toggle(parent, title, values, get_i, set_i, icon)
-		return
+		return null
 	var pc: = PanelContainer.new()
 	pc.add_theme_stylebox_override("panel", UiKit.sb("wb_panel_dark", 8, 2))
 	parent.add_child(pc)
@@ -509,18 +509,26 @@ func _selector(parent: Control, title: String, values: Array, get_i: Callable, s
 		v.text = str(values[clampi(int(get_i.call()), 0, values.size() - 1)])
 		v.add_theme_color_override("font_color", UiKit.MUTED if v.text in ["ВЫКЛ", "НЕТ"] else UiKit.TITLE)
 	upd.call()
-	left.pressed.connect(func() -> void:
-		set_i.call(posmod(int(get_i.call()) - 1, values.size()))
+	var step := func(delta: int) -> void:
+		var next: int = int(get_i.call()) + delta
+		set_i.call(posmod(next, values.size()) if wrap else clampi(next, 0, values.size() - 1))
 		_prefs_dirty = _prefs_dirty or current.begins_with("settings")
 		upd.call()
-		_rule_hint(pc, title))
-	right.pressed.connect(func() -> void:
-		set_i.call(posmod(int(get_i.call()) + 1, values.size()))
-		_prefs_dirty = _prefs_dirty or current.begins_with("settings")
-		upd.call()
-		_rule_hint(pc, title))
+		_rule_hint(pc, title)
+	left.pressed.connect(step.bind(-1))
+	right.pressed.connect(step.bind(1))
+	return v
 
 
+func _pc_scale_selector(parent: Control, pc_port: PcPortS) -> void:
+	var label: Label = _selector(parent, "МАСШТАБ ИНТЕРФЕЙСА", PcPortS.SCALE_NAMES,
+		func() -> int: return pc_port.scale_i, pc_port.set_scale_i, VW_SHORT, "", false)
+	var sync := func(_scale: float) -> void:
+		label.text = PcPortS.SCALE_NAMES[pc_port.scale_i]
+	pc_port.scale_changed.connect(sync)
+	label.tree_exiting.connect(func() -> void:
+		if is_instance_valid(pc_port):
+			pc_port.scale_changed.disconnect(sync), CONNECT_ONE_SHOT)
 
 
 func _toggle(parent: Control, title: String, values: Array, get_i: Callable, set_i: Callable, icon: String = "") -> void:
@@ -2600,9 +2608,9 @@ func show_settings_sub(kind: String) -> void:
 	current = "settings_" + kind
 	_sheet = kind != "gfx" and kind != "ui"
 	if kind == "ui":
-		var pc_port_u: Node = get_node_or_null("/root/PcPort")
+		var pc_port_u := get_node_or_null("/root/PcPort") as PcPortS
 		if pc_port_u != null and PcPortS.desktop():
-			_selector(vb, "МАСШТАБ ИНТЕРФЕЙСА", PcPortS.SCALE_NAMES, func() -> int: return int(pc_port_u.get("scale_i")), func(i: int) -> void: pc_port_u.call("set_scale_i", i), VW_SHORT)
+			_pc_scale_selector(vb, pc_port_u)
 			_selector(vb, "ПОЛНЫЙ ЭКРАН · F11", ["ВЫКЛ", "ВКЛ"], func() -> int: return 0 if get_window().mode == Window.MODE_WINDOWED else 1, func(i: int) -> void: pc_port_u.call("set_fullscreen", i == 1), VW_SHORT)
 			_selector(vb, "НАВЕДЕНИЕ МЫШИ (ТУЛТИПЫ)", ["ВКЛ", "ВЫКЛ"], func() -> int: return 0 if bool(pc_port_u.get("hover_tips")) else 1, func(i: int) -> void: pc_port_u.call("set_hover_tips", i == 0), VW_SHORT)
 			_selector(vb, "ЗАДЕРЖКА ПОДСКАЗОК", PcPortS.TIP_DELAY_NAMES, func() -> int: return int(pc_port_u.get("tip_delay_i")), func(i: int) -> void: pc_port_u.call("set_tip_delay_i", i), VW_SHORT)
@@ -2654,10 +2662,10 @@ func show_settings_sub(kind: String) -> void:
 		_selector(vb, "НЕ ЗАМЕДЛЯТЬ ИГРУ", ["ВЫКЛ", "ВКЛ"], func() -> int: return 1 if GameConfig.no_slow else 0, func(i: int) -> void:
 			GameConfig.no_slow = i == 1
 			Save.save_prefs(), VW_SHORT)
-		var pc_port: Node = get_node_or_null("/root/PcPort")
+		var pc_port := get_node_or_null("/root/PcPort") as PcPortS
 		if pc_port != null and PcPortS.desktop():  # PC port: the window and the UI size
 			_selector(vb, "ПОЛНЫЙ ЭКРАН · F11", ["ВЫКЛ", "ВКЛ"], func() -> int: return 0 if get_window().mode == Window.MODE_WINDOWED else 1, func(i: int) -> void: pc_port.call("set_fullscreen", i == 1), VW_SHORT)
-			_selector(vb, "МАСШТАБ ИНТЕРФЕЙСА", PcPortS.SCALE_NAMES, func() -> int: return int(pc_port.get("scale_i")), func(i: int) -> void: pc_port.call("set_scale_i", i), VW_SHORT)
+			_pc_scale_selector(vb, pc_port)
 		if GameConfig.dev_mode:
 			_selector(vb, "СЧЁТЧИК FPS", ["ВЫКЛ", "ВКЛ"], func() -> int: return 1 if GameConfig.perf_hud else 0, func(i: int) -> void: GameConfig.perf_hud = i == 1, VW_SHORT)
 
