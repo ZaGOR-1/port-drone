@@ -432,9 +432,15 @@ func _build_bottom() -> void:
 		grid.add_theme_constant_override("v_separation", 2)
 		grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		for it: Array in def[1]:
-			grid.add_child(_cell(String(it[0]), String(it[1]), bool(it[2])))
+			var cell := _cell(String(it[0]), String(it[1]), bool(it[2]))
+			grid.add_child(cell)
 		stack.add_child(grid)
 		pages.append(grid)
+		if _PcPortH.desktop():
+			for cell: Control in grid.get_children():
+				cell.visibility_changed.connect(_update_command_badges.bind(grid))
+				cell.get_child(0).visibility_changed.connect(_update_command_badges.bind(grid))
+			_update_command_badges(grid)
 
 	tip_pc = _tooltip_panel()
 	tip_pc.visible = false
@@ -468,6 +474,53 @@ func _build_bottom() -> void:
 	_select_page(0, false)
 
 
+
+
+func _visible_commands(grid: Control) -> Array[Button]:
+	var buttons: Array[Button] = []
+	for cell: Control in grid.get_children():
+		var button := cell.get_child(0) as Button if cell.get_child_count() > 0 else null
+		if cell.visible and button != null and button.visible:
+			buttons.append(button)
+	return buttons
+
+
+func _update_command_badges(grid: Control) -> void:
+	var buttons := _visible_commands(grid)
+	for index in buttons.size():
+		var button := buttons[index]
+		if index < 9:
+			set_hk_badge(button, str(index + 1), true, false, "NumberBadge")
+		else:
+			var badge := button.get_node_or_null("NumberBadge")
+			if badge != null:
+				button.remove_child(badge)
+				badge.queue_free()
+
+
+func command_numbers_open() -> bool:
+	return _PcPortH.desktop() and bottom_panel != null and bottom_panel.is_visible_in_tree() and not _spect
+
+
+func press_command_number(number: int) -> void:
+	var buttons := _visible_commands(pages[_page])
+	if number > buttons.size():
+		return
+	var button := buttons[number - 1]
+	if button.disabled:
+		return
+	if button.toggle_mode:
+		button.button_pressed = not button.button_pressed
+	button.pressed.emit()
+
+
+func gameplay_modal_open() -> bool:
+	if (is_instance_valid(panel) and panel.is_visible_in_tree()) or (is_instance_valid(prompt_panel) and prompt_panel.is_visible_in_tree()):
+		return true
+	if not ui24_open_now():
+		return false
+	# The ordinary army card follows the current selection and permits recalling another group.
+	return not (is_instance_valid(army_ux) and army_ux.sheet == ui24_sheet and army_ux.view in ["army", "group"])
 
 
 func _build_toast() -> void:
@@ -696,13 +749,7 @@ func _process(delta: float) -> void:
 			tw3.tween_property(sel_card, "position:x", 4.0, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_cmd_process(delta)
 
-	if bottom_panel != null and ops_panel != null:
-		var fold: bool = keys_collapsed and not _tut_on()
-		var want_bp: bool = not ops_panel.visible and not ui24_open_now() and not fold
-		if bottom_panel.visible != want_bp:
-			bottom_panel.visible = want_bp
-		if _fold_pad != null and _fold_pad.visible != (fold and not ops_panel.visible):
-			_fold_pad.visible = fold and not ops_panel.visible
+	_sync_command_panel()
 	_cc_process(delta)
 	_plan_process(delta)
 	_perf_process(delta)

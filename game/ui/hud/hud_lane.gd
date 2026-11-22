@@ -68,7 +68,7 @@ func war_flash(text: String, kind: String = "") -> void:
 
 
 
-func _on_tab_tap(p: int) -> void:
+func _on_tab_tap(p: int, fold_on_repeat: bool = true) -> void:
 	UiKit.snd("ui_tab")
 	var again: bool = p == _page
 	var dock_was: bool = armies_open
@@ -79,7 +79,7 @@ func _on_tab_tap(p: int) -> void:
 	var card_up: bool = ops_panel.visible
 	if card_up and main_node != null and main_node.has_method("drop_cards_for_sheet"):
 		main_node.drop_cards_for_sheet()
-	if again and not sheet_up and not (p == 4 and dock_was) and not _tut_on() and not card_up:
+	if fold_on_repeat and again and not sheet_up and not (p == 4 and dock_was) and not _tut_on() and not card_up:
 		set_keys_folded(not keys_collapsed)
 		return
 	if keys_collapsed:
@@ -88,6 +88,7 @@ func _on_tab_tap(p: int) -> void:
 		had.call("close")
 	_select_page(p, true)
 	_army_tab_hook(p, again and dock_was)
+	_sync_command_panel()
 	if p == 4 and armies_open:
 		show_tip(String(PAGE_TITLES[4]), "Армии внизу · ещё тап по АРМИЯ — постройки")
 

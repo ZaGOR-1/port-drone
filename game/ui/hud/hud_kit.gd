@@ -209,19 +209,19 @@ func _warn_col(key: String, warn: bool) -> void:
 		l.add_theme_color_override("font_color", UiKit.RED if warn else UiKit.TEXT)
 
 
-static func set_hk_badge(b: Control, key_txt: String, align_right: bool = true, bottom_y: bool = false) -> void:
+static func set_hk_badge(b: Control, key_txt: String, align_right: bool = true, bottom_y: bool = false, badge_name: String = "HkBadge") -> void:
 	if b == null or not is_instance_valid(b) or key_txt == "":
 		return
 	var pc_script: GDScript = load("res://pc/pc_port.gd") as GDScript
 	if pc_script == null or not bool(pc_script.call("desktop")):
 		return
-	var prev: Control = b.get_node_or_null("HkBadge") as Control
+	var prev: Control = b.get_node_or_null(NodePath(badge_name)) as Control
 	if prev != null:
 		if prev is Label:
 			(prev as Label).text = key_txt
 		return
 	var lbl: Label = UiKit.lbl(key_txt, 9, Color("ffe27a"), 2, 2)
-	lbl.name = "HkBadge"
+	lbl.name = badge_name
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lbl.add_to_group("hk_badge")
 	if align_right:

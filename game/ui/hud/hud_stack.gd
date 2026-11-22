@@ -1040,6 +1040,16 @@ func set_keys_folded(on: bool) -> void:
 		show_tip("ПАНЕЛЬ СВЁРНУТА", "Тап по вкладке — снова открыть")
 	else:
 		tip_pc.visible = false
+	_sync_command_panel()
+
+
+func _sync_command_panel() -> void:
+	if bottom_panel == null or ops_panel == null:
+		return
+	var fold: bool = keys_collapsed and not _tut_on()
+	bottom_panel.visible = not ops_panel.visible and not ui24_open_now() and not fold
+	if _fold_pad != null:
+		_fold_pad.visible = fold and not ops_panel.visible
 
 
 func _fit_keys_stack() -> void:

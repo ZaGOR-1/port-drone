@@ -40,10 +40,32 @@ func press(logical: int, physical: int = KEY_NONE, ctrl: bool = false, echo: boo
 
 func check_gameplay_input_blocked(m: ProbeMain, army: Object, ui: String) -> void:
 	var page: int = m.hud._page
+	m.actions.clear()
 	var slot: int = army._recall_k
 	press(KEY_F7 if page != 6 else KEY_F2)
 	press(KEY_2 if slot != 2 else KEY_3)
-	check(m.hud._page == page and army._recall_k == slot, "%s blocks gameplay shortcuts" % ui)
+	check(m.actions.is_empty() and m.hud._page == page and army._recall_k == slot, "%s blocks gameplay shortcuts" % ui)
+
+
+func check_command(m: ProbeMain, number: int, action: String) -> void:
+	var button: Button = m.hud.keys[action]
+	var badge := button.get_node_or_null("NumberBadge") as Label
+	check(badge != null and badge.text == str(number), "%s displays number %d" % [action, number])
+	m._set_mode(m.Mode.NONE)
+	m.actions.clear()
+	button.pressed.emit()
+	var mouse_mode: int = m.mode
+	var mouse_panel: String = m.hud.panel_kind
+	check(m.actions == [action], "%s button emits its action once" % action)
+	m.hud.close_panel()
+	m._set_mode(m.Mode.NONE)
+	m.actions.clear()
+	press(KEY_NONE, KEY_0 + number)
+	check(m.actions == [action] and m.mode == mouse_mode and m.hud.panel_kind == mouse_panel, "%d dispatches the same path as %s" % [number, action])
+	press(KEY_NONE, KEY_0 + number, false, true)
+	check(m.actions == [action], "echo does not repeat %s" % action)
+	m.hud.close_panel()
+	m._set_mode(m.Mode.NONE)
 
 
 func _finish() -> void:
@@ -83,6 +105,22 @@ func _run() -> void:
 	settings.world_seed = 20261016
 	await m.start_world(settings)
 	m.world.set_process(false)
+	while m.loading.visible:
+		await process_frame
+	m.hud.refresh()
+	press(KEY_F2)
+	check(m.hud._page == 1 and not m.hud.keys_collapsed, "F2 opens Cities when startup has already selected it")
+	m.actions.clear()
+	press(KEY_2)
+	check(m.actions == ["town"] and m.mode == m.Mode.CAPITAL, "initial capital mode still routes F2 + 2 through town validation")
+	for i in range(3):
+		check_command(m, i + 1, ["capital", "town", "farm"][i])
+	m._set_mode(m.Mode.CAPITAL)
+	m._pend = {"kind": "tap"}
+	m.actions.clear()
+	press(KEY_2)
+	check(m.actions.is_empty() and m.mode == m.Mode.CAPITAL and not m._pend.is_empty(), "pending capital placement blocks numeric shortcuts")
+	m._pend.clear()
 	var site := Vector2i(-1, -1)
 	for y in range(65, 448, 17):
 		for x in range(65, 448, 17):
@@ -96,6 +134,49 @@ func _run() -> void:
 		_finish()
 		return
 	m._set_mode(m.Mode.NONE)
+	m.hud.refresh()
+	await process_frame
+	await process_frame
+	var town_button: Button = m.hud.keys["town"]
+	var mouse_position: Vector2 = town_button.get_global_transform_with_canvas() * (town_button.size * 0.5)
+	m.actions.clear()
+	var motion := InputEventMouseMotion.new()
+	motion.position = mouse_position
+	root.push_input(motion, true)
+	for down: bool in [true, false]:
+		var click := InputEventMouseButton.new()
+		click.button_index = MOUSE_BUTTON_LEFT
+		click.position = mouse_position
+		click.pressed = down
+		root.push_input(click, true)
+	check(m.actions == ["town"] and m.mode == m.Mode.TOWN, "real mouse event selects Town once")
+	m._set_mode(m.Mode.NONE)
+	m.actions.clear()
+	press(KEY_9, KEY_1)
+	check(m.actions == ["town"] and m.mode == m.Mode.TOWN, "physical top-row position takes precedence over logical code")
+	m._set_mode(m.Mode.NONE)
+	var was_paused: bool = m._paused
+	m._paused = true
+	m._apply_speed()
+	m.actions.clear()
+	press(KEY_1)
+	check(m.actions == ["town"] and m._paused, "simulation pause leaves command buttons usable")
+	m._paused = was_paused
+	m._apply_speed()
+	m._set_mode(m.Mode.NONE)
+	for i in range(9):
+		check_command(m, i + 1, ["town", "farm", "civ", "power", "solar_farm", "npp", "mine", "store", "sawmill"][i])
+	var farm: Button = m.hud.keys["farm"]
+	farm.disabled = true
+	m.actions.clear()
+	press(KEY_2)
+	check(m.actions.is_empty(), "disabled visible Farm cannot dispatch a command")
+	check_command(m, 3, "civ")
+	farm.disabled = false
+	farm.get_parent().hide()
+	check_command(m, 2, "civ")
+	farm.get_parent().show()
+	check_command(m, 2, "farm")
 	var b: Facility = null
 	for dy in range(-36, 37, 3):
 		for dx in range(-36, 37, 3):
@@ -114,23 +195,23 @@ func _run() -> void:
 	for i in range(7):
 		m.actions.clear()
 		press(KEY_F1 + i)
-		check(m.hud._page == i, "F%d selects HUD page %d" % [i + 1, i])
+		check(m.hud._page == i and m.hud.command_numbers_open(), "F%d opens the corresponding command context" % (i + 1))
+		var first: String = ["zoom_out", "town", "launch", "ad_mfg", "barracks", "diplomacy", "port"][i]
+		var badge := (m.hud.keys[first] as Button).get_node_or_null("NumberBadge") as Label
+		check(badge != null and badge.text == "1", "F%d numbers the first visible command" % (i + 1))
 		var folded: bool = m.hud.keys_collapsed
 		press(KEY_F1 + i, KEY_NONE, false, true)
 		check(m.hud._page == i and m.hud.keys_collapsed == folded, "F%d echo leaves HUD unchanged" % (i + 1))
 	press(KEY_F2)
 	var hash_before: String = NetHash.of(m.world)
 	var delayed_before: int = m.world._delayed.size()
-	for d in range(1, 10):
-		press(KEY_0 + d)
-		check(m.mode == m.Mode.NONE and m.hud._page == 1, "F2 then empty slot %d leaves mode and page alone" % d)
-		m._set_mode(m.Mode.NONE)
 	press(KEY_F8)
 	press(KEY_F9)
 	press(KEY_T)
 	press(KEY_NONE, KEY_T)
 	check(m.mode == m.Mode.NONE and m.hud._page == 1, "F8, F9 and T leave gameplay unchanged")
 
+	m.hud.set_keys_folded(true)
 	press(KEY_3)
 	m._tap(m.cam.world_to_screen(Vector2((site + Vector2i(16, 0)) * GameWorld.CELL)))
 	check(m.world._delayed.size() == delayed_before and NetHash.of(m.world) == hash_before and m.mode == m.Mode.NONE, "3 and map click cannot schedule a free strike")
@@ -141,9 +222,27 @@ func _run() -> void:
 	var delays_before_b: int = m.world._delayed.size()
 	press(KEY_B)
 	check(m.mode == m.Mode.NONE and m.world._delayed.size() == delays_before_b, "B cannot schedule a test strike")
+	press(KEY_F2)
 	for d in range(1, 10):
 		army.sel[b.id] = true
+		m.actions.clear()
 		press(KEY_0 + d, KEY_0 + d, true)
+		check(m.actions.is_empty() and army._hot.get(d) == PackedInt32Array([b.id]), "Ctrl+%d binds the group while Cities is open" % d)
+	m.actions.clear()
+	var slot_before: int = army._recall_k
+	press(KEY_1)
+	check(m.actions == ["town"] and army._recall_k == slot_before, "Cities command wins over a stored group")
+	m._set_mode(m.Mode.NONE)
+	(m.hud.keys["farm"] as Button).disabled = true
+	m.actions.clear()
+	press(KEY_2)
+	check(m.actions.is_empty() and army._recall_k == slot_before, "disabled command slot does not fall through to a stored group")
+	(m.hud.keys["farm"] as Button).disabled = false
+	m.hud.open_store_pick()
+	check_gameplay_input_blocked(m, army, "HUD modal")
+	m.hud.close_panel()
+	m.hud.set_keys_folded(true)
+	for d in range(1, 10):
 		army.sel.clear()
 		press(KEY_NONE, KEY_0 + d)
 		check(army._recall_k == d and army.alive_fids() == PackedInt32Array([b.id]), "Ctrl+%d assigns and physical digit recalls the correct slot" % d)
@@ -158,6 +257,7 @@ func _run() -> void:
 	m._set_mode(m.Mode.NONE)
 
 	press(KEY_F2)
+	check(m.hud.command_numbers_open(), "F2 reopens command context after army recall")
 	var edit := LineEdit.new()
 	m.hud.root.add_child(edit)
 	edit.grab_focus()

@@ -1430,11 +1430,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if is_instance_valid(_spick) and bool(_spick.get("is_open")):
 			return
-		var army: Object = _pc_army()
-		if army != null and bool(army.key(event as InputEventKey)):
+		if hud != null and hud.gameplay_modal_open():
+			return
+		var key := event as InputEventKey
+		if _command_number(key):
 			get_viewport().set_input_as_handled()
 			return
-		_pc_hotkey(event as InputEventKey)
+		var army: Object = _pc_army()
+		if army != null and bool(army.key(key)):
+			get_viewport().set_input_as_handled()
+			return
+		_pc_hotkey(key)
 		return
 	if event is InputEventMagnifyGesture:
 		var mg := event as InputEventMagnifyGesture
@@ -1616,6 +1622,21 @@ func _ui_typing() -> bool:
 	return foc is LineEdit or foc is TextEdit
 
 
+func _command_number(key: InputEventKey) -> bool:
+	var code: int = key.physical_keycode if key.physical_keycode != KEY_NONE else key.keycode
+	var number: int = code - KEY_0
+	if number < 1 or number > 9 or key.alt_pressed or key.shift_pressed or key.meta_pressed:
+		return false
+	# A new match enters capital mode with no site selected. Its city buttons remain usable.
+	var founding: bool = mode == Mode.CAPITAL and (world.player == null or world.player.capital_id < 0)
+	if not _pend.is_empty() or (mode != Mode.NONE and not founding):
+		return true
+	if key.ctrl_pressed or hud == null or not hud.command_numbers_open():
+		return false
+	hud.press_command_number(number)
+	return true
+
+
 func _pc_hotkey(ev: InputEventKey) -> void:
 	if ev.ctrl_pressed or ev.alt_pressed or ev.meta_pressed or hud == null:
 		return
@@ -1705,7 +1726,7 @@ func _pc_hotkey(ev: InputEventKey) -> void:
 			if kc >= KEY_F1 and kc <= KEY_F7:
 				var idx: int = kc - KEY_F1
 				if idx < hud.tabs.size():
-					hud._on_tab_tap(idx)
+					hud._on_tab_tap(idx, false)
 					get_viewport().set_input_as_handled()
 
 
