@@ -711,6 +711,11 @@ func _show_pend() -> void:
 	var txt: String = _pend_text()
 	var ok: bool = why == ""
 	var pm: int = int(_pend.get("mode", mode))
+	if pm == Mode.CAPITAL and String(_pend.get("kind", "")) == "tap":
+		var point: Vector2 = _pend["wp"]
+		var cell := Vector2i((point / float(GameWorld.CELL)).floor())
+		if world.can_found_city(cell, City.Kind.CAPITAL, true).ok:
+			_pend["capital_preview"] = point
 	if ok and String(_pend.get("kind", "")) == "tap" and world.player != null and (pm == Mode.OPERATION or pm == Mode.MOVE_ALL):
 
 		var pv: Dictionary = {}
@@ -885,10 +890,14 @@ func _build_res_why(kind: int, pl: Country) -> String:
 
 
 func _draw_ghost() -> void:
-	if world.player == null:
+	if world.player != null:
+		_ghost_own_rings()
+	# SP creates the player on confirmation, after this preview is shown.
+	if int(_pend.get("mode", Mode.NONE)) == Mode.CAPITAL:
+		if _pend.has("capital_preview"):
+			_draw_reticle(Mode.CAPITAL, _pend["capital_preview"])
 		return
-	_ghost_own_rings()
-	if RB.draw(self, _ghost):
+	if world.player == null or RB.draw(self, _ghost):
 		return
 	var C: float = float(GameWorld.CELL)
 	var ok_col: = Color(0.35, 1.0, 0.45, 0.45)
