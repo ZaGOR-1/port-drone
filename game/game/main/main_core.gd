@@ -79,7 +79,6 @@ func _set_mode(m: int) -> void:
 		hud.hide_confirm()
 	hud.set_key_pressed("capital", m == Mode.CAPITAL)
 	hud.set_key_pressed("town", m == Mode.TOWN)
-	hud.set_key_pressed("strike", m == Mode.STRIKE)
 	for k: String in BUILD_KEYS:
 		hud.set_key_pressed(k, m == int(BUILD_KEYS[k]))
 	hud.set_key_pressed("depot", m == Mode.DEPOT_S or m == Mode.DEPOT_M or m == Mode.DEPOT_L)
@@ -131,8 +130,6 @@ func _refresh_mode_hint(m: int = -1) -> void:
 			hud.set_hint("ВЫБЕРИТЕ МЕСТО ДЛЯ СТОЛИЦЫ")
 		Mode.TOWN:
 			hud.set_hint((Loc.t("ГОРОД %d: СВОБОДНАЯ ЗЕМЛЯ ДО 360 М ОТ СТРАНЫ") % Military.COST_TOWN) + suf)
-		Mode.STRIKE:
-			hud.set_hint("ТЕСТОВЫЙ УДАР: НАЖМИТЕ НА ЦЕЛЬ")
 		Mode.FACTORY, Mode.DRONEPORT, Mode.TEL, Mode.MFACTORY, Mode.REFINERY, Mode.POWER, Mode.AIRFIELD, Mode.AIRPORT, Mode.SAWMILL, Mode.OIL_RIG, Mode.PORT, Mode.SOLAR_FARM, Mode.NAVBASE, Mode.NPP, Mode.UMINE, Mode.FARM, Mode.CIV, Mode.MINE, Mode.BARRACKS, Mode.AD_MFG, Mode.AD_SPAAG, Mode.AD_SAM, Mode.AD_PATRIOT, Mode.AD_INT, Mode.AD_RADAR, Mode.AD_EW, Mode.DUGOUT, Mode.COASTAL_ASM, Mode.DEPOT_S, Mode.DEPOT_M, Mode.DEPOT_L, Mode.STORE_S, Mode.STORE_M, Mode.STORE_L, Mode.NUKE_SILO, Mode.AD_ZASLON:
 			var kind: int = BUILD_KIND[cm]
 			var bc1: Dictionary = Economy.build_cost(kind)

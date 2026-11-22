@@ -688,8 +688,9 @@ func key(k: InputEventKey) -> bool:
 		clear()
 		UiKit.snd("ui_close")
 		return true
-	var d: int = k.keycode - KEY_0
-	if d < 1 or d > 9 or k.alt_pressed or k.shift_pressed:
+	var code: int = k.physical_keycode if k.physical_keycode != KEY_NONE else k.keycode
+	var d: int = code - KEY_0
+	if d < 1 or d > 9 or k.alt_pressed or k.shift_pressed or k.meta_pressed:
 		return false
 	if k.ctrl_pressed:
 		var fids: PackedInt32Array = alive_fids()

@@ -125,9 +125,6 @@ func _tap(pos: Vector2, shift_held: bool = false) -> void:
 				net.issue({"k": "town", "cell": cell}, on_town)
 			else:
 				on_town.call(world.player_found_town(cell))
-		Mode.STRIKE:
-			if not net.in_match:
-				world.strike(cell)
 		Mode.SATELLITE:
 			var sc: int = int(world.vision.satellite_cost())
 			var whys: String = world.vision.satellite(wp)

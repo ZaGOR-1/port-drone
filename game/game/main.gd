@@ -566,11 +566,6 @@ func _on_action(nm: String) -> void:
 				_set_mode(Mode.NONE if mode == Mode.TOWN else Mode.TOWN)
 			else:
 				_set_mode(Mode.CAPITAL)
-		"strike":
-			if net.in_match:
-				hud.show_toast("Тестовый удар в сетевой партии недоступен")
-				return
-			_set_mode(Mode.NONE if mode == Mode.STRIKE else Mode.STRIKE)
 		"menu":
 			_open_pause()
 		"scores":
@@ -1400,9 +1395,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_close_city_rename()
 				get_viewport().set_input_as_handled()
 			return
-		if not menus.is_open() and _pc_army() != null and bool(_pc_army().key(event as InputEventKey)):
-			return
 		if kc == KEY_ESCAPE or kc == KEY_BACK:
+			if not _ui_typing() and not menus.is_open() and _pc_army() != null and bool(_pc_army().key(event as InputEventKey)):
+				get_viewport().set_input_as_handled()
+				return
 			if not menus.is_open() and _army_back():
 				return
 			if not menus.is_open() and hud != null and hud.panel != null and is_instance_valid(hud.panel):
@@ -1432,8 +1428,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if _ui_typing() or menus.is_open():
 			return
+		if is_instance_valid(_spick) and bool(_spick.get("is_open")):
+			return
+		var army: Object = _pc_army()
+		if army != null and bool(army.key(event as InputEventKey)):
+			get_viewport().set_input_as_handled()
+			return
 		_pc_hotkey(event as InputEventKey)
-		_debug_key(kc)
 		return
 	if event is InputEventMagnifyGesture:
 		var mg := event as InputEventMagnifyGesture
@@ -1616,13 +1617,20 @@ func _ui_typing() -> bool:
 
 
 func _pc_hotkey(ev: InputEventKey) -> void:
-	if ev.ctrl_pressed or ev.alt_pressed or hud == null:
+	if ev.ctrl_pressed or ev.alt_pressed or ev.meta_pressed or hud == null:
 		return
-	var kc: int = ev.keycode
+	var kc: int = ev.physical_keycode if ev.physical_keycode != KEY_NONE else ev.keycode
 	match kc:
-		KEY_SPACE:
-			if not (net != null and net.in_match):
+		KEY_SPACE, KEY_P:
+			if kc == KEY_P or not (net != null and net.in_match):
 				_on_action("pause")
+				get_viewport().set_input_as_handled()
+		KEY_MINUS, KEY_EQUAL:
+			cam.step_zoom(-1 if kc == KEY_MINUS else 1, cam.view_size() * 0.5)
+			get_viewport().set_input_as_handled()
+		KEY_K:
+			if OS.is_debug_build():
+				_debug_next_checkpoint()
 				get_viewport().set_input_as_handled()
 		KEY_Q:
 			if not hud.pages.is_empty():
@@ -1701,59 +1709,22 @@ func _pc_hotkey(ev: InputEventKey) -> void:
 					get_viewport().set_input_as_handled()
 
 
-## Desktop / MCP test keys: -/= zoom, 1 capital mode, 2 town mode, 3 strike mode,
-## P pause, K next checkpoint, B strike next bridge, N next capital.
-func _debug_key(k: int) -> void:
-	if net.in_match and (k == KEY_3 or k == KEY_B):
-		return  # NET 34: the test strike changes the world on this device only (critic)
-	if not OS.is_debug_build() and (k == KEY_B or k == KEY_K):
-		return  # PC port: developer keys (B = strike a bridge) are not for players
+func _debug_next_checkpoint() -> void:
 	var c: Vector2 = cam.view_size() * 0.5
-	match k:
-		KEY_MINUS:
-			cam.step_zoom(-1, c)
-		KEY_EQUAL:
-			cam.step_zoom(1, c)
-		KEY_1:
-			_set_mode(Mode.CAPITAL)
-		KEY_2:
-			_set_mode(Mode.TOWN)
-		KEY_3:
-			_set_mode(Mode.STRIKE)
-		KEY_P:
-			_on_action("pause")
-		KEY_K:
-			var keys: Array = world.checkpoints.keys()
-			if not keys.is_empty():
-				_kpp_i = (_kpp_i + 1) % keys.size()
-				var cp: Dictionary = world.checkpoints[keys[_kpp_i]]
-				var cc: Vector2i = cp["cell"]
-				cam.set_zoom_at(MapCamera.zk(3.0), c)  # R347
-				cam.center_on(Vector2(cc * GameWorld.CELL))
-				var d: WorldData = world.data
-				var row: String = ""
-				for yy in range(cc.y - 2, cc.y + 3):
-					for xx in range(cc.x - 2, cc.x + 3):
-						row += str(d.get_owner_id(xx, yy))
-					row += "|"
-				print("[Debug] KPP %d/%d %s at %s owners %s flag=%s" % [_kpp_i + 1, keys.size(), keys[_kpp_i], cc, row, cp["flag"] != null])
-		KEY_B:
-			if not world.bridges.is_empty():
-				_br_i = (_br_i + 1) % world.bridges.size()
-				var br: Bridge = world.bridges[_br_i]
-				var mid: Vector2i = br.cells[br.cells.size() / 2]
-				cam.set_zoom_at(MapCamera.zk(3.0), c)  # R347
-				cam.center_on(Vector2(mid * GameWorld.CELL))
-				world.strike(mid)
-				print("[Debug] strike bridge %d (%d cells) at %s" % [br.id, br.cells.size(), mid])
-		KEY_N:
-			var caps: Array = []
-			for ct: City in world.cities:
-				if ct.kind == City.Kind.CAPITAL:
-					caps.append(ct)
-			if not caps.is_empty():
-				_cap_i = (_cap_i + 1) % caps.size()
-				cam.center_on(Vector2((caps[_cap_i] as City).center * GameWorld.CELL))
+	var keys: Array = world.checkpoints.keys()
+	if not keys.is_empty():
+		_kpp_i = (_kpp_i + 1) % keys.size()
+		var cp: Dictionary = world.checkpoints[keys[_kpp_i]]
+		var cc: Vector2i = cp["cell"]
+		cam.set_zoom_at(MapCamera.zk(3.0), c)  # R347
+		cam.center_on(Vector2(cc * GameWorld.CELL))
+		var d: WorldData = world.data
+		var row: String = ""
+		for yy in range(cc.y - 2, cc.y + 3):
+			for xx in range(cc.x - 2, cc.x + 3):
+				row += str(d.get_owner_id(xx, yy))
+			row += "|"
+		print("[Debug] KPP %d/%d %s at %s owners %s flag=%s" % [_kpp_i + 1, keys.size(), keys[_kpp_i], cc, row, cp["flag"] != null])
 
 
 ## «ПОКАЗАТЬ» / «ИСПРАВИТЬ»: camera to the best site for `key`, enter its build mode and put the

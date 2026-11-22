@@ -1,7 +1,8 @@
 extends Node
 
 
-enum Mode {NONE, CAPITAL, TOWN, STRIKE, FACTORY, DRONEPORT, TEL, MODULE, TARGET, MISSILE, MFACTORY, REFINERY, POWER, AIRFIELD, CR_TARGET, FARM, CIV, MINE, BARRACKS, AD_MFG, AD_SPAAG, AD_SAM, AD_PATRIOT, AD_INT, AD_RADAR, AD_EW, ATTACK, HYP_TARGET, TRENCH_H, TRENCH_V, TEETH_H, TEETH_V, DUGOUT, SAWMILL, OIL_RIG, PORT, SOLAR_FARM, SATELLITE, OPERATION, ORDER, RECON, GARRISON, MOVE_ALL, EXPEDITION, NAVBASE, SHIP_CR, COASTAL_ASM, NPP, UMINE, HOLD, JET_KAB, JET_CAS, RAIL_ST, RAIL_LINE, DEPOT_S, DEPOT_M, DEPOT_L, STORE_S, STORE_M, STORE_L, REBASE, NUKE_SILO, AD_ZASLON, NUKE_TARGET, AIRPORT, AIRDROP}
+# Keep the old test mode slot to preserve the other mode ordinals.
+enum Mode {NONE, CAPITAL, TOWN, RESERVED_STRIKE, FACTORY, DRONEPORT, TEL, MODULE, TARGET, MISSILE, MFACTORY, REFINERY, POWER, AIRFIELD, CR_TARGET, FARM, CIV, MINE, BARRACKS, AD_MFG, AD_SPAAG, AD_SAM, AD_PATRIOT, AD_INT, AD_RADAR, AD_EW, ATTACK, HYP_TARGET, TRENCH_H, TRENCH_V, TEETH_H, TEETH_V, DUGOUT, SAWMILL, OIL_RIG, PORT, SOLAR_FARM, SATELLITE, OPERATION, ORDER, RECON, GARRISON, MOVE_ALL, EXPEDITION, NAVBASE, SHIP_CR, COASTAL_ASM, NPP, UMINE, HOLD, JET_KAB, JET_CAS, RAIL_ST, RAIL_LINE, DEPOT_S, DEPOT_M, DEPOT_L, STORE_S, STORE_M, STORE_L, REBASE, NUKE_SILO, AD_ZASLON, NUKE_TARGET, AIRPORT, AIRDROP}
 
 const SPEEDS: Array = [1.0, 2.0, 5.0, 10.0, 20.0, 0.5]
 const GRAB_R: float = 22.0
@@ -38,9 +39,7 @@ var _press_ms: int = 0
 var _moved: bool = false
 var _pinch_d: float = 0.0
 var _mouse_down: bool = false
-var _cap_i: int = 0
 var _kpp_i: int = -1
-var _br_i: int = -1
 var _perf_t: float = 0.0
 var overlay: RouteOverlay
 
@@ -144,7 +143,7 @@ var loading: Loading
 var net: NetSession
 var _net_banner: MpKit.Plate = null
 var _net_last_key: String = ""
-const MODE_KEY: Dictionary = {Mode.MOVE_ALL: "operation", Mode.GARRISON: "garrison", Mode.RECON: "recon", Mode.OPERATION: "operation", Mode.SATELLITE: "satellite", Mode.CAPITAL: "capital", Mode.TOWN: "town", Mode.TARGET: "launch", Mode.MISSILE: "missile", Mode.ATTACK: "attack", Mode.STRIKE: "missile", Mode.SHIP_CR: "ship_cr"}
+const MODE_KEY: Dictionary = {Mode.MOVE_ALL: "operation", Mode.GARRISON: "garrison", Mode.RECON: "recon", Mode.OPERATION: "operation", Mode.SATELLITE: "satellite", Mode.CAPITAL: "capital", Mode.TOWN: "town", Mode.TARGET: "launch", Mode.MISSILE: "missile", Mode.ATTACK: "attack", Mode.SHIP_CR: "ship_cr"}
 
 
 
