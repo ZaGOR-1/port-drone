@@ -52,6 +52,8 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 ## Important paths
 
+- Основний worktree `~/projects/port-drone` на `beta`. Допоміжні worktrees збережено в `~/port-drone-worktrees-archive/`, а резервні копії, збірки й докази Windows QA — у його підпапці `droneflames/`. Робочі каталоги прогонів `df-*` збережено в `droneflames/qa-runs/`.
+
 - Boot і ресурси: [game/override.cfg](../game/override.cfg), [pc/boot.tscn](../game/pc/boot.tscn), [main.tscn.remap](../game/game/main.tscn.remap).
 - Контракти: [pc/version.cfg](../game/pc/version.cfg), [net_config.gd](../game/net/net_config.gd), [save.gd](../game/game/save.gd).
 - Збірка й тести: [tools/build.py](../tools/build.py), [tools/ci](../tools/ci/), [tools/qa](../tools/qa/), [tests](../tests/), [Windows QA](WINDOWS_QA.md).

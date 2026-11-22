@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | Поточний суміщений MinGW PCK | Keyboard 130/130; scale 26/26; UI 20/20; R02 standard 49/49; simulation 2476/2476 PASS. На попередньому PCK BUG-01 відтворено. | Локальні `evidence/windows-summary.json` і `evidence/pck-source.json` в каталозі кандидата. |
 | Поточний суміщений MinGW SFX | Cold/warm self-test, версія дочірнього рушія і headless startup PASS. Шість файлів payload звірено у self-test, три DLL ідентичні sidecar. | Локальний `evidence/sfx-smoke.json`. |
-| Окремий кандидат R02 MinGW | Windows matrix 24/24, R02 standard 49/49, shared checkpoint 44/44, explicit failure 49/49, negative snapshots 111/111, Godot 439/439, Save/Load/Continue 6/6 процесів PASS. | `~/projects/droneflames-r02-evidence-20261122/`, файли `summary.json`, `target/`, `compat/`, `matrix/`. |
+| Окремий кандидат R02 MinGW | Windows matrix 24/24, R02 standard 49/49, shared checkpoint 44/44, explicit failure 49/49, negative snapshots 111/111, Godot 439/439, Save/Load/Continue 6/6 процесів PASS. | `~/port-drone-worktrees-archive/droneflames/droneflames-r02-evidence-20261122/`, файли `summary.json`, `target/`, `compat/`, `matrix/`. |
 | Попередній INPUT SFX, SHA256 `5fcd17934a11170d53b1c4958e6f633680338415abb703f513ef1163413e4f22` | Користувач повідомив PASS для F1–F7, відсутності тестового удару, штатного TEL, кільця столиці, базової гри, Save/Continue і Steam. FAIL для контекстних цифр і wrap масштабу. | Ручний INPUT QA follow-up власника. Попередня папка Windows Downloads на момент цього аудиту недоступна. |
 | Суміщений SFX, ручна перевірка власника | **USER-REPORTED PASS** для F1–F7, контекстних цифр F2, збереження й виклику груп після вибору армії, видалення тестового удару, TEL, масштабу, кільця столиці, попередніх UI fixes, Save/Continue й запуску Steam. | Звіт власника для SHA256 вище. |
 | Повне приймання | Фізичний LAN, Steam між двома ПК і late-game FPS — **NOT RUN**. Окремих підтверджень fullscreen/DPI, зміни EN/UA, non-admin, SmartScreen та інших сценаріїв повної матриці немає. | [Двопірний план](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md). LAN і FPS не блокують інтеграцію в `beta` за рішенням власника. |
@@ -31,7 +31,7 @@
 
 ## Godot MinGW
 
-Локальний `df-godot472-operator-side-cache-v1`, Godot 4.7.2-stable від `ed1daf0bf001b61586d9930840f2f1394092c079`. Виправлено гонку GDScript operator cache, що спричиняла `0xC0000005`. MinGW template SHA256 `975407bd5bb15116928749ae233193d29e4578b1ec40bc1f3d92ee01a6cee141`. Шлях локального звіту `~/projects/droneflames-mingw-parity-20261122/MINGW_RUNTIME_VALIDATION_20261122.md`. Нативні reproducer, startup та зіставлення семантики перевірені. Upstream-проблему і первинний MSVC контроль описано у локальному `GODOT_VM_RACE_FIX.md` у worktree `fix/godot-vm-race`. Офіційний шаблон залишається CI-піном, MinGW використано для локальних кандидатів.
+Локальний `df-godot472-operator-side-cache-v1`, Godot 4.7.2-stable від `ed1daf0bf001b61586d9930840f2f1394092c079`. Виправлено гонку GDScript operator cache, що спричиняла `0xC0000005`. MinGW template SHA256 `975407bd5bb15116928749ae233193d29e4578b1ec40bc1f3d92ee01a6cee141`. Шлях локального звіту `~/port-drone-worktrees-archive/droneflames/droneflames-mingw-parity-20261122/MINGW_RUNTIME_VALIDATION_20261122.md`. Нативні reproducer, startup та зіставлення семантики перевірені. Upstream-проблему і первинний MSVC контроль описано у локальному `GODOT_VM_RACE_FIX.md` у worktree `fix/godot-vm-race`. Офіційний шаблон залишається CI-піном, MinGW використано для локальних кандидатів.
 
 Рання MSVC серія виявила +21,55% mean та +26,41% p99 тривалості тика проти Official. Same-toolchain MSVC patched проти original показав +0,02% mean. Ці вимірювання належать попередній серії.
 
@@ -39,7 +39,7 @@
 
 ## Підготовка SFX
 
-`tools/portable_sfx` відсутній у `beta`. Для цього EXE використано локальні інструменти з `~/projects/droneflames-vm-fix-20261122/source/tools/portable_sfx/` від `e1e4355`. Звірити SHA256 файлів tooling у маніфесті. `prepare_custom_package.py` приймає прямий runtime package, перевірений MinGW template і engine manifest. `build_prototype.py` збирає SFX із перевіреного package. Payload витягується у versioned cache, профіль і логи ізольовані. Updater вимкнений, Steam за замовчуванням native з тестовим AppID 480. Для діагностики або ізоляції Steam використовувати sidecar і [tracked launchers](../tools/qa/).
+`tools/portable_sfx` відсутній у `beta`. Для цього EXE використано локальні інструменти з `~/port-drone-worktrees-archive/droneflames/droneflames-vm-fix-20261122/source/tools/portable_sfx/` від `e1e4355`. Звірити SHA256 файлів tooling у маніфесті. `prepare_custom_package.py` приймає прямий runtime package, перевірений MinGW template і engine manifest. `build_prototype.py` збирає SFX із перевіреного package. Payload витягується у versioned cache, профіль і логи ізольовані. Updater вимкнений, Steam за замовчуванням native з тестовим AppID 480. Для діагностики або ізоляції Steam використовувати sidecar і [tracked launchers](../tools/qa/).
 
 ### Відтворення MinGW template
 
