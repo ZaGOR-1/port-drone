@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArmyGroups = preload("res://game/army_groups.gd")
+
 var checks := 0
 var failures: Array[String] = []
 var last_pointer := Vector2.ZERO
@@ -235,11 +237,27 @@ func _run() -> void:
 		button(end, MOUSE_BUTTON_LEFT, false, false, true)
 		check(army.alive_fids().has(barracks.id), "Shift+drag selects an actual unit")
 		check(camera_state(main).is_equal_approx(before), "production army selection does not pan")
-		var target := unit_point + Vector2(66, -50)
-		motion(target)
-		button(target, MOUSE_BUTTON_RIGHT, true, false, true)
-		button(target, MOUSE_BUTTON_RIGHT, false, false, true)
-		check(army._wp_chain.size() == 1 and army._wp_chain[0].is_equal_approx(camera.screen_to_world(target)), "Shift+RMB dispatches one actual order and records its waypoint")
+		var target := Vector2.INF
+		var accepted_target := Vector2.INF
+		for offset: Vector2 in [Vector2(210, -110), Vector2(-210, -110), Vector2(240, 30),
+				Vector2(-240, 30), Vector2(175, 105), Vector2(-175, 105)]:
+			var candidate := unit_point + offset
+			motion(candidate)
+			if root.gui_get_hovered_control() != null:
+				continue
+			var preview: Dictionary = ArmyGroups.preview(main.world, main.world.player.id, army.alive_fids(), "move", camera.screen_to_world(candidate))
+			if not preview["ends"].is_empty():
+				target = candidate
+				accepted_target = preview["ends"][0][1]
+				break
+		check(target.is_finite(), "fixture has a legal movement order")
+		if target.is_finite():
+			button(target, MOUSE_BUTTON_RIGHT, true, false, true)
+			button(target, MOUSE_BUTTON_RIGHT, false, false, true)
+			check(army._wp_chain.size() == 1 and army._wp_chain[0].is_equal_approx(camera.screen_to_world(target)), "Shift+RMB preserves a single waypoint")
+			var order: Dictionary = main.world.ops.of(barracks)
+			check(not order.is_empty() and (order["target"] as Vector2).is_equal_approx(accepted_target), "production dispatcher applies the movement order")
+			main.hud.army_ux.toast_x.pressed.emit()
 		army.clear()
 
 	var dock = main.hud.army_dock
@@ -260,6 +278,18 @@ func _run() -> void:
 		await frames(8)
 		check(dock.sheet.is_visible_in_tree() and within(dock.sheet), "group editor fits %s" % str(sample))
 		await capture("group-" + str(sample[2]) + "-" + str(sample[0].x))
+		if dock.sheet.get_child(0) is ScrollContainer:
+			var group_scroll := dock.sheet.get_child(0) as ScrollContainer
+			var create: Button = dock.sheet_refs["ok"]
+			if group_scroll.get_v_scroll_bar().visible:
+				var group_before := camera_state(main)
+				for i in 40:
+					wheel(center_of(group_scroll), MOUSE_BUTTON_WHEEL_DOWN)
+				var scroll_rect := group_scroll.get_global_rect()
+				check(group_scroll.scroll_vertical > 0 and scroll_rect.has_point(create.get_global_rect().get_center()), "group editor scroll reaches the create action")
+				check(camera_state(main).is_equal_approx(group_before), "group editor scroll keeps map still")
+				if sample[2] == "uk":
+					await capture("group-uk-1280-actions")
 		if sample[2] == "uk":
 			root.size = Vector2i(960, 540)
 			await frames(8)
