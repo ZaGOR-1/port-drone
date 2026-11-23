@@ -79,3 +79,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 ## Git Workflow v2
 
 Постійну політику локальних комітів, тематичних гілок, погодженого push і Draft PR закріплено в [AGENTS.md](../AGENTS.md) та [Development Workflow](DEVELOPMENT_WORKFLOW.md). Worktree `~/projects/port-drone-standards-l10n` використовує гілку `feature/development-standards-l10n` для Draft PR у `beta`. Кандидат L10N-02 лишається PARTIAL для review. Версія `0.36.0`, перевірене дерево гри `26e85284d4c7ae2d11bdc95a0f09eef623d15683`. Для приймання залишається [ручний QA](LOCALIZATION_TESTS.md#ручний-checklist-l10n-02).
+
+## L10N-03
+
+PR #7 з `~/projects/port-drone-standards-l10n` до `beta` лишається Draft. Перевірений runtime і Windows ZIP походять із `0e8316e`, дерево гри `26e85284d4c7ae2d11bdc95a0f09eef623d15683`, версія `0.36.0`. CI для дерева пакета пройшов. На Ubuntu пройшли точкові перевірки Save/Load, updater з локальними mocks і двоклієнтський ENet loopback з reconnect та resync. Для інтеграції статус NOT READY через відкритий Windows native GUI і DPI. Physical LAN, Steam й native updater лишаються NOT RUN. [Підсумок QA](L10N03_QA_SUMMARY.md) · [Merge gates](L10N03_MERGE_READINESS.md)
