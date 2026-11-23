@@ -69,3 +69,9 @@ DroneFlames — RTS про державу, економіку, дипломат�
 ## Development Standards v1
 
 Локальна гілка feature/development-standards-l10n від c91e0e6, worktree ~/projects/port-drone-standards-l10n. Git/версійні правила й перевірки локалізації додано. Локалізація PARTIAL. Виправлені 180 активних ключів uk/en, locale boot/updater та runtime HUD. Пройшли 77 localization checks, 31 релевантний regression test, 2476 simulation checks і короткий replay ru/uk/en. Вибірково перевірено GUI та Save/Continue в ізольованому Linux QA, зібрано Windows x64 QA. Native Windows GUI, повне покриття dynamic keys та transport UI відкриті. Версія v0.36.0. Production beta, R01–R06 і L01 залишилися без змін. [Перевірки](LOCALIZATION_TESTS.md)
+
+## L10N-02 · 2026-11-24
+
+Часткове приймання локалізації у `feature/development-standards-l10n`, worktree `~/projects/port-drone-standards-l10n`. Початкова вершина `15b6bbb`. Виправлення `f1e1f66` і `3ee7f1d`. Перевірене дерево `game/` `26e85284d4c7ae2d11bdc95a0f09eef623d15683`. Локальна й віддалена production `beta` на `c91e0e6a7eef831687e6e63550560bba739a6b87`.
+
+Переглянуто 466 порожніх записів uk/en, заповнено 29 і класифіковано 437 службових. Виправлено складені підписи, повторний рендер сповіщень і текст анімованого завантаження. Каталоги, L10N, simulation, replay, Windows build check і вибірковий Linux/Wine GUI пройдено. Версія `0.36.0`. Для інтеграції залишається Windows native GUI, живий transport UI та сценарії з [ручного checklist](LOCALIZATION_TESTS.md#ручний-checklist-l10n-02). Локальний handoff з bundle і доказами є в `~/projects/droneflames-toolchain/l10n02-qa.sfnBnw/handoff/`. [Аудит](LOCALIZATION_AUDIT.md#l10n-02--перевірка-порожніх-записів)
