@@ -35,7 +35,6 @@ const TXT: Dictionary = {
 	"es": {"name": "Español", "glyph": "Ññ", "sample": "DEFENSA AÉREA · DRONES · CIUDADES", "title": "IDIOMA", "go": "CONTINUAR", "note": "Puedes cambiarlo más tarde en Ajustes", "back": "ATRÁS"},
 }
 
-const NEAR_RU: PackedStringArray = ["be", "kk", "ky", "tg"]
 
 var first: bool = true
 var sel: String = "ru"
@@ -60,19 +59,12 @@ var _logo_base: float = 0.0
 
 
 static func langs() -> PackedStringArray:
-	return PackedStringArray(["ru", "uk", "en", "es"]) if SHOW_ES else PackedStringArray(["ru", "uk", "en"])
+	return Loc.LANGS if SHOW_ES else Loc.PUBLIC_LANGS
 
 
 
 static func device_lang(os_code: String = "") -> String:
-	var c: String = (os_code if os_code != "" else OS.get_locale_language()).strip_edges().to_lower().replace("-", "_").get_slice("_", 0)
-	if c == "ua":
-		c = "uk"
-	if langs().has(c):
-		return c
-	if NEAR_RU.has(c):
-		return "ru"
-	return "en"
+	return Loc.device_lang(os_code, langs())
 
 
 
@@ -116,8 +108,7 @@ static func open_from(menus: Node) -> void:
 
 static func row_title() -> String:
 	var c: String = Loc.cur()
-	var own: String = String((TXT.get(c, TXT["ru"]) as Dictionary)["title"])
-	return own if c == "en" else own + " · LANGUAGE"
+	return String((TXT.get(c, TXT["ru"]) as Dictionary)["title"])
 
 
 

@@ -2021,7 +2021,7 @@ msgstr "howitzers"
 #. kind: mk
 #: game/army_fire.gd:234
 msgid "Армия №%d вызвала огонь: стреляют %s армии №%d"
-msgstr "Army #%d called for fire: Army #%d %s are firing"
+msgstr "Army #%d called for fire: %s from Army #%d are firing"
 
 #. kind: mk
 #: game/army_fire.gd:715
@@ -10155,7 +10155,7 @@ msgstr "SKY: you already have %d launchers there (max %d)"
 #. kind: t
 #: game/sky_cover.gd:409
 msgid "НЕБО: над страной %s уже %d пусковых союзников (максимум %d)"
-msgstr "SKY: allies already have %d launchers over %s (max %d)"
+msgstr "SKY: over %s, allies already have %d launchers (maximum %d)"
 
 #. kind: t
 #: game/sky_cover.gd:411
@@ -17081,15 +17081,6 @@ msgid "Максимальный уровень."
 msgstr "Max level."
 
 #. kind: t
-#: ui/hud/hud_cards.gd:614
-msgid ""
-"УР %d→%d\n"
-"%d"
-msgstr ""
-"LV %d→%d\n"
-"%d"
-
-#. kind: t
 #: ui/hud/hud_cards.gd:617
 msgid "Улучшение до уровня %d: %s.%s%s"
 msgstr "Upgrade to level %d: %s.%s%s"
@@ -17736,12 +17727,12 @@ msgstr "ready"
 #. kind: t
 #: ui/hud/hud_keys.gd:805
 msgid "ПЛАН РАЗВИТИЯ %d из %d  ▶"
-msgstr "DEVELOPMENT PLAN %d of %d  ▶"
+msgstr "PLAN %d of %d  ▶"
 
 #. kind: t
 #: ui/hud/hud_keys.gd:805
 msgid "ПЛАН РАЗВИТИЯ %d/%d %s"
-msgstr "DEVELOPMENT PLAN %d/%d %s"
+msgstr "PLAN %d/%d %s"
 
 #. kind: tag
 #. short caps label: keep <= 6 chars (glossary short form)
@@ -35481,3 +35472,543 @@ msgstr "Shift+click — buy full available wing"
 #. patch Shift UX
 msgid "Shift+клик — заполнить БК до предела"
 msgstr "Shift+click — fill ammo to max"
+
+msgid "Нужен целый аэродром или аэропорт"
+msgstr "An operational airfield or airport is required"
+
+msgid "В аэропорту можно покупать только транспортники и вертолёты"
+msgstr "Only transports and helicopters can be purchased at an airport"
+
+msgid "На базе авиации нет места"
+msgstr "No space at the airbase"
+
+msgid "Нужен живой свой авианосец"
+msgstr "You need an operational carrier of your own"
+
+msgid "На авианосце базируются только F-14 и вертолёты"
+msgstr "Only F-14s and helicopters can be based on carriers"
+
+msgid "Палуба и ангары заполнены"
+msgstr "The flight deck and hangars are full"
+
+msgid "Самолёт не найден"
+msgstr "Aircraft not found"
+
+msgid "Продажа только на стоянке"
+msgstr "Aircraft can only be sold while parked"
+
+msgid "Есть активная очередь пуска"
+msgstr "A launch is already queued"
+
+msgid "Нужен свой целый аэродром или подходящий аэропорт"
+msgstr "You need an operational airfield of your own or a suitable airport"
+
+msgid "Уже базируется здесь"
+msgstr "Already based here"
+
+msgid "Десант — только для транспортника"
+msgstr "Only a transport aircraft can carry paratroopers"
+
+msgid "Неверный владелец"
+msgstr "Invalid owner"
+
+msgid "Высадка возможна только на суше"
+msgstr "Troops can only be dropped on land"
+
+msgid "Десант загружается на аэродроме"
+msgstr "Paratroopers board at the airfield"
+
+msgid "Нужно %d на снаряжение ВДВ"
+msgstr "Need %d to equip the paratroopers"
+
+msgid "Пуск - только с истребителя или бомбардировщика в воздухе"
+msgstr "Only airborne fighters and bombers can launch"
+
+msgid "Подвес - только у истребителя и бомбардировщика"
+msgstr "Only fighters and bombers carry external weapons"
+
+msgid "ВДВ: десант высажен (%d отделений)"
+msgstr "AIRBORNE: troops deployed (%d squads)"
+
+msgid "НЕТ ПУТИ: ОЖИДАНИЕ ПРОХОДА"
+msgstr "NO ROUTE: WAITING FOR PASSAGE"
+
+msgid "ПРО «ЗАСЛОН» (%s) ПЕРЕХВАТИЛА ЯДЕРНУЮ МБР!"
+msgstr "ZASLON MISSILE DEFENSE (%s) INTERCEPTED A NUCLEAR ICBM!"
+
+msgid "Война: %s → %s"
+msgstr "War: %s → %s"
+
+msgid "Недоступно"
+msgstr "Unavailable"
+
+msgid "%s требует свернуть ядерную программу и разоружить МБР"
+msgstr "%s demands that you end the nuclear program and disarm your ICBMs"
+
+msgid "Ядерная программа не активна"
+msgstr "The nuclear program is inactive"
+
+msgid "ЯДЕРНОЕ"
+msgstr "NUCLEAR"
+
+msgid "свернуть ядерную программу"
+msgstr "end the nuclear program"
+
+msgid "Нельзя построить"
+msgstr "Construction unavailable"
+
+msgid "ЯДЕРНЫЙ УДАР: %s"
+msgstr "NUCLEAR STRIKE: %s"
+
+msgid "Можно переименовать только свой город"
+msgstr "You can only rename a city you own"
+
+msgid "Название слишком короткое"
+msgstr "Name is too short"
+
+msgid "Город с таким названием уже есть"
+msgstr "A city with that name already exists"
+
+msgid "Город ур.%d"
+msgstr "City, level %d"
+
+msgid "Морбаза"
+msgstr "Naval base"
+
+msgid "Залежь"
+msgstr "Deposit"
+
+msgid "осталось %d%s"
+msgstr "%d%s remaining"
+
+msgid " · шахта"
+msgstr " · mine"
+
+msgid "Дипломатия недоступна"
+msgstr "Diplomacy unavailable"
+
+msgid "Некорректная сделка"
+msgstr "Invalid deal"
+
+msgid "Сделки с землёй возможны только в мирное время"
+msgstr "Land deals are only available in peacetime"
+
+msgid "Подождите ещё %d с перед новой сделкой"
+msgstr "Wait %d more seconds before making another deal"
+
+msgid "Участок не найден"
+msgstr "Parcel not found"
+
+msgid "%s отказывается принимать дар"
+msgstr "%s refuses the gift"
+
+msgid "ДАР ЗЕМЛИ: %s → %s (%s)"
+msgstr "LAND GIFT: %s → %s (%s)"
+
+msgid "Участок больше не принадлежит %s"
+msgstr "The parcel no longer belongs to %s"
+
+msgid "Нужно %d денег"
+msgstr "Need %d funds"
+
+msgid "%s отказывается: просит от %d"
+msgstr "%s refuses: asking at least %d"
+
+msgid "ПОКУПКА ЗЕМЛИ: %s КУПИЛА %s ЗА %d"
+msgstr "LAND PURCHASE: %s BUYS %s FOR %d"
+
+msgid "У %s недостаточно денег (%d)"
+msgstr "%s does not have enough funds (%d)"
+
+msgid "%s согласна максимум на %d"
+msgstr "%s will pay at most %d"
+
+msgid "У покупателя нет %d денег"
+msgstr "The buyer does not have %d funds"
+
+msgid "ПРОДАЖА ЗЕМЛИ: %s → %s (%s за %d)"
+msgstr "LAND SALE: %s → %s (%s for %d)"
+
+msgid "Выберите оба участка для обмена"
+msgstr "Select both parcels to exchange"
+
+msgid "%s считает обмен неравноценным (%d < %d)"
+msgstr "%s considers the exchange unfair (%d < %d)"
+
+msgid "ОБМЕН ЗЕМЛЁЙ: %s (%s) ⇄ %s (%s)"
+msgstr "LAND EXCHANGE: %s (%s) ⇄ %s (%s)"
+
+msgid "Неизвестная сделка"
+msgstr "Unknown deal"
+
+msgid "Предложение уже ожидает ответа"
+msgstr "An offer is already awaiting a response"
+
+msgid "Участок недоступен"
+msgstr "Parcel unavailable"
+
+msgid "Неизвестный ответ"
+msgstr "Unknown response"
+
+msgid "Условия сделки изменились"
+msgstr "The terms of the deal have changed"
+
+msgid "ВОЗДУШНЫЙ ДЕСАНТ: ТАП ПО СУШЕ ДЛЯ ВЫСАДКИ ВДВ"
+msgstr "AIRBORNE TROOPS: CLICK LAND TO DROP PARATROOPERS"
+
+msgid "ЯДЕРНЫЙ УДАР: ТАП ПО ЛЮБОЙ ТОЧКЕ КАРТЫ (ПЕРЕХВАТЫВАЕТ ТОЛЬКО ПРО «ЗАСЛОН»)"
+msgstr "NUCLEAR STRIKE: SELECT A POINT ON THE MAP (ONLY ZASLON CAN INTERCEPT)"
+
+msgid "НАНЕСТИ ЯДЕРНЫЙ УДАР СЮДА? ВСЕ СТРАНЫ ОТРЕАГИРУЮТ"
+msgstr "STRIKE HERE WITH NUCLEAR WEAPONS? ALL COUNTRIES WILL REACT"
+
+msgid "Перебазирование"
+msgstr "Rebase"
+
+msgid "Транспортник не найден"
+msgstr "Transport aircraft not found"
+
+msgid "ВДВ: транспортник вылетел на выброску"
+msgstr "AIRBORNE: transport aircraft en route to the drop zone"
+
+msgid "Построено: %d (−%d)%s"
+msgstr "Built: %d (−%d)%s"
+
+msgid "Нет свободных месторождений"
+msgstr "No available deposits"
+
+msgid "ПЕРЕИМЕНОВАТЬ ГОРОД"
+msgstr "RENAME CITY"
+
+msgid "Название города"
+msgstr "City name"
+
+msgid "Ядерное оружие отключено в настройках матча"
+msgstr "Nuclear weapons are disabled in the match settings"
+
+msgid "Воронка ядерного взрыва: строительство навсегда запрещено"
+msgstr "Nuclear crater: construction is permanently disabled"
+
+msgid "%s — только: %s"
+msgstr "%s — only: %s"
+
+msgid "ЯДЕРНОЕ ОРУЖИЕ ОТКЛЮЧЕНО"
+msgstr "NUCLEAR WEAPONS DISABLED"
+
+msgid "ШАХТА РАЗРУШЕНА"
+msgstr "SILO DESTROYED"
+
+msgid "ШАХТА ПУСТА"
+msgstr "SILO EMPTY"
+
+msgid "В шахте уже идёт работа или есть МБР"
+msgstr "The silo is already in use or contains an ICBM"
+
+msgid "Шахта на перезарядке: ещё %d с"
+msgstr "Silo rearming: %d seconds left"
+
+msgid "МБР уже приводится в боеготовность: %d с"
+msgstr "ICBM is already being readied: %d seconds"
+
+msgid "ЯДЕРНАЯ ДЕРЖАВА: %s ПРИВЕЛА МБР В БОЕГОТОВНОСТЬ!"
+msgstr "NUCLEAR POWER: %s HAS READIED AN ICBM!"
+
+msgid "%s: ЕЩЁ ОДНА МБР НА БОЕВОМ ДЕЖУРСТВЕ"
+msgstr "%s: ANOTHER ICBM ON ALERT"
+
+msgid "МБР на боевом дежурстве! Другие страны получили предупреждение"
+msgstr "ICBM on alert! Other countries have been notified"
+
+msgid "МБР не в боеготовности"
+msgstr "ICBM is not ready"
+
+msgid "Ядерный пуск: время подлёта %d с"
+msgstr "Nuclear launch: time to impact %d s"
+
+msgid "ЯДЕРНЫЙ УДАР: %s ПОРАЗИЛА %s!"
+msgstr "NUCLEAR STRIKE: %s HITS %s!"
+
+msgid "ЯДЕРНЫЙ ВЗРЫВ В СЕКТОРЕ (%d, %d)"
+msgstr "NUCLEAR EXPLOSION IN SECTOR (%d, %d)"
+
+msgid "нет пути: ожидание прохода"
+msgstr "no route: waiting for passage"
+
+msgid "ЗИМА: РЕКИ ЗАМЕРЗАЮТ · УРОЖАЙ ФЕРМ −50%"
+msgstr "WINTER: RIVERS FREEZE · FARM YIELDS −50%"
+
+msgid "ВЕСНА: СНЕГ ТАЕТ · УРОЖАЙ ФЕРМ ВОССТАНОВЛЕН"
+msgstr "SPRING: SNOW MELTS · FARM YIELDS RESTORED"
+
+msgid "ЛЕТО: ЯСНАЯ ПОГОДА"
+msgstr "SUMMER: CLEAR WEATHER"
+
+msgid "ОСЕНЬ: ПОХОЛОДАНИЕ И ДОЖДИ"
+msgstr "AUTUMN: COOLER WEATHER AND RAIN"
+
+msgid "Яд. зима"
+msgstr "Nuclear winter"
+
+msgid "Нет носителя с гиперзвуком: аэродром › истребитель или бомбардировщик › подвес «ГИПЕРЗВУК»"
+msgstr "No hypersonic missile carrier: airfield › fighter or bomber › hypersonic loadout"
+
+msgid "Выделение → %d (%s). Нажмите %d, чтобы выбрать снова"
+msgstr "Selection → %d (%s). Press %d to select again"
+
+msgid "Выделенные армии"
+msgstr "Selected armies"
+
+msgid "%s: идут %d из %d"
+msgstr "%s: %d of %d moving"
+
+msgid "%s: в путь"
+msgstr "%s: on the move"
+
+msgid "%s: стоп"
+msgstr "%s: halt"
+
+msgid "%s: отход к казармам (%d)"
+msgstr "%s: retreat to barracks (%d)"
+
+msgid "Хроники партий"
+msgstr "Match chronicles"
+
+msgid "Завершённые матчи автоматически сохраняются сюда для пересмотра."
+msgstr "Completed matches are saved here automatically for replay."
+
+msgid "ПОБЕДА: %s"
+msgstr "VICTORY: %s"
+
+msgid "ХРОНИКА ПАРТИИ"
+msgstr "MATCH CHRONICLE"
+
+msgid "ЗАКРЫТЬ"
+msgstr "CLOSE"
+
+msgid "Тап по зданию на карте покажет владельца и время постройки · Щипок/колёсико — масштаб"
+msgstr "Select a building to see its owner and build time · Pinch or scroll to zoom"
+
+msgid "%s · %s · построено на %d:%02d"
+msgstr "%s · %s · built at %d:%02d"
+
+msgid "ИДЕОЛОГИЯ"
+msgstr "IDEOLOGY"
+
+msgid "Ядерная МБР"
+msgstr "Nuclear ICBM"
+
+msgid "%s\nПЛУТОНИЙ %d/%d · СБОРКА МБР: %d + %s"
+msgstr "%s\nPLUTONIUM %d/%d · ICBM ASSEMBLY: %d + %s"
+
+msgid "СОБРАТЬ\nМБР"
+msgstr "BUILD\nICBM"
+
+msgid "ЯДЕРНЫЙ\nПУСК"
+msgstr "NUCLEAR\nLAUNCH"
+
+msgid "Бомбардировщик несёт 8 крылатых или 3 гиперзвуковые ракеты (подвес на стоянке), истребитель — ракеты «воздух-воздух» и подвес (2 КР или 1 гиперзвук), вертолёт патрулирует, C-17 — транспортник ВДВ. Штурмовик: 4 КАБ (делает ракетный завод), НАРы, пушка, 2 ракеты «воздух-воздух». Нужен титан."
+msgstr "Bombers carry 8 cruise or 3 hypersonic missiles (loaded while parked). Fighters carry air-to-air missiles plus 2 cruise or 1 hypersonic missile. Helicopters patrol and C-17s carry paratroopers. Attack aircraft carry 4 guided bombs (from the missile factory), unguided rockets, a cannon and 2 air-to-air missiles. Titanium required."
+
+msgid "БОРТОВ %d/%d · ТИТАН %d"
+msgstr "AIRCRAFT %d/%d · TITANIUM %d"
+
+msgid "ВЕРТОЛЁТ\n%d"
+msgstr "HELICOPTER\n%d"
+
+msgid "Тяжёлый транспортный аэропорт: базирование транспортников C-17 и вертолётов, высадка воздушного десанта ВДВ по всей карте (тап → точка сброса)."
+msgstr "Heavy transport airport for C-17s and helicopters. Paratroopers can deploy anywhere on the map: select a drop point."
+
+msgid " · ПКР %d/%d · В-В %d/%d"
+msgstr " · AShM %d/%d · AAM %d/%d"
+
+msgid " · ВДВ %d/%d"
+msgstr " · PARATROOPERS %d/%d"
+
+msgid "ДЕСАНТ\n%d"
+msgstr "PARATROOPS\n%d"
+
+msgid "ВЫСАДКА\nВДВ"
+msgstr "AIRBORNE\nDROP"
+
+msgid "%d КРЫЛАТЫЕ"
+msgstr "%d CRUISE MISSILES"
+
+msgid "ПРОДАТЬ\n+%d"
+msgstr "SELL\n+%d"
+
+msgid "Удерживайте кнопку для подтверждения"
+msgstr "Hold the button to confirm"
+
+msgid "Склад и ресурсы (клик — открыть)"
+msgstr "Depot and resources (click to open)"
+
+msgid "ЯДЕРНОЕ ОРУЖИЕ"
+msgstr "NUCLEAR WEAPONS"
+
+msgid "НЕ ЗАМЕДЛЯТЬ ИГРУ"
+msgstr "DO NOT SLOW DOWN THE GAME"
+
+msgid "ЗАБЫЛИ ПАРОЛЬ?"
+msgstr "FORGOT PASSWORD?"
+
+msgid "ПРИСЛАТЬ КОД"
+msgstr "SEND CODE"
+
+msgid "СМЕНИТЬ ПАРОЛЬ"
+msgstr "CHANGE PASSWORD"
+
+msgid "ОТПРАВЛЯЕМ..."
+msgstr "SENDING…"
+
+msgid "МЕНЯЕМ..."
+msgstr "CHANGING…"
+
+msgid "НОВЫЙ ПАРОЛЬ · 2 ИЗ 2"
+msgstr "NEW PASSWORD · 2 OF 2"
+
+msgid "ВОССТАНОВЛЕНИЕ · 1 ИЗ 2"
+msgstr "RECOVERY · 1 OF 2"
+
+msgid "ПРИШЛЁМ 6 ЦИФР НА ПОЧТУ"
+msgstr "WE WILL EMAIL A SIX-DIGIT CODE"
+
+msgid "ПОЧТА: %s · КОД ДЕЙСТВУЕТ 15 МИНУТ"
+msgstr "EMAIL: %s · CODE VALID FOR 15 MINUTES"
+
+msgid "КОД ИЗ ПИСЬМА"
+msgstr "CODE FROM EMAIL"
+
+msgid "6 цифр"
+msgstr "6 digits"
+
+msgid "ЕЩЁ КОД"
+msgstr "SEND ANOTHER CODE"
+
+msgid "НОВЫЙ ПАРОЛЬ"
+msgstr "NEW PASSWORD"
+
+msgid "ПОВТОРИТЕ ПАРОЛЬ"
+msgstr "REPEAT PASSWORD"
+
+msgid "Ещё раз"
+msgstr "Enter again"
+
+msgid "ЕЩЁ КОД %d:%02d"
+msgstr "SEND ANOTHER CODE IN %d:%02d"
+
+msgid "СЛИШКОМ ЧАСТО. ПОПРОБУЙТЕ ПОЗЖЕ"
+msgstr "TOO MANY REQUESTS. TRY AGAIN LATER"
+
+msgid "НЕТ СВЯЗИ С СЕРВЕРОМ. ПРОВЕРЬТЕ ИНТЕРНЕТ"
+msgstr "NO CONNECTION TO THE SERVER. CHECK YOUR INTERNET"
+
+msgid "СЕРВЕР НЕ ОТВЕЧАЕТ. ПОПРОБУЙТЕ ПОЗЖЕ"
+msgstr "THE SERVER IS NOT RESPONDING. TRY AGAIN LATER"
+
+msgid "НЕ ПОЛУЧИЛОСЬ. ПОПРОБУЙТЕ ЕЩЁ РАЗ"
+msgstr "SOMETHING WENT WRONG. TRY AGAIN"
+
+msgid "КОД УЖЕ ОТПРАВЛЕН · ПОДОЖДИТЕ"
+msgstr "CODE ALREADY SENT · PLEASE WAIT"
+
+msgid "НОВЫЙ КОД ОТПРАВЛЕН"
+msgstr "NEW CODE SENT"
+
+msgid "ЕСЛИ АККАУНТ С ЭТОЙ ПОЧТОЙ ЕСТЬ, МЫ ОТПРАВИЛИ КОД"
+msgstr "IF AN ACCOUNT EXISTS FOR THIS EMAIL, WE SENT A CODE"
+
+msgid "КОД: ВВЕДИТЕ 6 ЦИФР"
+msgstr "CODE: ENTER 6 DIGITS"
+
+msgid "ПАРОЛИ НЕ СОВПАДАЮТ"
+msgstr "PASSWORDS DO NOT MATCH"
+
+msgid "ПАРОЛЬ ИЗМЕНЁН · ВЫ ВОШЛИ"
+msgstr "PASSWORD CHANGED · YOU ARE SIGNED OUT"
+
+msgid "КОД НЕВЕРНЫЙ · ОСТАЛОСЬ ПОПЫТОК: %d"
+msgstr "INCORRECT CODE · ATTEMPTS LEFT: %d"
+
+msgid "ПОПЫТКИ КОНЧИЛИСЬ · ЗАПРОСИТЕ НОВЫЙ КОД"
+msgstr "NO ATTEMPTS LEFT · REQUEST A NEW CODE"
+
+msgid "КОД УСТАРЕЛ · ЗАПРОСИТЕ НОВЫЙ"
+msgstr "CODE EXPIRED · REQUEST A NEW ONE"
+
+msgid "ЗНАК (40)"
+msgstr "MARKER (40)"
+
+msgid "Сделки с землёй возможны только в мирное время."
+msgstr "Land deals are only available in peacetime."
+
+msgid "ОТМЕНА НА КАРТЕ"
+msgstr "CANCEL MAP SELECTION"
+
+msgid "ВЫБРАТЬ НА КАРТЕ"
+msgstr "SELECT ON MAP"
+
+msgid "Нет доступных городов (кроме столицы), залежей или портов."
+msgstr "No eligible cities (excluding the capital), deposits or ports."
+
+msgid "ВЫБРАННЫЙ УЧАСТОК"
+msgstr "SELECTED PARCEL"
+
+msgid "ВАШ УЧАСТОК НА ОБМЕН"
+msgstr "YOUR PARCEL FOR EXCHANGE"
+
+msgid "УЧАСТОК СОСЕДА"
+msgstr "NEIGHBOR'S PARCEL"
+
+msgid "У соседа нет доступных участков."
+msgstr "The neighbor has no available parcels."
+
+msgid "ЦЕНА: %d"
+msgstr "PRICE: %d"
+
+msgid "Предложение отправлено: ответ во входящих"
+msgstr "Offer sent. Check your inbox for a response"
+
+msgid "Сделка с землёй выполнена"
+msgstr "Land deal completed"
+
+msgid "КУПИТЬ ЗА %d"
+msgstr "BUY FOR %d"
+
+msgid "Показать спорную землю на карте"
+msgstr "Show the disputed parcel on the map"
+
+msgid "АВИАКРЫЛО"
+msgstr "AIR WING"
+
+msgid "АВИАКРЫЛО %d/%d"
+msgstr "AIR WING %d/%d"
+
+msgid "в воздухе"
+msgstr "airborne"
+
+msgid "палуба"
+msgstr "flight deck"
+
+msgid "Тапните по карте — вылет с авианосца"
+msgstr "Select a point on the map for a carrier sortie"
+
+msgid "только: %s"
+msgstr "only: %s"
+
+msgid "ПОСТРОИТЬ НА ВСЕХ СВОБОДНЫХ (%d)"
+msgstr "BUILD ON ALL AVAILABLE SITES (%d)"
+
+msgid "Весна"
+msgstr "Spring"
+
+msgid "Лето"
+msgstr "Summer"
+
+msgid "Осень"
+msgstr "Autumn"
+
+msgid "Зима"
+msgstr "Winter"
+
+msgid "ХРОНИКИ"
+msgstr "CHRONICLES"
