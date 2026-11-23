@@ -193,3 +193,56 @@ static func set_emblem(c: Control, emb: String, col: Color) -> void:
 
 static func set_tex_rect(r: TextureRect, n: String) -> void:
 	r.texture = tex(n)
+
+
+
+## Bound army overlays independently of the content minimum. Scrolling keeps
+## actions reachable when a short window or a large UI scale reduces the space.
+static func overlay_scroll(panel: PanelContainer) -> ScrollContainer:
+	panel.mouse_force_pass_scroll_events = false
+	var scroll := ScrollContainer.new()
+	scroll.follow_focus = true
+	panel.add_child(scroll)
+	return scroll
+
+
+static func size_overlay(panel: PanelContainer, content: Control, width: float, max_height: float) -> void:
+	var margins := panel.get_theme_stylebox("panel").get_minimum_size()
+	var content_min := content.get_combined_minimum_size()
+	var scroll := content.get_parent() as ScrollContainer
+	var vbar := scroll.get_v_scroll_bar().get_combined_minimum_size().x
+	var hbar := scroll.get_h_scroll_bar().get_combined_minimum_size().y
+	var scroll_width := vbar if content_min.y + margins.y > max_height else 0.0
+	var extra_height := hbar if content_min.x + margins.x + scroll_width > width else 0.0
+	panel.size = Vector2(width, minf(max_height, content_min.y + margins.y + extra_height))
+
+
+static func watch_popover(panel: PanelContainer, anchor: Control, content: Control, width: float) -> void:
+	var viewport := panel.get_viewport()
+	var place := _place_popover.bind(panel, anchor, content, width)
+	anchor.item_rect_changed.connect(place, CONNECT_DEFERRED)
+	viewport.size_changed.connect(place, CONNECT_DEFERRED)
+	content.minimum_size_changed.connect(place, CONNECT_DEFERRED)
+	panel.tree_exiting.connect(func() -> void:
+		if is_instance_valid(anchor):
+			anchor.item_rect_changed.disconnect(place)
+		viewport.size_changed.disconnect(place))
+	place.call()
+
+
+static func _place_popover(panel: PanelContainer, anchor: Control, content: Control, width: float) -> void:
+	if not is_instance_valid(panel) or panel.is_queued_for_deletion() or not is_instance_valid(anchor):
+		return
+	var viewport := panel.get_viewport_rect().size
+	var bounds := Rect2(Vector2(4, 4), viewport - Vector2(8, 8))
+	var ar := anchor.get_global_rect()
+	var above := ar.position.y - 6.0 - bounds.position.y
+	var below := bounds.end.y - ar.end.y - 6.0
+	var max_height := minf(bounds.size.y, maxf(88.0, maxf(above, below)))
+	size_overlay(panel, content, minf(width, bounds.size.x), max_height)
+	var y := ar.position.y - panel.size.y - 6.0
+	if panel.size.y > above and below > above:
+		y = ar.end.y + 6.0
+	panel.global_position = Vector2(
+		clampf(ar.end.x - panel.size.x, bounds.position.x, bounds.end.x - panel.size.x),
+		clampf(y, bounds.position.y, bounds.end.y - panel.size.y)).round()
