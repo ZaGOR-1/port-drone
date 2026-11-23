@@ -65,3 +65,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 ## Handoff
 
 Прочитай [AGENTS.md](../AGENTS.md) і цей файл. Звір `git status`, HEAD, refs та worktrees. Для QA відкрий [Windows QA](WINDOWS_QA.md) і перевір маніфест ще раз. Після суттєвої роботи онови цей стан і відповідний технічний документ.
+
+## Development Standards v1
+
+Локальна гілка feature/development-standards-l10n від c91e0e6, worktree ~/projects/port-drone-standards-l10n. Git/версійні правила й перевірки локалізації додано. Локалізація PARTIAL. Виправлені 180 активних ключів uk/en, locale boot/updater та runtime HUD. Пройшли 77 localization checks, 31 релевантний regression test, 2476 simulation checks і короткий replay ru/uk/en. Вибірково перевірено GUI та Save/Continue в ізольованому Linux QA, зібрано Windows x64 QA. Native Windows GUI, повне покриття dynamic keys та transport UI відкриті. Версія v0.36.0. Production beta, R01–R06 і L01 залишилися без змін. [Перевірки](LOCALIZATION_TESTS.md)
