@@ -22764,122 +22764,122 @@ msgstr "збито вогнем гармати"
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:19
 msgid "Северный пакт"
-msgstr ""
+msgstr "Північний пакт"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:19
 msgid "Южный блок"
-msgstr ""
+msgstr "Південний блок"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:19
 msgid "Восточный альянс"
-msgstr ""
+msgstr "Східний альянс"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:19
 msgid "Западный договор"
-msgstr ""
+msgstr "Західний договір"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:19
 msgid "Морской пакт"
-msgstr ""
+msgstr "Морський пакт"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:20
 msgid "Степной блок"
-msgstr ""
+msgstr "Степовий блок"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:20
 msgid "Озёрный пакт"
-msgstr ""
+msgstr "Озерний пакт"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:20
 msgid "Лесной альянс"
-msgstr ""
+msgstr "Лісовий альянс"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:20
 msgid "Речной договор"
-msgstr ""
+msgstr "Річковий договір"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:20
 msgid "Медовый пакт"
-msgstr ""
+msgstr "Медовий пакт"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:20
 msgid "Вольный блок"
-msgstr ""
+msgstr "Вільний блок"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:21
 msgid "Лига Трёх Рек"
-msgstr ""
+msgstr "Ліга Трьох Річок"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:21
 msgid "Лига Побережья"
-msgstr ""
+msgstr "Ліга Узбережжя"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:21
 msgid "Лига Свободных Земель"
-msgstr ""
+msgstr "Ліга Вільних Земель"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:21
 msgid "Лига Холмов"
-msgstr ""
+msgstr "Ліга Пагорбів"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:21
 msgid "Лига Равнин"
-msgstr ""
+msgstr "Ліга Рівнин"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:22
 msgid "Содружество Островов"
-msgstr ""
+msgstr "Співдружність Островів"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:22
 msgid "Содружество Долин"
-msgstr ""
+msgstr "Співдружність Долин"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:22
 msgid "Северное кольцо"
-msgstr ""
+msgstr "Північне кільце"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:22
 msgid "Щит Юга"
-msgstr ""
+msgstr "Щит Півдня"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:22
 msgid "Кольцо Морей"
-msgstr ""
+msgstr "Кільце Морів"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:23
 msgid "Пакт Перевалов"
-msgstr ""
+msgstr "Пакт Перевалів"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:23
 msgid "Альянс Рассвета"
-msgstr ""
+msgstr "Альянс Світанку"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:23
 msgid "Горный блок"
-msgstr ""
+msgstr "Гірський блок"
 
 #. cat=sim_text zone=sim uses=1
 #: game/alliances.gd:603
@@ -24557,7 +24557,7 @@ msgstr ""
 #. cat=static zone=ui uses=3
 #: ui/menus.gd:954 ui/ui24/dip_page.gd:2495 ui/ui24/dip_page.gd:2620
 msgid "мир"
-msgstr ""
+msgstr "мир"
 
 #. cat=static zone=ui uses=1
 #: ui/menus.gd:954
@@ -36392,3 +36392,11 @@ msgstr "Зима"
 
 msgid "ХРОНИКИ"
 msgstr "ХРОНІКИ"
+
+#: ui/chronicle_viewer.gd:103
+msgid "%s · %d:%02d · %d кадр."
+msgstr "%s · %d:%02d · кадрів: %d"
+
+#: ui/tutorial.gd:268
+msgid "Обучение: готово, +%d"
+msgstr "Навчання завершено, +%d"

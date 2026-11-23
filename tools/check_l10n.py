@@ -111,7 +111,7 @@ def structural_errors(locale, entries):
 
 
 def source_literals(game):
-    explicit, widgets = {}, {}
+    explicit, widgets, plurals = {}, {}, {}
     for path in sorted(game.rglob("*.gd")):
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if line.lstrip().startswith("#"):
@@ -127,12 +127,14 @@ def source_literals(game):
                 msgid = json.loads(match[1])
                 context = json.loads(match[4]) if match[4] else ""
                 if CYRILLIC.search(msgid):
-                    explicit.setdefault((context, msgid), location)
+                    key = context, msgid
+                    explicit.setdefault(key, location)
+                    plurals.setdefault(key, {})[json.loads(match[3])] = location
             for match in WIDGET.finditer(line):
                 msgid = json.loads(match[1] or match[2])
                 if CYRILLIC.search(msgid):
                     widgets.setdefault(("", msgid), location)
-    return explicit, widgets
+    return explicit, widgets, plurals
 
 
 def missing(entry):
@@ -153,11 +155,15 @@ def inspect(root):
         catalogs[path.stem] = {key: value for key, value in entries.items() if key[1]}
         errors.extend(problems)
         errors.extend(structural_errors(path.stem, entries))
-    explicit, widgets = source_literals(game)
+    explicit, widgets, plurals = source_literals(game)
     summary = {"explicit_keys": len(explicit), "widget_candidates": len(widgets), "catalogs": {}}
     for locale, entries in catalogs.items():
         info = {"keys": len(entries), "empty": sum(missing(entry) for entry in entries.values())}
         if locale in {"uk", "en"}:
+            for key, variants in plurals.items():
+                for many, location in variants.items():
+                    if entries.get(key, {}).get("msgid_plural") != many:
+                        errors.append(f"{locale}: wrong plural source for {key!r} at {location}")
             for key, location in explicit.items():
                 if missing(entries.get(key, {})):
                     errors.append(f"{locale}: active key missing or empty {key!r} at {location}")

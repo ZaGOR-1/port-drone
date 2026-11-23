@@ -24529,7 +24529,7 @@ msgstr ""
 #. cat=static zone=ui uses=3
 #: ui/menus.gd:1008 ui/ui24/dip_page.gd:2496 ui/ui24/dip_page.gd:2621
 msgid "мир"
-msgstr ""
+msgstr "peace"
 
 #. cat=static zone=ui uses=1
 #: ui/menus.gd:1008
@@ -31577,13 +31577,13 @@ msgstr ""
 #. cat=static zone=ui uses=1
 #: ui/ui24/notif_calm.gd:47
 msgid "МОСТЫ"
-msgstr ""
+msgstr "BRIDGES"
 
 #. cat=static zone=ui uses=6
 #: ui/ui24/notif_calm.gd:47 ui/ui24/notif_calm.gd:47 ui/ui24/notif_calm.gd:47
 #: ui/ui24/notif_calm.gd:47 ui/ui24/notif_calm.gd:47 net/net_session.gd:2518
 msgid "ПОТЕРИ"
-msgstr ""
+msgstr "LOSSES"
 
 #. cat=static zone=ui uses=1
 #: ui/ui24/notif_calm.gd:47
@@ -31608,7 +31608,7 @@ msgstr ""
 #. cat=static zone=ui uses=2
 #: ui/ui24/notif_calm.gd:48 ui/ui24/notif_calm.gd:48
 msgid "СЕТЬ"
-msgstr ""
+msgstr "POWER GRID"
 
 #. cat=static zone=ui uses=1
 #: ui/ui24/notif_calm.gd:48
@@ -36012,3 +36012,11 @@ msgstr "Winter"
 
 msgid "ХРОНИКИ"
 msgstr "CHRONICLES"
+
+#: ui/chronicle_viewer.gd:103
+msgid "%s · %d:%02d · %d кадр."
+msgstr "%s · %d:%02d · frames: %d"
+
+#: ui/tutorial.gd:268
+msgid "Обучение: готово, +%d"
+msgstr "Tutorial complete, +%d"

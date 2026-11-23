@@ -32,6 +32,63 @@ func screen_contains(m: Menus, words: Array, label: String) -> void:
 		check(shown.contains(word), "%s missing %s: %s" % [label, word, shown.left(500)])
 
 
+func check_dynamic(m: Node) -> void:
+	var ally = preload("res://game/alliances.gd")
+	var lane = preload("res://ui/ui24/notif_lane.gd")
+	var bridge: Array = Loc.mk("Мост восстановлен")
+	var merged: Variant = lane._note_message({"n": 2, "key": "МОСТЫ", "tk": bridge})
+	var expected: Dictionary = {
+		"ru": ["1 армия", "2 армии", "5 армий", "21 армия", "МОСТЫ ×2 · Мост восстановлен",
+			"ПОПЫТКА 2 · ВАШЕ МЕСТО СОХРАНЕНО", "Северный пакт", "ЗАГРУЖАЮТСЯ: 0 ИЗ 2"],
+		"uk": ["1 армія", "2 армії", "5 армій", "21 армія", "МОСТИ ×2 · Міст відновлено",
+			"СПРОБА 2 · ВАШЕ МІСЦЕ ЗБЕРЕЖЕНО", "Північний пакт", "ЗАВАНТАЖУЮТЬСЯ: 0 З 2"],
+		"en": ["1 army", "2 armies", "5 armies", "21 armies", "BRIDGES ×2 · Bridge restored",
+			"ATTEMPT 2 · YOUR SLOT IS SAVED", "Northern Pact", "LOADING: 0 OF 2"]
+	}
+	var downgrade: Dictionary = {"cid": m.world.player.id, "tier": 1, "old_tier": 2, "state": 0, "old_state": 0}
+	var downgrade_text: Dictionary = {"ru": "Ваша страна теряет статус: снова РЕСПУБЛИКА",
+		"uk": "Ваша країна втрачає статус: знову РЕСПУБЛІКА", "en": "Your country loses status: back to REPUBLIC"}
+	Loc.set_lang("ru", false)
+	var kept: Variant = Loc.keep(m.world.pstat.change_text(downgrade, true))
+	var tip_prefix: Dictionary = {"ru": "Армия до 12 бойцов", "uk": "Армія до 12 бійців", "en": "Army of up to 12 troops"}
+	var old_hints: bool = GameConfig.hints
+	GameConfig.hints = false
+	var ns: NetSession = m.net
+	var shown: MpKit.Plate = MpKit.Plate.new()
+	root.add_child(shown)
+	ns.in_match = true
+	ns.slots.assign([{}, {}])
+	m.hud.lane.journal.append({"t": 0.0, "text": Loc.re(merged), "lvl": 1, "k": merged})
+	for locale: String in ["ru", "uk", "en", "uk"]:
+		Loc.set_lang(locale, false)
+		var words: Array = expected[locale]
+		var counts: Array[int] = [1, 2, 5, 21]
+		for i: int in counts.size():
+			var n: int = counts[i]
+			check(Loc.n(n, "%d армия", "%d армии", "%d армий") % n == words[i],
+				"army plural %d in %s" % [n, locale])
+		check(m.hud.lane.journal.back()["text"] == words[4], "retained merged notice " + locale)
+		check(Loc.re(kept) == downgrade_text[locale], "retained status event " + locale)
+		ns.reconnecting = true
+		ns.rc_tries = 2
+		shown.set_state(ns.plate(), 1.1)
+		check(shown.sub.text == words[5], "reconnect plate formats " + locale)
+		ns.reconnecting = false
+		ns.is_host = true
+		shown.set_state(ns.plate(), 1.1)
+		check(shown.sub.text == words[7], "start plate formats " + locale)
+		check(ally.display_name("Северный пакт") == words[6], "alliance preset " + locale)
+		check(ally.display_name("МОСТЫ") == "МОСТЫ", "custom alliance name " + locale)
+		m.hud._show_build_tip("barracks")
+		check(m.hud.tip_sub.text.begins_with(tip_prefix[locale]), "build tooltip translated before shortening " + locale)
+	GameConfig.hints = old_hints
+	m.hud.tip_pc.hide()
+	ns.in_match = false
+	ns.is_host = false
+	ns.slots.clear()
+	shown.queue_free()
+
+
 func run() -> void:
 	if not OS.get_user_data_dir().contains("df_l10n_"):
 		push_error("Use an isolated df_l10n_ profile")
@@ -115,6 +172,8 @@ func run() -> void:
 	check(goals_ru[1]["title"] != goals_uk[1]["title"], "guide content cache changes with locale")
 	check(hud.plan_head.text.begins_with("ПЛАН РОЗВИТКУ"), "visible guide header refreshes immediately")
 	check(NetHash.of(world) == state_before_switch, "guide re-render preserves NetHash")
+
+	check_dynamic(m)
 
 	Loc.set_lang("en", false)
 	menu.show_settings(false)

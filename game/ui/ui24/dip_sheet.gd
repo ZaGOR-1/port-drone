@@ -821,7 +821,7 @@ func _treaty_chip(cid: int, k: String, row: Dictionary) -> Button:
 	b.pressed.connect(func() -> void:
 		if in_ally:
 			_shake(b)
-			m.hud.show_toast("%s уже входит в союз" % String(inf["name"]).capitalize())
+			m.hud.show_toast(Loc.t("%s уже входит в союз") % Loc.t(String(inf["name"])).capitalize())
 		elif active:
 			confirm_kind = "" if confirm_kind == k else k
 			rebuild()
@@ -830,13 +830,13 @@ func _treaty_chip(cid: int, k: String, row: Dictionary) -> Button:
 			if st == Diplomacy.Rel.WAR or st == Diplomacy.Rel.TRUCE:
 				m.hud.show_toast("Сначала заключите мир")
 			else:
-				m.hud.show_toast("%s: нужны отношения от %d (сейчас %d)" % [String(inf["name"]).capitalize(), need, rv])
+				m.hud.show_toast(Loc.t("%s: нужны отношения от %d (сейчас %d)") % [Loc.t(String(inf["name"])).capitalize(), need, rv])
 		else:
 			if String(hud.dip_hint_treaty) == k:
 				hud.dip_hint_treaty = ""
 			_dp("propose_treaty", [me, cid, k], func(why: String) -> void:
 				if why == "":
-					m.hud.show_toast("%s подписан" % String(inf["name"]).capitalize())
+					m.hud.show_toast(Loc.t("%s подписан") % Loc.t(String(inf["name"])).capitalize())
 					rebuild()
 					var nb: Button = _chips.get(k) as Button
 					if nb != null:
@@ -2236,7 +2236,7 @@ func _aid_picker(cid: int) -> Control:
 					_shake(_aid_send)
 				return
 			UiKit.snd("ui_click")
-			m.hud.show_toast("Отправлено: %s ×%d — отношения растут" % [String(o3.get("label", "")).to_lower(), sent_n])
+			m.hud.show_toast(Loc.t("Отправлено: %s ×%d — отношения растут") % [Loc.t(String(o3.get("label", ""))).to_lower(), sent_n])
 			aid_n = mini(aid_n, int(_aid_opt(cid).get("max", 0)))
 			rebuild()))
 	_aid_set(cid, aid_n)
@@ -2534,7 +2534,7 @@ func _ally_row(cid: int) -> Control:
 	lg.modulate = colr
 	lg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(lg)
-	var nm: Label = UiKit.lbl(Loc.name(String(a["name"])).to_upper(), 11, colr.lightened(0.3), 2, 3)
+	var nm: Label = UiKit.lbl(Loc.name(al.display_name(String(a["name"]))).to_upper(), 11, colr.lightened(0.3), 2, 3)
 	nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	nm.size_flags_vertical = Control.SIZE_FILL
 	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2621,10 +2621,10 @@ func _ally_action(cid: int) -> Button:
 	bt.pressed.connect(func() -> void:
 		_dp(method, args, func(why: String) -> void:
 			if why == "sent":
-				m.hud.show_toast("Предложение отправлено: %s ответит во «Входящих»" % gw.country_by_id(cid).name)
+				m.hud.show_toast(Loc.t("Предложение отправлено: %s ответит во «Входящих»") % Loc.name(gw.country_by_id(cid).name))
 			elif why != "":
 				m.hud.show_toast(why)
 			else:
-				m.hud.show_toast("Альянс «%s»" % String(al.name_of(me)))
+				m.hud.show_toast(Loc.t("Альянс «%s»") % al.display_name(String(al.name_of(me))))
 			rebuild()))
 	return bt

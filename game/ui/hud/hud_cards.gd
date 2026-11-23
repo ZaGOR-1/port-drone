@@ -217,7 +217,7 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 				for k in Military.MT_NAMES.size():
 					acts.append(_act(String(MT_SHORT[k]), String(Military.MT_ICONS[k]), "mtype_%d" % k, bool(Military.MT_READY[k]), 1 if k == t else 0, "%d" % player.missile_stock[k]))
 				_solar_act(f, mil, player, acts)
-				detail = Loc.t("%s — %s. Цена %d, %d с, на складе %d из %d. Цифра на кнопке — запас на складе. «+Солнце» — резервное питание завода.") % [_sentence(Loc.t(String(Military.MT_NAMES[t]))), String(MT_PURPOSE[t]), int(Military.MT_COST[t]), int(Military.MT_TIME[t]), player.missile_stock[t], Military.DepotS.missile_cap(mil, player, t)]
+				detail = Loc.t("%s — %s. Цена %d, %d с, на складе %d из %d. Цифра на кнопке — запас на складе. «+Солнце» — резервное питание завода.") % [_sentence(Loc.t(String(Military.MT_NAMES[t]))), Loc.t(MT_PURPOSE[t]), int(Military.MT_COST[t]), int(Military.MT_TIME[t]), player.missile_stock[t], Military.DepotS.missile_cap(mil, player, t)]
 			Facility.Kind.REFINERY:
 				info = Loc.t("%s · ПРОДАНО НА %d\nБУФЕР ТОПЛИВА: %d/%d") % [_rate_line(f, player), player.fuel_sold, f.ref_fuel, Military.REFINERY_TANK_CAP]
 				if player.oil <= 0:
@@ -405,7 +405,7 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 				var op: Dictionary = gw.ops.of(f) if gw.get("ops") != null else {}
 				var no: int = int(ab.get("no", ai["no"]))
 				var stn: int = gw.ops.stance_of(f) if gw.ops.has_method("stance_of") else 0
-				info = "%s %s · %d/%d · %s" % [Loc.no(no) if no > 0 else Loc.t("НОВАЯ"), String(ab.get("build_name", ai["name"])), n, int(ab.get("cap", ai["cap"])), String(Operations.AutoCmd.STANCE_NAMES[stn])]
+				info = "%s %s · %d/%d · %s" % [Loc.no(no) if no > 0 else Loc.t("НОВАЯ"), Loc.t(String(ab.get("build_name", ai["name"]))), n, int(ab.get("cap", ai["cap"])), Loc.t(String(Operations.AutoCmd.STANCE_NAMES[stn]))]
 				var doing: String = String(ab.get("order_text", ""))
 				if not op.is_empty():
 					doing = "%s: %s" % [String(op.get("name", "")), String(op.get("state_text", ""))]
@@ -421,7 +421,7 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 				if not _tut_on():
 
 
-					info = Loc.t("АРМИЯ №%d · %s · %d/%d") % [no, String(ab.get("build_name", ai["name"])).to_upper(), n, int(ab.get("cap", ai["cap"]))] if no > 0 else Loc.t("АРМИЯ ФОРМИРУЕТСЯ · %d/%d") % [n, int(ab.get("cap", ai["cap"]))]
+					info = Loc.t("АРМИЯ №%d · %s · %d/%d") % [no, Loc.t(String(ab.get("build_name", ai["name"]))).to_upper(), n, int(ab.get("cap", ai["cap"]))] if no > 0 else Loc.t("АРМИЯ ФОРМИРУЕТСЯ · %d/%d") % [n, int(ab.get("cap", ai["cap"]))]
 					acts.append(_act("ЕЩЁ…", "icon_menu", "build_pick", true))
 					bar_lite = true
 				else:
@@ -435,7 +435,7 @@ func show_facility(f: Facility, mil: Military, player: Country) -> void:
 					else:
 						acts.append(_act("ОТХОД", "icon_op_retreat", "op_retreat", n > 0))
 					if gw.ops.has_method("stance_of"):
-						acts.append(_act(Loc.t("РЕЖИМ:\n") + String(Operations.AutoCmd.STANCE_NAMES[stn]), "icon_move" if stn == 0 else String(Operations.AutoCmd.STANCE_ICONS[stn]), "stance_cycle", true, 1 if stn > 0 else 0))
+						acts.append(_act(Loc.t("РЕЖИМ:\n") + Loc.t(String(Operations.AutoCmd.STANCE_NAMES[stn])), "icon_move" if stn == 0 else String(Operations.AutoCmd.STANCE_ICONS[stn]), "stance_cycle", true, 1 if stn > 0 else 0))
 					acts.append(_act("ЕЩЁ…", "icon_menu", "build_pick", true))
 			Facility.Kind.AD_MFG, Facility.Kind.AD_SPAAG, Facility.Kind.AD_SAM, Facility.Kind.AD_PATRIOT, Facility.Kind.AD_INT, Facility.Kind.AD_ZASLON:
 				var sp: Dictionary = Defense.SPEC[f.kind]
@@ -671,7 +671,7 @@ func show_army(f: Facility, mil: Military, player: Country) -> void:
 		acts.append(_act("ОТМЕНИТЬ", "icon_close", "op_cancel", true))
 	else:
 		acts.append(_act("ОТХОД", "icon_op_retreat", "op_retreat", n > 0))
-	acts.append(_act(Loc.t("РЕЖИМ:\n") + String(Operations.AutoCmd.STANCE_NAMES[stn]), "icon_move" if stn == 0 else String(Operations.AutoCmd.STANCE_ICONS[stn]), "stance_cycle", true, 1 if stn > 0 else 0))
+	acts.append(_act(Loc.t("РЕЖИМ:\n") + Loc.t(String(Operations.AutoCmd.STANCE_NAMES[stn])), "icon_move" if stn == 0 else String(Operations.AutoCmd.STANCE_ICONS[stn]), "stance_cycle", true, 1 if stn > 0 else 0))
 	if not g.is_empty():
 		acts.append(_act("ГРУППА", String(g.get("emblem", "icon_group_add")) if UiKit.has(String(g.get("emblem", ""))) else "icon_group_add", "army_group", true))
 	else:
@@ -730,9 +730,9 @@ func _rate_line(f: Facility, p: Country) -> String:
 	var n: float = float(s["n"])
 	var why: String = String(s["why"])
 	var parts: PackedStringArray = PackedStringArray()
-	var nm: String = String(Economy.RES_NAMES.get(res, res))
+	var nm: String = Loc.t(String(Economy.RES_NAMES.get(res, res)))
 	if String(s["use_res"]) != "" and res != "":
-		parts.append(Loc.t("%s %s → %s %s/МИН") % [String(Economy.RES_NAMES.get(String(s["use_res"]), "")), EconRates.fmt(-float(s["use"])) if float(s["use"]) > 0.0 else "0", nm, EconRates.fmt(n) if n > 0.0 else "0"])
+		parts.append(Loc.t("%s %s → %s %s/МИН") % [Loc.t(String(Economy.RES_NAMES.get(String(s["use_res"]), ""))), EconRates.fmt(-float(s["use"])) if float(s["use"]) > 0.0 else "0", nm, EconRates.fmt(n) if n > 0.0 else "0"])
 	elif res != "":
 		parts.append(Loc.t("%s %s/МИН") % [nm, EconRates.fmt(n) if n > 0.0 else "0"])
 	if float(s["money"]) > 0.0:

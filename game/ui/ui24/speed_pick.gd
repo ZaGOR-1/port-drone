@@ -188,7 +188,7 @@ func _open_net(ns: Object, animate: bool = true) -> void:
 			MpKit.status_bar(vb, "x1, ПОКА НЕ У ВСЕХ ЕСТЬ СТОЛИЦА", "info", "net_wait", false, false)
 		elif why.begins_with("auto:") and why.length() > 5:
 			var who: String = String(ns.speed_who)
-			MpKit.status_bar(vb, "x1: %s%s" % [why.substr(5), (Loc.t(" У %s") % who.to_upper()) if who != "" else ""], "wait", "net_pause", false, false)
+			MpKit.status_bar(vb, "x1: %s%s" % [Loc.t(why.substr(5)), (Loc.t(" У %s") % who.to_upper()) if who != "" else ""], "wait", "net_pause", false, false)
 		elif spd > 1:
 			MpKit.status_bar(vb, "ТИХО — УСКОРЯЕМСЯ", "ok", "net_sync", true, false)
 		else:
