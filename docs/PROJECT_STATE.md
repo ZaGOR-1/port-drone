@@ -75,3 +75,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 Часткове приймання локалізації у `feature/development-standards-l10n`, worktree `~/projects/port-drone-standards-l10n`. Початкова вершина `15b6bbb`. Виправлення `f1e1f66` і `3ee7f1d`. Перевірене дерево `game/` `26e85284d4c7ae2d11bdc95a0f09eef623d15683`. Локальна й віддалена production `beta` на `c91e0e6a7eef831687e6e63550560bba739a6b87`.
 
 Переглянуто 466 порожніх записів uk/en, заповнено 29 і класифіковано 437 службових. Виправлено складені підписи, повторний рендер сповіщень і текст анімованого завантаження. Каталоги, L10N, simulation, replay, Windows build check і вибірковий Linux/Wine GUI пройдено. Версія `0.36.0`. Для інтеграції залишається Windows native GUI, живий transport UI та сценарії з [ручного checklist](LOCALIZATION_TESTS.md#ручний-checklist-l10n-02). Локальний handoff з bundle і доказами є в `~/projects/droneflames-toolchain/l10n02-qa.sfnBnw/handoff/`. [Аудит](LOCALIZATION_AUDIT.md#l10n-02--перевірка-порожніх-записів)
+
+## Git Workflow v2
+
+Постійну політику локальних комітів, тематичних гілок, погодженого push і Draft PR закріплено в [AGENTS.md](../AGENTS.md) та [Development Workflow](DEVELOPMENT_WORKFLOW.md). Worktree `~/projects/port-drone-standards-l10n` використовує гілку `feature/development-standards-l10n` для Draft PR у `beta`. Кандидат L10N-02 лишається PARTIAL для review. Версія `0.36.0`, перевірене дерево гри `26e85284d4c7ae2d11bdc95a0f09eef623d15683`. Для приймання залишається [ручний QA](LOCALIZATION_TESTS.md#ручний-checklist-l10n-02).
