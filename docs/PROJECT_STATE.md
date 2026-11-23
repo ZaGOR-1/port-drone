@@ -37,6 +37,8 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 ## In progress
 
+FIX-01 перебуває у `~/projects/port-drone-fix-hud-input` на `fix/hud-camera-input` від production `beta` `c91e0e6`. Виправлено межі армійських панелей і routing вводу миші. Цільовий playback, симуляційна регресія та official Windows build пройшли. Нативний Windows GUI після виправлень очікує ручного QA. Звіт із вихідної Windows-збірки додано до PR #7. Вибір понад приблизно 200 цілей ОТРК відкладено до PERF-01. [Причини](FIX01_BUG_ANALYSIS.md), [регресії](FIX01_REGRESSION_TESTS.md), [Windows QA](FIX01_WINDOWS_QA.md).
+
 Інтеграцію Windows-стабілізації в `beta` завершено. Фізичний LAN і профілювання late-game FPS залишаються завданнями наступного циклу.
 
 ## Known issues
