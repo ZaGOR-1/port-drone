@@ -51,6 +51,7 @@ func check_dynamic(m: Node) -> void:
 	Loc.set_lang("ru", false)
 	var kept: Variant = Loc.keep(m.world.pstat.change_text(downgrade, true))
 	var tip_prefix: Dictionary = {"ru": "Армия до 12 бойцов", "uk": "Армія до 12 бійців", "en": "Army of up to 12 troops"}
+	var loading_text: Dictionary = {"ru": "Страны и города...", "uk": "Країни й міста...", "en": "Countries and cities..."}
 	var old_hints: bool = GameConfig.hints
 	GameConfig.hints = false
 	var ns: NetSession = m.net
@@ -69,6 +70,8 @@ func check_dynamic(m: Node) -> void:
 				"army plural %d in %s" % [n, locale])
 		check(m.hud.lane.journal.back()["text"] == words[4], "retained merged notice " + locale)
 		check(Loc.re(kept) == downgrade_text[locale], "retained status event " + locale)
+		m.loading.set_progress(0.7, "Страны и города...")
+		check(m.loading.stage.text == loading_text[locale], "loading stage translated before animation " + locale)
 		ns.reconnecting = true
 		ns.rc_tries = 2
 		shown.set_state(ns.plate(), 1.1)
