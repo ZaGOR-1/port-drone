@@ -14,7 +14,7 @@
 | Godot runtime | [Windows QA · MinGW](WINDOWS_QA.md#godot-mingw) | Native race, provenance, headless CPU benchmark |
 | Тестування і QA | [Windows QA](WINDOWS_QA.md#перевірки) · [Windows checklist](codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) | Поточні результати за артефактами та ручні сценарії |
 | INT-01 | [Інтеграція PR #7–#9](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md) | QA-кандидат 0.36.1, Windows A/B і порядок приймання |
-| Продуктивність | [Performance validation](performance.md) · [PERF-01 ОТРК](perf01/PERF01_ANALYSIS.md) · [PERF-02 підтвердження](perf02/PERF02_ANALYSIS.md) · [PERF-03 дефіцит ОТРК](perf03/PERF03_RESULTS.md) · [R07 watchdog](r07/R07_RESULTS.md) | Вимірювання, результати CPU та QA масового вибору |
+| Продуктивність | [Performance validation](performance.md) · [PERF-01 ОТРК](perf01/PERF01_ANALYSIS.md) · [PERF-02 підтвердження](perf02/PERF02_ANALYSIS.md) · [PERF-03 дефіцит ОТРК](perf03/PERF03_RESULTS.md) · [R07 watchdog](r07/R07_RESULTS.md) · [R08 lockstep](r08/R08_RESULTS.md) | Вимірювання, результати CPU та QA масового вибору |
 | Roadmap і рішення | [Next steps](PROJECT_STATE.md#next-steps) · [Backlog](codex/verified/BACKLOG.md) · [Decisions](codex/verified/DECISIONS.md) | Windows QA та FPS, Linux-порт, UI після Linux |
 | Історичні технічні звіти | [Інвентар Markdown](DOCUMENTATION_AUDIT.md) | Git/PR історія, Phase-звіти, старі контрольні збірки, source coverage |
 

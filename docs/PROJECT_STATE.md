@@ -81,6 +81,10 @@ QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integ
 
 Версія 0.36.3 зберігає PROTO 7, SIM_REV v036-integration-1 і Save.FORMAT 1. Мережевий допуск порівнює повну версію. Фізичний Windows GUI й навантаження відкладені власником, фізичні LAN і Steam — NOT RUN. Локальні перевірки, QA ZIP/TAR, Git increment і матеріали майбутнього R08 — у handoff INT-04 в toolchain. Наступний профіль — кадр 4693 і чотири команди lockstep у `NetSession._exec`, включно з вкладеними обробниками.
 
+## R08 · Lockstep-команди
+
+Гілка `perf/lockstep-command-execution`, worktree `/home/zagor/projects/port-drone-r08`, база `690915646ec0186b5086cd254dcd6b8eab85f6c0`. Код `d59bba648144b4c866c4b0f351b8eb9ca44942e4`, версія 0.36.3. На Late E чотири `army.order_attack` викликають пошук суходолу під час побудови fallback-шляхів. Периметровий обхід у `land_point` скоротив медіану пакета 174,449 → 121,996 мс у трьох GUI A/B-парах. Детермінізм історичного replay збережено. FPS INCONCLUSIVE. Наступні кроки — review Draft і фізичний Windows QA. [Профіль, регресії й QA-пакети](r08/R08_RESULTS.md)
+
 ## Known issues
 
 - Фізичний LAN, Steam-матч на двох ПК, reconnect/resync і late-game FPS мають статус NOT RUN. `Ctrl+1–9` без виділення очищає слот групи. Це чинна поведінка й окреме можливе UX-покращення.
