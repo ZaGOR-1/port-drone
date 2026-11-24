@@ -1,6 +1,6 @@
 # DroneFlames — пам’ять проєкту
 
-Базовий стан звірено 2026-11-22. PERF-01 звірено 2026-11-24. Маршрут до технічних документів і архіву наведено в [індексі](INDEX.md).
+Базовий стан звірено 2026-11-22. PERF-01 і PERF-02 звірено 2026-11-24. Маршрут до технічних документів і архіву наведено в [індексі](INDEX.md).
 
 ## Project identity
 
@@ -44,7 +44,13 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 Кандидат `perf/otrk-target-selection`, worktree `~/projects/port-drone-perf01`. UI-коміт `1ebb914`, код Windows QA `130dce2`, версія кандидата `0.36.1`. На `beta` відтворено поступову деградацію вибору й промальовування. У двох ізольованих A/B-парах на 200 цілях клік зменшився з 24,93 до 0,69 мс, підготовка рендерингу з 9,63 до 5,02 мс/кадр. NetHash, порядок цілей, wire payload і черги збіглися. Симуляційна регресія 2476/2476.
 
-Наступна перевірка — повтор на фізичній Windows 11 зі збігом SHA256 EXE/DLL, потім GUI зі спільним кандидатом з PR #8. Окремий пріоритет після native QA — повторні повні плани при preview і підтвердженні. Сирі дані та ZIP у `~/projects/droneflames-toolchain/performance/perf01/`. [PERF-01](perf01/PERF01_ANALYSIS.md)
+Наступна перевірка — повтор на фізичній Windows 11 зі збігом SHA256 EXE/DLL, потім GUI зі спільним кандидатом з PR #8. Подальші зміни підтвердження й preview описано в PERF-02. Сирі дані та ZIP у `~/projects/droneflames-toolchain/performance/perf01/`. [PERF-01](perf01/PERF01_ANALYSIS.md)
+
+## PERF-02
+
+Гілка `perf/otrk-target-selection`, worktree `~/projects/port-drone-perf01`, код `3880359`, версія `0.36.1`, Draft PR #9 до `beta`. На 500 цілях headless-підтвердження 107,27 → 16,62 мс, контрольований preview 4,60 → 2,05 мс/кадр за тієї самої частоти. Повторний план для синхронного залпу лише ОТРК замінено застосуванням готового плану в межах виклику. У 15 A/B-парах порівняно команди, черги, першу хвилю й NetHash. Simulation regression 2476/2476, Python discovery 43/43.
+
+Фізична Windows 11 GUI, LAN і Steam — NOT RUN. Пакет і сирі докази зберігаються в `~/projects/droneflames-toolchain/performance/perf02/`. Наступна перевірка — A/B з ZIP PERF-01 на тому самому Windows ПК. Фактичну затримку при вичерпанні боєзапасу зафіксовано для наступного профілювання. [PERF-02](perf02/PERF02_ANALYSIS.md)
 
 ## Known issues
 

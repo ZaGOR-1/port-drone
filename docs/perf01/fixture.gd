@@ -17,6 +17,11 @@ var setup_tels: int = 250
 var verify_ui: bool = false
 var verify_mp: bool = false
 var collect_frames: bool = true
+var perf02: bool = false
+var perf_case: String = ""
+var host_command_steps: int = 0
+var expected_queued: int = 0
+var changed_owner: Facility
 var main: FixtureMain
 var samples: Dictionary = {}
 var failures: Array[String] = []
@@ -33,6 +38,12 @@ func _ready() -> void:
 			limit = int(arg.trim_prefix("--limit="))
 		elif arg.begins_with("--tels="):
 			setup_tels = int(arg.trim_prefix("--tels="))
+		elif arg == "--perf02":
+			perf02 = true
+		elif arg == "--cpu-only":
+			collect_frames = false
+		elif arg.begins_with("--perf-case="):
+			perf_case = arg.trim_prefix("--perf-case=")
 		elif arg == "--verify-ui":
 			verify_ui = true
 		elif arg == "--verify-mp":
@@ -133,6 +144,13 @@ func observe(points: Array[Vector2], hover: bool) -> Dictionary:
 
 func positions() -> Array[Vector2]:
 	var points: Array[Vector2] = []
+	if perf02:
+		const COLS02 = 48
+		const ROWS02 = 16
+		for i in COLS02 * ROWS02:
+			var index: int = (i * 137) % (COLS02 * ROWS02)
+			points.append(Vector2(164 + (index % COLS02) * 24, 184 + floori(float(index) / COLS02) * 24))
+		return points
 	# Visit widely separated points to keep successive clicks clear of double-tap zoom.
 	const COLS = 49
 	const ROWS = 18
@@ -244,6 +262,8 @@ func _run() -> void:
 	main.cam.center_on(Vector2(256, 256) * GameWorld.CELL)
 	await frames(8)
 	Engine.max_fps = 0
+	if perf02:
+		root.get_node("PcPort").edge_pan = false
 	samples["workload"]["zoom"] = main.cam.zoom.x
 	samples["workload"]["camera"] = str(main.cam.position)
 	samples["workload"]["game_time"] = main.world.game_time
@@ -267,23 +287,34 @@ func _run() -> void:
 	samples["workload"]["ops_card"] = str(main.hud.ops_panel.get_global_rect())
 	var add: Array[int] = []
 	var input_scopes: Dictionary = {}
+	var retries: Array[int] = []
 	for i in limit:
 		begin_sample()
 		add.append(click(points[i]))
 		var measured: Dictionary = end_sample()
+		if perf02 and main.cam.position == Vector2(1024, 1024) and main.cam.zoom == Vector2.ONE \
+				and main.plan_list.size() + int(main.plan_has_target) == i \
+				and main.StrikeHubScript.n_of(main._plan_targets()) == i:
+			# A GUI overlay can consume a click while its layout settles. Retry only an unchanged draft.
+			retries.append(i + 1)
+			await get_tree().create_timer(0.34).timeout
+			begin_sample()
+			add[i] = click(points[i])
+			measured = end_sample()
 		if (i + 1) in CHECKPOINTS:
 			input_scopes[str(i + 1)] = measured
 		var selected: int = main.plan_list.size() + int(main.plan_has_target)
 		if selected != i + 1:
+			samples["failed_click_scopes_us"] = measured
 			check(false, "map click %d at %s, selected=%d, ops=%s hovered=%s" % [i + 1, points[i], selected, main.hud.ops_panel.get_global_rect(), root.gui_get_hovered_control()])
 			break
 		if i < 10 or (i + 1) % 8 == 0:
 			await get_tree().process_frame
-		if (i + 1) in CHECKPOINTS:
+		if (i + 1) in CHECKPOINTS or (perf02 and i + 1 == limit):
 			var n: String = str(i + 1)
 			await frames(3)
 			samples[n] = {}
-			if collect_frames:
+			if collect_frames and (not perf02 or i + 1 in [50, 100, 199, 200, 201, 300, 500]):
 				samples[n]["idle"] = await observe(points.slice(0, i + 1), false)
 				samples[n]["hover"] = await observe(points.slice(0, i + 1), true)
 			samples[n]["counts"] = counts()
@@ -291,6 +322,10 @@ func _run() -> void:
 			if i + 1 in [50, 200, 300, 500] or i + 1 == limit:
 				samples[n]["plan"] = plan_digest()
 			printerr("PERF01 targets=", n, " input_us=", add[i])
+	if perf02:
+		samples["input_retries"] = retries
+		check(main.cam.position == Vector2(1024, 1024) and main.cam.zoom == Vector2.ONE,
+			"camera stays fixed throughout selection")
 	samples["add_us"] = add
 	samples["add_scopes_us"] = input_scopes
 	if not failures.is_empty():
@@ -302,42 +337,90 @@ func _run() -> void:
 		check(main._plan_targets().size() == limit, "extra dot rejected by the live ammo limit")
 	if verify_ui:
 		await verify_controls(points, limit)
+	if perf02:
+		if not verify_mp and not collect_frames and perf_case.is_empty():
+			main._strike_update(0.26)
+			begin_sample()
+			for i in 48:
+				main._strike_update(1.0 / 60.0)
+			samples["fixed_preview"] = {"frames": 48, "scopes_us": end_sample()}
+		if perf_case == "delayed":
+			verify_delayed()
+			_finish()
+			return
+		apply_case()
+	expected_queued = limit
+	if perf02 and (not perf_case.is_empty()) and perf_case != "host-stock":
+		var digest: Dictionary = plan_digest()
+		samples["effective_plan"] = digest
+		expected_queued = int(digest["assigned"])
 	var before: String = NetHash.of(main.world)
-	check(before == samples["workload"]["net_hash_initial"], "selection and HUD interaction preserve the initial NetHash")
+	if perf_case not in ["launcher-state", "tie"]:
+		check(before == samples["workload"]["net_hash_initial"], "selection and HUD interaction preserve the initial NetHash")
 	if verify_mp:
 		main.net.in_match = true
 		main.net.is_host = true
 		main.net.local_slot = main.world.player.id - 1
 	check(main.strike_ui._fire.is_visible_in_tree() and not main.strike_ui._fire.disabled, "enabled fire button")
+	var before_money: int = main.world.player.money
 	begin_sample()
 	var confirm_us: int = click_control(main.strike_ui._fire)
 	var scopes: Dictionary = end_sample()
+	if perf_case == "repeat":
+		main.strike_fire()
 	if verify_mp:
 		verify_host_command(before)
 	var queue: Array = []
 	for tel: Facility in main.world.mil.facs_of_kind(Facility.Kind.TEL):
 		if not tel.queued.is_empty():
 			queue.append([tel.id, tel.queued.duplicate()])
+	if changed_owner != null:
+		check(changed_owner.queued.is_empty(), "the previously owned TEL receives no order")
+		changed_owner.country_id = main.world.player.id
+	if perf_case == "tie":
+		var first: Facility = main.world.mil.facs_of_kind(Facility.Kind.TEL)[0]
+		check(queue.size() == 1 and queue[0][0] == first.id, "equal stock and distance use facility order")
 	var queued: int = 0
 	for entry: Array in queue:
 		queued += entry[1].size()
-	check(queued == limit, "one queued missile per target through UI, actual %d" % queued)
+	check(queued == expected_queued, "UI strike queued %d, expected %d" % [queued, expected_queued])
+	if perf02:
+		samples["confirmation_closed"] = not main.strike.active
+		check(bool(samples["confirmation_closed"]) == (queued > 0), "the sheet closes only after a successful order")
 	var after_order: String = NetHash.of(main.world)
+	var after_money: int = main.world.player.money
+	var after_ammo: int = main.world.mil.missiles_ready(main.world.player.id)
 	begin_sample()
 	var tick: Array[int] = []
-	for i in 105:
+	var first_launch: int = 0
+	var first_launch_us: int = 0
+	var step_elapsed: int = 0
+	var first_wave: Array = []
+	for i in range(host_command_steps, 105):
 		var stamp: int = Time.get_ticks_usec()
 		if verify_mp:
 			main.world.net_step(NetConfig.SIM_DT)
 		else:
 			main.world._sim_step(NetConfig.SIM_DT)
-		tick.append(Time.get_ticks_usec() - stamp)
+		var elapsed: int = Time.get_ticks_usec() - stamp
+		tick.append(elapsed)
+		step_elapsed += elapsed
+		if first_launch == 0 and not main.world.mil.missiles.is_empty():
+			first_launch = i + 1
+			first_launch_us = step_elapsed
+			for missile: Missile in main.world.mil.missiles:
+				first_wave.append([missile.id, missile.country_id, missile.launch, missile.target])
 	samples["execution"] = {
 		"confirm_us": confirm_us, "confirm_scopes_us": scopes,
 		"queues": JSON.stringify(queue).sha256_text(), "queued": queued, "sim_step_us": tick,
 		"sim_scopes_us": end_sample(), "live_missiles": main.world.mil.missiles.size(),
 		"net_hash_before_order": before, "net_hash_after_order": after_order, "net_hash_after_ticks": NetHash.of(main.world),
 	}
+	if perf02:
+		samples["execution"].merge({"first_launch_tick": first_launch, "first_launch_cpu_us": first_launch_us,
+			"first_wave": JSON.stringify(first_wave).sha256_text(), "money": main.world.player.money,
+			"money_before": before_money, "money_after_order": after_money, "ready_after_order": after_ammo,
+			"rng_state": str(main.world.rng.state), "final_tick": main.world.net_tick})
 	if collect_frames:
 		await frames(3)
 		samples["post_launch"] = await observe(points, false)
@@ -357,10 +440,73 @@ func verify_host_command(before: String) -> void:
 	denied["s"] = -1
 	main.net._exec(denied)
 	check(main.world.mil.missiles_ready(main.world.player.id) == samples["workload"]["magazine"] and NetHash.of(main.world) == before, "strike without a valid issuer leaves ready stock and NetHash intact")
+	var command_tick: int = main.world.net_tick
+	if perf_case == "host-stock":
+		empty_launchers(40)
+		expected_queued = limit - 80
 	begin_sample()
-	main.net._exec(cmd)
+	if perf02:
+		main.net._turn(0, [cmd])
+		main.net._run(NetConfig.SIM_DT)
+		host_command_steps = 1
+		check(main.world.net_tick == command_tick + 1 and main.net.exec_tick == 1,
+			"the host command applies before the first simulation step in turn zero")
+	else:
+		main.net._exec(cmd)
 	var scopes: Dictionary = end_sample()
-	samples["host"] = {"wire": digest, "scopes_us": scopes}
+	samples["host"] = {"wire": digest, "scopes_us": scopes, "command_tick": command_tick}
+
+
+
+func empty_launchers(count: int) -> void:
+	var tels: Array[Facility] = main.world.mil.facs_of_kind(Facility.Kind.TEL)
+	for i in count:
+		tels[i].missiles = 0
+
+
+func apply_case() -> void:
+	match perf_case:
+		"remove":
+			main._on_action("plan_back")
+			check(main._plan_targets().size() == limit - 1, "removal changes the confirmed list")
+		"stock":
+			empty_launchers(40)
+		"unavailable":
+			main.plan_target = Vector2(-10000, -10000)
+		"launcher-state":
+			var tels: Array[Facility] = main.world.mil.facs_of_kind(Facility.Kind.TEL)
+			tels[0].restore_t = 1.0
+			tels[1].moving = true
+			tels[2].cell += Vector2i(20, 0)
+			changed_owner = tels[3]
+			changed_owner.country_id = -1
+		"tie":
+			var tels: Array[Facility] = main.world.mil.facs_of_kind(Facility.Kind.TEL)
+			empty_launchers(tels.size())
+			tels[0].missiles = 2
+			tels[1].missiles = 2
+			tels[1].cell = tels[0].cell
+		"mixed":
+			# No hyper carriers in this match. The second weapon still uses the mixed-strike path.
+			main.strike.plans["hyper"] = [main._plan_targets()[0]]
+
+
+func verify_delayed() -> void:
+	var world: GameWorld = main.world
+	var targets: Array = main._plan_targets()
+	main.strike.pending.append({"gw": world.get_instance_id(), "wd": world.data.get_instance_id(),
+		"at": 2.0, "wid": "tel", "targets": targets, "eta": 20.0, "cid": world.player.id})
+	begin_sample()
+	main.strike.tick(world)
+	check(main.strike.pending.size() == 1 and world.mil.missiles_ready(world.player.id) == 500,
+		"the delayed order waits for its scheduled time")
+	empty_launchers(250)
+	world.game_time = 2.0
+	main.strike.tick(world)
+	samples["delayed"] = {"scopes_us": end_sample(), "pending": main.strike.pending.size(),
+		"launches": main.strike.log.size(), "net_hash": NetHash.of(world)}
+	check(main.strike.pending.is_empty() and main.strike.log.is_empty(),
+		"the due order validates depleted stock and queues no rounds")
 
 
 func verify_controls(points: Array[Vector2], n: int) -> void:
@@ -369,16 +515,20 @@ func verify_controls(points: Array[Vector2], n: int) -> void:
 	main._on_action("plan_back")
 	samples["remove_scopes_us"] = end_sample()
 	check(main._plan_targets().size() == n - 1, "back removes one target")
+	if n == 1:
+		await get_tree().create_timer(0.34).timeout
 	click(points[n - 1])
 	check(main._plan_targets() == expected, "reselect appends target in the original order")
 	for lang: String in ["uk", "en", "ru"]:
 		Loc.set_lang(lang, false)
 		await frames(2)
 		check(Loc.cur() == lang and not main.strike_ui._info.text.is_empty() and not main.strike_ui._fire.disabled, "usable strike UI for " + lang)
+	var ready: int = main.world.mil.missiles_ready(main.world.player.id)
 	begin_sample()
 	main.strike_close()
 	samples["close_scopes_us"] = end_sample()
 	check(not main.strike.active and main._plan_targets().is_empty(), "close cancels current selection")
+	check(main.world.mil.missiles_ready(main.world.player.id) == ready, "closing consumes no ammunition")
 	main._on_action("missile")
 	await frames(3)
 	check(main._plan_targets() == expected, "reopen restores ordered draft")
@@ -397,3 +547,22 @@ func verify_controls(points: Array[Vector2], n: int) -> void:
 	main.cam.zoom = Vector2(z, z)
 	main.cam.center_on(old)
 	await frames(3)
+	if perf02 and DisplayServer.get_name() != "headless":
+		var reticle: Texture2D = main.overlay.get("_tel_reticle")
+		var window_size: Vector2i = root.size
+		var pc: Node = root.get_node("PcPort")
+		var scale_i: int = pc.scale_i
+		begin_sample()
+		root.size = Vector2i(1320, 850)
+		pc.set_scale_i(4)
+		await frames(4)
+		var resized: Dictionary = end_sample()
+		samples["resize_scopes_us"] = resized
+		check(root.size != window_size and pc.scale_i == 4 and resized.has("route_overlay_draw")
+			and reticle != null and main._plan_targets() == expected and main.overlay.get("_tel_reticle") == reticle,
+			"viewport and UI scaling preserve targets and redraw with the baked reticle")
+		root.size = window_size
+		pc.set_scale_i(scale_i)
+		main.cam.zoom = Vector2(z, z)
+		main.cam.center_on(old)
+		await frames(4)

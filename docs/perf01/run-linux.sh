@@ -26,6 +26,9 @@ sed -i 's|^run/main_scene=.*|run/main_scene="res://perf01_fixture.tscn"|' "$stag
 export DF_NO_UPDATE=1 DF_NO_OPENING=1 DF_STEAM_MOCK=0 DF_LANG=ru
 export XDG_DATA_HOME="$stage/profile/perf01" XDG_CONFIG_HOME="$stage/config" XDG_CACHE_HOME="$stage/cache"
 "$editor" --headless --path "$stage/packproj" --script res://pack.gd -- "$stage/game" "$stage/DroneFlames.pck" > "$stage/pack.log" 2>&1
+if [[ ${PERF01_PREPARE_ONLY:-0} == 1 ]]; then
+  exit 0
+fi
 cd "$stage"
 render=()
 if [[ ${PERF01_HEADLESS:-0} == 1 ]]; then
