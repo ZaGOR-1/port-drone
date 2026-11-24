@@ -72,6 +72,9 @@ class V036RegressionTests(unittest.TestCase):
     def test_tooltip_rules(self):
         self.run_case('tooltips')
 
+    def test_land_point_ring_order(self):
+        self.run_case('land-point')
+
     def test_hud_layout_and_camera_input(self):
         profile = self.folder/'df_input_qa'
         env = self.env.copy()
