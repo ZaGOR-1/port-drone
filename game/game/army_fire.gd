@@ -511,13 +511,18 @@ func _impact(s: Dictionary) -> void:
 	if kind == KIND_ARTY or ri(3) == 0:
 		add_decal("crater_s", p.round())
 		army.tac.add_crater(p)
+	var damage_r: float = r + 3.0
+	var suppression_r: float = r * 2.5
+	var effect_r: float = maxf(damage_r, suppression_r)
 	for u: Unit in army.units:
+		var d: float = u.pos.distance_to(p)
+		if not (d <= effect_r):
+			continue
 		if not u.alive() or not u.ground() or not army._hostile(c, u.country_id):
 			continue
-		var d: float = u.pos.distance_to(p)
-		if d <= r + 3.0:
+		if d <= damage_r:
 			army._damage(u, dmg * (1.0 if d < r * 0.5 else 0.5), c, p, false, 2)
-		elif d <= r * 2.5:
+		elif d <= suppression_r:
 			u.supp = minf(1.0, u.supp + 0.3)
 			if d <= r * 2.0:
 				army.pin(u)

@@ -36032,3 +36032,7 @@ msgstr "Faster search for army withdrawal points on foreign territory"
 #: ui/menus.gd
 msgid "Ускорено построение маршрутов при массовом приказе на наступление"
 msgstr "Faster route generation for mass attack orders"
+
+#: ui/menus.gd
+msgid "Ускорена обработка артиллерийских попаданий в крупных боях"
+msgstr "Faster processing of artillery impacts in large battles"
