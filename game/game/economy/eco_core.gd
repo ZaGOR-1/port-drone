@@ -623,14 +623,22 @@ func land_point(p: Vector2, r: int = 6) -> Vector2:
 	var c: = Vector2i(floori(p.x / GameWorld.CELL), floori(p.y / GameWorld.CELL))
 	if not d.inside(c.x, c.y) or not Biome.is_water(d.get_biome(c.x, c.y)) or d.has_flag(c.x, c.y, WorldData.F_BRIDGE):
 		return p
+	var biomes: PackedByteArray = d.biome
 	for rr in range(1, r + 1):
-		for dy in range(-rr, rr + 1):
-			for dx in range(-rr, rr + 1):
-				if maxi(absi(dx), absi(dy)) != rr:
-					continue
-				var q: = c + Vector2i(dx, dy)
-				if d.inside(q.x, q.y) and not Biome.is_water(d.get_biome(q.x, q.y)):
-					return Vector2(q * GameWorld.CELL) + Vector2(2, 2)
+		var left: int = c.x - rr
+		var right: int = c.x + rr
+		var top: int = c.y - rr
+		var bottom: int = c.y + rr
+		var end: int = mini(d.w, right + 1)
+		for y in range(maxi(0, top), mini(d.h, bottom + 1)):
+			# Keep row order and visit the left side before the right side.
+			var edge: bool = y == top or y == bottom
+			var first: int = maxi(0, left) if edge else (left if left >= 0 else right)
+			var step: int = 1 if edge else 2 * rr
+			var row: int = y * d.w
+			for x in range(first, end, step):
+				if not Biome.is_water(biomes[row + x]):
+					return Vector2(Vector2i(x, y) * GameWorld.CELL) + Vector2(2, 2)
 	return p
 
 

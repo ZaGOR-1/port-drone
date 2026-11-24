@@ -29,11 +29,64 @@ func _run() -> void:
 		"hash": _hash_state()
 		"upgrades": _upgrades()
 		"tooltips": _tooltips()
+		"land-point": _land_point()
 		_: check(false, "Unknown case: " + name)
 	var result: Dictionary = {"passed": failures.is_empty(), "checks": checks, "failures": failures}
 	FileAccess.open(out, FileAccess.WRITE).store_string(JSON.stringify(result))
 	print("V036_RESULT ", JSON.stringify(result))
 	quit(0 if failures.is_empty() else 1)
+
+func _reference_land_point(d: WorldData, p: Vector2, radius: int) -> Vector2:
+	var c := Vector2i(floori(p.x / GameWorld.CELL), floori(p.y / GameWorld.CELL))
+	if not d.inside(c.x, c.y) or not Biome.is_water(d.get_biome(c.x, c.y)) or d.has_flag(c.x, c.y, WorldData.F_BRIDGE):
+		return p
+	for r in range(1, radius + 1):
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) != r:
+					continue
+				var q := c + Vector2i(dx, dy)
+				if d.inside(q.x, q.y) and not Biome.is_water(d.get_biome(q.x, q.y)):
+					return Vector2(q * GameWorld.CELL) + Vector2(2, 2)
+	return p
+
+
+func _land_point() -> void:
+	var gw := GameWorld.new()
+	gw.econ = Economy.new(gw)
+	for size: Vector2i in [Vector2i(7, 5), Vector2i(1, 5), Vector2i(5, 1), Vector2i.ONE]:
+		var d := WorldData.new(size.x, size.y, 1)
+		gw.data = d
+		var matched: bool = true
+		for land in range(-1, d.w * d.h):
+			d.biome.fill(Biome.RIVER)
+			d.flags.fill(0)
+			if land >= 0:
+				d.biome[land] = Biome.ROAD
+			for y in range(-1, d.h + 1):
+				for x in range(-1, d.w + 1):
+					var p := Vector2(x, y) * GameWorld.CELL + Vector2(0.25, 0.75)
+					for radius in range(-1, 7):
+						if gw.econ.land_point(p, radius) != _reference_land_point(d, p, radius):
+							matched = false
+		check(matched, "land_point preserves every radius and origin with one or no land cell on %s" % size)
+	var d := WorldData.new(7, 5, 1)
+	gw.data = d
+	d.biome.fill(Biome.OCEAN)
+	var p := Vector2(14.25, 9.75)
+	d.set_biome(2, 2, Biome.GRASS)
+	d.set_biome(4, 2, Biome.SAND)
+	check(gw.econ.land_point(p, 1) == Vector2(10, 10), "land_point visits left side first on the same row")
+	d.set_biome(4, 1, Biome.GRASS)
+	check(gw.econ.land_point(p, 1) == Vector2(18, 6), "land_point visits top row before side cells")
+	d.add_flag(3, 2, WorldData.F_BRIDGE)
+	check(gw.econ.land_point(p, 6) == p, "land_point preserves a bridge origin")
+	d.clear_flag(3, 2, WorldData.F_BRIDGE)
+	d.set_biome(4, 1, Biome.OCEAN)
+	d.add_flag(4, 1, WorldData.F_BRIDGE)
+	check(gw.econ.land_point(p, 1) == Vector2(10, 10), "land_point skips a water candidate even when it has a bridge flag")
+	gw.free()
+
 
 func _autosave() -> void:
 	var a := Facility.new()
