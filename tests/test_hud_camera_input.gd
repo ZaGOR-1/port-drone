@@ -83,6 +83,8 @@ func _run() -> void:
 		check(false, "fixture needs isolated df_input_qa profile")
 		finish()
 		return
+	# Seed the incidental menu world as well as the fixture map.
+	seed(20261016)
 	root.mode = Window.MODE_WINDOWED
 	root.size = Vector2i(1280, 720)
 	var pc := root.get_node_or_null("PcPort")
