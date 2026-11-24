@@ -54,6 +54,10 @@ FIX-01 перебуває у `~/projects/port-drone-fix-hud-input` на `fix/hud
 
 Фізична Windows 11 GUI, LAN і Steam — NOT RUN. Пакет і сирі докази зберігаються в `~/projects/droneflames-toolchain/performance/perf02/`. Наступна перевірка — A/B з ZIP PERF-01 на тому самому Windows ПК. Фактичну затримку при вичерпанні боєзапасу зафіксовано для наступного профілювання. [PERF-02](perf02/PERF02_ANALYSIS.md)
 
+## INT-01
+
+QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integration-qa` об’єднує Draft PR #7 → #8 → #9 від `c91e0e6a`. Перевірене дерево гри `26dd6975cf20e987d4db703f1cabde4e85483cb0`. Handoff і докази розміщені в `/home/zagor/projects/droneflames-toolchain/integration-qa-v0.36.1/`. Фізичні Windows DPI, LAN та Steam очікують перевірки. [Інтеграція](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md)
+
 ## Known issues
 
 - Фізичний LAN, Steam-матч на двох ПК, reconnect/resync і late-game FPS мають статус NOT RUN. `Ctrl+1–9` без виділення очищає слот групи. Це чинна поведінка й окреме можливе UX-покращення.
