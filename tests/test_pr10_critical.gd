@@ -74,6 +74,7 @@ func _run() -> void:
 	_test_render_and_hash()
 	_test_missile_shortage_reasons()
 	_test_mixed_missile_strike()
+	_test_watchdog_exit()
 	_test_human_consent()
 	_test_land_rejection_and_cancel()
 	_test_land_modes_and_validation()
@@ -88,6 +89,32 @@ func _run() -> void:
 			FileAccess.open(arg.trim_prefix("--out="),FileAccess.WRITE).store_string(JSON.stringify(result,"\t"))
 	print("PR10_CRITICAL ",JSON.stringify(result))
 	quit(0 if failures.is_empty() else 1)
+
+
+func _test_watchdog_exit() -> void:
+	var w := world()
+	w.data = WorldData.new(128, 128, 456)
+	w.data.biome.fill(Biome.GRASS)
+	w.data.owners.fill(2)
+	w.ops = Operations.new(w)
+	var center := Vector2(258, 258)
+	check(w.ops.wd_exit(1, 2, center) == Vector2.INF, "Watchdog preserves the no-exit result")
+	w.data.set_owner_id(64, 63, 1)
+	w.data.set_owner_id(64, 65, 1)
+	check(w.ops.wd_exit(1, 2, center) == Vector2(258, 254), "Watchdog keeps the first equally near side")
+	w.data.set_biome(64, 63, Biome.OCEAN)
+	check(w.ops.wd_exit(1, 2, center) == Vector2(258, 262), "Watchdog sees a newly blocked exit")
+	w.data.set_owner_id(64, 65, 2)
+	w.data.set_owner_id(63, 64, 0)
+	w.data.set_owner_id(64, 62, 1)
+	check(w.ops.wd_exit(1, 2, center) == Vector2(254, 258), "Watchdog keeps the earlier equal weighted score")
+	w.data.set_owner_id(63, 64, 2)
+	check(w.ops.wd_exit(1, 2, center) == Vector2(258, 250), "Watchdog sees ownership changes before the next search")
+	w.data.set_owner_id(64, 62, 2)
+	w.data.set_owner_id(65, 16, 1)
+	w.data.set_owner_id(66, 16, 1)
+	check(w.ops.wd_exit(1, 2, center) == Vector2(266, 66), "Watchdog keeps step-two candidate parity from ring 48")
+	w.free()
 
 
 func _test_missile_shortage_reasons() -> void:
