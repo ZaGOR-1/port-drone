@@ -36024,3 +36024,7 @@ msgstr "Tutorial complete, +%d"
 #: ui/menus.gd
 msgid "Массовый удар ОТРК — быстрее подтверждается при нехватке ракет"
 msgstr "Mass OTRK strike — faster confirmation when ammunition runs low"
+
+#: ui/menus.gd
+msgid "Ускорен поиск точки выхода армии с чужой территории"
+msgstr "Faster search for army withdrawal points on foreign territory"

@@ -71,6 +71,16 @@ QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integ
 
 Інтеграцію погоджено після review і успішного CI в [PR #11](https://github.com/ZaGOR-1/port-drone/pull/11). Фізичний Windows GUI QA — NOT RUN, відкладено власником. Фізичний LAN і Steam — NOT RUN. За повного запасу GUI-вимір лишається INCONCLUSIVE. Локальні QA-пакети та перевірка Git increment належать до handoff INT-03 у `/home/zagor/projects/droneflames-toolchain/int03.IGMm9Fth/`. Для відкату використовуй окремий PR із revert merge commit від першого батька.
 
+## R07 · Watchdog і точки виходу
+
+Гілка `perf/watchdog-exit-search`, worktree `/home/zagor/projects/port-drone-r07`, база `b2af27a67d503aa6587a82dc5255458fedf32e79` і версія `0.36.2`. Код кандидата `d534cc4a07c885f70676ac92136a8affb1f6dcdb`. На Late E, тик 4746, медіана пошуку 118,42 → 99,96 мс, усі три GUI-пари дали менший CPU пік watchdog. Детермінізм, snapshot roundtrip, simulation 2476/2476, Python 47/47, Linux і Windows official QA build та Wine smoke пройшли. FPS INCONCLUSIVE. Для приймання потрібні review і фізичний Windows A/B. [R07](r07/R07_RESULTS.md)
+
+## INT-04 · R07 / beta 0.36.3
+
+Кандидат [PR #12](https://github.com/ZaGOR-1/port-drone/pull/12) від `b2af27a67d503aa6587a82dc5255458fedf32e79` перевикористовує цілочисельну геометрію пошуку виходу. Review підтвердив збереження порядку кандидатів, розв’язання нічиїх, просторових запитів, поведінки fallback та моменту застосування наказів. У Late E `wd_exit` прискорився з 118,42 до 99,96 мс. Приріст FPS INCONCLUSIVE. Найдовший кадр зріс із 200,60 до 204,65 мс. [Вимірювання та fixture](r07/R07_RESULTS.md)
+
+Версія 0.36.3 зберігає PROTO 7, SIM_REV v036-integration-1 і Save.FORMAT 1. Мережевий допуск порівнює повну версію. Фізичний Windows GUI й навантаження відкладені власником, фізичні LAN і Steam — NOT RUN. Локальні перевірки, QA ZIP/TAR, Git increment і матеріали майбутнього R08 — у handoff INT-04 в toolchain. Наступний профіль — кадр 4693 і чотири команди lockstep у `NetSession._exec`, включно з вкладеними обробниками.
+
 ## Known issues
 
 - Фізичний LAN, Steam-матч на двох ПК, reconnect/resync і late-game FPS мають статус NOT RUN. `Ctrl+1–9` без виділення очищає слот групи. Це чинна поведінка й окреме можливе UX-покращення.

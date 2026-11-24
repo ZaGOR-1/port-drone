@@ -579,26 +579,32 @@ func wd_exit(who: int, land: int, p: Vector2) -> Vector2:
 	var px: int = pc.x
 	var py: int = pc.y
 	for r in range(1, rmax):
-		if best.x >= 0 and r * r >= bs:
+		var r2: int = r * r
+		if best.x >= 0 and r2 >= bs:
 			break
 		var st: int = 1 if r < 48 else 2
+		var left: int = px - r
+		var right: int = px + r
+		var top: int = py - r
+		var bottom: int = py + r
 		for k in range(-r, r + 1, st):
+			var e2: int = r2 + k * k
+			var x: int = px + k
+			var y: int = py + k
 			for sd in 4:
-				var dx: int = k
-				var dy: int = k
-				if sd == 0:
-					dy = -r
-				elif sd == 1:
-					dy = r
-				elif sd == 2:
-					dx = -r
-				else:
-					dx = r
-				var e2: int = dx * dx + dy * dy
+				# All four sides share the same distance lower bound.
 				if e2 >= bs:
-					continue
-				var qx: int = px + dx
-				var qy: int = py + dy
+					break
+				var qx: int = x
+				var qy: int = y
+				if sd == 0:
+					qy = top
+				elif sd == 1:
+					qy = bottom
+				elif sd == 2:
+					qx = left
+				else:
+					qx = right
 				if qx < 0 or qy < 0 or qx >= W or qy >= H:
 					continue
 				var ci: int = qy * W + qx
