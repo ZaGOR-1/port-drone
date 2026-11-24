@@ -15,6 +15,7 @@ var out: String
 var limit: int = 500
 var setup_tels: int = 250
 var verify_ui: bool = false
+var verify_hud_input: bool = false
 var verify_mp: bool = false
 var collect_frames: bool = true
 var perf02: bool = false
@@ -46,6 +47,8 @@ func _ready() -> void:
 			perf_case = arg.trim_prefix("--perf-case=")
 		elif arg == "--verify-ui":
 			verify_ui = true
+		elif arg == "--verify-hud-input":
+			verify_hud_input = true
 		elif arg == "--verify-mp":
 			verify_mp = true
 			collect_frames = false
@@ -337,6 +340,8 @@ func _run() -> void:
 		check(main._plan_targets().size() == limit, "extra dot rejected by the live ammo limit")
 	if verify_ui:
 		await verify_controls(points, limit)
+	if verify_hud_input:
+		await verify_strike_hud_input(points[limit])
 	if perf02:
 		if not verify_mp and not collect_frames and perf_case.is_empty():
 			main._strike_update(0.26)
@@ -507,6 +512,38 @@ func verify_delayed() -> void:
 		"launches": main.strike.log.size(), "net_hash": NetHash.of(world)}
 	check(main.strike.pending.is_empty() and main.strike.log.is_empty(),
 		"the due order validates depleted stock and queues no rounds")
+
+
+func verify_strike_hud_input(map_point: Vector2) -> void:
+	var draft: Array = main._plan_targets()
+	var camera_pos: Vector2 = main.cam.position
+	var zoom: Vector2 = main.cam.zoom
+	var fire: Button = main.strike_ui._fire
+	var fire_point: Vector2 = fire.get_global_rect().get_center()
+	motion(fire_point)
+	check(root.gui_get_hovered_control() == fire, "the active strike confirmation button owns the pointer")
+	button(fire_point, MOUSE_BUTTON_WHEEL_UP, true)
+	check(main.cam.zoom == zoom and main._plan_targets() == draft, "wheel over confirmation preserves camera and strike draft")
+
+	main.menus.show_settings_sub("ui")
+	await get_tree().create_timer(0.34).timeout
+	var scroll: ScrollContainer = main.menus._scroll
+	var scroll_point: Vector2 = scroll.get_global_rect().get_center()
+	motion(scroll_point)
+	for index in 8:
+		button(scroll_point, MOUSE_BUTTON_WHEEL_DOWN, true)
+	click(map_point)
+	check(main.cam.position == camera_pos and main.cam.zoom == zoom, "Settings wheel and clicks leave camera fixed during strike planning")
+	check(main._plan_targets() == draft and not fire.disabled, "Settings input preserves the pending strike order")
+	main.menus.close()
+	await frames(3)
+	motion(map_point)
+	button(map_point, MOUSE_BUTTON_WHEEL_UP, true)
+	check(main.cam.zoom != zoom, "map wheel works after closing Settings during strike planning")
+	main.cam.zoom = zoom
+	main.cam.center_on(camera_pos)
+	await frames(3)
+	samples["strike_hud_input"] = {"targets": draft.size(), "checks_passed": failures.is_empty()}
 
 
 func verify_controls(points: Array[Vector2], n: int) -> void:
