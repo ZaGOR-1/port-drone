@@ -10,7 +10,7 @@ const ScrollInput = preload("res://ui/ui24/tap_guard.gd")
 
 signal request(name: String)
 
-const VERSION: String = "v0.36.0"
+const VERSION: String = "v0.36.1"
 
 const WHATS_NEW: Array = [
 	"НОВОЕ: Серая зона в начале партии — до 10:00 (12:00 на 8 странах) запрещены полномасштабная война и штурмы городов; с 3:00 возможны пограничные стычки за рудники и спорные залежи",
