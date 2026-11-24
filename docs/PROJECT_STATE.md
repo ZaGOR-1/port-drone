@@ -85,7 +85,15 @@ QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integ
 
 Гілка `perf/lockstep-command-execution`, worktree `/home/zagor/projects/port-drone-r08`, база `690915646ec0186b5086cd254dcd6b8eab85f6c0`. Код `d59bba648144b4c866c4b0f351b8eb9ca44942e4`, версія 0.36.3. На Late E чотири `army.order_attack` викликають пошук суходолу під час побудови fallback-шляхів. Периметровий обхід у `land_point` скоротив медіану пакета 174,449 → 121,996 мс у трьох GUI A/B-парах. Детермінізм історичного replay збережено. FPS INCONCLUSIVE. Наступні кроки — review Draft і фізичний Windows QA. [Профіль, регресії й QA-пакети](r08/R08_RESULTS.md)
 
+## INT-05 · R08 / beta 0.36.4
+
+[PR #13](https://github.com/ZaGOR-1/port-drone/pull/13) від `690915646ec0186b5086cd254dcd6b8eab85f6c0`. Периметровий обхід `Economy.land_point` зберігає порядок клітинок, tie-breaking і результати `Army.safe_point`. Історичний апаратний R08 дав −30,1% latency пакета, FPS INCONCLUSIVE. PROTO 7, SIM_REV v036-integration-1 і Save.FORMAT 1 збережено. Мережевий допуск перевіряє повну версію. Фізичний Windows QA відкладено власником, фізичні LAN і Steam — NOT RUN. [Результати R08](r08/R08_RESULTS.md)
+
+Worktree кандидата — `/home/zagor/projects/port-drone-r08`. Підсумок інтеграції, QA-пакети, Git increment і контекст R09 — `/home/zagor/projects/droneflames-toolchain/int05.qp8pp1c0/`. У всіх трьох B прогонах R08 найдовший кадр припав на watchdog на 4746. Для нового baseline лишаються Late E, C1200 і D1920/D2100.
+
 ## Known issues
+
+- **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
 
 - Фізичний LAN, Steam-матч на двох ПК, reconnect/resync і late-game FPS мають статус NOT RUN. `Ctrl+1–9` без виділення очищає слот групи. Це чинна поведінка й окреме можливе UX-покращення.
 - Падіння до 2–3 FPS у масштабних боях повідомлялося користувачем. Точний bottleneck ще потребує Windows профілювання. Відкриті shutdown leaks, цілісність updater, стійкість saves при збоях і загальне покриття мережевих схем. [Backlog](codex/verified/BACKLOG.md)
