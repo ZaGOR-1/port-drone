@@ -13,7 +13,7 @@
 | Windows build/export | [Build and release](codex/verified/BUILD_RELEASE.md) | PCK, DLL, CI, офіційний template та межі SFX |
 | Godot runtime | [Windows QA · MinGW](WINDOWS_QA.md#godot-mingw) | Native race, provenance, headless CPU benchmark |
 | Тестування і QA | [Windows QA](WINDOWS_QA.md#перевірки) · [Windows checklist](codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) | Поточні результати за артефактами та ручні сценарії |
-| Продуктивність | [Performance validation](performance.md) | Команди вимірювання й історичні CPU результати |
+| Продуктивність | [Performance validation](performance.md) · [PERF-01 ОТРК](perf01/PERF01_ANALYSIS.md) | Вимірювання, результати CPU та QA масового вибору |
 | Roadmap і рішення | [Next steps](PROJECT_STATE.md#next-steps) · [Backlog](codex/verified/BACKLOG.md) · [Decisions](codex/verified/DECISIONS.md) | Windows QA та FPS, Linux-порт, UI після Linux |
 | Історичні технічні звіти | [Інвентар Markdown](DOCUMENTATION_AUDIT.md) | Git/PR історія, Phase-звіти, старі контрольні збірки, source coverage |
 

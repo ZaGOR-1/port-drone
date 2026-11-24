@@ -1,6 +1,6 @@
 # DroneFlames — пам’ять проєкту
 
-Звірено 2026-11-22. Маршрут до технічних документів і архіву наведено в [індексі](INDEX.md).
+Базовий стан звірено 2026-11-22. PERF-01 звірено 2026-11-24. Маршрут до технічних документів і архіву наведено в [індексі](INDEX.md).
 
 ## Project identity
 
@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| Актуальна production beta | `c91e0e6a7eef831687e6e63550560bba739a6b87`. PR #7 і #8 залишаються окремими Draft PR. |
 | Windows-стабілізація в `beta` | [PR #5](https://github.com/ZaGOR-1/port-drone/pull/5) об’єднано комітом `739a21bcdb74b31e8a9651f491c9f8271948b294` від бази `94aedbe36fc5d1abd4da100bed83f803fad53b2f`. Production tip `e174cd0ce6d6804a8f0598d29bfa7b7008c1206f`, дерево `game/` `052d3b1047774012be4fbc551cfe36d995845ea8`. |
 | `main` / `origin/main` | `172df65e3bd004efed9a5444e90a284d9d69db10`. UI `v0.34.0`, updater config `0.33.2.3`, SIM_REV `pr10-phase5b2-1`. |
 | Контракти `beta` і локального кандидата | `v0.36.0`, `PROTO 7`, `SIM_REV v036-integration-1`, `Save.FORMAT 1`. |
@@ -38,6 +39,12 @@ DroneFlames — RTS про державу, економіку, дипломат�
 ## In progress
 
 Інтеграцію Windows-стабілізації в `beta` завершено. Фізичний LAN і профілювання late-game FPS залишаються завданнями наступного циклу.
+
+## PERF-01
+
+Кандидат `perf/otrk-target-selection`, worktree `~/projects/port-drone-perf01`. UI-коміт `1ebb914`, код Windows QA `130dce2`, версія кандидата `0.36.1`. На `beta` відтворено поступову деградацію вибору й промальовування. У двох ізольованих A/B-парах на 200 цілях клік зменшився з 24,93 до 0,69 мс, підготовка рендерингу з 9,63 до 5,02 мс/кадр. NetHash, порядок цілей, wire payload і черги збіглися. Симуляційна регресія 2476/2476.
+
+Наступна перевірка — повтор на фізичній Windows 11 зі збігом SHA256 EXE/DLL, потім GUI зі спільним кандидатом з PR #8. Окремий пріоритет після native QA — повторні повні плани при preview і підтвердженні. Сирі дані та ZIP у `~/projects/droneflames-toolchain/performance/perf01/`. [PERF-01](perf01/PERF01_ANALYSIS.md)
 
 ## Known issues
 
