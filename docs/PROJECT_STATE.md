@@ -91,6 +91,14 @@ QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integ
 
 Worktree кандидата — `/home/zagor/projects/port-drone-r08`. Підсумок інтеграції, QA-пакети, Git increment і контекст R09 — `/home/zagor/projects/droneflames-toolchain/int05.qp8pp1c0/`. У всіх трьох B прогонах R08 найдовший кадр припав на watchdog на 4746. Для нового baseline лишаються Late E, C1200 і D1920/D2100.
 
+## R10 · ArmyFire._impact
+
+Worktree `/home/zagor/projects/port-drone-r10`, гілка `perf/armyfire-impact`, база `d8114afac56c2475ca9ded5bd8627d4d42000041`. Код `85d76a177110c802cee9c7792abfa4c295c6318a`, fixture і пакети з `8509ddb58a51e5775ab12479d6017b10c98bce03`, дерево гри `6e367205359cdc75d4e83520ac11901d421afae8`, версія 0.36.4.
+
+Ранній фільтр відсікає 99.26% відвідувань D2100. Медіана inclusive `_impact` 8.81 → 4.94 мс/кадр, FPS 19.18 → 20.84. У C1200 exclusive `_impact` 3.12 → 2.04 мс/кадр, FPS INCONCLUSIVE. Late E, C1200 і D2100 збіглися покроково. Дисковий save і мережевий snapshot продовжилися ідентично між A/B. Python 49/49, simulation 2476/2476, differential 49/49 на кожному варіанті. Linux і Windows official QA-пакети, Linux native та Wine headless smoke пройшли.
+
+Докази та QA-архіви — `/home/zagor/projects/droneflames-toolchain/performance/r10.sgT1Rl0N/`. Наступний крок для інтеграції — review Draft PR і фізичний Windows x64 A/B у D2100 та щільному сценарії, де ранній фільтр має додаткову ціну. [Методика, результати й обмеження](r10/R10_RESULTS.md)
+
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
