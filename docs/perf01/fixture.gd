@@ -20,6 +20,7 @@ var verify_mp: bool = false
 var collect_frames: bool = true
 var perf02: bool = false
 var perf_case: String = ""
+var confirm_stock: int = -1
 var host_command_steps: int = 0
 var expected_queued: int = 0
 var changed_owner: Facility
@@ -45,6 +46,8 @@ func _ready() -> void:
 			collect_frames = false
 		elif arg.begins_with("--perf-case="):
 			perf_case = arg.trim_prefix("--perf-case=")
+		elif arg.begins_with("--confirm-stock="):
+			confirm_stock = int(arg.trim_prefix("--confirm-stock="))
 		elif arg == "--verify-ui":
 			verify_ui = true
 		elif arg == "--verify-hud-input":
@@ -123,13 +126,13 @@ func count_controls(node: Node) -> int:
 	return total
 
 
-func observe(points: Array[Vector2], hover: bool) -> Dictionary:
+func observe(points: Array[Vector2], hover: bool, frame_count: int = 26) -> Dictionary:
 	var frame_us: Array[int] = []
 	var draw_calls: Array[int] = []
 	var motion_us: Array[int] = []
 	begin_sample()
 	var stamp: int = Time.get_ticks_usec()
-	for i in 26:
+	for i in frame_count:
 		if hover:
 			var at: Vector2 = points[(i * 19) % points.size()]
 			root.warp_mouse(at)
@@ -193,6 +196,8 @@ func plan_digest() -> Dictionary:
 	return {
 		"command": JSON.stringify(wire).sha256_text(),
 		"ordered_allocation": JSON.stringify(allocation).sha256_text(),
+		"per_target": JSON.stringify(plan["per_target"]).sha256_text(),
+		"why": plan["why"],
 		"assigned": plan["assigned"], "total": plan["total"], "available": plan["available"],
 		"net_hash_before": NetHash.of(main.world),
 	}
@@ -311,13 +316,15 @@ func _run() -> void:
 			samples["failed_click_scopes_us"] = measured
 			check(false, "map click %d at %s, selected=%d, ops=%s hovered=%s" % [i + 1, points[i], selected, main.hud.ops_panel.get_global_rect(), root.gui_get_hovered_control()])
 			break
-		if i < 10 or (i + 1) % 8 == 0:
+		if i < 10 or (i + 1) % (32 if confirm_stock >= 0 else 8) == 0:
 			await get_tree().process_frame
 		if (i + 1) in CHECKPOINTS or (perf02 and i + 1 == limit):
 			var n: String = str(i + 1)
+			if confirm_stock >= 0 and i + 1 != limit:
+				continue
 			await frames(3)
 			samples[n] = {}
-			if collect_frames and (not perf02 or i + 1 in [50, 100, 199, 200, 201, 300, 500]):
+			if collect_frames and confirm_stock < 0 and (not perf02 or i + 1 in [50, 100, 199, 200, 201, 300, 500]):
 				samples[n]["idle"] = await observe(points.slice(0, i + 1), false)
 				samples[n]["hover"] = await observe(points.slice(0, i + 1), true)
 			samples[n]["counts"] = counts()
@@ -328,7 +335,7 @@ func _run() -> void:
 	if perf02:
 		samples["input_retries"] = retries
 		check(main.cam.position == Vector2(1024, 1024) and main.cam.zoom == Vector2.ONE,
-			"camera stays fixed throughout selection")
+			"camera stays fixed throughout selection, got %s at zoom %s" % [main.cam.position, main.cam.zoom])
 	samples["add_us"] = add
 	samples["add_scopes_us"] = input_scopes
 	if not failures.is_empty():
@@ -355,10 +362,23 @@ func _run() -> void:
 			return
 		apply_case()
 	expected_queued = limit
-	if perf02 and (not perf_case.is_empty()) and perf_case != "host-stock":
+	if confirm_stock >= 0:
+		set_confirm_stock(magazine)
+		begin_sample()
+		main._strike_update(0.26)
+		for i in 48:
+			main._strike_update(1.0 / 60.0)
+		samples["fixed_preview"] = {"frames": 49, "scopes_us": end_sample()}
+		if collect_frames:
+			samples["shortage_preview"] = await observe(points.slice(0, limit), false, 64)
+		expected_queued = mini(confirm_stock, limit)
+	if confirm_stock >= 0 or (perf02 and not perf_case.is_empty() and perf_case != "host-stock"):
 		var digest: Dictionary = plan_digest()
 		samples["effective_plan"] = digest
-		expected_queued = int(digest["assigned"])
+		if confirm_stock >= 0:
+			check(int(digest["assigned"]) == expected_queued, "all available in-range rounds are assigned")
+		else:
+			expected_queued = int(digest["assigned"])
 	var before: String = NetHash.of(main.world)
 	if perf_case not in ["launcher-state", "tie"]:
 		check(before == samples["workload"]["net_hash_initial"], "selection and HUD interaction preserve the initial NetHash")
@@ -426,7 +446,7 @@ func _run() -> void:
 			"first_wave": JSON.stringify(first_wave).sha256_text(), "money": main.world.player.money,
 			"money_before": before_money, "money_after_order": after_money, "ready_after_order": after_ammo,
 			"rng_state": str(main.world.rng.state), "final_tick": main.world.net_tick})
-	if collect_frames:
+	if collect_frames and confirm_stock < 0:
 		await frames(3)
 		samples["post_launch"] = await observe(points, false)
 	_finish()
@@ -467,6 +487,19 @@ func empty_launchers(count: int) -> void:
 	var tels: Array[Facility] = main.world.mil.facs_of_kind(Facility.Kind.TEL)
 	for i in count:
 		tels[i].missiles = 0
+
+
+func set_confirm_stock(magazine: int) -> void:
+	var spent: int = magazine - confirm_stock
+	check(spent >= 0, "requested confirmation stock fits the starting magazine")
+	for tel: Facility in main.world.mil.facs_of_kind(Facility.Kind.TEL):
+		var take: int = mini(tel.missiles, spent)
+		tel.missiles -= take
+		spent -= take
+		if spent == 0:
+			break
+	check(main.world.mil.missiles_ready(main.world.player.id) == confirm_stock,
+		"stock was reduced after targets were selected under the normal ammo cap")
 
 
 func apply_case() -> void:
