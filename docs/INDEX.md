@@ -13,8 +13,14 @@
 | Windows build/export | [Build and release](codex/verified/BUILD_RELEASE.md) | PCK, DLL, CI, офіційний template та межі SFX |
 | Godot runtime | [Windows QA · MinGW](WINDOWS_QA.md#godot-mingw) | Native race, provenance, headless CPU benchmark |
 | Тестування і QA | [Windows QA](WINDOWS_QA.md#перевірки) · [Windows checklist](codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) | Поточні результати за артефактами та ручні сценарії |
-| Продуктивність | [Performance validation](performance.md) | Команди вимірювання й історичні CPU результати |
+| INT-01 | [Інтеграція PR #7–#9](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md) | QA-кандидат 0.36.1, Windows A/B і порядок приймання |
+| Продуктивність | [Performance validation](performance.md) · [PERF-01 ОТРК](perf01/PERF01_ANALYSIS.md) · [PERF-02 підтвердження](perf02/PERF02_ANALYSIS.md) | Вимірювання, результати CPU та QA масового вибору |
 | Roadmap і рішення | [Next steps](PROJECT_STATE.md#next-steps) · [Backlog](codex/verified/BACKLOG.md) · [Decisions](codex/verified/DECISIONS.md) | Windows QA та FPS, Linux-порт, UI після Linux |
 | Історичні технічні звіти | [Інвентар Markdown](DOCUMENTATION_AUDIT.md) | Git/PR історія, Phase-звіти, старі контрольні збірки, source coverage |
 
 Шлях `docs/codex/verified/` збережено для наявних посилань. Дата, commit і тестовий сценарій у кожному звіті визначають його обсяг. Історичний PASS і старі дозволи не переносяться на поточний HEAD.
+
+## Правила розробки й локалізації
+
+- [Git workflow](DEVELOPMENT_WORKFLOW.md) · [Versioning](VERSIONING_POLICY.md)
+- [Аудит локалізації](LOCALIZATION_AUDIT.md) · [Зміни](LOCALIZATION_FIXES.md) · [Глосарій](LOCALIZATION_GLOSSARY.md) · [Тести й ручний QA](LOCALIZATION_TESTS.md)

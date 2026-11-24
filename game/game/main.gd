@@ -327,6 +327,9 @@ func _open_pause() -> void:
 		return
 	if not menus.is_open():
 		_menu_paused = _paused
+	_cancel_desktop_press()
+	_pc_pan = false
+	_rmb_at = Vector2.INF
 	_paused = true
 	_apply_speed()
 	menus.show_pause()
@@ -1372,6 +1375,34 @@ func _on_action(nm: String) -> void:
 			hud.open_trade()
 
 
+# Observe releases before GUI dispatch. A release consumed by a Control must cancel
+# the pending map gesture without running its click or drag action.
+func _input(event: InputEvent) -> void:
+	if _desktop_press == null or not event is InputEventMouseButton:
+		return
+	var mb := event as InputEventMouseButton
+	if mb.device != InputEvent.DEVICE_ID_EMULATION and mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+		_cancel_consumed_release.call_deferred(_desktop_press)
+
+
+func _cancel_consumed_release(press: InputEventMouseButton) -> void:
+	if _desktop_press == press:
+		_cancel_desktop_press()
+
+
+func _cancel_desktop_press() -> void:
+	_desktop_press = null
+	_mouse_down = false
+	_shift_mouse_tap = false
+	_moved = false
+	_drag_pt = -2
+	_dtz = false
+	line_cells.clear()
+	var army: Object = _pc_army()
+	if army != null:
+		army.cancel_drag()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if in_menu:
 		return
@@ -1442,6 +1473,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		_pc_hotkey(key)
 		return
+	if menus.is_open():
+		return
+	# Wheel events can pass through stopped Controls after the GUI gets first
+	# chance to scroll. Map gestures are accepted only over the world.
+	if get_viewport().gui_get_hovered_control() != null:
+		if event is InputEventGesture or (event is InputEventMouseButton and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]):
+			return
 	if event is InputEventMagnifyGesture:
 		var mg := event as InputEventMagnifyGesture
 		cam.set_zoom_at(cam.zoom.x * mg.factor, mg.position)
@@ -1522,6 +1560,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			var wdir2: int = 1 if (pc_w2 != null and bool(pc_w2.get("wheel_invert"))) else -1
 			cam.step_zoom(wdir2, mb.position)
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed:
+				if _desktop_press != null:
+					_cancel_desktop_press()
+				_desktop_press = mb
+			elif _desktop_press == null:
+				return
+			var press := _desktop_press
+			if not mb.pressed:
+				_desktop_press = null
 			if _pc_army() != null and bool(_pc_army().lmb(mb)):
 				_mouse_down = false
 				_shift_mouse_tap = false
@@ -1529,12 +1576,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			if mb.pressed:
 				_mouse_down = true
 				_shift_mouse_tap = mb.shift_pressed
-				_begin_press(mb.position)
+				_begin_press(mb.position, false)
 			else:
 				_mouse_down = false
 				var sh_tap: bool = mb.shift_pressed or _shift_mouse_tap
 				_shift_mouse_tap = false
-				_release_press(mb.position, sh_tap)
+				_release_press(mb.position, sh_tap, false, press.double_click)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT or mb.button_index == MOUSE_BUTTON_MIDDLE:
 			_pc_pan = mb.pressed  # PC port: right / middle drag moves the map
 			if mb.button_index == MOUSE_BUTTON_RIGHT:
@@ -1559,28 +1606,33 @@ func _unhandled_input(event: InputEvent) -> void:
 					_rmb_at = Vector2.INF
 	elif event is InputEventMouseMotion:
 		var mm: = event as InputEventMouseMotion
-		if mm.device != InputEvent.DEVICE_ID_EMULATION and _pc_army() != null and bool(_pc_army().mouse_move(mm.position)):
+		if mm.device == InputEvent.DEVICE_ID_EMULATION:
 			return
-		if mm.device != InputEvent.DEVICE_ID_EMULATION and _pc_pan and not _mouse_down:
+		if _desktop_press != null:
+			if (mm.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+				_cancel_desktop_press()
+			elif _pc_army() != null and bool(_pc_army().mouse_move(mm.position)):
+				return
+		if _pc_pan and not _mouse_down:
 			_rmb_path += mm.relative.length()
 			if (mm.button_mask & (MOUSE_BUTTON_MASK_RIGHT | MOUSE_BUTTON_MASK_MIDDLE)) == 0:
 				_pc_pan = false
+				_rmb_at = Vector2.INF
 				return
 			if cam_lock:
 				cam_lock = false
 				hud.set_key_pressed("follow", false)
 			cam.pan_screen(mm.relative)
 			return
-		if mm.device == InputEvent.DEVICE_ID_EMULATION or not _mouse_down:
+		if not _mouse_down:
 			return
-		if _dtz:
-			_dtz_drag(mm.position)
-		elif _moved or mm.position.distance_to(_press_pos) > 6.0:
+		if _moved or mm.position.distance_to(_press_pos) > 6.0:
 			_moved = true
 			_drag_or_pan(mm.position, mm.relative)
 
 
 
+var _desktop_press: InputEventMouseButton = null
 var _pc_pan: bool = false
 var _rmb_at: Vector2 = Vector2.INF
 var _rmb_path: float = 0.0
@@ -1592,7 +1644,9 @@ func _pc_army() -> Object:
 
 
 func _reset_input_state() -> void:
-	_mouse_down = false
+	_cancel_desktop_press()
+	_last_tap_ms = -10000
+	_strat_tap = Vector2.INF
 	_pc_pan = false
 	_rmb_at = Vector2.INF
 	_rmb_path = 0.0
@@ -1606,9 +1660,6 @@ func _reset_input_state() -> void:
 	_pinch_mid = Vector2.INF
 	if cam != null and cam.has_method("clear_held"):
 		cam.call("clear_held")
-	var pa: Object = _pc_army()
-	if pa != null and pa.has_method("cancel_drag"):
-		pa.call("cancel_drag")
 	if _ghost != null:
 		_ghost.queue_redraw()
 	_pc_hover_ui()
@@ -1892,7 +1943,7 @@ func _on_net_speed(old: int, new: int) -> void:
 		elif why.begins_with("auto:"):
 			if net.speed_who == me_name:
 				return  # one's own event has its own notification
-			t += " · %s%s" % [why.substr(5), (Loc.t(" У %s") % net.speed_who.to_upper()) if net.speed_who != "" else ""]
+			t += " · %s%s" % [Loc.t(why.substr(5)), (Loc.t(" У %s") % net.speed_who.to_upper()) if net.speed_who != "" else ""]
 	hud.show_toast(t)
 
 

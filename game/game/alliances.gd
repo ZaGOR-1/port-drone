@@ -21,6 +21,11 @@ const NAMES: Array = ["Северный пакт", "Южный блок", "Во�
 	"Лига Трёх Рек", "Лига Побережья", "Лига Свободных Земель", "Лига Холмов", "Лига Равнин",
 	"Содружество Островов", "Содружество Долин", "Северное кольцо", "Щит Юга", "Кольцо Морей",
 	"Пакт Перевалов", "Альянс Рассвета", "Горный блок"]
+# Keep the saved / networked name as entered; translate preset names for display.
+static func display_name(nm: String) -> String:
+	return Loc.t(nm) if NAMES.has(nm) else nm
+
+
 const COLORS: Array = [Color("2fd8e6"), Color("ffb000"), Color("ff5fb0"), Color("a2e35f"), Color("c08cff"),
 	Color("e8564a"), Color("5f8bff"), Color("f2efe6")]
 const COLOR_N: int = 8

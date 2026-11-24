@@ -1,0 +1,8 @@
+# L10N-03 · QA summary
+
+**PARTIAL.** Перевірений runtime придатний для ручного QA. Остаточне рішення щодо інтеграції — [NOT READY](L10N03_MERGE_READINESS.md).
+
+- Джерело Windows-пакета `0e8316ee167b11a90925e33a126290b6848d9986`, дерево `game/` `26e85284d4c7ae2d11bdc95a0f09eef623d15683`. Версія `0.36.0`, official Godot `4.7.2.stable.official.ed1daf0bf`. QA ZIP і склад EXE/DLL перевірено за SHA256. [Windows QA](L10N03_WINDOWS_QA.md)
+- CI для коду пакета — PASS. 46/46 unittest, 125 L10N checks, 2476/2476 simulation checks, Windows x64 build. Release job — SKIPPED. CI checkout `61fcb9e33584082e1e6eca4a61b66f8af2f8ba79` має те саме повне Git-дерево, що й `0e8316e`. [CI та артефакти](https://github.com/ZaGOR-1/port-drone/actions/runs/45278752360)
+- Нові Ubuntu exact-PCK fixtures — 11/11 Save/Load assertions, 42/42 updater assertions і 15/15 assertion двох ENet-клієнтів у loopback namespace. У перевірених текстах `uk/ru/en` випадкового змішування мов не виявлено. Відомі повідомлення про витоки ресурсів при завершенні лишаються. Підтверджених нових дефектів у перевірених сценаріях — 0. Ігрових виправлень у L10N-03 — 0. [Windows QA](L10N03_WINDOWS_QA.md) · [Multiplayer QA](L10N03_MULTIPLAYER_QA.md)
+- Повторно використано L10N-02 Linux GUI та 30 fixed-tick replay зі спільним snapshot. NetHash і RNG збіглися в усіх трьох локалях. Фінальний NetHash `787a72dc394849ab`. Збережено `PROTO=7`, `SIM_REV=v036-integration-1`, `Save.FORMAT=1`. [Попередні докази](LOCALIZATION_TESTS.md#l10n-02)

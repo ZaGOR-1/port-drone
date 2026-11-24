@@ -1,6 +1,6 @@
 # DroneFlames — пам’ять проєкту
 
-Звірено 2026-11-22. Маршрут до технічних документів і архіву наведено в [індексі](INDEX.md).
+Базовий стан звірено 2026-11-22. PERF-01 і PERF-02 звірено 2026-11-24. Маршрут до технічних документів і архіву наведено в [індексі](INDEX.md).
 
 ## Project identity
 
@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| Актуальна production beta | `c91e0e6a7eef831687e6e63550560bba739a6b87`. PR #7 і #8 залишаються окремими Draft PR. |
 | Windows-стабілізація в `beta` | [PR #5](https://github.com/ZaGOR-1/port-drone/pull/5) об’єднано комітом `739a21bcdb74b31e8a9651f491c9f8271948b294` від бази `94aedbe36fc5d1abd4da100bed83f803fad53b2f`. Production tip `e174cd0ce6d6804a8f0598d29bfa7b7008c1206f`, дерево `game/` `052d3b1047774012be4fbc551cfe36d995845ea8`. |
 | `main` / `origin/main` | `172df65e3bd004efed9a5444e90a284d9d69db10`. UI `v0.34.0`, updater config `0.33.2.3`, SIM_REV `pr10-phase5b2-1`. |
 | Контракти `beta` і локального кандидата | `v0.36.0`, `PROTO 7`, `SIM_REV v036-integration-1`, `Save.FORMAT 1`. |
@@ -37,7 +38,25 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 ## In progress
 
+FIX-01 перебуває у `~/projects/port-drone-fix-hud-input` на `fix/hud-camera-input` від production `beta` `c91e0e6`. Виправлено межі армійських панелей і routing вводу миші. Цільовий playback, симуляційна регресія та official Windows build пройшли. Нативний Windows GUI після виправлень очікує ручного QA. Звіт із вихідної Windows-збірки додано до PR #7. Вибір понад приблизно 200 цілей ОТРК відкладено до PERF-01. [Причини](FIX01_BUG_ANALYSIS.md), [регресії](FIX01_REGRESSION_TESTS.md), [Windows QA](FIX01_WINDOWS_QA.md).
+
 Інтеграцію Windows-стабілізації в `beta` завершено. Фізичний LAN і профілювання late-game FPS залишаються завданнями наступного циклу.
+
+## PERF-01
+
+Кандидат `perf/otrk-target-selection`, worktree `~/projects/port-drone-perf01`. UI-коміт `1ebb914`, код Windows QA `130dce2`, версія кандидата `0.36.1`. На `beta` відтворено поступову деградацію вибору й промальовування. У двох ізольованих A/B-парах на 200 цілях клік зменшився з 24,93 до 0,69 мс, підготовка рендерингу з 9,63 до 5,02 мс/кадр. NetHash, порядок цілей, wire payload і черги збіглися. Симуляційна регресія 2476/2476.
+
+Наступна перевірка — повтор на фізичній Windows 11 зі збігом SHA256 EXE/DLL, потім GUI зі спільним кандидатом з PR #8. Подальші зміни підтвердження й preview описано в PERF-02. Сирі дані та ZIP у `~/projects/droneflames-toolchain/performance/perf01/`. [PERF-01](perf01/PERF01_ANALYSIS.md)
+
+## PERF-02
+
+Гілка `perf/otrk-target-selection`, worktree `~/projects/port-drone-perf01`, код `3880359`, версія `0.36.1`, Draft PR #9 до `beta`. На 500 цілях headless-підтвердження 107,27 → 16,62 мс, контрольований preview 4,60 → 2,05 мс/кадр за тієї самої частоти. Повторний план для синхронного залпу лише ОТРК замінено застосуванням готового плану в межах виклику. У 15 A/B-парах порівняно команди, черги, першу хвилю й NetHash. Simulation regression 2476/2476, Python discovery 43/43.
+
+Фізична Windows 11 GUI, LAN і Steam — NOT RUN. Пакет і сирі докази зберігаються в `~/projects/droneflames-toolchain/performance/perf02/`. Наступна перевірка — A/B з ZIP PERF-01 на тому самому Windows ПК. Фактичну затримку при вичерпанні боєзапасу зафіксовано для наступного профілювання. [PERF-02](perf02/PERF02_ANALYSIS.md)
+
+## INT-01
+
+QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integration-qa` об’єднує Draft PR #7 → #8 → #9 від `c91e0e6a`. Перевірене дерево гри `26dd6975cf20e987d4db703f1cabde4e85483cb0`. Handoff і докази розміщені в `/home/zagor/projects/droneflames-toolchain/integration-qa-v0.36.1/`. Python 47/47, simulation 2476/2476, міжмовний replay 30 ticks і ENet loopback із reconnect/resync пройшли. Official Windows ZIP перевіряється через SHA256. Wine smoke і Linux GUI пройшли у задокументованому обсязі. Фізичні Windows DPI, LAN та Steam мають статус NOT RUN. [Інтеграція](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md)
 
 ## Known issues
 
@@ -65,3 +84,21 @@ DroneFlames — RTS про державу, економіку, дипломат�
 ## Handoff
 
 Прочитай [AGENTS.md](../AGENTS.md) і цей файл. Звір `git status`, HEAD, refs та worktrees. Для QA відкрий [Windows QA](WINDOWS_QA.md) і перевір маніфест ще раз. Після суттєвої роботи онови цей стан і відповідний технічний документ.
+
+## Development Standards v1
+
+Локальна гілка feature/development-standards-l10n від c91e0e6, worktree ~/projects/port-drone-standards-l10n. Git/версійні правила й перевірки локалізації додано. Локалізація PARTIAL. Виправлені 180 активних ключів uk/en, locale boot/updater та runtime HUD. Пройшли 77 localization checks, 31 релевантний regression test, 2476 simulation checks і короткий replay ru/uk/en. Вибірково перевірено GUI та Save/Continue в ізольованому Linux QA, зібрано Windows x64 QA. Native Windows GUI, повне покриття dynamic keys та transport UI відкриті. Версія v0.36.0. Production beta, R01–R06 і L01 залишилися без змін. [Перевірки](LOCALIZATION_TESTS.md)
+
+## L10N-02 · 2026-11-24
+
+Часткове приймання локалізації у `feature/development-standards-l10n`, worktree `~/projects/port-drone-standards-l10n`. Початкова вершина `15b6bbb`. Виправлення `f1e1f66` і `3ee7f1d`. Перевірене дерево `game/` `26e85284d4c7ae2d11bdc95a0f09eef623d15683`. Локальна й віддалена production `beta` на `c91e0e6a7eef831687e6e63550560bba739a6b87`.
+
+Переглянуто 466 порожніх записів uk/en, заповнено 29 і класифіковано 437 службових. Виправлено складені підписи, повторний рендер сповіщень і текст анімованого завантаження. Каталоги, L10N, simulation, replay, Windows build check і вибірковий Linux/Wine GUI пройдено. Версія `0.36.0`. Для інтеграції залишається Windows native GUI, живий transport UI та сценарії з [ручного checklist](LOCALIZATION_TESTS.md#ручний-checklist-l10n-02). Локальний handoff з bundle і доказами є в `~/projects/droneflames-toolchain/l10n02-qa.sfnBnw/handoff/`. [Аудит](LOCALIZATION_AUDIT.md#l10n-02--перевірка-порожніх-записів)
+
+## Git Workflow v2
+
+Постійну політику локальних комітів, тематичних гілок, погодженого push і Draft PR закріплено в [AGENTS.md](../AGENTS.md) та [Development Workflow](DEVELOPMENT_WORKFLOW.md). Worktree `~/projects/port-drone-standards-l10n` використовує гілку `feature/development-standards-l10n` для Draft PR у `beta`. Кандидат L10N-02 лишається PARTIAL для review. Версія `0.36.0`, перевірене дерево гри `26e85284d4c7ae2d11bdc95a0f09eef623d15683`. Для приймання залишається [ручний QA](LOCALIZATION_TESTS.md#ручний-checklist-l10n-02).
+
+## L10N-03
+
+PR #7 з `~/projects/port-drone-standards-l10n` до `beta` лишається Draft. Перевірений runtime і Windows ZIP походять із `0e8316e`, дерево гри `26e85284d4c7ae2d11bdc95a0f09eef623d15683`, версія `0.36.0`. CI для дерева пакета пройшов. На Ubuntu пройшли точкові перевірки Save/Load, updater з локальними mocks і двоклієнтський ENet loopback з reconnect та resync. Для інтеграції статус NOT READY через відкритий Windows native GUI і DPI. Physical LAN, Steam й native updater лишаються NOT RUN. [Підсумок QA](L10N03_QA_SUMMARY.md) · [Merge gates](L10N03_MERGE_READINESS.md)

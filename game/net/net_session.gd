@@ -2369,7 +2369,7 @@ func plate() -> Dictionary:
 		return {}
 	if reconnecting:
 		return {"key": "rc", "sev": "alarm", "icon": "net_signal_lost", "title": "ПЕРЕПОДКЛЮЧЕНИЕ...",
-			"sub": ("ПОПЫТКА %d · ВАШЕ МЕСТО СОХРАНЕНО" % maxi(1, rc_tries)) if rc_tries < 3 else "ВЫЙТИ МОЖНО ЧЕРЕЗ МЕНЮ · МЕСТО СОХРАНИТСЯ",
+			"sub": (Loc.t("ПОПЫТКА %d · ВАШЕ МЕСТО СОХРАНЕНО") % maxi(1, rc_tries)) if rc_tries < 3 else "ВЫЙТИ МОЖНО ЧЕРЕЗ МЕНЮ · МЕСТО СОХРАНИТСЯ",
 			"timer": _mmss(maxf(0.0, NetConfig.RECONNECT_S - rc_t))}
 	if rejoining:
 		return {"key": "rj", "sev": "info", "icon": "net_sync", "spin": true, "title": "ВОЗВРАЩАЕМСЯ В ПАРТИЮ", "sub": "ПОЛУЧАЕМ МИР ОТ ХОСТА..."}
@@ -2386,10 +2386,10 @@ func plate() -> Dictionary:
 			all_n = int(rc[1])
 			miss = _missing_text()
 		return {"key": "resume", "sev": "info", "icon": "net_players", "title": "ЖДЁМ ИГРОКОВ",
-			"sub": ("ВЕРНУЛИСЬ: %d ИЗ %d" % [back_n, all_n]) + ((" · ЖДЁМ: " + miss) if miss != "" else ("" if is_host else " · ХОСТ МОЖЕТ НАЧАТЬ")),
+			"sub": (Loc.t("ВЕРНУЛИСЬ: %d ИЗ %d") % [back_n, all_n]) + (Loc.t(" · ЖДЁМ: ") + miss if miss != "" else ("" if is_host else Loc.t(" · ХОСТ МОЖЕТ НАЧАТЬ"))),
 			"timer": _mmss(maxf(0.0, NetConfig.RESUME_WAIT_S - resume_t))}
 	if not go:
-		var sub_s: String = "ЗАГРУЖАЮТСЯ: %d ИЗ %d" % [mini(_ready_peers.size(), slots.size()), slots.size()] if is_host else "ЗАГРУЖАЕТСЯ ПАРТИЯ"
+		var sub_s: String = Loc.t("ЗАГРУЖАЮТСЯ: %d ИЗ %d") % [mini(_ready_peers.size(), slots.size()), slots.size()] if is_host else "ЗАГРУЖАЕТСЯ ПАРТИЯ"
 		if is_host and _start_t > 50.0:
 			sub_s = "СТРАНУ ОПОЗДАВШЕГО ВОЗЬМЁТ ИИ"
 		return {"key": "start", "sev": "info", "icon": "net_sync", "spin": true, "title": "ЖДЁМ ИГРОКОВ", "sub": sub_s,
@@ -2411,7 +2411,7 @@ func plate() -> Dictionary:
 			var c: Country = gw.country_by_id(i + 1)
 			if c != null and c.capital_id >= 0:
 				done_n += 1
-		return {"key": "caps", "sev": "info", "icon": "net_players", "title": "ЖДЁМ СТОЛИЦЫ ДРУГИХ", "sub": "ГОТОВО: %d ИЗ %d" % [done_n, slots.size()],
+		return {"key": "caps", "sev": "info", "icon": "net_players", "title": "ЖДЁМ СТОЛИЦЫ ДРУГИХ", "sub": Loc.t("ГОТОВО: %d ИЗ %d") % [done_n, slots.size()],
 			"timer": _mmss(maxf(0.0, NetConfig.CAPITAL_TIMEOUT_S - gw.game_time))}
 	return {}
 

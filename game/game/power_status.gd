@@ -269,7 +269,7 @@ func change_text(ev: Dictionary, own: bool) -> String:
 		return Loc.msg(Loc.mk("%s оправилась от кризиса", [who]))
 	if int(ev["tier"]) > int(ev["old_tier"]):
 		return Loc.msg(Loc.mk("%s стала %s", [who, String(TIER_INS[int(ev["tier"])])]))
-	return Loc.t("%s теряет статус: снова %s") % [Loc.tx(who), status_name(int(ev["tier"]))]
+	return Loc.msg(Loc.mk("%s теряет статус: снова %s", [who, Loc.mk(status_name(int(ev["tier"])))]))
 
 
 

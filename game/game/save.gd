@@ -428,13 +428,13 @@ static func _apply_pack(m: Node, pack: Dictionary, net: bool, current: Callable)
 	mm._paused = false
 	mm.tutorial.stop()
 	mm.settings = s
-	mm.loading.show_screen(Loc.t("Синхронизация с хостом...") if net else Loc.t("Загружаем партию..."))
+	mm.loading.show_screen("Синхронизация с хостом..." if net else "Загружаем партию...")
 	var keep_cam: Vector2 = mm.cam.position
 	var keep_z: float = mm.cam.zoom.x
 	mm._deselect()
 	mm._clear_plan()
 	mm.hud.close_panel()
-	mm.loading.set_progress(0.12, Loc.t("Рельеф, реки и леса..."))
+	mm.loading.set_progress(0.12, "Рельеф, реки и леса...")
 	await tree.process_frame
 	await tree.process_frame
 	if not _load_current(m, current):
@@ -447,7 +447,7 @@ static func _apply_pack(m: Node, pack: Dictionary, net: bool, current: Callable)
 	if not _load_current(m, current) or gw.data == null or gw.data == previous_data or gw.data.w != s.size or gw.data.h != s.size:
 		return false
 	var t2: int = Time.get_ticks_usec()
-	mm.loading.set_progress(0.55, Loc.t("Страны, города и границы..."))
+	mm.loading.set_progress(0.55, "Страны, города и границы...")
 	await tree.process_frame
 	if not _load_current(m, current):
 		return false
@@ -460,7 +460,7 @@ static func _apply_pack(m: Node, pack: Dictionary, net: bool, current: Callable)
 	if not cfg_in.has("creative") and gw.player != null:
 		GameConfig.creative = gw.player.money >= 900000
 	var t4: int = Time.get_ticks_usec()
-	mm.loading.set_progress(0.72, Loc.t("Предприятия, армии, торговля..."))
+	mm.loading.set_progress(0.72, "Предприятия, армии, торговля...")
 	await tree.process_frame
 	if not _load_current(m, current):
 		return false
@@ -474,7 +474,7 @@ static func _apply_pack(m: Node, pack: Dictionary, net: bool, current: Callable)
 		if gw.mil != null:
 			gw.mil.heal_partial(true)
 	var t6: int = Time.get_ticks_usec()
-	mm.loading.set_progress(0.88, Loc.t("Готовим карту..."))
+	mm.loading.set_progress(0.88, "Готовим карту...")
 	await tree.process_frame
 	if not _load_current(m, current):
 		return false

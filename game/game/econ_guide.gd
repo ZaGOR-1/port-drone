@@ -197,7 +197,7 @@ func _forest_ok(p: Country) -> bool:
 func goals(p: Country) -> Array:
 	if p == null:
 		return []
-	var sg: String = _sig(p)
+	var sg: String = "%s|%d" % [_sig(p), Loc.gen]
 	if sg != _goal_sig:
 		_goal_sig = sg
 		_cache.erase("goals%d" % p.id)

@@ -429,10 +429,11 @@ func _missile_mp() -> Dictionary:
 
 func _missile_tap(pos: Vector2, wp: Vector2) -> void:
 	if plan_has_target and not route_mode:
-		var tot: int = 0
-		for t: Dictionary in _plan_targets():
+		var tot: int = plan_count
+		for t: Dictionary in plan_list:
 			tot += int(t["n"])
-		var av: int = int(_missile_mp()["available"])
+		# The click only needs the ready stock; assignment is computed by the preview and launch.
+		var av: int = world.mil.missiles_ready(world.player.id) if mode == Mode.MISSILE else int(_missile_mp()["available"])
 		if tot >= av:
 			hud.show_toast(Loc.msg(Loc.mk("Все ракеты распределены: %d", [av])))
 			UiKit.snd("ui_error")

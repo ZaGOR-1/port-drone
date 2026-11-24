@@ -518,15 +518,22 @@ func missile_multi_plan(country: Country, targets: Array) -> Dictionary:
 	var out: Dictionary = {"ok": false, "total": 0, "available": 0, "assigned": 0, "tels": 0, "per_target": [], "plan": [], "why": ""}
 	if country == null:
 		return out
-	var free: Dictionary = {}
+	var free_by_facility: Dictionary = {}
 	var avail: int = 0
 	for f: Facility in facilities:
 		if f.kind == Facility.Kind.TEL and f.country_id == country.id and alive(f) and not f.moving:
 			var k: int = maxi(0, f.missiles - f.queued.size())
 			if k > 0:
-				free[f] = k
+				free_by_facility[f] = k
 				avail += k
 	out["available"] = avail
+	# Preserve facility order for equal stock and distance. Centers are fixed during this call.
+	var launchers: Array = free_by_facility.keys()
+	var centers := PackedVector2Array()
+	var free := PackedInt64Array()
+	for f: Facility in launchers:
+		centers.append(f.center_px())
+		free.append(int(free_by_facility[f]))
 	var used: Dictionary = {}
 	var sbw: String = ""
 	for e: Array in _strike_pts(targets):
@@ -540,23 +547,27 @@ func missile_multi_plan(country: Country, targets: Array) -> Dictionary:
 			(out["per_target"] as Array).append({"ok": false, "reason": sbw, "n": n, "got": 0, "tels": 0, "pos": p})
 			continue
 		for i in n:
-			var best: Facility = null
+			var best: int = -1
+			var best_free: int = 0
 			var bd: float = INF
-			for f: Facility in free:
-				if int(free[f]) <= 0:
+			for j in launchers.size():
+				var left: int = free[j]
+				if left <= 0:
 					continue
-				var d: float = f.center_px().distance_to(p)
+				var d: float = centers[j].distance_to(p)
 				if d > MISSILE_RANGE or d < MISSILE_MIN:
 					continue
-				if best == null or int(free[f]) > int(free[best]) or (int(free[f]) == int(free[best]) and d < bd):
-					best = f
+				if left > best_free or (left == best_free and d < bd):
+					best = j
+					best_free = left
 					bd = d
-			if best == null:
+			if best < 0:
 				break
-			free[best] = int(free[best]) - 1
-			(out["plan"] as Array).append([best, p])
-			tl[best] = true
-			used[best] = true
+			free[best] = best_free - 1
+			var launcher: Facility = launchers[best]
+			(out["plan"] as Array).append([launcher, p])
+			tl[launcher] = true
+			used[launcher] = true
 			got += 1
 		var why: String = ""
 		if got < n:
@@ -575,7 +586,11 @@ func missile_multi_plan(country: Country, targets: Array) -> Dictionary:
 
 
 func launch_missiles_multi(country: Country, targets: Array) -> Dictionary:
-	var mp: Dictionary = missile_multi_plan(country, targets)
+	return _apply_missile_plan(country, missile_multi_plan(country, targets))
+
+
+# Apply a plan made in the current synchronous call.
+func _apply_missile_plan(country: Country, mp: Dictionary) -> Dictionary:
 	var res: Dictionary = {"launched": 0, "per": [], "tels": int(mp["tels"]), "text": ""}
 	for pt: Dictionary in mp["per_target"]:
 		(res["per"] as Array).append(int(pt["got"]))

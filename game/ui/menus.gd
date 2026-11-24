@@ -10,7 +10,7 @@ const ScrollInput = preload("res://ui/ui24/tap_guard.gd")
 
 signal request(name: String)
 
-const VERSION: String = "v0.36.0"
+const VERSION: String = "v0.36.1"
 
 const WHATS_NEW: Array = [
 	"НОВОЕ: Серая зона в начале партии — до 10:00 (12:00 на 8 странах) запрещены полномасштабная война и штурмы городов; с 3:00 возможны пограничные стычки за рудники и спорные залежи",
@@ -172,7 +172,7 @@ func _process(delta: float) -> void:
 		_mp_t += delta
 		var dots: String = ".".repeat(int(_mp_t * 2.0) % 4)
 		if _mp_t < 4.0:
-			_mp_label.text = "Поиск соперников" + dots
+			_mp_label.text = Loc.t("Поиск соперников") + dots
 		else:
 			_mp_label.text = "Серверы ещё не запущены. Попробуйте позже"
 			_mp_label.add_theme_color_override("font_color", UiKit.RED)
@@ -196,6 +196,7 @@ func _screen(title: String, dim: float = 0.55, animate: bool = true) -> VBoxCont
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.color = Color(0.03, 0.05, 0.1, dim)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	bg.mouse_force_pass_scroll_events = false
 	root.add_child(bg)
 	screen = bg
 
@@ -3195,7 +3196,7 @@ func _auth_tick() -> void:
 		_a_submit.text = ["ВХОДИМ...", "СОЗДАЁМ...", Loc.t("ОТПРАВЛЯЕМ..."), Loc.t("МЕНЯЕМ...")][clampi(_auth_tab, 0, 3)]
 		_a_submit.disabled = true
 	elif left > 0:
-		_a_submit.text = "ПОДОЖДИТЕ %d:%02d" % [left / 60, left % 60]
+		_a_submit.text = Loc.t("ПОДОЖДИТЕ %d:%02d") % [left / 60, left % 60]
 		_a_submit.disabled = true
 		get_tree().create_timer(1.0).timeout.connect(_auth_tick)
 	else:
@@ -4032,13 +4033,13 @@ func _rk_tick(gen: int) -> void:
 	var searching: bool = net.ranked_mode != "" and net.rtc.socket_open()
 	var pen: int = Ranked.penalty()
 	if searching:
-		_rk_btn.text = "%s · ОТМЕНИТЬ" % Hud._mmss((Time.get_ticks_msec() - net.queue_t0) / 1000.0)
+		_rk_btn.text = Loc.t("%s · ОТМЕНИТЬ") % Hud._mmss((Time.get_ticks_msec() - net.queue_t0) / 1000.0)
 		if _rk_btn.icon == null:
 			_rk_btn.icon = UiKit.tex("net_sync")
 		_rk_btn.add_theme_stylebox_override("normal", UiKit.sb("wb_btn_stone", 14, 4, -1))
 		_rk_btn.disabled = false
 	elif pen > 0:
-		_rk_btn.text = "ПОИСК ЧЕРЕЗ %s" % Hud._mmss(float(pen))
+		_rk_btn.text = Loc.t("ПОИСК ЧЕРЕЗ %s") % Hud._mmss(float(pen))
 		_rk_btn.icon = null
 		_rk_btn.disabled = true
 		Ranked.me["penalty"] = pen - 1

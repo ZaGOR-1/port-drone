@@ -97,9 +97,12 @@ func _on_nuke_detonated(pos: Vector2, r_px: float) -> void:
 
 
 func _lang_refresh() -> void:
+	_plan_sig = ""
+	_plan_t = 0.0
 	if gw != null and is_instance_valid(gw) and top_name != null and is_instance_valid(top_name):
 		refresh()
 		_race_t = 0.0
+		_plan_process(0.0)
 	for nm: String in key_labels:
 		var l: Variant = key_labels[nm]
 		var src: String = String((KEY_INFO.get(nm, [""]) as Array)[0])

@@ -32,11 +32,11 @@ class V036RegressionTests(unittest.TestCase):
         if p.returncode:
             raise AssertionError(p.stdout+p.stderr)
 
-    def run_case(self, name):
+    def run_case(self, name, script='test_v036_regressions.gd', env=None):
         report = self.folder/(name+'.json')
         p = subprocess.run([str(self.godot), '--headless', '--main-pack', str(self.pack),
-            '--script', str(ROOT/'tests/test_v036_regressions.gd'), '--',
-            '--case='+name, '--out='+str(report)], env=self.env,
+            '--script', str(ROOT/'tests'/script), '--',
+            '--case='+name, '--out='+str(report)], env=env or self.env,
             capture_output=True, text=True, timeout=120)
         log = p.stdout+p.stderr
         if self.env.get('DF_TEST_LOG_DIR'):
@@ -71,3 +71,12 @@ class V036RegressionTests(unittest.TestCase):
 
     def test_tooltip_rules(self):
         self.run_case('tooltips')
+
+    def test_hud_layout_and_camera_input(self):
+        profile = self.folder/'df_input_qa'
+        env = self.env.copy()
+        for key in ('XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_CACHE_HOME', 'APPDATA', 'LOCALAPPDATA'):
+            folder = profile/key
+            folder.mkdir(parents=True)
+            env[key] = str(folder)
+        self.run_case('hud-camera-input', script='test_hud_camera_input.gd', env=env)

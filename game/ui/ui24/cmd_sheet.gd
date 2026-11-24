@@ -606,7 +606,7 @@ func _toggle_refill() -> void:
 		return
 	var want: bool = int(rf[0]) < int(rf[1])
 	NetSession.sim("", "cmd_refill_all", [gw.player, want], func(_r: Variant) -> void:
-		gw.message.emit(Loc.t("Пополнение армий: %s") % (Loc.t("включено для всех") if want else Loc.t("выключено"))))
+		gw.message.emit(Loc.msg(Loc.mk("Пополнение армий: %s", [Loc.mk("включено для всех" if want else "выключено")]))))
 
 
 func _rebuild_keep_scroll() -> void:
@@ -624,7 +624,7 @@ func _toggle_state(key: String, sm: Dictionary) -> Array:
 	match key:
 		"auto_strike":
 			var v: int = int(sm.get("auto_strike", 0))
-			return [v > 0, String(Operations.AutoCmd.STRIKE_NAMES[v]) if v > 0 else Loc.t("ВЫКЛ")]
+			return [v > 0, Loc.t(String(Operations.AutoCmd.STRIKE_NAMES[v])) if v > 0 else Loc.t("ВЫКЛ")]
 		"smart":
 			var on: bool = gw.mil.has_method("smart_of") and bool(gw.mil.smart_of(gw.player.id))
 			return [on, Loc.t("ВКЛ — облетают ПВО") if on else Loc.t("ВЫКЛ — напрямую")]

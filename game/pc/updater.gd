@@ -79,8 +79,14 @@ func _load_cfg() -> void:
 		version = String(c.get_value("pc", "version", version))
 		repo = String(c.get_value("pc", "repo", ""))
 		libs_rev = int(c.get_value("pc", "libs_rev", 0))
-	var l: String = OS.get_locale_language()
-	lang = l if TXT.has(l) else "en"
+	var prefs := ConfigFile.new()
+	var saved: String = ""
+	if prefs.load(Save.prefs_path) == OK:
+		var value: Variant = prefs.get_value("prefs", "lang", "")
+		if value is String:
+			saved = value
+	var chosen: String = Loc.launch_lang(saved, Loc.device_lang())
+	lang = chosen if TXT.has(chosen) else "en"
 
 
 func t(k: String) -> String:
