@@ -1253,8 +1253,9 @@ func _popover(anchor: Control, title: String, items: Array) -> void:
 	var root: = Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	root.mouse_force_pass_scroll_events = false
 	root.gui_input.connect(func(e: InputEvent) -> void:
-		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+		if e is InputEventMouseButton and e.pressed and e.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
 			_close_pop())
 	hud.root.add_child(root)
 	_pop = root
@@ -1263,8 +1264,12 @@ func _popover(anchor: Control, title: String, items: Array) -> void:
 	root.add_child(pop)
 	var vb: = VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 3)
-	pop.add_child(vb)
-	vb.add_child(UiKit.lbl(title, 10, UiKit.TITLE, 2, 3))
+	var scroll := U.overlay_scroll(pop)
+	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(vb)
+	var heading := UiKit.lbl(title, 10, UiKit.TITLE, 2, 3)
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vb.add_child(heading)
 	for it: Array in items:
 		var b: Button = UiKit.big(String(it[0]), "stone", "", 44.0, 10)
 		b.custom_minimum_size = Vector2(236, 44)
@@ -1273,12 +1278,10 @@ func _popover(anchor: Control, title: String, items: Array) -> void:
 			_close_pop()
 			cb.call())
 		vb.add_child(b)
-		vb.add_child(UiKit.lbl(String(it[1]), 9, UiKit.MUTED, 1))
-	pop.reset_size()
-	var ar: Rect2 = anchor.get_global_rect()
-	var vs: Vector2 = get_viewport().get_visible_rect().size
-	pop.position = Vector2(clampf(ar.end.x - pop.size.x, 4.0, vs.x - pop.size.x - 4.0), clampf(ar.position.y - pop.size.y - 6.0, 60.0, maxf(60.0, vs.y - pop.size.y)))
-	UiKit.pop_in(pop, 0.9, 0.16)
+		var hint := UiKit.lbl(String(it[1]), 9, UiKit.MUTED, 1)
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		vb.add_child(hint)
+	U.watch_popover(pop, anchor, vb, 264.0)
 
 
 func _close_pop() -> void:

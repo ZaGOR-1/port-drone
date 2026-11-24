@@ -679,14 +679,14 @@ func _unit_hit(pos: Vector2) -> Object:
 	return best
 
 
-func _begin_press(pos: Vector2) -> void:
+func _begin_press(pos: Vector2, touch: bool = true) -> void:
 	if not _cam_plan.is_empty():
 		_cam_stop()
 	_press_pos = pos
 	_press_ms = Time.get_ticks_msec()
 	_moved = false
 
-	_dtz = _press_ms - _last_tap_ms < 320 and _last_tap_pos.is_finite() and pos.distance_to(_last_tap_pos) < 50.0 and line_cells.is_empty() and not _on_plan_point(pos)
+	_dtz = touch and _press_ms - _last_tap_ms < 320 and _last_tap_pos.is_finite() and pos.distance_to(_last_tap_pos) < 50.0 and line_cells.is_empty() and not _on_plan_point(pos)
 	if _dtz:
 		_strat_tap = Vector2.INF
 		_dtz_y0 = pos.y
@@ -697,7 +697,7 @@ func _begin_press(pos: Vector2) -> void:
 		_drag_pt = _press_hit(pos)
 
 
-func _release_press(pos: Vector2, shift_held: bool = false) -> void:
+func _release_press(pos: Vector2, shift_held: bool = false, touch: bool = true, double_click: bool = false) -> void:
 	if _dtz:
 		_dtz = false
 		if not _moved and hud.get("army_dock") != null and hud.army_dock.front_dbl(pos):
@@ -713,11 +713,17 @@ func _release_press(pos: Vector2, shift_held: bool = false) -> void:
 		_end_drag(shift_held)
 		return
 	if not _moved and Time.get_ticks_msec() - _press_ms < 450:
-		_last_tap_ms = Time.get_ticks_msec()
-		_last_tap_pos = pos
+		if double_click and hud.get("army_dock") != null and hud.army_dock.front_dbl(pos):
+			_strat_tap = Vector2.INF
+			_end_drag(shift_held)
+			return
+		var now: int = Time.get_ticks_msec()
+		if touch:
+			_last_tap_ms = now
+			_last_tap_pos = pos
 		if cam.strat_k() > 0.5 and mode == Mode.NONE:
 			_strat_tap = pos
-			_strat_tap_ms = _last_tap_ms
+			_strat_tap_ms = now
 			_strat_tap_w = cam.screen_to_world(pos)
 		else:
 			_tap(pos, shift_held)

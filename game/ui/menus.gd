@@ -196,6 +196,7 @@ func _screen(title: String, dim: float = 0.55, animate: bool = true) -> VBoxCont
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.color = Color(0.03, 0.05, 0.1, dim)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	bg.mouse_force_pass_scroll_events = false
 	root.add_child(bg)
 	screen = bg
 

@@ -30,7 +30,6 @@ var sum_r: Label
 var expanded: bool = false
 var toast: Callable
 var col_top: float = -1.0
-var pop_anchor: Control
 var head: HBoxContainer
 var strip_sc: ScrollContainer
 var strip: HBoxContainer
@@ -1212,19 +1211,21 @@ func popover(anchor: Control, title: String, items: Array, w: float = 214.0) -> 
 	scrim = Control.new()
 	scrim.position = Vector2.ZERO
 	scrim.size = get_viewport_rect().size
+	scrim.mouse_force_pass_scroll_events = false
 	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
 	scrim.gui_input.connect(func(e: InputEvent) -> void:
-		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+		if e is InputEventMouseButton and e.pressed and e.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
 			close_pop())
 	add_child(scrim)
 	pop = PanelContainer.new()
 	pop.add_theme_stylebox_override("panel", UiKit.sb("wb_card", 6, 6))
-	pop.custom_minimum_size = Vector2(w, 0)
 	pop.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(pop)
 	var vb: = VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 4)
-	pop.add_child(vb)
+	var scroll := U.overlay_scroll(pop)
+	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(vb)
 	var tl: Label = UiKit.lbl(title, 10, UiKit.TITLE, 2, 3)
 	vb.add_child(tl)
 	for it: Dictionary in items:
@@ -1260,31 +1261,12 @@ func popover(anchor: Control, title: String, items: Array, w: float = 214.0) -> 
 			close_pop()
 			cb.call())
 		vb.add_child(b)
-	var ar: Rect2 = anchor.get_global_rect()
-	var p: PanelContainer = pop
-	var vp: Vector2 = get_viewport_rect().size
-	var sz: Vector2 = p.get_combined_minimum_size()
-	p.size = sz
-	var x: float = clampf(ar.get_center().x - sz.x * 0.5, 4.0, vp.x - sz.x - 4.0)
-	var y: float = ar.position.y - sz.y - 6.0
-	if y < 90.0:
-		y = ar.end.y + 6.0
-	p.position = Vector2(roundf(x), roundf(y))
-	pop_anchor = anchor
-	UiKit.pop_in(p, 0.9, 0.16)
-
-
-func _place_pop() -> void:
-	if pop == null or not is_instance_valid(pop) or pop_anchor == null or not is_instance_valid(pop_anchor):
-		return
-	var ar: Rect2 = pop_anchor.get_global_rect()
-	var vp: Vector2 = get_viewport_rect().size
-	var sz: Vector2 = pop.size
-	var x: float = clampf(ar.get_center().x - sz.x * 0.5, 4.0, vp.x - sz.x - 4.0)
-	var y: float = ar.position.y - sz.y - 6.0
-	if y < 60.0:
-		y = ar.end.y + 6.0
-	pop.position = Vector2(roundf(x), roundf(y))
+	U.watch_popover(pop, anchor, vb, w)
+	var backdrop := scrim
+	var viewport := get_viewport()
+	var fit_backdrop := func() -> void: backdrop.size = get_viewport_rect().size
+	viewport.size_changed.connect(fit_backdrop)
+	backdrop.tree_exiting.connect(func() -> void: viewport.size_changed.disconnect(fit_backdrop))
 
 
 func close_pop() -> void:
@@ -1325,6 +1307,7 @@ func open_sheet(mode: String, gid: int, fids: PackedInt32Array) -> void:
 	scrim.position = Vector2.ZERO
 	scrim.size = get_viewport_rect().size
 	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+	scrim.mouse_force_pass_scroll_events = false
 	add_child(scrim)
 	var dim: = ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.32)
@@ -1339,7 +1322,9 @@ func open_sheet(mode: String, gid: int, fids: PackedInt32Array) -> void:
 	add_child(sheet)
 	var vb: = VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
-	sheet.add_child(vb)
+	var scroll := U.overlay_scroll(sheet)
+	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(vb)
 
 	var hr: = HBoxContainer.new()
 	hr.add_theme_constant_override("separation", 6)
@@ -1470,43 +1455,47 @@ func open_sheet(mode: String, gid: int, fids: PackedInt32Array) -> void:
 	br.add_child(ok)
 	var hint: Label = UiKit.lbl("Одна армия — в одной группе. Группа получает приказы одной кнопкой.", 9, UiKit.MUTED, 1, 2)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.custom_minimum_size.x = get_viewport_rect().size.x - 24.0
 	vb.add_child(hint)
 	sheet_refs = {"pen": pen, "cnt": cnt, "sw": sw, "eb": eb, "ok": ok, "le": le}
 	_sheet_refresh()
-	var vp: Vector2 = _PcPortS.sheet_vp(get_viewport_rect().size)
 	var s: PanelContainer = sheet
-	s.custom_minimum_size.x = vp.x
-	s.reset_size()
-	var h: float = minf(s.get_combined_minimum_size().y, vp.y * 0.62)
-	s.size = Vector2(vp.x, h)
-	var y: float = vp.y - h
-	s.position = Vector2(_PcPortS.sheet_x(get_viewport_rect().size.x), y + 24)
+	var fit := _fit_group_sheet.bind(s, vb)
+	get_viewport().size_changed.connect(fit, CONNECT_DEFERRED)
+	vb.minimum_size_changed.connect(fit, CONNECT_DEFERRED)
+	s.tree_exiting.connect(func() -> void:
+		if get_viewport().size_changed.is_connected(fit):
+			get_viewport().size_changed.disconnect(fit))
+	fit.call()
 	s.modulate.a = 0.0
-	var tw: Tween = s.create_tween().set_parallel(true)
-	tw.tween_property(s, "position:y", y, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.tween_property(s, "modulate:a", 1.0, 0.18)
-	tw.finished.connect(func() -> void: s.set_meta("settled", true))
+	s.create_tween().tween_property(s, "modulate:a", 1.0, 0.18)
 	UiKit.snd("ui_open")
 
 
+func _fit_group_sheet(s: PanelContainer, content: Control) -> void:
+	if not is_instance_valid(s) or s != sheet:
+		return
+	var vp := get_viewport_rect().size
+	scrim.size = vp
+	U.size_overlay(s, content, _PcPortS.sheet_w(vp.x), vp.y * 0.62)
+	s.position.x = roundf((vp.x - s.size.x) * 0.5)
+	_place_sheet()
 
 
 func _place_sheet() -> void:
-	if sheet == null or not is_instance_valid(sheet) or not sheet.has_meta("settled"):
+	if not is_instance_valid(sheet):
 		return
-	var vp: Vector2 = get_viewport_rect().size
+	var vp := get_viewport_rect().size
 	var le: LineEdit = sheet_refs.get("le")
-	var typing: bool = le != null and is_instance_valid(le) and le.has_focus()
 	var kb: float = 0.0
-	if typing:
+	if is_instance_valid(le) and le.has_focus():
 		if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
 			var win: Vector2 = Vector2(DisplayServer.window_get_size())
 			kb = float(DisplayServer.virtual_keyboard_get_height()) * (vp.x / maxf(win.x, 1.0))
 		if kb_override >= 0.0:
 			kb = kb_override
-	var y: float = maxf(4.0, vp.y - kb - sheet.size.y + (hud._safe_margins().y + 14.0 - 6.0 if kb > 0.0 else 0.0))
-	sheet.position.y = roundf(lerpf(sheet.position.y, y, 0.5)) if absf(sheet.position.y - y) > 1.0 else y
+	var y := maxf(0.0, vp.y - kb - sheet.size.y)
+	if sheet.position.y != y:
+		sheet.position.y = y
 
 
 func _bump(c: Control) -> void:
@@ -1749,7 +1738,6 @@ func _process(delta: float) -> void:
 		close()
 		return
 	_restack_cmd()
-	_place_pop()
 	_place_sheet()
 	for h: Array in _holds:
 		if float(h[1]) >= 0.0 and is_instance_valid(h[0]):
