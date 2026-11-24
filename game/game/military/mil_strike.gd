@@ -415,10 +415,14 @@ func _tel_nozzle(f: Facility, sprite: String) -> Array[Vector2]:
 
 
 
+func _range_tel(f: Facility, country_id: int) -> bool:
+	return f.kind == Facility.Kind.TEL and f.country_id == country_id and alive(f) and not f.moving and not f.mb
+
+
 func tels_for(country: Country, target: Vector2) -> Array[Facility]:
 	var out: Array[Facility] = []
 	for f: Facility in facilities:
-		if f.kind != Facility.Kind.TEL or f.country_id != country.id or not alive(f) or f.moving or f.mb:
+		if not _range_tel(f, country.id):
 			continue
 		var dd: float = f.center_px().distance_to(target)
 		if dd > MISSILE_RANGE or dd < MISSILE_MIN:
@@ -426,6 +430,15 @@ func tels_for(country: Country, target: Vector2) -> Array[Facility]:
 		out.append(f)
 	out.sort_custom(func(a: Facility, b: Facility) -> bool: return a.center_px().distance_squared_to(target) < b.center_px().distance_squared_to(target))
 	return out
+
+
+static func _missile_in_range(centers: PackedVector2Array, target: Vector2) -> bool:
+	for center: Vector2 in centers:
+		var d: float = center.distance_to(target)
+		if d > MISSILE_RANGE or d < MISSILE_MIN:
+			continue
+		return true
+	return false
 
 
 func missile_plan(country: Country, target: Vector2, has_target: bool) -> Dictionary:
@@ -536,6 +549,8 @@ func missile_multi_plan(country: Country, targets: Array) -> Dictionary:
 		free.append(int(free_by_facility[f]))
 	var used: Dictionary = {}
 	var sbw: String = ""
+	var range_centers := PackedVector2Array()
+	var range_centers_ready: bool = false
 	for e: Array in _strike_pts(targets):
 		var p: Vector2 = e[0]
 		var n: int = int(e[1])
@@ -571,7 +586,13 @@ func missile_multi_plan(country: Country, targets: Array) -> Dictionary:
 			got += 1
 		var why: String = ""
 		if got < n:
-			why = Loc.t("Вне дальности ОТРК") if tels_for(country, p).is_empty() else Loc.t("Не хватает ракет")
+			if not range_centers_ready:
+				# Empty TELs also determine the failure reason. Positions stay fixed during planning.
+				for f: Facility in facilities:
+					if _range_tel(f, country.id):
+						range_centers.append(f.center_px())
+				range_centers_ready = true
+			why = Loc.t("Вне дальности ОТРК") if not _missile_in_range(range_centers, p) else Loc.t("Не хватает ракет")
 		(out["per_target"] as Array).append({"ok": got == n, "reason": why, "n": n, "got": got, "tels": tl.size(), "pos": p})
 		out["assigned"] = int(out["assigned"]) + got
 	out["tels"] = used.size()
