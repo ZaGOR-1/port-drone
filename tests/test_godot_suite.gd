@@ -1169,7 +1169,7 @@ func _test_step6_pc_and_perf() -> void:
 	gw.free()
 
 	# Menus What's New metadata + Ukrainian i18n entries
-	check(Menus.VERSION == "v0.36.1", "Menus.VERSION updated to v0.36.1")
+	check(Menus.VERSION == "v0.36.2", "Menus.VERSION updated to v0.36.2")
 	var wn_cats: Dictionary = {}
 	for wn_s: String in Menus.WHATS_NEW:
 		for pref: String in ["НОВОЕ:", "УЛУЧШЕНО:", "ИСПР:", "УДАЛЕНО:"]:

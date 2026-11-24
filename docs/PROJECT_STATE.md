@@ -10,10 +10,11 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
-| Актуальна production beta | `c91e0e6a7eef831687e6e63550560bba739a6b87`. PR #7 і #8 залишаються окремими Draft PR. |
+| База `beta` перед INT-03 | `11380ee014cae95c1bdc2367b0ee9a1b8cbfed7b`. [INT-02, PR #10](https://github.com/ZaGOR-1/port-drone/pull/10). |
+| Інтеграція `beta` 0.36.2 | Merge commit та перевірки приймання прив’язані до [INT-03, PR #11](https://github.com/ZaGOR-1/port-drone/pull/11). |
 | Windows-стабілізація в `beta` | [PR #5](https://github.com/ZaGOR-1/port-drone/pull/5) об’єднано комітом `739a21bcdb74b31e8a9651f491c9f8271948b294` від бази `94aedbe36fc5d1abd4da100bed83f803fad53b2f`. Production tip `e174cd0ce6d6804a8f0598d29bfa7b7008c1206f`, дерево `game/` `052d3b1047774012be4fbc551cfe36d995845ea8`. |
 | `main` / `origin/main` | `172df65e3bd004efed9a5444e90a284d9d69db10`. UI `v0.34.0`, updater config `0.33.2.3`, SIM_REV `pr10-phase5b2-1`. |
-| Контракти `beta` і локального кандидата | `v0.36.0`, `PROTO 7`, `SIM_REV v036-integration-1`, `Save.FORMAT 1`. |
+| Контракти INT-03 | `v0.36.2`, `PROTO 7`, `SIM_REV v036-integration-1`, `Save.FORMAT 1`. Мережевий допуск вимагає однакової повної версії. |
 | Windows QA | R02, UI-01/02/03, INPUT-01, GAME-01, BUG-01 і BUG-02 у `beta`. Дерево `game/` в merge-коміті збігається з деревом перевіреного локального SFX. [Windows QA](WINDOWS_QA.md) |
 | Локальні джерела | R02 — `fix/r02-release-recovery`; UI — `fix/windows-ui-qa`; ввід і шкала — `fix/windows-keyboard-controls`, `fix/windows-input-followup`, `fix/windows-context-hotkeys`. SFX tooling та native patch зберігаються окремо. Робочі дерева та оригінали патчів збережено. SFX tooling і MinGW не входять до CI-дерева гри. |
 
@@ -57,6 +58,18 @@ FIX-01 перебуває у `~/projects/port-drone-fix-hud-input` на `fix/hud
 ## INT-01
 
 QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integration-qa` об’єднує Draft PR #7 → #8 → #9 від `c91e0e6a`. Перевірене дерево гри `26dd6975cf20e987d4db703f1cabde4e85483cb0`. Handoff і докази розміщені в `/home/zagor/projects/droneflames-toolchain/integration-qa-v0.36.1/`. Python 47/47, simulation 2476/2476, міжмовний replay 30 ticks і ENet loopback із reconnect/resync пройшли. Official Windows ZIP перевіряється через SHA256. Wine smoke і Linux GUI пройшли у задокументованому обсязі. Фізичні Windows DPI, LAN та Steam мають статус NOT RUN. [Інтеграція](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md)
+
+## PERF-03 · 2026-11-24
+
+Гілка `perf/otrk-ammo-shortage` у `/home/zagor/projects/port-drone-perf03` від `beta` `11380ee014cae95c1bdc2367b0ee9a1b8cbfed7b`. Оптимізація `2acc15e22b03a696ab83c44893a705e8273c0c93`, fixtures `9906cb142de5f05401811fc6b84d7a5636266a82`, перевірене дерево гри `3ee7ab1774c4bae884689db0fd9bb4dd01b93e7f`. Версія `0.36.1`.
+
+На 500 цілях і 420 ракетах підтвердження 88,89 → 16,31 мс на RTX 4060 Laptop GPU з Vulkan. У 33 GUI-парах і 11 додаткових A/B-парах збережено ігрові результати. Simulation 2476/2476 і Python 47/47. Для приймання залишаються фізичний Windows GUI A/B за повного й недостатнього запасу та review. [Вимірювання й пакети](perf03/PERF03_RESULTS.md)
+
+## INT-03 · beta 0.36.2
+
+Цільовий review PERF-03 підтвердив еквівалентні фільтри установок, межі дальності, порядок розподілу й причини відмов. Координати перевикористовуються лише в межах одного синхронного планування. Змішані та відкладені пуски перевіряють актуальний запас. Підвищення версії `a08f24dbe77706b5f40d30ab2123553425f41371` синхронізує конфіг, меню, локалізовану примітку і тести build identity. Перевірене дерево `game/` — `5935cf8c6ba53258040417f06d41de9dc125aefb`.
+
+Інтеграцію погоджено після review і успішного CI в [PR #11](https://github.com/ZaGOR-1/port-drone/pull/11). Фізичний Windows GUI QA — NOT RUN, відкладено власником. Фізичний LAN і Steam — NOT RUN. За повного запасу GUI-вимір лишається INCONCLUSIVE. Локальні QA-пакети та перевірка Git increment належать до handoff INT-03 у `/home/zagor/projects/droneflames-toolchain/int03.IGMm9Fth/`. Для відкату використовуй окремий PR із revert merge commit від першого батька.
 
 ## Known issues
 

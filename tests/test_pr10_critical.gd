@@ -4,6 +4,7 @@ extends SceneTree
 const SeasonsS = preload("res://game/seasons.gd")
 const ChronicleS = preload("res://game/chronicle.gd")
 const DockS = preload("res://ui/ui24/navy_dock.gd")
+const StrikeHubS = preload("res://game/strike_hub.gd")
 var checks: int = 0
 var failures: Array = []
 
@@ -71,6 +72,8 @@ func command(w: GameWorld, actor: int, method: String, args: Array, path: String
 
 func _run() -> void:
 	_test_render_and_hash()
+	_test_missile_shortage_reasons()
+	_test_mixed_missile_strike()
 	_test_human_consent()
 	_test_land_rejection_and_cancel()
 	_test_land_modes_and_validation()
@@ -85,6 +88,94 @@ func _run() -> void:
 			FileAccess.open(arg.trim_prefix("--out="),FileAccess.WRITE).store_string(JSON.stringify(result,"\t"))
 	print("PR10_CRITICAL ",JSON.stringify(result))
 	quit(0 if failures.is_empty() else 1)
+
+
+func _test_missile_shortage_reasons() -> void:
+	var w := world()
+	var tel := Facility.new()
+	tel.kind = Facility.Kind.TEL
+	tel.country_id = w.player.id
+	tel.queued.append(Vector2.ZERO)
+	w.mil.facilities.append(tel)
+	var center: Vector2 = tel.center_px()
+	var near: Vector2 = center + Vector2(Military.MISSILE_MIN, 0)
+	var far: Vector2 = center + Vector2(Military.MISSILE_RANGE, 0)
+	var shortage: String = Loc.t("Не хватает ракет")
+	var outside: String = Loc.t("Вне дальности ОТРК")
+	var plan: Dictionary = w.mil.missile_multi_plan(w.player, [
+		{"pos": near, "n": 2}, far, near - Vector2(1, 0), far + Vector2(1, 0),
+	])
+	var rows: Array = plan["per_target"]
+	check(plan["plan"] == [[tel, near]] and int(plan["available"]) == 1,
+		"Missile planning preserves the reservation and partially fills the first target")
+	check(rows[0]["reason"] == shortage and rows[1]["reason"] == shortage,
+		"Both range endpoints are inclusive even after the last round is assigned")
+	check(rows[2]["reason"] == outside and rows[3]["reason"] == outside,
+		"Targets just beyond either range endpoint are out of range")
+	tel.missiles = 0
+	tel.queued.clear()
+	plan = w.mil.missile_multi_plan(w.player, [near])
+	check(plan["per_target"][0]["reason"] == shortage and plan["why"] == Loc.t("Нет ракет: идёт перезарядка"),
+		"An empty eligible TEL explains a shortage and preserves the reload message")
+	tel.mb = true
+	check(w.mil.missile_multi_plan(w.player, [near])["per_target"][0]["reason"] == outside,
+		"An empty mothballed TEL is excluded from the range explanation")
+	tel.mb = false
+	tel.moving = true
+	check(w.mil.missile_multi_plan(w.player, [near])["per_target"][0]["reason"] == outside,
+		"A moving TEL is excluded from the range explanation")
+	w.ops = Operations.new(w)
+	w.diplo.subjects[2] = {"over": w.player.id}
+	plan = w.mil.missile_multi_plan(w.player, [center])
+	check(plan["per_target"][0]["reason"] == Diplomacy.STRIKE_BLOCK_TXT,
+		"Diplomatic validation still applies to every target with no available rounds")
+	w.mil.facilities.clear()
+	plan = w.mil.missile_multi_plan(w.player, [near, far])
+	check(plan["per_target"][0]["reason"] == outside and plan["per_target"][1]["reason"] == outside
+			and plan["why"] == Loc.t("Нет ОТРК"), "An empty facility list preserves the range and no-TEL messages")
+	w.free()
+
+
+func _test_mixed_missile_strike() -> void:
+	for sync_arrive: bool in [false, true]:
+		var w := world()
+		w.data = WorldData.new(512, 512, 456)
+		w.data.owners.fill(w.player.id)
+		var tel := Facility.new()
+		tel.kind = Facility.Kind.TEL
+		tel.country_id = w.player.id
+		tel.cell = Vector2i(20, 20)
+		w.data.set_biome(tel.cell.x, tel.cell.y, Biome.GRASS)
+		w.mil.facilities.append(tel)
+		var ship := Ship.new()
+		ship.id = 1
+		ship.c = w.player.id
+		ship.hull = Ship.Hull.HEAVY
+		ship.mods.append("vls")
+		ship.ammo["cm"] = 1
+		ship.pos = Vector2(1800, 400)
+		w.navy.ships.append(ship)
+		var target := Vector2(400, 400)
+		w.data.set_biome(100, 100, Biome.GRASS)
+		var hub := StrikeHubS.new()
+		var result: Dictionary = hub.fire(w, {
+			"tel": [{"pos": target, "n": 2}], "ship": [{"pos": target, "n": 1}],
+		}, sync_arrive)
+		check(result["failed"].is_empty() and result["now"].get("ship", 0) == 1 and w.navy.cr_queue.size() == 1,
+			"The mixed strike queues a cruise missile and accepts the TEL order")
+		if sync_arrive:
+			check(result["later"].has("tel") and tel.queued.is_empty(), "Synchronizing defers the faster TEL strike")
+			tel.missiles = 1
+			hub.tick(w)
+			check(tel.queued.is_empty() and hub.pending.size() == 1, "The TEL order waits for its due time")
+			w.game_time = float(result["later"].get("tel", 0.0))
+			hub.tick(w)
+			check(hub.pending.is_empty() and tel.queued == [target],
+				"The due TEL order revalidates the reduced stock and reserves only one round")
+		else:
+			check(result["now"].get("tel", 0) == 2 and tel.queued == [target, target],
+				"The unsynchronized mixed strike reserves both TEL rounds")
+		w.free()
 
 
 func _test_render_and_hash() -> void:
