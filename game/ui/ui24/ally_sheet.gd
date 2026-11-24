@@ -228,7 +228,7 @@ func _refresh() -> void:
 		(e2[1] as Control).visible = on2
 	UiKit.set_icon(refs["plogo"], "ally_logo_%d" % int(st["logo"]), LOGO_BIG)
 	(refs["plogo"] as TextureRect).modulate = colr
-	(refs["pname"] as Label).text = String(st["name"]).strip_edges().to_upper()
+	(refs["pname"] as Label).text = AL.display_name(String(st["name"]).strip_edges()).to_upper()
 	(refs["pname"] as Label).add_theme_color_override("font_color", colr.lightened(0.25))
 	(refs["ok"] as Button).disabled = String(st["name"]).strip_edges() == ""
 

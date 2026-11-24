@@ -16785,13 +16785,6 @@ msgid "Максимальный уровень."
 msgstr ""
 
 #. kind: t
-#: ui/hud/hud_cards.gd:610
-msgid ""
-"УР %d→%d\n"
-"%d"
-msgstr ""
-
-#. kind: t
 #: ui/hud/hud_cards.gd:613
 msgid "Улучшение до уровня %d: %s.%s%s"
 msgstr ""

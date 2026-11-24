@@ -29,6 +29,8 @@ extends RefCounted
 
 
 const LANGS: PackedStringArray = ["ru", "uk", "en", "es"]
+const PUBLIC_LANGS: PackedStringArray = ["ru", "uk", "en"]
+const _NEAR_RU: PackedStringArray = ["be", "kk", "ky", "tg"]
 
 const LANG_NAMES: Dictionary = {"ru": "Русский", "uk": "Українська", "en": "English", "es": "Español"}
 const SRC: String = "ru"
@@ -55,33 +57,43 @@ static var as_name: Dictionary = {}
 
 
 static func boot() -> void:
-	var want: String = GameConfig.lang
+	var options: Array = OS.get_cmdline_user_args()
 	var ps: bool = GameConfig.pseudo_loc and GameConfig.dev_mode
-	var test: bool = false
-	if OS.get_environment("DF_LANG") != "":
-		want = OS.get_environment("DF_LANG")
-		test = true
 	if OS.get_environment("DF_PSEUDO") != "":
 		ps = OS.get_environment("DF_PSEUDO") != "0"
-		test = true
-	for a: String in OS.get_cmdline_user_args():
-		if a.begins_with("--lang="):
-			want = a.trim_prefix("--lang=")
-			test = true
-		elif a == "--pseudo":
-			ps = true
-			test = true
-	_apply(norm(want), ps)
-	if test:
-		print("[Loc] test override: lang=%s pseudo=%s" % [lang, pseudo_on])
+	ps = ps or "--pseudo" in options
+	var code: String = launch_lang(GameConfig.lang)
+	_apply(code, ps)
+	if OS.get_environment("DF_LANG") != "" or OS.get_environment("DF_PSEUDO") != "" or ps:
+		print("[Loc] lang=%s pseudo=%s" % [lang, pseudo_on])
 
+
+static func launch_lang(saved: String, fallback: String = SRC) -> String:
+	var want: String = saved if not saved.is_empty() else fallback
+	var override: String = OS.get_environment("DF_LANG")
+	if not override.is_empty():
+		want = override
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--lang="):
+			want = arg.trim_prefix("--lang=")
+	return norm(want)
+
+
+static func _language_code(locale: String) -> String:
+	var code: String = locale.strip_edges().to_lower().replace("-", "_").get_slice("_", 0)
+	return "uk" if code == "ua" else code
 
 
 static func norm(code: String) -> String:
-	var c: String = code.strip_edges().to_lower().replace("-", "_").get_slice("_", 0)
-	if c == "ua":
-		c = "uk"
-	return c if LANGS.has(c) else SRC
+	var short: String = _language_code(code)
+	return short if LANGS.has(short) else SRC
+
+
+static func device_lang(os_code: String = "", supported: PackedStringArray = PUBLIC_LANGS) -> String:
+	var code: String = _language_code(os_code if os_code != "" else OS.get_locale_language())
+	if supported.has(code):
+		return code
+	return SRC if _NEAR_RU.has(code) else "en"
 
 
 static func cur() -> String:

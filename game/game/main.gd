@@ -1892,7 +1892,7 @@ func _on_net_speed(old: int, new: int) -> void:
 		elif why.begins_with("auto:"):
 			if net.speed_who == me_name:
 				return  # one's own event has its own notification
-			t += " · %s%s" % [why.substr(5), (Loc.t(" У %s") % net.speed_who.to_upper()) if net.speed_who != "" else ""]
+			t += " · %s%s" % [Loc.t(why.substr(5)), (Loc.t(" У %s") % net.speed_who.to_upper()) if net.speed_who != "" else ""]
 	hud.show_toast(t)
 
 

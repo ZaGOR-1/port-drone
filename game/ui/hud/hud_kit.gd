@@ -120,7 +120,7 @@ func _show_build_tip(nm: String) -> void:
 				warn = true
 				break
 	if hint == "":
-		hint = _short_line(_sentence(String(Military.PURPOSE.get(kind, ""))), 64)
+		hint = _short_line(_sentence(Loc.t(String(Military.PURPOSE.get(kind, "")))), 64)
 	if nm == "trench" or nm == "teeth":
 		hint = Loc.t("Цена за клетку. ") + Loc.t(hint)
 	var yl: String = EconRates.build_yield(gw, p, kind)
@@ -175,7 +175,7 @@ func _fill_tip_cost(cost: Dictionary) -> void:
 		var miss: bool = have < need
 		var l: Label = UiKit.lbl((Loc.t("%d (есть %d)") % [need, have]) if miss else str(need), 11, UiKit.RED if miss else UiKit.TEXT, 2, 3)
 		if k != "money":
-			l.text = "%s %s" % [String(Economy.RES_NAMES.get(k, k)).to_lower(), l.text]
+			l.text = "%s %s" % [Loc.t(String(Economy.RES_NAMES.get(k, k))).to_lower(), l.text]
 		pair.add_child(l)
 		tip_cost.add_child(pair)
 
@@ -288,7 +288,7 @@ static func _res_line(cost: Dictionary) -> String:
 	var out: PackedStringArray = PackedStringArray()
 	for k: String in cost:
 		if k != "money":
-			out.append("%s %d" % [String(NAMES.get(k, k)), int(cost[k])])
+			out.append("%s %d" % [Loc.t(String(NAMES.get(k, k))), int(cost[k])])
 	return ", ".join(out)
 
 

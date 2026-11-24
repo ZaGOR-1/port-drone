@@ -628,7 +628,7 @@ func _strip(parent: Control, cid: int, row: Dictionary, st: int, folded: bool = 
 	if al != null and GameConfig.alliances:
 		var a: Dictionary = al.of_country(cid)
 		if not a.is_empty():
-			items.append(["ally_logo_%d" % int(a["logo"]), Loc.name(String(a["name"])).to_upper(), al.color(a), "", a])
+			items.append(["ally_logo_%d" % int(a["logo"]), Loc.name(al.display_name(String(a["name"]))).to_upper(), al.color(a), "", a])
 	var n1: int = ap.leaving(cid, me)
 	if n1 >= 0:
 		items.append(["d331_pass_revoke", Loc.t("ИХ ВОЙСКА УХОДЯТ: %d") % n1, C_AMB, "mil", {}])
@@ -1359,7 +1359,7 @@ func _pass(cid: int, st: int) -> void:
 		_line(pv, "d331_pass_offer", "ОНИ → НАША ЗЕМЛЯ", Loc.t("есть · их отрядов у нас: %d") % nt, C_TRUCE, "ОТОЗВАТЬ", "ghost",
 			func() -> void: _arm("pass_them"))
 		if confirm == "pass_them":
-			var tx: String = "Отозвать проход? " + ((Loc.t("Их %d отр. уйдут к ближайшей границе. ") % nt) if nt > 0 else "") + Loc.t("−%d к отношениям.") % int(Diplomacy.CANCEL_PENALTY.get("passage", 5))
+			var tx: String = Loc.t("Отозвать проход? ") + ((Loc.t("Их %d отр. уйдут к ближайшей границе. ") % nt) if nt > 0 else "") + Loc.t("−%d к отношениям.") % int(Diplomacy.CANCEL_PENALTY.get("passage", 5))
 			if rv_cmd == "":
 				tx = Loc.t("Закрыть проход в обе стороны? −%d к отношениям.") % int(Diplomacy.CANCEL_PENALTY.get("passage", 5))
 			_confirm(pv, tx, "ОТОЗВАТЬ", func() -> void:
@@ -1689,8 +1689,9 @@ func _short_why(why: String) -> String:
 	var w: String = why.to_lower()
 	for pair: Array in [["дронопорт", "нет мест"], ["отрк", "нет ОТРК"], ["зрк", "нет ЗРК"], ["носител", "нет носителя"], ["полон", "склад полон"], ["пусков", "нет пусковой"]]:
 		if w.contains(String(pair[0])):
-			return String(pair[1])
-	return why if why.length() <= 12 else why.left(11) + "…"
+			return Loc.t(String(pair[1]))
+	var text: String = Loc.t(why)
+	return text if text.length() <= 12 else text.left(11) + "…"
 
 
 
@@ -2509,6 +2510,7 @@ func _target_row(cid: int, x: int) -> void:
 			_:
 				st_txt = "мир"
 				stc = C_PEACE
+		st_txt = Loc.t(st_txt)
 		if cc.is_player:
 			st_txt += Loc.t(" · игрок")
 		var o: Dictionary = ap.outlook(cid, comp_kind, x)
@@ -2633,7 +2635,7 @@ func _review(cid: int) -> void:
 	tl.custom_minimum_size.x = 120
 	v.add_child(tl)
 	var rs: String = String({Diplomacy.Rel.ALLIANCE: "союз", Diplomacy.Rel.WAR: "война", Diplomacy.Rel.TRUCE: "перемирие"}.get(dp.get_rel(me, cid), "мир"))
-	v.add_child(UiKit.lbl(Loc.t("просим: %s (%s, %s)") % [Loc.name(c.name), rs, s._signed(dp.relation(me, cid))], 9, UiKit.MUTED, 1))
+	v.add_child(UiKit.lbl(Loc.t("просим: %s (%s, %s)") % [Loc.name(c.name), Loc.t(rs), s._signed(dp.relation(me, cid))], 9, UiKit.MUTED, 1))
 	_sep(cv)
 	var fh: = HBoxContainer.new()
 	fh.add_theme_constant_override("separation", 6)

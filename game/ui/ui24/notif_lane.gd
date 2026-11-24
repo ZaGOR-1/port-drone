@@ -345,13 +345,17 @@ func ambient(text: String, lvl: int, col: Color = Color(0, 0, 0, 0)) -> void:
 			_log(text, lvl)
 
 
-static func _note_title(e: Dictionary) -> String:
+static func _note_message(e: Dictionary) -> Variant:
 	var n: int = int(e["n"])
+	var msg: Variant = e["tk"]
 	if n <= 1:
-		return String(e["text"])
-	if String(e["key"]) != "":
-		return "%s ×%d · %s" % [String(e["key"]), n, String(e["text"])]
-	return "%s (×%d)" % [String(e["text"]), n]
+		return msg
+	if not Loc.is_msg(msg):
+		msg = Loc.mk(String(msg))
+	var key: String = String(e["key"])
+	if key != "":
+		return Loc.mk("%s ×%d · %s", [Loc.mk(key), n, msg])
+	return Loc.mk("%s (×%d)", [msg, n])
 
 
 
@@ -372,10 +376,9 @@ func _note_tick() -> void:
 			return
 	var e: Dictionary = _note_pend.pop_front()
 	note_next = clock + NOTE_GAP
-	var t: String = _note_title(e)
-	var d: Dictionary = {"title": t, "ttl": 2.6 + clampf((t.length() - 40) * 0.03, 0.0, 1.4)}
-	if int(e["n"]) <= 1 and e.has("tk"):
-		d["tk"] = e["tk"]
+	var msg: Variant = _note_message(e)
+	var t: String = Loc.re(msg)
+	var d: Dictionary = {"title": t, "tk": msg, "ttl": 2.6 + clampf((t.length() - 40) * 0.03, 0.0, 1.4)}
 	if (e["col"] as Color).a > 0.0:
 		d["colour"] = e["col"]
 	push("note", d)

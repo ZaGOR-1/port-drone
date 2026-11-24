@@ -145,6 +145,7 @@ func _ready() -> void:
 		t.set_anchors_preset(Control.PRESET_CENTER)
 		root.add_child(t)
 	stage = UiKit.lbl("", 13, UiKit.TEXT, 2, 3)
+	stage.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	stage.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	root.add_child(stage)
 	bar_frame = PanelContainer.new()
@@ -208,7 +209,7 @@ func finish() -> void:
 
 
 func _set_stage(text: String) -> void:
-	_stage_base = text.rstrip(".…")
+	_stage_base = Loc.t(text).rstrip(".…")
 	stage.text = _stage_base + "..."
 
 

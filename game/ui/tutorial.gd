@@ -265,7 +265,7 @@ func _process(delta: float) -> void:
 			p.money += rw
 			if gw.econ != null and gw.econ.has_method("stat_add"):
 				gw.econ.stat_add(p, "income", "tutorial", rw)
-			hud.show_toast("Обучение: готово, +%d" % rw)
+			hud.show_toast(Loc.t("Обучение: готово, +%d") % rw)
 		else:
 			hud.show_toast("Обучение: готово")
 		UiKit.snd("ui_build")

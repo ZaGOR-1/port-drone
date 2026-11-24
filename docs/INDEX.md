@@ -18,3 +18,8 @@
 | Історичні технічні звіти | [Інвентар Markdown](DOCUMENTATION_AUDIT.md) | Git/PR історія, Phase-звіти, старі контрольні збірки, source coverage |
 
 Шлях `docs/codex/verified/` збережено для наявних посилань. Дата, commit і тестовий сценарій у кожному звіті визначають його обсяг. Історичний PASS і старі дозволи не переносяться на поточний HEAD.
+
+## Правила розробки й локалізації
+
+- [Git workflow](DEVELOPMENT_WORKFLOW.md) · [Versioning](VERSIONING_POLICY.md)
+- [Аудит локалізації](LOCALIZATION_AUDIT.md) · [Зміни](LOCALIZATION_FIXES.md) · [Глосарій](LOCALIZATION_GLOSSARY.md) · [Тести й ручний QA](LOCALIZATION_TESTS.md)

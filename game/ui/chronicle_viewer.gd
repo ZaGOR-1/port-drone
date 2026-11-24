@@ -100,7 +100,7 @@ static func show_browser(m: Menus) -> void:
 			tl.clip_text = true
 			col.add_child(tl)
 			var dur: int = roundi(float(mt.get("duration", 0.0)))
-			var sub_t: String = "%s · %d:%02d · %d кадр." % [String(mt.get("date", "")), dur / 60, dur % 60, int(rec.get("n_frames", 0))]
+			var sub_t: String = Loc.t("%s · %d:%02d · %d кадр.") % [String(mt.get("date", "")), dur / 60, dur % 60, int(rec.get("n_frames", 0))]
 			col.add_child(UiKit.lbl(sub_t, 9, UiKit.MUTED, 1, 1))
 			var rpath: String = String(rec.get("path", ""))
 			var watch_b: Button = UiKit.big("СМОТРЕТЬ", "green", "", 40.0, 10)
