@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| beta 0.36.5 | База 0.36.4 `d8114af`. Кандидат INT-06 з R10 і version bump `a2bcdb0`. Merge commit і CI зафіксовано в [PR #14](https://github.com/ZaGOR-1/port-drone/pull/14). |
 | База `beta` перед INT-03 | `11380ee014cae95c1bdc2367b0ee9a1b8cbfed7b`. [INT-02, PR #10](https://github.com/ZaGOR-1/port-drone/pull/10). |
 | Інтеграція `beta` 0.36.2 | Merge commit та перевірки приймання прив’язані до [INT-03, PR #11](https://github.com/ZaGOR-1/port-drone/pull/11). |
 | Windows-стабілізація в `beta` | [PR #5](https://github.com/ZaGOR-1/port-drone/pull/5) об’єднано комітом `739a21bcdb74b31e8a9651f491c9f8271948b294` від бази `94aedbe36fc5d1abd4da100bed83f803fad53b2f`. Production tip `e174cd0ce6d6804a8f0598d29bfa7b7008c1206f`, дерево `game/` `052d3b1047774012be4fbc551cfe36d995845ea8`. |
@@ -97,13 +98,25 @@ Worktree `/home/zagor/projects/port-drone-r10`, гілка `perf/armyfire-impact
 
 Ранній фільтр відсікає 99.26% відвідувань D2100. Медіана inclusive `_impact` 8.81 → 4.94 мс/кадр, FPS 19.18 → 20.84. У C1200 exclusive `_impact` 3.12 → 2.04 мс/кадр, FPS INCONCLUSIVE. Late E, C1200 і D2100 збіглися покроково. Дисковий save і мережевий snapshot продовжилися ідентично між A/B. Python 49/49, simulation 2476/2476, differential 49/49 на кожному варіанті. Linux і Windows official QA-пакети, Linux native та Wine headless smoke пройшли.
 
-Докази та QA-архіви — `/home/zagor/projects/droneflames-toolchain/performance/r10.sgT1Rl0N/`. Наступний крок для інтеграції — review Draft PR і фізичний Windows x64 A/B у D2100 та щільному сценарії, де ранній фільтр має додаткову ціну. [Методика, результати й обмеження](r10/R10_RESULTS.md)
+Докази та QA-архіви — `/home/zagor/projects/droneflames-toolchain/performance/r10.sgT1Rl0N/`. Приймання цього кандидата зафіксовано в INT-06. [Методика, результати й обмеження](r10/R10_RESULTS.md)
+
+## R09 · Baseline 0.36.4
+
+На Ubuntu native з official Godot 4.7.2 і RTX 4060 Laptop GPU виміряно медіани C1200 41,62 FPS, D1920 21,89, D2100 20,28 і Late E 35,06. Контроль D2100 показав обмеження головного потоку. Дані R09 і гілка `docs/r09-baseline` `93a626e` збережені в `/home/zagor/projects/droneflames-toolchain/performance/r09.vlpdda5t/`. Фізичний Windows performance — NOT RUN.
+
+## INT-06 · R10 / beta 0.36.5
+
+[PR #14](https://github.com/ZaGOR-1/port-drone/pull/14) інтегрує R10 з `d8114afac56c2475ca9ded5bd8627d4d42000041`. Worktree кандидата `/home/zagor/projects/port-drone-r10`. Мережевий допуск зберігає перевірку повної версії, PROTO 7, SIM_REV v036-integration-1 і Save.FORMAT 1. D2100 Ubuntu дав +8,64% FPS, p99 кадру +3,98% за медіанами, причина лишається відкритою. Physical Windows user acceptance: PASS — owner-reported. Quantitative Windows A/B metrics: NOT PROVIDED. Фізичне приймання фінального пакета 0.36.5, LAN і Steam — NOT RUN. Merge SHA, CI, QA-пакети, Git increment і докази фіксуються в локальному handoff `/home/zagor/projects/droneflames-toolchain/int06.ruEDaqvC/`. [Review, ризики й R12](r10/INT06_INTEGRATION.md)
+
+## R11 · NO-GO
+
+Локальний worktree `/home/zagor/projects/port-drone-r11`, гілка `perf/r11-army-update`, HEAD `a72a67c`. Експеримент окопування не інтегровано. На Late E FPS і tick p95 погіршилися в усіх трьох мінімальних парах, причинність відкрита. Докази збережено в `/home/zagor/projects/droneflames-toolchain/performance/r11.AZ9TDOdC/`.
 
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
 
-- Фізичний LAN, Steam-матч на двох ПК, reconnect/resync і late-game FPS мають статус NOT RUN. `Ctrl+1–9` без виділення очищає слот групи. Це чинна поведінка й окреме можливе UX-покращення.
+- Фізичні LAN, Steam-матч на двох ПК та reconnect/resync мають статус NOT RUN. Кількісного Windows late-game A/B для фінального 0.36.5 ще немає. `Ctrl+1–9` без виділення очищає слот групи. Це чинна поведінка й окреме можливе UX-покращення.
 - Падіння до 2–3 FPS у масштабних боях повідомлялося користувачем. Точний bottleneck ще потребує Windows профілювання. Відкриті shutdown leaks, цілісність updater, стійкість saves при збоях і загальне покриття мережевих схем. [Backlog](codex/verified/BACKLOG.md)
 
 ## Next steps
