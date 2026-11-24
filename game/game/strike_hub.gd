@@ -287,6 +287,7 @@ func fire(gw: GameWorld, all: Dictionary, arrive_together: bool) -> Dictionary:
 	var res: Dictionary = {"now": {}, "later": {}, "eta": {}, "text": "", "failed": []}
 	last_drones = []
 	var etas: Dictionary = {}
+	var tel_plan: Dictionary = {}
 	for w: String in W_IDS:
 		var ts: Array = all.get(w, [])
 		if ts.is_empty():
@@ -296,6 +297,9 @@ func fire(gw: GameWorld, all: Dictionary, arrive_together: bool) -> Dictionary:
 			(res["failed"] as Array).append(w)
 			continue
 		etas[w] = eta(gw, w, mp)
+		# A TEL-only strike launches in this call, before another weapon can change the world.
+		if w == "tel" and all.size() == 1:
+			tel_plan = mp
 	res["eta"] = etas
 	var t_max: float = 0.0
 	for w2: String in etas:
@@ -312,7 +316,7 @@ func fire(gw: GameWorld, all: Dictionary, arrive_together: bool) -> Dictionary:
 	for w3: String in etas:
 		var delay: float = (t_max - float(etas[w3])) if arrive_together else 0.0
 		if delay < 1.0:
-			var n: int = _launch_now(gw, w3, all[w3], float(etas[w3]))
+			var n: int = _launch_now(gw, w3, all[w3], float(etas[w3]), tel_plan)
 			res["now"][w3] = n
 			if n > 0:
 				parts.append("%s %d" % [short(w3), n])
@@ -343,7 +347,7 @@ static func _ru(n: int, one: String, few: String, many: String) -> String:
 	return many
 
 
-func _launch_now(gw: GameWorld, wid: String, targets: Array, eta_s: float) -> int:
+func _launch_now(gw: GameWorld, wid: String, targets: Array, eta_s: float, tel_plan: Dictionary = {}) -> int:
 	var p: Country = _p(gw)
 	if p == null or p.eliminated:
 		return 0
@@ -361,7 +365,8 @@ func _launch_now(gw: GameWorld, wid: String, targets: Array, eta_s: float) -> in
 			else:
 				n = int(gw.mil.launch_multi_ex(p, targets, jet)["launched"])
 		"tel":
-			n = int(gw.mil.launch_missiles_multi(p, targets)["launched"])
+			var result: Dictionary = gw.mil.launch_missiles_multi(p, targets) if tel_plan.is_empty() else gw.mil._apply_missile_plan(p, tel_plan)
+			n = int(result["launched"])
 		"ship":
 			var r: Dictionary = NavyStrike.launch(gw, p.id, targets)
 			n = int(r.get("launched", 0))

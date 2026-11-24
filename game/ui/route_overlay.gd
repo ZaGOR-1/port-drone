@@ -15,6 +15,7 @@ var gw: GameWorld
 var main_node: Node
 var _t: float = 0.0
 var _had: bool = false
+var _tel_reticle: ImageTexture
 var ripples: Array = []
 var plan_line: PackedVector2Array = PackedVector2Array()
 var follow_line: PackedVector2Array = PackedVector2Array()
@@ -109,12 +110,20 @@ func _draw() -> void:
 	if bool(st["active"]) and String(st["kind"]) in ["missile", "cruise", "hyper"]:
 
 		var mm: Array = st.get("multi", [])
+		var tel: bool = st["kind"] == "missile"
+		if tel and mm.size() > 1 and _tel_reticle == null:
+			# The inactive TEL reticle has fixed geometry. Use the baked PathKit reticle.
+			_tel_reticle = ImageTexture.create_from_image(Image.load_from_file("res://assets/sprites/tel_plan_reticle.png"))
 		for i in range(mm.size()):
-			var tp0: Vector2 = mm[i]["pos"]
-			if i < mm.size() - 1:
-				_cross(_scr(tp0), false, false)
+			var point: Vector2 = _scr(mm[i]["pos"])
+			var previous: bool = i < mm.size() - 1
+			if previous:
+				if tel:
+					draw_texture(_tel_reticle, point - Vector2(16.0, 16.0))
+				else:
+					_cross(point, false, false)
 			if mm.size() > 1 or int(mm[i]["n"]) > 1:
-				_tag(_scr(tp0), "#%d ×%d" % [i + 1, int(mm[i]["n"])], Color.WHITE if i < mm.size() - 1 else Color("ffd166"))
+				_tag(point, "#%d ×%d" % [i + 1, int(mm[i]["n"])], Color.WHITE if previous else Color("ffd166"))
 		if bool(st["has_target"]) and String(st["kind"]) == "hyper":
 			_cross(_scr(st["target"]), false, true)
 	if bool(st["active"]) and String(st["kind"]) == "cruise":

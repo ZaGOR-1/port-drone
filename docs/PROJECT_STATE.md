@@ -1,6 +1,6 @@
 # DroneFlames — пам’ять проєкту
 
-Звірено 2026-11-22. Маршрут до технічних документів і архіву наведено в [індексі](INDEX.md).
+Базовий стан звірено 2026-11-22. PERF-01 і PERF-02 звірено 2026-11-24. Маршрут до технічних документів і архіву наведено в [індексі](INDEX.md).
 
 ## Project identity
 
@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| Актуальна production beta | `c91e0e6a7eef831687e6e63550560bba739a6b87`. PR #7 і #8 залишаються окремими Draft PR. |
 | Windows-стабілізація в `beta` | [PR #5](https://github.com/ZaGOR-1/port-drone/pull/5) об’єднано комітом `739a21bcdb74b31e8a9651f491c9f8271948b294` від бази `94aedbe36fc5d1abd4da100bed83f803fad53b2f`. Production tip `e174cd0ce6d6804a8f0598d29bfa7b7008c1206f`, дерево `game/` `052d3b1047774012be4fbc551cfe36d995845ea8`. |
 | `main` / `origin/main` | `172df65e3bd004efed9a5444e90a284d9d69db10`. UI `v0.34.0`, updater config `0.33.2.3`, SIM_REV `pr10-phase5b2-1`. |
 | Контракти `beta` і локального кандидата | `v0.36.0`, `PROTO 7`, `SIM_REV v036-integration-1`, `Save.FORMAT 1`. |
@@ -40,6 +41,18 @@ DroneFlames — RTS про державу, економіку, дипломат�
 FIX-01 перебуває у `~/projects/port-drone-fix-hud-input` на `fix/hud-camera-input` від production `beta` `c91e0e6`. Виправлено межі армійських панелей і routing вводу миші. Цільовий playback, симуляційна регресія та official Windows build пройшли. Нативний Windows GUI після виправлень очікує ручного QA. Звіт із вихідної Windows-збірки додано до PR #7. Вибір понад приблизно 200 цілей ОТРК відкладено до PERF-01. [Причини](FIX01_BUG_ANALYSIS.md), [регресії](FIX01_REGRESSION_TESTS.md), [Windows QA](FIX01_WINDOWS_QA.md).
 
 Інтеграцію Windows-стабілізації в `beta` завершено. Фізичний LAN і профілювання late-game FPS залишаються завданнями наступного циклу.
+
+## PERF-01
+
+Кандидат `perf/otrk-target-selection`, worktree `~/projects/port-drone-perf01`. UI-коміт `1ebb914`, код Windows QA `130dce2`, версія кандидата `0.36.1`. На `beta` відтворено поступову деградацію вибору й промальовування. У двох ізольованих A/B-парах на 200 цілях клік зменшився з 24,93 до 0,69 мс, підготовка рендерингу з 9,63 до 5,02 мс/кадр. NetHash, порядок цілей, wire payload і черги збіглися. Симуляційна регресія 2476/2476.
+
+Наступна перевірка — повтор на фізичній Windows 11 зі збігом SHA256 EXE/DLL, потім GUI зі спільним кандидатом з PR #8. Подальші зміни підтвердження й preview описано в PERF-02. Сирі дані та ZIP у `~/projects/droneflames-toolchain/performance/perf01/`. [PERF-01](perf01/PERF01_ANALYSIS.md)
+
+## PERF-02
+
+Гілка `perf/otrk-target-selection`, worktree `~/projects/port-drone-perf01`, код `3880359`, версія `0.36.1`, Draft PR #9 до `beta`. На 500 цілях headless-підтвердження 107,27 → 16,62 мс, контрольований preview 4,60 → 2,05 мс/кадр за тієї самої частоти. Повторний план для синхронного залпу лише ОТРК замінено застосуванням готового плану в межах виклику. У 15 A/B-парах порівняно команди, черги, першу хвилю й NetHash. Simulation regression 2476/2476, Python discovery 43/43.
+
+Фізична Windows 11 GUI, LAN і Steam — NOT RUN. Пакет і сирі докази зберігаються в `~/projects/droneflames-toolchain/performance/perf02/`. Наступна перевірка — A/B з ZIP PERF-01 на тому самому Windows ПК. Фактичну затримку при вичерпанні боєзапасу зафіксовано для наступного профілювання. [PERF-02](perf02/PERF02_ANALYSIS.md)
 
 ## Known issues
 
