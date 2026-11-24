@@ -1171,14 +1171,16 @@ func _test_step6_pc_and_perf() -> void:
 	# Menus What's New metadata + Ukrainian i18n entries
 	check(Menus.VERSION == "v0.36.3", "Menus.VERSION updated to v0.36.3")
 	var wn_cats: Dictionary = {}
+	var first_wn: String = ""
 	for wn_s: String in Menus.WHATS_NEW:
 		for pref: String in ["НОВОЕ:", "УЛУЧШЕНО:", "ИСПР:", "УДАЛЕНО:"]:
 			if wn_s.begins_with(pref):
 				wn_cats[pref] = true
+				if pref == "НОВОЕ:" and first_wn.is_empty():
+					first_wn = wn_s.trim_prefix(pref).strip_edges()
 	check(wn_cats.size() == 4, "Menus.WHATS_NEW covers all 4 categories (НОВОЕ, УЛУЧШЕНО, ИСПР, УДАЛЕНО)")
 	var prev_lang: String = GameConfig.lang
 	Loc.set_lang("uk", false)
-	var first_wn: String = String(Menus.WHATS_NEW[0]).trim_prefix("НОВОЕ:").strip_edges()
 	check(Loc.t("УЛУЧШЕНО") == "ПОКРАЩЕНО" and Loc.t("УДАЛЕНО") == "ВИДАЛЕНО" and Loc.t(first_wn) != first_wn and Loc.t("ИНТЕРФЕЙС И ПК") == "ІНТЕРФЕЙС І ПК", "Ukrainian translation loads v0.35 What's New and UI entries")
 	Loc.set_lang(prev_lang, false)
 
