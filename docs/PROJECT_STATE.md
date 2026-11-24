@@ -56,7 +56,7 @@ FIX-01 перебуває у `~/projects/port-drone-fix-hud-input` на `fix/hud
 
 ## INT-01
 
-QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integration-qa` об’єднує Draft PR #7 → #8 → #9 від `c91e0e6a`. Перевірене дерево гри `26dd6975cf20e987d4db703f1cabde4e85483cb0`. Handoff і докази розміщені в `/home/zagor/projects/droneflames-toolchain/integration-qa-v0.36.1/`. Фізичні Windows DPI, LAN та Steam очікують перевірки. [Інтеграція](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md)
+QA-гілка `integration/qa-v0.36.1` у `/home/zagor/projects/port-drone-integration-qa` об’єднує Draft PR #7 → #8 → #9 від `c91e0e6a`. Перевірене дерево гри `26dd6975cf20e987d4db703f1cabde4e85483cb0`. Handoff і докази розміщені в `/home/zagor/projects/droneflames-toolchain/integration-qa-v0.36.1/`. Python 47/47, simulation 2476/2476, міжмовний replay 30 ticks і ENet loopback із reconnect/resync пройшли. Official Windows ZIP перевіряється через SHA256. Wine smoke і Linux GUI пройшли у задокументованому обсязі. Фізичні Windows DPI, LAN та Steam мають статус NOT RUN. [Інтеграція](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md)
 
 ## Known issues
 
