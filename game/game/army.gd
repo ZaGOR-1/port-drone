@@ -469,15 +469,52 @@ func order_hold(country_id: int) -> void:
 
 
 
+# Only this scan owns the cached lists. The grid still defines membership
+# and insertion order, even if a member moved or died after grid construction.
+class AcquisitionBuckets:
+	var grid_revision: int = -1
+	var country_revision: int = -1
+	var by_foes: Dictionary[int, Dictionary] = {}
+
+	func for_foes(foes: int, current_grid_revision: int) -> Dictionary:
+		if grid_revision != current_grid_revision or country_revision != Unit.country_revision:
+			by_foes.clear()
+			grid_revision = current_grid_revision
+			country_revision = Unit.country_revision
+		if not by_foes.has(foes):
+			by_foes[foes] = {}
+		return by_foes[foes]
+
+
+var _acquire_grid_revision: int = 0
+
+
+func _has_mixed_acquisition_bucket() -> bool:
+	# Reuse pays for materialization in large mixed fights. Sparse and
+	# single-front buckets already do little redundant work.
+	const MIN_MEMBERS: int = 512
+	for idx: int in _ugrid_used:
+		if (_ugrid[idx] as Array).size() < MIN_MEMBERS:
+			continue
+		var owners: int = _umask[idx]
+		var remaining: int = owners & (owners - 1)
+		if (remaining & (remaining - 1)) != 0:
+			return true
+	return false
+
+
 func update(dt: float) -> void:
 	_train(dt)
 	_has_smoke = not smokes.is_empty() or (gw.ops != null and gw.ops.has_smoke_zones())
 	_scan_t -= dt
 	var scan: bool = _scan_t <= 0.0
+	var acquisition: AcquisitionBuckets
 	if scan:
 		_scan_t = 0.25
 		_build_grid()
 		_refresh_scan_cache()
+		if get_script() == Army and gw.get_script() == GameWorld and _has_mixed_acquisition_bucket():
+			acquisition = AcquisitionBuckets.new()
 		if pin_until.size() > 48:
 			for k: int in pin_until.keys():
 				if float(pin_until[k]) <= gw.game_time:
@@ -496,7 +533,7 @@ func update(dt: float) -> void:
 			_advance(u, dt)
 		else:
 			if scan:
-				_acquire(u)
+				_acquire(u, acquisition)
 			var tgt: Object = u.target
 			if tgt != null and not _valid(u, tgt):
 				u.target = null
@@ -514,6 +551,7 @@ func update(dt: float) -> void:
 		if u.type == Unit.Type.INFANTRY or u.type == Unit.Type.ASSAULT:
 			u.rpg_cd -= dt
 			_maybe_fpv(u, dt)
+	acquisition = null
 	_update_shells(dt)
 	_update_rockets(dt)
 	_update_grenades(dt)
@@ -570,7 +608,7 @@ func _valid(u: Unit, t: Object) -> bool:
 
 
 
-func _acquire(u: Unit) -> void:
+func _acquire(u: Unit, acquisition: AcquisitionBuckets = null) -> void:
 	if u.target != null and _valid(u, u.target):
 		return
 	var cid: int = u.country_id
@@ -600,7 +638,13 @@ func _acquire(u: Unit) -> void:
 	var smoke_check: bool = _has_smoke if use_fast_mask else true
 	var blind_known: bool = false
 	var blind: bool = false
-	var scan_u: Array = _near_hostile_into(cid, fm, u.pos, r, _tmp_near) if (use_fast_mask and not grd and not gz and _grid_w > 0) else _near_into(u.pos, r, _tmp_near)
+	var fast: bool = use_fast_mask and not grd and not gz and _grid_w > 0
+	var foes: int = _acquire_foes(cid) if acquisition != null and fast else -1
+	var scan_u: Array
+	if foes >= 0:
+		scan_u = _near_acquire_foes_into(fm, u.pos, r, _tmp_near, acquisition, foes)
+	else:
+		scan_u = _near_hostile_into(cid, fm, u.pos, r, _tmp_near) if fast else _near_into(u.pos, r, _tmp_near)
 	for o: Unit in scan_u:
 		if not o.alive() or o.type == Unit.Type.FPV or o.country_id == cid:
 			continue
@@ -636,6 +680,21 @@ func _acquire(u: Unit) -> void:
 				bd = d3
 				best = f
 	u.target = best
+
+
+func _acquire_foes(cid: int) -> int:
+	var c: Country = gw.country_by_id(cid)
+	if c == null:
+		return 0
+	var foes: int = 0
+	for key: Variant in c.at_war:
+		# The overflow bucket bit is shared by unrelated owners. Unusual
+		# keys must go through the exact Dictionary.has() reference path.
+		if not key is int or key <= 0 or key >= 62:
+			return -1
+		if key != cid:
+			foes |= 1 << key
+	return foes
 
 
 func _target_pos(t: Object, from: = Vector2.INF) -> Vector2:
@@ -2248,11 +2307,12 @@ func safe_point(base: Vector2, off: Vector2) -> Vector2:
 
 
 func save_state() -> Dictionary:
-	return {"a": Save.dump(self, ["units_revision"]), "t": Save.dump(tac), "f": Save.dump(fire, ["_shots", "_impact_units"])}
+	return {"a": Save.dump(self, ["units_revision", "_acquire_grid_revision"]), "t": Save.dump(tac), "f": Save.dump(fire, ["_shots", "_impact_units"])}
 
 
 func load_state(d: Dictionary) -> void:
-	Save.fill(self, d.get("a", {}), ["units_revision"])
+	_acquire_grid_revision += 1
+	Save.fill(self, d.get("a", {}), ["units_revision", "_acquire_grid_revision"])
 	Save.fill(tac, d.get("t", {}))
 	Save.fill(fire, d.get("f", {}), ["_impact_units"])
 
@@ -2326,6 +2386,7 @@ func _ensure_flat_grid() -> void:
 
 
 func _build_grid() -> void:
+	_acquire_grid_revision += 1
 	_ensure_flat_grid()
 	for idx: int in _ugrid_used:
 		(_ugrid[idx] as Array).clear()
@@ -2434,6 +2495,32 @@ func _near_hostile_into(_cid: int, fm: int, p: Vector2, r: float, out: Array) ->
 			var idx: int = row + cx
 			if (_umask[idx] & fm) != 0:
 				out.append_array(_ugrid[idx] as Array)
+	return out
+
+
+func _near_acquire_foes_into(fm: int, p: Vector2, r: float, out: Array,
+		acquisition: AcquisitionBuckets, foes: int) -> Array:
+	out.clear()
+	if fm == 0 or foes == 0:
+		return out
+	var filtered: Dictionary = acquisition.for_foes(foes, _acquire_grid_revision)
+	var x0: int = maxi(0, floori((p.x - r) / GRID_PX))
+	var x1: int = mini(_grid_w - 1, floori((p.x + r) / GRID_PX))
+	var y0: int = maxi(0, floori((p.y - r) / GRID_PX))
+	var y1: int = mini(_grid_h - 1, floori((p.y + r) / GRID_PX))
+	for cy in range(y0, y1 + 1):
+		var row: int = cy * _grid_w
+		for cx in range(x0, x1 + 1):
+			var idx: int = row + cx
+			if (_umask[idx] & fm) == 0:
+				continue
+			if not filtered.has(idx):
+				var members: Array = []
+				for o: Unit in _ugrid[idx]:
+					if (_cbit(o.country_id) & foes) != 0:
+						members.append(o)
+				filtered[idx] = members
+			out.append_array(filtered[idx] as Array)
 	return out
 
 

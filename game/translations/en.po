@@ -36044,3 +36044,7 @@ msgstr "Faster unit selection for army operations"
 #: ui/menus.gd
 msgid "Ускорен поиск наземных целей при артиллерийских попаданиях"
 msgstr "Faster search for ground targets affected by artillery impacts"
+
+#: ui/menus.gd
+msgid "Ускорен поиск целей армейскими подразделениями в плотных боях"
+msgstr "Faster target acquisition by army units in dense battles"

@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| INT-11 / R19 0.36.10 | Ordered target acquisition buckets і PATCH 0.36.10. Точний SHA та стан інтеграції в [PR #19](https://github.com/ZaGOR-1/port-drone/pull/19). |
 | INT-10 / R18B 0.36.9 | Ordered ground impact lookup і PATCH 0.36.9. SHA та стан інтеграції в [PR #18](https://github.com/ZaGOR-1/port-drone/pull/18). |
 | INT-09 / R17 0.36.8 | Ordered unit membership lookup і PATCH 0.36.8. SHA та стан інтеграції в [PR #17](https://github.com/ZaGOR-1/port-drone/pull/17). |
 | INT-08 / beta 0.36.7 | R15 і PATCH `6a41f0d`. Точний SHA, стан інтеграції й CI в [PR #16](https://github.com/ZaGOR-1/port-drone/pull/16). [Review, ризики й контекст R16](r15/INT08_INTEGRATION.md). |
@@ -156,6 +157,17 @@ Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity
 
 Власник погодив інтеграцію через PR #18 від `117781083ff108c8353b9e53a3eda3d49bedd0fe`. Production PoC і контракти R18B збережено. R17 fixture повторно пройшов 33/33 на official PCK обох варіантів. Типізований `Array[Unit]` зберігає початкове тестове присвоєння та всі assertions. Фізичні Windows A/B, LAN і Steam — NOT RUN за рішенням власника. Відомі teardown warnings відкриті. Ризик для подальшого приймання — +9,16% frame p95 в одній парі щільного D2100. CI, QA-пакети, admission та incremental bundle фіксуються в handoff `/home/zagor/projects/droneflames-toolchain/int10.GjFgeuwy/`.
 
+## R19 · Ordered Target Acquisition Buckets
+
+Окремий кандидат від beta `93bd6afdfb51b4dfb5c6d04e3339e37bbdbda035` (0.36.9) у `perf/army-target-acquisition`, worktree `/home/zagor/projects/port-drone-r19`. Ліниві списки чинних spatial buckets за маскою ворогів зберігають порядок, живі перевірки й початковий шлях у звичайному бою. У трьох парах Profile B щільний D5000 показав −56,73% повної acquire CPU, економію 10,68 мс/тик, −68,65% visits разом із побудовою списків та +7,63% FPS. Звичайний D5000 показав −2,24% FPS і +0,74% 1% low. GO за performance і детермінізмом. Differential 24/24, 420 зіставлених тіків, regression 2476/2476, Save/Load 22/22, ENet, official Linux/Windows build, PCK parity та headless smoke — PASS. Фізичні Windows FPS, LAN і Steam — NOT RUN. [Замір, QA й handoff](r19/R19_RESULTS.md)
+
+
+### INT-11 · PATCH 0.36.10
+
+Власник погодив інтеграцію [PR #19](https://github.com/ZaGOR-1/port-drone/pull/19) від `93bd6afdfb51b4dfb5c6d04e3339e37bbdbda035`. Production-код R19 прив’язано до `868b2b8e43fc1aa45d3cfbf7b9be492faa1207f8`. PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с збережено. Повна версія входить до identity ENet. Після інтеграції основний checkout для beta — `/home/zagor/projects/port-drone`.
+
+У коротких контролях кеш не активувався. D2100 показав −7,66% 1% low, Late E показав +9,77% tick p99 (+3,82 мс). B мав більше стороннє навантаження CPU в обох парах, причинність відкрита. Фізичні Windows FPS, LAN і Steam відкладено за рішенням власника, статус NOT RUN. Дефекти вивільнення ресурсів Godot залишаються відкритими. Фінальні CI, smoke, ENet admission, пакети, SHA256 і відновлення incremental bundle фіксуються в локальному handoff `/home/zagor/projects/droneflames-toolchain/int11.KkAMcCZr/`.
+
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
@@ -165,7 +177,7 @@ Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity
 
 ## Next steps
 
-Наступний погоджений дослідницький напрям — **NATIVE-01**, ізольований Rust + GDExtension PoC. Статус — заплановано.
+Дослідження NATIVE-01–02D завершено. Production-інтеграцію Rust відкладено. Відкладена перевірка R19 — фізичний Windows Profile B для 0.36.10, зокрема D2100 і Late E.
 
 1. Пройти фізичний LAN/Steam QA на двох ПК з однаковими SHA256, зокрема reconnect/resync.
 2. Оцінити UX очищення груп без виділення, зберігши можливість явного очищення.
