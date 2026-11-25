@@ -23,6 +23,64 @@ const KIND_MORTAR: int = 0
 const KIND_ARTY: int = 1
 const KIND_ROCKET: int = 2
 
+# Values in the buckets are offsets in Army.units, including duplicate entries.
+class ImpactUnits:
+	const CELL: float = 64.0
+	const LIMIT: float = 1048576.0
+	const MAX_RADIUS: float = 256.0
+
+	var disabled: bool = false
+	var first: bool = true
+	var registry: Array[Unit] = []
+	var size: int = -1
+	var buckets: Dictionary[Vector2i, Array] = {}
+
+	func invalidate() -> void:
+		buckets.clear()
+		registry = []
+		size = -1
+
+	func matches(units: Array[Unit]) -> bool:
+		return size == units.size() and is_same(registry, units)
+
+	func candidates(units: Array[Unit], p: Vector2, radius: float) -> Variant:
+		# Only amortize the index after the first ground scan of a shell batch.
+		if first:
+			first = false
+			return null
+		if disabled or not p.is_finite() or not is_finite(radius) or radius < 0.0 or radius > MAX_RADIUS:
+			return null
+		# With this coordinate bound, one full cell of padding exceeds Vector2
+		# rounding error at both ends of the query. Keep distance_to as the test.
+		var reach: float = radius + CELL
+		if absf(p.x) + reach > LIMIT or absf(p.y) + reach > LIMIT:
+			return null
+		if not matches(units):
+			invalidate()
+			for rank: int in units.size():
+				var pos: Vector2 = units[rank].pos
+				if not pos.is_finite() or absf(pos.x) > LIMIT or absf(pos.y) > LIMIT:
+					disabled = true
+					invalidate()
+					return null
+				var key := Vector2i(floori(pos.x / CELL), floori(pos.y / CELL))
+				if not buckets.has(key):
+					buckets[key] = []
+				buckets[key].append(rank)
+			registry = units
+			size = units.size()
+		var ranks: Array[int] = []
+		for y: int in range(floori((p.y - reach) / CELL), floori((p.y + reach) / CELL) + 1):
+			for x: int in range(floori((p.x - reach) / CELL), floori((p.x + reach) / CELL) + 1):
+				var key := Vector2i(x, y)
+				if buckets.has(key):
+					ranks.append_array(buckets[key])
+		ranks.sort()
+		return ranks
+
+
+var _impact_units: ImpactUnits
+
 var army: Army
 var gw: GameWorld
 var spotted: Dictionary = {}
@@ -497,6 +555,12 @@ static func shell_pos(s: Dictionary) -> Vector2:
 
 
 func _update_shells(dt: float) -> void:
+	var lookup: ImpactUnits
+	if _impact_units != null:
+		# A nested update can run effects before the enclosing query resumes.
+		_impact_units.disabled = true
+		_impact_units.invalidate()
+	var can_index: bool = _impact_units == null and shells.size() > 1 and _can_index_impact()
 	for k in range(shells.size() - 1, -1, -1):
 		var s: Dictionary = shells[k]
 		s["t"] = float(s["t"]) + dt
@@ -517,10 +581,35 @@ func _update_shells(dt: float) -> void:
 		if float(s["t"]) < float(s["dur"]):
 			continue
 		shells.remove_at(k)
-		_impact(s)
+		if can_index and lookup == null:
+			lookup = ImpactUnits.new()
+			_impact_units = lookup
+		_impact(s, lookup)
+	if lookup != null:
+		_impact_units = null
 
 
-func _impact(s: Dictionary) -> void:
+func _can_index_impact() -> bool:
+	# Only the stock synchronous effect chain has been checked for mutations.
+	if army.get_script() != Army or gw.get_script() != GameWorld or gw.mil.get_script() != Military:
+		return false
+	if gw.fx != null and gw.fx.get_script() != FxLayer:
+		return false
+	if gw.battle_watch != null and gw.battle_watch.get_script() != BattleWatch:
+		return false
+	if gw.naval != null and gw.naval.get_script() != Naval:
+		return false
+	if gw.vfx != null:
+		if gw.vfx.get_script() != Vfx:
+			return false
+		if gw.vfx.has_meta("fauna") and (gw.vfx.get_meta("fauna") as Node).get_script() != FaunaLayer:
+			return false
+	return true
+
+func _impact(s: Dictionary, lookup: ImpactUnits = null) -> void:
+	if lookup == null and _impact_units != null:
+		_impact_units.disabled = true
+		_impact_units.invalidate()
 	var p: Vector2 = s["to"]
 	var kind: int = int(s["k"])
 	var c: int = int(s["c"])
@@ -544,22 +633,11 @@ func _impact(s: Dictionary) -> void:
 	if kind == KIND_ARTY or ri(3) == 0:
 		add_decal("crater_s", p.round())
 		army.tac.add_crater(p)
-	var damage_r: float = r + 3.0
-	var suppression_r: float = r * 2.5
-	var effect_r: float = maxf(damage_r, suppression_r)
-	for u: Unit in army.units:
-		var d: float = u.pos.distance_to(p)
-		if not (d <= effect_r):
-			continue
-		if not u.alive() or not u.ground() or not army._hostile(c, u.country_id):
-			continue
-		if d <= damage_r:
-			army._damage(u, dmg * (1.0 if d < r * 0.5 else 0.5), c, p, false, 2)
-		elif d <= suppression_r:
-			u.supp = minf(1.0, u.supp + 0.3)
-			if d <= r * 2.0:
-				army.pin(u)
+	_impact_ground(p, r, dmg, c, lookup)
 	if gw.naval != null:
+		# A sunk transport can synchronously publish a world message.
+		if lookup != null and (not gw.naval.landings.is_empty() or not gw.naval.expeditions.is_empty()):
+			lookup.invalidate()
 		gw.naval.on_shell(p, r, dmg, c)
 
 	var cell: = Vector2i(floori(p.x / GameWorld.CELL), floori(p.y / GameWorld.CELL))
@@ -570,6 +648,8 @@ func _impact(s: Dictionary) -> void:
 		for tx in range(-rt, rt + 1):
 			var tq: = cell + Vector2i(tx, ty)
 			if tx * tx + ty * ty <= rt * rt and gw.mil.fort_cells.has(tq) and Military.is_teeth((gw.mil.fort_cells[tq] as Facility).kind):
+				if lookup != null:
+					lookup.invalidate()
 				gw.mil.remove_line_cell(gw.mil.fort_cells[tq], tq)
 	for dy in range(-rc, rc + 1):
 		for dx in range(-rc, rc + 1):
@@ -582,6 +662,8 @@ func _impact(s: Dictionary) -> void:
 			if not army._hostile(c, lf.country_id):
 				continue
 			if ri(100) < [12, 35, 15][kind]:
+				if lookup != null:
+					lookup.invalidate()
 				gw.mil.remove_line_cell(lf, q)
 				caved = true
 	var attacker: Country = gw.country_by_id(c)
@@ -605,8 +687,53 @@ func _impact(s: Dictionary) -> void:
 		city.garrison = maxf(0.0, city.garrison - dmg * 0.3)
 		city.hit_t = gw.game_time
 		if ri([14, 5, 9][kind]) == 0:
+			# A train hit can unload units synchronously into Army.units.
+			if lookup != null:
+				lookup.invalidate()
 			gw._apply_strike(cell, 1, "crater_s", 6.0, c)
 		break
+
+
+func _impact_ground(p: Vector2, r: float, dmg: float, c: int, lookup: ImpactUnits) -> void:
+	var damage_r: float = r + 3.0
+	var suppression_r: float = r * 2.5
+	var effect_r: float = maxf(damage_r, suppression_r)
+	var units: Array[Unit] = army.units
+	var ranks: Variant = lookup.candidates(units, p, effect_r) if lookup != null and is_finite(r) else null
+	if ranks == null:
+		for u: Unit in units:
+			var d: float = u.pos.distance_to(p)
+			if d <= effect_r:
+				_impact_ground_hit(u, d, p, r, dmg, c, damage_r, suppression_r)
+		return
+	for rank: int in ranks:
+		var u: Unit = units[rank]
+		var d: float = u.pos.distance_to(p)
+		if not (d <= effect_r):
+			continue
+		_impact_ground_hit(u, d, p, r, dmg, c, damage_r, suppression_r)
+		if lookup.disabled or not lookup.matches(units):
+			# A reentrant impact invalidated this query. Resume at the next
+			# registry offset without repeating effects already applied.
+			var next_rank: int = rank + 1
+			while next_rank < units.size():
+				var next: Unit = units[next_rank]
+				next_rank += 1
+				var next_d: float = next.pos.distance_to(p)
+				if next_d <= effect_r:
+					_impact_ground_hit(next, next_d, p, r, dmg, c, damage_r, suppression_r)
+			return
+
+
+func _impact_ground_hit(u: Unit, d: float, p: Vector2, r: float, dmg: float, c: int, damage_r: float, suppression_r: float) -> void:
+	if not u.alive() or not u.ground() or not army._hostile(c, u.country_id):
+		return
+	if d <= damage_r:
+		army._damage(u, dmg * (1.0 if d < r * 0.5 else 0.5), c, p, false, 2)
+	elif d <= suppression_r:
+		u.supp = minf(1.0, u.supp + 0.3)
+		if d <= r * 2.0:
+			army.pin(u)
 
 
 func cook_off(p: Vector2) -> void:

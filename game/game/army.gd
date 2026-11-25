@@ -2248,13 +2248,13 @@ func safe_point(base: Vector2, off: Vector2) -> Vector2:
 
 
 func save_state() -> Dictionary:
-	return {"a": Save.dump(self, ["units_revision"]), "t": Save.dump(tac), "f": Save.dump(fire, ["_shots"])}
+	return {"a": Save.dump(self, ["units_revision"]), "t": Save.dump(tac), "f": Save.dump(fire, ["_shots", "_impact_units"])}
 
 
 func load_state(d: Dictionary) -> void:
 	Save.fill(self, d.get("a", {}), ["units_revision"])
 	Save.fill(tac, d.get("t", {}))
-	Save.fill(fire, d.get("f", {}))
+	Save.fill(fire, d.get("f", {}), ["_impact_units"])
 
 
 
