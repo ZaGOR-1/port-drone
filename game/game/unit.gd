@@ -7,7 +7,13 @@ enum State {IDLE, MOVE, FIGHT, SIEGE, DEAD}
 
 var id: int = 0
 var type: int = Type.TANK
-var country_id: int = 0
+static var country_revision: int = 0
+
+var country_id: int = 0:
+	set(value):
+		if country_id != value:
+			country_id = value
+			country_revision += 1
 var pos: Vector2 = Vector2.ZERO
 var heading: float = 0.0
 var frame: int = 0

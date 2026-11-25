@@ -156,6 +156,10 @@ Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity
 
 Власник погодив інтеграцію через PR #18 від `117781083ff108c8353b9e53a3eda3d49bedd0fe`. Production PoC і контракти R18B збережено. R17 fixture повторно пройшов 33/33 на official PCK обох варіантів. Типізований `Array[Unit]` зберігає початкове тестове присвоєння та всі assertions. Фізичні Windows A/B, LAN і Steam — NOT RUN за рішенням власника. Відомі teardown warnings відкриті. Ризик для подальшого приймання — +9,16% frame p95 в одній парі щільного D2100. CI, QA-пакети, admission та incremental bundle фіксуються в handoff `/home/zagor/projects/droneflames-toolchain/int10.GjFgeuwy/`.
 
+## R19 · Ordered Target Acquisition Buckets
+
+Окремий кандидат від beta `93bd6afdfb51b4dfb5c6d04e3339e37bbdbda035` (0.36.9) у `perf/army-target-acquisition`, worktree `/home/zagor/projects/port-drone-r19`. Ліниві списки чинних spatial buckets за маскою ворогів зберігають порядок, живі перевірки й початковий шлях у звичайному бою. У трьох парах Profile B щільний D5000 показав −56,73% повної acquire CPU, економію 10,68 мс/тик, −68,65% visits разом із побудовою списків та +7,63% FPS. Звичайний D5000 показав −2,24% FPS і +0,74% 1% low. GO за performance і детермінізмом. Differential 24/24, 420 зіставлених тіків, regression 2476/2476, Save/Load 22/22, ENet, official Linux/Windows build, PCK parity та headless smoke — PASS. Фізичні Windows FPS, LAN і Steam — NOT RUN. [Замір, QA й handoff](r19/R19_RESULTS.md)
+
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
@@ -165,7 +169,7 @@ Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity
 
 ## Next steps
 
-Наступний погоджений дослідницький напрям — **NATIVE-01**, ізольований Rust + GDExtension PoC. Статус — заплановано.
+Дослідження NATIVE-01–02D завершено. Production-інтеграцію Rust відкладено. Наступна перевірка R19 — фізичний Windows Profile B і QA у Draft PR.
 
 1. Пройти фізичний LAN/Steam QA на двох ПК з однаковими SHA256, зокрема reconnect/resync.
 2. Оцінити UX очищення груп без виділення, зберігши можливість явного очищення.
