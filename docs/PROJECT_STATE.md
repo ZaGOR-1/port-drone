@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| INT-10 / R18B 0.36.9 | Ordered ground impact lookup і PATCH 0.36.9. SHA та стан інтеграції в [PR #18](https://github.com/ZaGOR-1/port-drone/pull/18). |
 | INT-09 / R17 0.36.8 | Ordered unit membership lookup і PATCH 0.36.8. SHA та стан інтеграції в [PR #17](https://github.com/ZaGOR-1/port-drone/pull/17). |
 | INT-08 / beta 0.36.7 | R15 і PATCH `6a41f0d`. Точний SHA, стан інтеграції й CI в [PR #16](https://github.com/ZaGOR-1/port-drone/pull/16). [Review, ризики й контекст R16](r15/INT08_INTEGRATION.md). |
 | INT-07 / beta 0.36.6 | R14, кандидат PATCH `8649531`. Точний merge SHA та CI в [PR #15](https://github.com/ZaGOR-1/port-drone/pull/15). [Цільовий review і приймання](r14/INT07_INTEGRATION.md). |
@@ -151,6 +152,10 @@ Profile B **GO**. Медіани парних змін impact CPU, simulation CP
 
 Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity та Linux native/Wine smoke — PASS. Windows A/B комплект містить official `beta` та R18B і спільний ручний disk save. PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с успадковано з beta.
 
+### INT-10 · PATCH 0.36.9
+
+Власник погодив інтеграцію через PR #18 від `117781083ff108c8353b9e53a3eda3d49bedd0fe`. Production PoC і контракти R18B збережено. R17 fixture повторно пройшов 33/33 на official PCK обох варіантів. Типізований `Array[Unit]` зберігає початкове тестове присвоєння та всі assertions. Фізичні Windows A/B, LAN і Steam — NOT RUN за рішенням власника. Відомі teardown warnings відкриті. Ризик для подальшого приймання — +9,16% frame p95 в одній парі щільного D2100. CI, QA-пакети, admission та incremental bundle фіксуються в handoff `/home/zagor/projects/droneflames-toolchain/int10.GjFgeuwy/`.
+
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
@@ -159,6 +164,8 @@ Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity
 - Падіння до 2–3 FPS у масштабних боях повідомлялося користувачем. Точний bottleneck ще потребує Windows профілювання. Відкриті shutdown leaks, цілісність updater, стійкість saves при збоях і загальне покриття мережевих схем. [Backlog](codex/verified/BACKLOG.md)
 
 ## Next steps
+
+Наступний погоджений дослідницький напрям — **NATIVE-01**, ізольований Rust + GDExtension PoC. Статус — заплановано.
 
 1. Пройти фізичний LAN/Steam QA на двох ПК з однаковими SHA256, зокрема reconnect/resync.
 2. Оцінити UX очищення груп без виділення, зберігши можливість явного очищення.
