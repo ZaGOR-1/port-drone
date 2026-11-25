@@ -751,7 +751,7 @@ func _board(L: Dictionary, mem: Array) -> void:
 	for k in boats.size():
 		(boats[k] as Dictionary)["delay"] = float(k) * BOAT_GAP
 	for u: Unit in go:
-		gw.army.units.erase(u)
+		gw.army.remove_unit(u)
 		u.path = PackedVector2Array()
 		u.pi = 0
 		u.target = null
@@ -794,7 +794,7 @@ func _unload(L: Dictionary) -> void:
 			u.op_move = false
 			u.cover = 1.0
 			u.still_t = 0.0
-			gw.army.units.append(u)
+			gw.army.add_unit(u)
 			landed.append(u)
 			k += 1
 	if gw._on_screen(beach, 80.0):

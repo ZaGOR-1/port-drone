@@ -89,7 +89,11 @@ const LOC_RES_GEN: Dictionary = {"money": "денег", "food": "еды", "titan
 	"precious": "драгметаллов", "fuel": "топлива", "goods": "товаров"}
 
 var gw: GameWorld
-var units: Array[Unit] = []
+var units_revision: int = 0
+var units: Array[Unit] = []:
+	set(value):
+		units = value
+		units_revision += 1
 var arrows: Array = []
 var shells: Array = []
 var _next_id: int = 1
@@ -301,6 +305,16 @@ func barracks_out(f: Facility) -> Vector2:
 	return f.center_px() + Vector2(0, f.size.y * 2 + 4)
 
 
+func add_unit(u: Unit) -> void:
+	units.append(u)
+	units_revision += 1
+
+
+func remove_unit(u: Unit) -> void:
+	units.erase(u)
+	units_revision += 1
+
+
 func _spawn(f: Facility, t: int) -> Unit:
 	var u: = Unit.new()
 	u.id = _next_id
@@ -323,7 +337,7 @@ func _spawn(f: Facility, t: int) -> Unit:
 	u.path = PackedVector2Array([u.pos + u.slot])
 	u.pi = 0
 	u.state = Unit.State.MOVE
-	units.append(u)
+	add_unit(u)
 	if gw.country_by_id(f.country_id).is_player and gw._on_screen(u.pos, 40.0):
 		gw.fx.spawn("dust_s", u.pos.round(), 5)
 	return u
@@ -354,7 +368,7 @@ func spawn_paratroops(cid: int, drop_p: Vector2, count: int) -> Array[Unit]:
 		u.heading = PI * 0.5
 		u.update_frame()
 		u.state = Unit.State.IDLE
-		units.append(u)
+		add_unit(u)
 		out.append(u)
 		if gw._on_screen(lp, 40.0):
 			gw.fx.spawn("dust_s", lp.round(), 5)
@@ -521,6 +535,7 @@ func update(dt: float) -> void:
 		var u: Unit = units[k]
 		if u.state == Unit.State.DEAD and gw.game_time - u.dead_t > 0.5:
 			units.remove_at(k)
+			units_revision += 1
 	for k in range(arrows.size() - 1, -1, -1):
 		if gw.game_time - float(arrows[k]["t"]) > 6.0:
 			arrows.remove_at(k)
@@ -1086,7 +1101,7 @@ func _maybe_fpv(u: Unit, dt: float) -> void:
 	f.target = best
 	f.life = FPV_LIFE
 	f.state = Unit.State.MOVE
-	units.append(f)
+	add_unit(f)
 	if _fpvs_t >= 0.0:
 		_fpvs.append(f)
 	_fpv_fly[u.country_id] = flying + 1
@@ -2233,11 +2248,11 @@ func safe_point(base: Vector2, off: Vector2) -> Vector2:
 
 
 func save_state() -> Dictionary:
-	return {"a": Save.dump(self), "t": Save.dump(tac), "f": Save.dump(fire, ["_shots"])}
+	return {"a": Save.dump(self, ["units_revision"]), "t": Save.dump(tac), "f": Save.dump(fire, ["_shots"])}
 
 
 func load_state(d: Dictionary) -> void:
-	Save.fill(self, d.get("a", {}))
+	Save.fill(self, d.get("a", {}), ["units_revision"])
 	Save.fill(tac, d.get("t", {}))
 	Save.fill(fire, d.get("f", {}))
 

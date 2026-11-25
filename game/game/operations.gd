@@ -82,6 +82,14 @@ const STR_CELL: float = 350.0
 const AGx = preload("res://game/army_groups.gd")
 const AutoCmd = preload("res://game/auto_cmd.gd")
 
+const EMPTY_HOME_MEMBERS: Array[Unit] = []
+
+# Only retained during the synchronous Operations update. Eligibility is read live.
+var _index_membership: bool = false
+var _units_by_home: Dictionary[Facility, Array] = {}
+var _indexed_units_revision: int = -1
+var _indexed_home_revision: int = -1
+
 var gw: GameWorld
 var list: Dictionary = {}
 var zones: Array = []
@@ -1698,6 +1706,7 @@ func update(dt: float) -> void:
 		return
 	var step: float = _t
 	_t = 0.0
+	_index_membership = true
 	_adopt()
 	for f: Facility in list.keys():
 		if list.has(f):
@@ -1720,6 +1729,8 @@ func update(dt: float) -> void:
 	if _warn_t <= 0.0:
 		_warn_t = 2.0
 		_warn_scan()
+	_index_membership = false
+	_clear_membership()
 
 
 
@@ -1892,7 +1903,7 @@ func _tick(op: Dictionary, dt: float) -> void:
 	var mem: Array[Unit] = []
 	var post_hp: float = 0.0
 	var is_retreat: bool = int(op["kind"]) == Kind.RETREAT
-	for u: Unit in gw.army.units:
+	for u: Unit in _membership_candidates(f):
 		if u.home != f or not u.alive():
 			continue
 		if u.ground() and (u.op_on or is_retreat and u.post == null and u.reinf == 0):
@@ -2994,9 +3005,35 @@ func order_units(f: Facility) -> Array[Unit]:
 	return out
 
 
+func _membership_candidates(f: Facility) -> Array[Unit]:
+	if not _index_membership or f == null:
+		return gw.army.units
+	if _indexed_units_revision != gw.army.units_revision or _indexed_home_revision != Unit.home_revision:
+		_build_membership()
+	return _units_by_home.get(f, EMPTY_HOME_MEMBERS)
+
+
+func _clear_membership() -> void:
+	_units_by_home.clear()
+	_indexed_units_revision = -1
+
+
+func _build_membership() -> void:
+	_clear_membership()
+	for u: Unit in gw.army.units:
+		var home: Facility = u.home
+		if home == null:
+			continue
+		if not _units_by_home.has(home):
+			_units_by_home[home] = [] as Array[Unit]
+		_units_by_home[home].append(u)
+	_indexed_units_revision = gw.army.units_revision
+	_indexed_home_revision = Unit.home_revision
+
+
 func _army(f: Facility, all: bool = false) -> Array[Unit]:
 	var out: Array[Unit] = []
-	for u: Unit in gw.army.units:
+	for u: Unit in _membership_candidates(f):
 		if u.home == f and u.alive() and u.ground() and (all or (u.post == null and u.reinf == 0 and not _kept(u))):
 			out.append(u)
 	return out

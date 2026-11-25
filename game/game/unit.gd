@@ -19,7 +19,13 @@ var pi: int = 0
 var blocked_path: PackedVector2Array = PackedVector2Array()
 var path_retry_at: float = 0.0
 var target_city: int = -1
-var home: Facility = null
+static var home_revision: int = 0
+
+var home: Facility = null:
+	set(value):
+		if home != value:
+			home = value
+			home_revision += 1
 var fire_cd: float = 0.0
 var fpv_cd: float = 8.0
 var target: Object = null

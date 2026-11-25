@@ -567,7 +567,7 @@ func _board(r: Dictionary, mem: Array) -> void:
 	tr["hold"] = BOARD_T
 	tr["country"] = int(r["c"])
 	for u3: Unit in units:
-		gw.army.units.erase(u3)
+		gw.army.remove_unit(u3)
 		u3.path = PackedVector2Array()
 		u3.pi = 0
 		u3.target = null
@@ -748,7 +748,7 @@ func _unload(r: Dictionary, p: Vector2, why: String, tr: Dictionary, by_car: boo
 		u.cover = 1.0
 		u.still_t = 0.0
 		u.target = null
-		gw.army.units.append(u)
+		gw.army.add_unit(u)
 		landed.append(u)
 		k += 1
 	_count("unloaded", landed.size())
