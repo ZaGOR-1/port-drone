@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| INT-09 / R17 0.36.8 | Ordered unit membership lookup і PATCH 0.36.8. SHA та стан інтеграції в [PR #17](https://github.com/ZaGOR-1/port-drone/pull/17). |
 | INT-08 / beta 0.36.7 | R15 і PATCH `6a41f0d`. Точний SHA, стан інтеграції й CI в [PR #16](https://github.com/ZaGOR-1/port-drone/pull/16). [Review, ризики й контекст R16](r15/INT08_INTEGRATION.md). |
 | INT-07 / beta 0.36.6 | R14, кандидат PATCH `8649531`. Точний merge SHA та CI в [PR #15](https://github.com/ZaGOR-1/port-drone/pull/15). [Цільовий review і приймання](r14/INT07_INTEGRATION.md). |
 | beta 0.36.5 / INT-06 | База 0.36.4 `d8114af`. Кандидат INT-06 з R10 і version bump `a2bcdb0`. Merge commit і CI зафіксовано в [PR #14](https://github.com/ZaGOR-1/port-drone/pull/14). |
@@ -125,6 +126,22 @@ Worktree `/home/zagor/projects/port-drone-r10`, гілка `perf/armyfire-impact
 ## INT-08 · R15 / beta 0.36.7
 
 Кандидат із `/home/zagor/projects/port-drone-r15`, база `50f3f04306ec49ea600296135225282907c9955c`. Наземний spotting повторно використовує відфільтровані bucket-и тільки в межах скану країни. У R15 D2100 час чотирьох викликів `_spot` зменшився на 72,1%. Причина розбіжності FPS і максимуму кадру в щільних парах відкрита. R11–R13 лишаються NO-GO. Фізичний Windows GUI/FPS відкладено, LAN і Steam — NOT RUN. Докази, стан CI, QA-пакети, incremental bundle і матеріали R16 зберігаються в handoff INT-08. [INT-08](r15/INT08_INTEGRATION.md)
+
+## R17 · Ordered Unit Membership Lookup
+
+Локальний PoC у `/home/zagor/projects/port-drone-r17`, гілка `perf/operations-membership-lookup` від `d6a38e8db58361430df69ffe0a98e628acac6d8b`, версія 0.36.7. У синхронній фазі `Operations.update` впорядкований підбір за посиланням `Unit.home` перебудовується після зміни home або реєстру. Цільові перевірки 33/33 на A/B, repeated restore PASS, покроковий replay D2100/D5000/Late E 390/390. У 120-тикових вікнах D2100/D5000 консервативне зменшення visits склало 94,95% і 82,30%. На пікових тиках CPU membership зменшився на 94,56% і 96,01%. Медіана парного поліпшення tick p99 21,38% і 50,54%.
+
+GUI Late E дав зміни середнього FPS +3,26%, −18,43% і −14,76% у трьох парах. Обидва повільні B-прогони мали вищу зайнятість CPU хоста. Причинність відкрита. Ранній gate INCONCLUSIVE. Повний QA, тривалий контроль, пакети, commit, push і PR відкладено. Локальний diff, сирі заміри, fixtures, replay traces і SHA256 збережено у `/home/zagor/projects/droneflames-toolchain/performance/r17.xD07pkTL/`. Наступна перевірка цього кандидата — парний Late E на стабільному фоновому навантаженні. У D2100 B підтверджений залишковий hotspot `Operations.wd_exit` має 58–72 мс exclusive на тиках 4816 і 4864.
+
+### Фінальне приймання · 25.11.2026
+
+Late E **GO** за Real-World Gaming (Profile B). Незмінний PoC зафіксовано в `617c58004261cff52a3ad035c9ccf11d87893aa5`. Чотири збалансовані пари по 150 тіків на плече дали медіани парних змін +3,11% FPS, +3,81% 1% low, −2,82% frame p99, −22,86% tick p99 і −0,75% CPU-часу процесу. Усі плечі збіглися за NetHash, RNG і wire payload. VM була активною у всіх плечах. Сторонній CPU між A і B змінювався в обох напрямках, а FPS і tick p99 поліпшились у кожній парі. Абсолютні показники описують виміряну сесію Ubuntu з VM. Історичні D2100/D5000 gates та repeated restore перенесено за SHA256.
+
+Пройшли simulation regression 2476/2476, дисковий Save/Load 22/22, ENet admission і двопроцесні reconnect/resync, 600-тіковий lifecycle control, official Linux та Windows x64 build, PCK parity і Linux native/Wine smoke. Версія 0.36.7, PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с. Докази, збірки й Windows A/B комплект у `/home/zagor/projects/droneflames-toolchain/performance/r17-final-profile-b.9tC9OIb6/`. Наступна перевірка для Draft PR — фізичний Windows A/B, LAN і Steam. У smoke залишаються відомі попередження Godot під час виходу про ресурси.
+
+### INT-09 · PATCH 0.36.8
+
+Власник погодив інтеграцію через PR #17 з бази `d6a38e8db58361430df69ffe0a98e628acac6d8b`. Перевірений R17 PoC, PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с збережено. ENet admission порівнює повну identity і відхиляє змішані 0.36.7/0.36.8. Фізичний Windows A/B, LAN і Steam — NOT RUN за рішенням власника. CI, QA-пакети, результати admission і incremental bundle фіксуються в локальному handoff `/home/zagor/projects/droneflames-toolchain/int09.svwoLWvo/`. Відомі повідомлення про ресурси під час виходу Godot залишаються відкритими.
 
 ## Known issues
 
