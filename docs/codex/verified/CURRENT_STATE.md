@@ -1,4 +1,4 @@
-> Історичний snapshot від 2026-11-21 і попередні checkpoints. Поточні refs, QA й handoff ведуться в [PROJECT_STATE.md](../../PROJECT_STATE.md).
+> **Архів.** Історичний snapshot від 2026-11-21 і попередні checkpoints. Поточні refs, QA й handoff ведуться в [PROJECT_STATE.md](../../PROJECT_STATE.md).
 
 # DroneFlames — поточний технічний стан
 

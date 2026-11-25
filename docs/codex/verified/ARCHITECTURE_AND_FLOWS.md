@@ -1,3 +1,5 @@
+> DOCS-02 звірив boot, remap, autoload та chains Main, GameWorld і Hud на `7181e88`. Метрики й runtime-висновки нижче належать своїм датованим збіркам.
+
 > Поточний boot на `beta` звірено за [override.cfg](../../../game/override.cfg) і [main.tscn.remap](../../../game/game/main.tscn.remap). PcPort і SteamNet — autoloads, `pc/boot.tscn` запускає updater і remapped main scene. Зміни R02 та HUD описано в [Windows QA](../../WINDOWS_QA.md).
 
 # DroneFlames — архітектура та потоки beta v0.36
@@ -8,7 +10,7 @@
 
 1. `game/project.binary`: ECFG, 1632 bytes, 26 entries; application DroneFlames, baseline main `res://game/main.tscn`, viewport360×640, canvas_items/expand, renderer mobile, Windows driver d3d12. Це прочитані binary metadata; активний renderer потребує runtime log. У project немає текстового project.godot і немає application/config/version entry.
 2. [override.cfg](../../../game/override.cfg) задає main `res://pc/boot.tscn`, window override1600×900 та autoload **PcPort**, **SteamNet**. Autoload ініціалізуються до boot; порядок фіксується конфігом, startup підтверджено попереднім native headless; GUI тут NOT RUN.
-3. [PcPort](../../../game/pc/pc_port.gd) створює desktop window policy, minimum960×540, scale/fullscreen/window preferences у `user://pc_port.cfg`; [SteamNet](../../../game/pc/steam_net.gd) ініціалізує GodotSteam або mock. Updater bypass сам по собі не обходить Steam: QA launcher окремо задає `DF_STEAM_MOCK=0`.
+3. [PcPort](../../../game/pc/pc_port.gd) створює desktop window policy, minimum960×540, scale/fullscreen/window preferences у `user://pc_port.cfg`; [SteamNet](../../../game/pc/steam_net.gd) ініціалізує GodotSteam або mock. Updater bypass сам по собі не обходить Steam: QA launcher окремо задає `DF_STEAM_MOCK=0` для mock. `Run-MultiplayerQA.ps1 -Transport Steam` прибирає цю змінну для native Steam.
 4. [boot.tscn](../../../game/pc/boot.tscn) створює PcBoot з [updater.gd](../../../game/pc/updater.gd). `_ready` → `_enabled` → `_load_cfg`; headless/editor/DF_NO_UPDATE або empty repo пропускають update. Далі `_start_game` → `change_scene_to_file("res://game/main.tscn")`.
 5. [main.tscn.remap](../../../game/game/main.tscn.remap) веде до 672-byte binary [PackedScene](../../../game/.godot/exported/133200997/export-178df499c26bcd3357cc4c21fb1eaa2e-main.scn). RSRC і рядки Main/Node/script/main.gd підтверджені статично; scene startup пройшов попередній native headless; binary metadata не замінюють GUI QA. Це не missing scene.
 6. [Main._ready](../../../game/game/main.gd) створює World, Camera, Hud, PendingGhost, RouteOverlay, **Net**, Menus, Tutorial, Loading; під'єднує input/action/request/news/war/capture/end/offer signals. `Net` має однаковий RPC path на peers. `Menus.setup` → `Save.load_prefs` → `Loc.boot`.

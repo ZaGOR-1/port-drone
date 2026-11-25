@@ -1,6 +1,6 @@
 # Windows QA — кандидати, runtime і докази
 
-Звірено 2026-11-22. Статуси прив’язані до конкретного EXE/PCK і сценарію. Гілки та пріоритети наведено в [PROJECT_STATE.md](PROJECT_STATE.md). Звичайну збірку з `beta` описано в [інструкції збірки](codex/verified/BUILD_RELEASE.md).
+Перший комплект звірено 2026-11-22. На baseline DOCS-02 editor і Windows template збіглися з [CI-піном](../tools/ci/godot-4.7.2.json). Історичні QA-артефакти перевіряй за маніфестом. Частина розпакованих файлів потребує відновлення з локального `droneflames-toolchain/.cold-storage`. Статуси прив’язані до конкретного EXE/PCK і сценарію. Гілки та пріоритети наведено в [PROJECT_STATE.md](PROJECT_STATE.md). Звичайну збірку з `beta` описано в [інструкції збірки](codex/verified/BUILD_RELEASE.md).
 
 **Позначення.** IMPLEMENTED означає наявність коду у вказаному дереві. VERIFIED означає успішну перевірку в зазначеному обсязі. PARTIALLY VERIFIED означає, що частину заявленого обсягу перевірено. NOT TESTED або NOT RUN — перевірка не виконана. PLANNED — запланована робота. BLOCKED — конкретна перешкода. PASS і FAIL належать окремим сценаріям.
 

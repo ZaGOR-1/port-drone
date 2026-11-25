@@ -1,4 +1,4 @@
-> Поточні результати прив’язані до точного артефакту в [Windows QA](../../WINDOWS_QA.md) і до CI у [PROJECT_STATE](../../PROJECT_STATE.md). Нижче збережено матриці Phase 1–5C. Склад тестів у checkout перевіряй за [tests/](../../../tests/) і [.github/workflows/build.yml](../../../.github/workflows/build.yml).
+> Поточні результати прив’язані до точного артефакту в [Windows QA](../../WINDOWS_QA.md) і до CI у [PROJECT_STATE](../../PROJECT_STATE.md). Команди для нової перевірки наведено в [Development Workflow](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope). Нижче збережено матриці Phase 1–5C. Склад тестів у checkout перевіряй за [tests/](../../../tests/) і [.github/workflows/build.yml](../../../.github/workflows/build.yml).
 
 > **Історичне зведення PR #4.** Beta v0.36 CI PASS43 tests з Godot +2476 regression checks +Windows x64 package verification; job без Godot36 tests/9 skips. CI існує PR #2; [CURRENT_STATE](CURRENT_STATE.md) містить exact run/cohort. GUI і real LAN/Steam на тому комплекті NOT RUN. Старі кількості tests/PASS/SKIP нижче не є результатами нової сесії.
 

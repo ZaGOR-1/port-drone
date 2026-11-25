@@ -1,6 +1,6 @@
 # Співпраця в новому репозиторії DroneFlames
 
-Поточні правила визначає [AGENTS.md](../../../AGENTS.md), стан — [PROJECT_STATE.md](../../PROJECT_STATE.md). Історія workflow наведена нижче.
+Поточні правила визначає [AGENTS.md](../../../AGENTS.md), стан — [PROJECT_STATE.md](../../PROJECT_STATE.md). Практичні кроки ведемо в [Development Workflow](../../DEVELOPMENT_WORKFLOW.md). Нижче збережено історію співпраці та дозволи окремих задач.
 
 - ZaGOR-1 — власник і release decision maker; OKREDU — довірений співавтор. Зберігати авторство і погоджені механіки людей.
 - main — прийнята база; beta — development/integration/testing. Нові feature/*, fix/*, docs/* від актуальної beta. Не переписувати спільні branches/історію; великі shared files — погодити ownership.

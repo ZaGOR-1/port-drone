@@ -1,4 +1,4 @@
-> Поточний wire contract `beta`: `PROTO=7`, `SIM_REV=v036-integration-1`, `SIM_DT=1/30`, 3 ticks/turn ([NetConfig](../../../game/net/net_config.gd)). Старі Phase overlays нижче належать указаним кандидатам. Release-oriented R02 та межі peer QA наведено в [Windows QA](../../WINDOWS_QA.md).
+> Поточний wire contract `beta`: `PROTO=7`, `SIM_REV=v036-integration-1`, `SIM_DT=1/30`, 3 ticks/turn ([NetConfig](../../../game/net/net_config.gd)). `NetConfig.version()` складає identity з повної `Menus.VERSION`, PROTO та SIM_REV. Номер поточного продукту ведемо в [PROJECT_STATE](../../PROJECT_STATE.md). Старі Phase overlays нижче належать указаним кандидатам. Release-oriented R02 та межі peer QA наведено в [Windows QA](../../WINDOWS_QA.md).
 
 > **Підтвердження PR #4 і попередні звіти.** v0.36.0/PROTO7/SIM_REV `v036-integration-1`. Exact hello/resume gate, power wire/schema/owner guard і canonical hash нових fields перевірені targeted fixtures у PR #4; full physical LAN/Steam NOT RUN. [Current flows](ARCHITECTURE_AND_FLOWS.md), [fixes](V036_FIX_RESULTS.md). Старі revisions/SHA/permissions/results нижче датовані, не поточні.
 

@@ -1,3 +1,5 @@
+> Історичний висновок про готовність кандидата. [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7) згодом інтегровано в `beta`. Цей звіт фіксує тодішній NOT READY і обсяг перевірок.
+
 # L10N-03 · PR #7 Merge Readiness
 
 **NOT READY.** PR придатний для review і має чистий merge з `beta` у GitHub. Немає результатів обов’язкового Native Windows GUI й DPI. Для приймання також відкриті фізичний LAN, Steam і нативні сценарії помилок. [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7)

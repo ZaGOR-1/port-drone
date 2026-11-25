@@ -1,3 +1,65 @@
+# Аудит документації DroneFlames
+
+## DOCS-02 · 2026-11-26
+
+**INCONCLUSIVE для повного приймання.** Документаційні зміни та локальні перевірки готові до review. Повний Markdown corpus прочитано машинно, розібрано за секціями й класифіковано пофайлово. Зміст і докази переглянуто цільово. Построкова семантична верифікація всіх історичних тверджень і незалежне відтворення всіх старих прогонів залишаються поза підтвердженим покриттям.
+
+### Baseline і scope
+
+- Локальна `beta`, `origin/beta` і GitHub ref збіглися на `7181e88b03a6ad5c2a5c64a6fbf02bfc8854ff33`. `main` і його remote ref на `172df65e3bd004efed9a5444e90a284d9d69db10`. Fetch і push URL `origin` збіглися. [PR #21](https://github.com/ZaGOR-1/port-drone/pull/21)
+- Гілка `docs/docs02-comprehensive-audit`, worktree `~/projects/droneflames-worktrees/docs02`. До роботи production checkout чистий, у діагностичному `performance/source` 15 наявних змін. В інших зареєстрованих worktrees релевантних незакомічених Markdown не знайдено. Зміни власника й інших задач залишено в їхніх checkout.
+- [Інвентар 103 документів](DOCUMENTATION_INVENTORY.csv) містить точний шлях, обсяг, SHA256 блоба, останню зміну, знайдені маркери scope, аудиторію, окремий висновок, Markdown-залежності, історичну цінність, статус, ризик і дію. 103/103 UTF-8 Markdown розібрано й класифіковано. Машинний аналіз охопив увесь текст, Markdown AST, посилання, дати, SHA та сигнали результатів. Цільова звірка охопила тексти за змістом із глибшими перевірками змінюваних контрактів. Вкладених tracked `AGENTS.md` або інших Markdown-розширень не виявлено. Поза `docs/` охоплено README, AGENTS і `tools/qa/r23/README.md`.
+- Окремо перевірено локальні індекси MAINT-01–05, R23 і NATIVE-01–02D та індекс cold storage. Це локальні докази поза 103 tracked файлами. Вихідні копії збірок, сторонні пакети, кеші й приватні профілі виключено з інвентарю. MAINT-03/04/05 описують вже виконані merge, backup та очищення, тому старі шляхи й колишні дозволи використовуй лише як історичні відомості.
+
+### Висновки за напрямами
+
+| Статус | Теза й джерело |
+| --- | --- |
+| VERIFIED_CURRENT | `tools/build.py --print-version` → 0.36.11. `version.cfg` і `Menus.VERSION` синхронні. `NetConfig` дає PROTO 7, SIM_REV `v036-integration-1`, 30 ticks/s, три ticks/turn та identity з повною версією. `Save.FORMAT=1`. [Стан і посилання на код](PROJECT_STATE.md) |
+| VERIFIED_CURRENT | `override.cfg` → `pc/boot.tscn`/updater → remapped binary PackedScene → Main. PcPort і SteamNet — autoload. Main створює GameWorld, HUD та NetSession. Extends звірено в `game/game/main/`, `game/game/game_world/`, `game/ui/hud/`. Спільний порядок MP і межі snapshot звірено за `NetSession`, `NetConfig` і `Save`. Реалізацію reconnect/resync підтверджено статично. [Потоки](codex/verified/ARCHITECTURE_AND_FLOWS.md), [Save](codex/verified/SAVE_FORMAT.md) |
+| VERIFIED_CURRENT | Нативний Ubuntu 26.04.1, kernel 7.0.0-44-generic, Python 3.14.4, Codex CLI 0.171.0, gh 2.46.0. Офіційний editor `4.7.2.stable.official.ed1daf0bf` і Windows template збіглися за SHA256 з [CI-піном](../tools/ci/godot-4.7.2.json). PE/DLL і пакування описано в [Build and Release](codex/verified/BUILD_RELEASE.md). Локальні SFX і MinGW мають власний provenance. |
+| VERIFIED_CURRENT | Workflow запускає Windows x64 build і Python/Godot checks на відповідних PR/push. Релізний guard отримує `release=false`. Для baseline Python/CI policy і Godot/Windows build SUCCESS, release SKIPPED. DOCS-02 CI окремо не запускався. [Workflow](../.github/workflows/build.yml), [run 45714307932](https://github.com/ZaGOR-1/port-drone/actions/runs/45714307932) |
+| OUTDATED | README називали 0.36.0 чинним identity; динамічні значення перенесено до PROJECT_STATE. Історичний WSL2 відділено від поточного нативного Ubuntu. L10N-03 і старий handoff називали PR #7 Draft/NOT READY на тому checkpoint. GitHub підтверджує подальший merge, а тодішній результат QA збережено. [PR #7](https://github.com/ZaGOR-1/port-drone/pull/7) |
+| CONTRADICTORY | Презентація старого PROJECT_STATE змішувала current baseline зі старим backlog, назвами гілок і ручними gate. Чинний порядок залишено в короткому стані, а датовані факти — в [immutable Git snapshot](https://github.com/ZaGOR-1/port-drone/blob/7181e88b03a6ad5c2a5c64a6fbf02bfc8854ff33/docs/PROJECT_STATE.md). Старий опис Steam env уточнено. Непорожній `DF_STEAM_MOCK`, включно з `0`, активує mock, а Steam QA launcher прибирає змінну. |
+| VERIFIED_CURRENT | `Loc.PUBLIC_LANGS` має ru/uk/en. QA checker завершився з 0 structural/active-literal errors. Історичні counts і fallback деталі мають власний scope. [Localization audit](LOCALIZATION_AUDIT.md) |
+| VERIFIED_HISTORICAL | R23 offline analyzer і validator повторно пройшли на наявному harness: 65 повних GUI-прогонів, 64 matched comparisons і historical snapshots. Контрольні версії, Profile B, незалежні NO-GO R11/R12/R13/R22 і окремі NATIVE висновки збережено. Компіляцію та GUI-прогони тут не повторювали. [R23](r23/R23_RESULTS.md), [команди](../tools/qa/r23/README.md) |
+| VERIFIED_HISTORICAL | Перевірено інвентар NATIVE-01 та handoff NATIVE-02–02D. Маніфести NATIVE-02B–02D пройшли повністю на розпакованих файлах. У шести позицій NATIVE-01/02 розпаковані файли відсутні, потоки із cold storage збіглися з маніфестами за SHA256. NATIVE-01 засвідчив технічну можливість, 02 — обмежений дослідницький GO, 02B — витрати маршалінгу acquire, 02C/02D — межу виграшу для Vision/Army. Rust production відкладено. |
+| UNVERIFIED / NOT RUN | Фізичний Windows GUI/FPS, кампанія власника, LAN, Steam і reconnect/resync для baseline DOCS-02 не проганялися. Старий SFX acceptance має точний артефакт і сценарій. Авторство та обмеження розповсюдження збережено в README. Tracked standalone LICENSE для гри не знайдено. [Windows QA](WINDOWS_QA.md), [права](../README.md#ліцензія-та-права-використання) |
+
+### Канонічна структура й рішення
+
+- [INDEX](INDEX.md) визначає один маршрут на кожну тему. AGENTS зберігає обов’язкові обмеження. PROJECT_STATE зберігає поточний handoff. [Development Workflow](DEVELOPMENT_WORKFLOW.md) описує Git, тести, MCP та оновлення пам’яті. Build/Windows QA, Profile B, wire/save, локалізація й versioning залишаються в тематичних джерелах.
+- `SPLIT` для PROJECT_STATE. Історична хронологія доступна в Git за baseline і в наявних тематичних матеріалах. `REDIRECT` для NEXT_SESSION, який веде до AGENTS і PROJECT_STATE. README обох мов посилаються на одне джерело identity. `CURRENT_STATE` зберігає старий handoff, `BACKLOG` — датовані записи triage, `DECISIONS` — передумови й наслідки рішень. Чинні дозволи веде AGENTS.
+- `ARCHIVE` в інвентарі означає історичну роль на наявному шляху. Жоден Markdown не видалено й не переміщено. Немає окремих `MERGE`/`DELETE`: у звітах збережено унікальні результати й provenance. У [INT08](r15/INT08_INTEGRATION.md) виправлено вхідний anchor до INT07. Попередній DOCS audit лишився нижче зі своїм обсягом і якірними посиланнями.
+- 103 Markdown до і після. Дії інвентарю: 73 ARCHIVE, 16 UPDATE, 12 KEEP, 1 SPLIT, 1 REDIRECT. Загалом 9 943 → 9 757 рядків і 1 606 596 → 1 577 327 байтів Markdown. CSV-інвентар виміряно окремо: 58 266 байтів. AGENTS — 113 → 37 рядків, 24 587 → 11 491 байт. PROJECT_STATE — 236 → 27 рядків, 42 291 → 4 297 байтів. Обов’язковий стартовий контекст — 66 878 → 15 788 байт (−76,4%). Токени не вимірювалися, відповідного tokenizer локально не виявлено. `project_doc_max_bytes` не задано, global AGENTS і вкладених інструкцій не виявлено. Старий і новий AGENTS окремо нижчі за default 32 KiB. PROJECT_STATE відкривається за посиланням і врахований у метриці старту. [Codex AGENTS.md guide](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
+
+### MCP аудит
+
+У локальному `codex mcp list` дев’ять записів CONFIGURED. Перевірки нижче стосуються доступних інструментів поточної сесії. [Матриця вибору](DEVELOPMENT_WORKFLOW.md#вибір-mcp)
+
+| MCP | Фактична перевірка | Статус |
+| --- | --- | --- |
+| Serena | Manual і активний проєкт визначено. `get_symbols_overview` для NetSession завершився помилкою підключення до Godot LSP. G07 зі старих звітів не є підтвердженням цього середовища. | AVAILABLE, LSP FAILED |
+| Godot | `project_info` визначив shadow, boot та autoload. `class_info` повернув `PackedScene.instantiate`. `project_find` знайшов посилання boot → updater. Editor bridge недоступний, SHA256 shadow NetSession відрізняється. `script_check` для NetConfig повернув `checked=1, failed=0, ok=false` через відсутні Linux GDExtension Device/Steam/WebRTC. Editor scenarios NOT RUN. | AVAILABLE, SMOKE PASS для metadata/API/references, LIMITED для script check |
+| Context7 | Lookup і versioned запит повернули upstream docs з гілки 4.7. Patch-specific API звірено через engine class_info. | AVAILABLE, SMOKE PASS |
+| GitHub | Є bearer config. У каталозі поточної сесії MCP відсутній, налаштована bearer env-змінна в перевіреному процесі відсутня. PR/CI/refs читали через `gh` і Git. | CONFIGURED, UNAVAILABLE, MCP NOT RUN |
+| Semgrep | `get_supported_languages` повернув Python/YAML та інші мови. GDScript відсутній. Скан коду не потрібен для цього scope. | AVAILABLE, SMOKE PASS |
+| Playwright | Прочитано список вкладок. Функціональний браузерний сценарій N/A. | AVAILABLE, SMOKE PASS |
+| Chrome DevTools | Прочитано список сторінок. Функціональний браузерний сценарій N/A. | AVAILABLE, SMOKE PASS |
+| draw.io | `get_drawio_reference` повернув Mermaid довідник. Редагування N/A. | AVAILABLE, SMOKE PASS |
+| Figma | `whoami` підтвердив доступ без виведення даних акаунта. Файловий сценарій N/A. | AVAILABLE, SMOKE PASS |
+
+### Валідація й межі
+
+- PASS — build identity 3/3, CI policy 4/4, CI artifact 6/6, release tooling 15/15. Широкий Python discovery без `DF_GODOT` завершився OK з 10 SKIP, включно з class setup. Повну нову Godot regression, Windows GUI і performance suites позначено NOT RUN. Доказ baseline CI наведено окремо.
+- PASS — версія та SHA editor/template, `check_l10n.py`, R23 offline, внутрішні Markdown paths/anchors, README language navigation і docs-only diff. Одноразова перевірка використала встановлений MarkdownIt. Постійний checker і зміни CI не потрібні для цього етапу.
+- Перевірено current PR через `gh pr list` і чотири явно вказані CI runs. 14 pre-snapshot SHA з GitHub commit/blob-посилань не резолвляться в поточному GitHub API. Старі URL та PR-журнали збережено як історичні посилання. Частина вкладень залежить від оригінальних backups. Номери старих PR не ототожнено з новими. Повну перевірку сторонніх URL і переобчислення всіх історичних серій не виконували.
+- Runtime, ресурси, продуктова версія й мережеві контракти збережено. Історичних PASS і NO-GO не переоцінювали. Для наступного приймання потрібне локальне review змін із цим обсягом аудиту та окрема Windows сесія на точному комплекті.
+
+---
+
+## Попередній аудит · 2026-11-22
+
 # Інвентар Markdown і межі аудиту
 
 2026-11-22. Початковий інвентар містить 56 tracked Markdown-файлів на `beta` `94aedbe`. Окремо перевірено 16 локальних документів і варіантів звітів кандидатів. Сторонні матеріали, тимчасові build-копії та імпорти поза інвентарем. Маршрут за темами наведено в [INDEX](INDEX.md).

@@ -1,5 +1,3 @@
 # Початок наступної сесії
 
-1. Прочитай [AGENTS.md](../../../AGENTS.md) і [PROJECT_STATE.md](../../PROJECT_STATE.md).
-2. Звір фактичні HEAD, status і worktrees. Для локальних Windows-патчів відкрий [поточний QA-маніфест](../../WINDOWS_QA.md).
-3. Знайди потрібну тему в [індексі](../../INDEX.md). Старі Phase-плани зберігають історичний контекст і результати свого часу.
+Маршрут нової сесії ведемо в [AGENTS.md](../../../AGENTS.md#початок-сесії). Поточний handoff доступний у [PROJECT_STATE.md](../../PROJECT_STATE.md).
