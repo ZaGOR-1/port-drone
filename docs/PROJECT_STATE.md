@@ -143,6 +143,14 @@ Late E **GO** за Real-World Gaming (Profile B). Незмінний PoC заф�
 
 Власник погодив інтеграцію через PR #17 з бази `d6a38e8db58361430df69ffe0a98e628acac6d8b`. Перевірений R17 PoC, PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с збережено. ENet admission порівнює повну identity і відхиляє змішані 0.36.7/0.36.8. Фізичний Windows A/B, LAN і Steam — NOT RUN за рішенням власника. CI, QA-пакети, результати admission і incremental bundle фіксуються в локальному handoff `/home/zagor/projects/droneflames-toolchain/int09.svwoLWvo/`. Відомі повідомлення про ресурси під час виходу Godot залишаються відкритими.
 
+## R18B · Ordered Ground Impact Lookup
+
+Кандидат `b33d49cf0a70ed01cd36d0aae79b93497475ab31` від beta `117781083ff108c8353b9e53a3eda3d49bedd0fe`, версія 0.36.8. R18A `6d83ef995a154e842906d2ebdb15a41c5a883ce3` збережено в попередньому worktree. В Army save/load суміщено виключення транзієнтних полів R17 і R18. Цільові differential, 330 покрокових зіставлень, repeated restore, дискове продовження, ENet reconnect/resync та обмежений lifecycle пройшли.
+
+Profile B **GO**. Медіани парних змін impact CPU, simulation CPU і FPS відповідно −40,97%, −14,60%, +10,09% у D5000 і −24,71%, −7,42%, +3,12% у щільному D5000. У щільному сценарії 981 457 рангів у 866 сортуваннях потребували 72,72 мс CPU за медіаною. Frame p99 та peak RSS щільного D5000 зросли на 1,33% і 1,19%. У щільному D2100 один контроль показав +11,01% impact CPU та +9,16% frame p95, за майже незмінного FPS. Важкі пари виміряно на Ubuntu з активною Windows VM. Фізичний Windows A/B, LAN і Steam — NOT RUN. Сирі дані та QA-артефакти в `/home/zagor/projects/droneflames-toolchain/performance/r18b-profile-b.gFaqgQ6i/`.
+
+Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity та Linux native/Wine smoke — PASS. Windows A/B комплект містить official `beta` та R18B і спільний ручний disk save. PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с успадковано з beta.
+
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
