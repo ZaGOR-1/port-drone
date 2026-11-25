@@ -36036,3 +36036,7 @@ msgstr "Faster route generation for mass attack orders"
 #: ui/menus.gd
 msgid "Ускорена обработка артиллерийских попаданий в крупных боях"
 msgstr "Faster processing of artillery impacts in large battles"
+
+#: ui/menus.gd
+msgid "Ускорен подбор подразделений для армейских операций"
+msgstr "Faster unit selection for army operations"

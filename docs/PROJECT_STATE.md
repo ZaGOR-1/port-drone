@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| INT-09 / R17 0.36.8 | Ordered unit membership lookup і PATCH 0.36.8. SHA та стан інтеграції в [PR #17](https://github.com/ZaGOR-1/port-drone/pull/17). |
 | INT-08 / beta 0.36.7 | R15 і PATCH `6a41f0d`. Точний SHA, стан інтеграції й CI в [PR #16](https://github.com/ZaGOR-1/port-drone/pull/16). [Review, ризики й контекст R16](r15/INT08_INTEGRATION.md). |
 | INT-07 / beta 0.36.6 | R14, кандидат PATCH `8649531`. Точний merge SHA та CI в [PR #15](https://github.com/ZaGOR-1/port-drone/pull/15). [Цільовий review і приймання](r14/INT07_INTEGRATION.md). |
 | beta 0.36.5 / INT-06 | База 0.36.4 `d8114af`. Кандидат INT-06 з R10 і version bump `a2bcdb0`. Merge commit і CI зафіксовано в [PR #14](https://github.com/ZaGOR-1/port-drone/pull/14). |
@@ -137,6 +138,10 @@ GUI Late E дав зміни середнього FPS +3,26%, −18,43% і −14
 Late E **GO** за Real-World Gaming (Profile B). Незмінний PoC зафіксовано в `617c58004261cff52a3ad035c9ccf11d87893aa5`. Чотири збалансовані пари по 150 тіків на плече дали медіани парних змін +3,11% FPS, +3,81% 1% low, −2,82% frame p99, −22,86% tick p99 і −0,75% CPU-часу процесу. Усі плечі збіглися за NetHash, RNG і wire payload. VM була активною у всіх плечах. Сторонній CPU між A і B змінювався в обох напрямках, а FPS і tick p99 поліпшились у кожній парі. Абсолютні показники описують виміряну сесію Ubuntu з VM. Історичні D2100/D5000 gates та repeated restore перенесено за SHA256.
 
 Пройшли simulation regression 2476/2476, дисковий Save/Load 22/22, ENet admission і двопроцесні reconnect/resync, 600-тіковий lifecycle control, official Linux та Windows x64 build, PCK parity і Linux native/Wine smoke. Версія 0.36.7, PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с. Докази, збірки й Windows A/B комплект у `/home/zagor/projects/droneflames-toolchain/performance/r17-final-profile-b.9tC9OIb6/`. Наступна перевірка для Draft PR — фізичний Windows A/B, LAN і Steam. У smoke залишаються відомі попередження Godot під час виходу про ресурси.
+
+### INT-09 · PATCH 0.36.8
+
+Власник погодив інтеграцію через PR #17 з бази `d6a38e8db58361430df69ffe0a98e628acac6d8b`. Перевірений R17 PoC, PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с збережено. ENet admission порівнює повну identity і відхиляє змішані 0.36.7/0.36.8. Фізичний Windows A/B, LAN і Steam — NOT RUN за рішенням власника. CI, QA-пакети, результати admission і incremental bundle фіксуються в локальному handoff `/home/zagor/projects/droneflames-toolchain/int09.svwoLWvo/`. Відомі повідомлення про ресурси під час виходу Godot залишаються відкритими.
 
 ## Known issues
 
