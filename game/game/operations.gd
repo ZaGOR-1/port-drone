@@ -595,10 +595,18 @@ func wd_exit(who: int, land: int, p: Vector2) -> Vector2:
 		var right: int = px + r
 		var top: int = py - r
 		var bottom: int = py + r
+		var inside: bool = left >= 0 and top >= 0 and right < W and bottom < H
+		var top_row: int = top * W
+		var bottom_row: int = bottom * W
 		for k in range(-r, r + 1, st):
-			var e2: int = r2 + k * k
 			var x: int = px + k
 			var y: int = py + k
+			# These four cells cannot be an exit from the land being left.
+			if inside and own[top_row + x] == land and own[bottom_row + x] == land:
+				var row: int = y * W
+				if own[row + left] == land and own[row + right] == land:
+					continue
+			var e2: int = r2 + k * k
 			for sd in 4:
 				# All four sides share the same distance lower bound.
 				if e2 >= bs:

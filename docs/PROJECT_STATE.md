@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| INT-12 / R21 0.36.11 | Watchdog exit search і PATCH 0.36.11. Точний SHA та стан інтеграції в [PR #20](https://github.com/ZaGOR-1/port-drone/pull/20). |
 | INT-11 / R19 0.36.10 | Ordered target acquisition buckets і PATCH 0.36.10. Точний SHA та стан інтеграції в [PR #19](https://github.com/ZaGOR-1/port-drone/pull/19). |
 | INT-10 / R18B 0.36.9 | Ordered ground impact lookup і PATCH 0.36.9. SHA та стан інтеграції в [PR #18](https://github.com/ZaGOR-1/port-drone/pull/18). |
 | INT-09 / R17 0.36.8 | Ordered unit membership lookup і PATCH 0.36.8. SHA та стан інтеграції в [PR #17](https://github.com/ZaGOR-1/port-drone/pull/17). |
@@ -167,6 +168,17 @@ Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity
 Власник погодив інтеграцію [PR #19](https://github.com/ZaGOR-1/port-drone/pull/19) від `93bd6afdfb51b4dfb5c6d04e3339e37bbdbda035`. Production-код R19 прив’язано до `868b2b8e43fc1aa45d3cfbf7b9be492faa1207f8`. PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с збережено. Повна версія входить до identity ENet. Після інтеграції основний checkout для beta — `/home/zagor/projects/port-drone`.
 
 У коротких контролях кеш не активувався. D2100 показав −7,66% 1% low, Late E показав +9,77% tick p99 (+3,82 мс). B мав більше стороннє навантаження CPU в обох парах, причинність відкрита. Фізичні Windows FPS, LAN і Steam відкладено за рішенням власника, статус NOT RUN. Дефекти вивільнення ресурсів Godot залишаються відкритими. Фінальні CI, smoke, ENet admission, пакети, SHA256 і відновлення incremental bundle фіксуються в локальному handoff `/home/zagor/projects/droneflames-toolchain/int11.KkAMcCZr/`.
+
+## R21 · Watchdog exit search
+
+Кандидат від beta `3298af5878501d458920b41dc5738f60571ac551` (0.36.10), worktree `/home/zagor/projects/port-drone-r21`, гілка `perf/watchdog-lockstep-latency`. `wd_exit` пропускає групу з чотирьох клітин, якщо всі належать території виходу. D2100: медіанна парна зміна CPU `wd_exit` −41,49%, tick p99 −16,40%. Детермінізм 390/390, геометрія 576/576, Operations/transport 37/37 на плечі. Локальний повний QA — PASS. Командні піки та siege D5000 лишаються окремими джерелами затримок. [Результати, QA й обмеження](r21/R21_RESULTS.md)
+
+
+### INT-12 · PATCH 0.36.11
+
+Власник погодив інтеграцію [PR #20](https://github.com/ZaGOR-1/port-drone/pull/20) від `3298af5878501d458920b41dc5738f60571ac551` після перевірки ризиків. Production-код R21 збережено з `8b564ca15f4696f4009c97cd322f563371d0dbf4`. П’ять пар D2100 підтвердили менший CPU обох watchdog-тіків, стабільний порядок роботи та відсутність підтвердженої систематичної регресії FPS або 1% low понад 5%. Вищі p95, варіація CPU поза watchdog, command batch і siege у D5000 лишаються відкритими. [Перевірка INT-12](r21/R21_RESULTS.md#int-12--performance-review)
+
+PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с збережено. Повна версія входить до ENet identity. Фізичні Windows FPS, LAN і Steam — NOT RUN. Основний checkout beta — `/home/zagor/projects/port-drone`. Фінальні CI, QA-пакети, PCK, admission та відновлення incremental bundle фіксуються в локальному handoff `/home/zagor/projects/droneflames-toolchain/int12.7iX78x0s/`.
 
 ## Known issues
 
