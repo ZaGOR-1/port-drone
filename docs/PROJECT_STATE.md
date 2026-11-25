@@ -112,6 +112,10 @@ Worktree `/home/zagor/projects/port-drone-r10`, гілка `perf/armyfire-impact
 
 Локальний worktree `/home/zagor/projects/port-drone-r11`, гілка `perf/r11-army-update`, HEAD `a72a67c`. Експеримент окопування не інтегровано. На Late E FPS і tick p95 погіршилися в усіх трьох мінімальних парах, причинність відкрита. Докази збережено в `/home/zagor/projects/droneflames-toolchain/performance/r11.AZ9TDOdC/`.
 
+## R14 · Обхід споруд в ArmyFire._impact
+
+Кандидат `13dd5bffbd2878bf416c0d3bdd7663c43f7d8f73` на `perf/armyfire-impact-buildings` від `8c83d91d06989cc3857c7560c4690188bf88a964`, worktree `/home/zagor/projects/port-drone-r14`, версія 0.36.5. Винесено пошук країни-атакувальника за межі циклу споруд. D2100 facility scan 3,583 → 2,011 мс/кадр, FPS 19,996 → 20,647 і simulation 25,831 → 24,478 мс/тик. Gate GO, локальний повний QA PASS. C1200 frame p95 і щільний tick p99 лишаються ризиками. Manual Windows A/B, LAN і Steam — NOT RUN. Handoff у `/home/zagor/projects/droneflames-toolchain/performance/r14.GEz1Tr3B/`. [Результати R14](r14/R14_RESULTS.md)
+
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
