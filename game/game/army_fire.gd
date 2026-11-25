@@ -551,8 +551,13 @@ func _impact(s: Dictionary) -> void:
 			if ri(100) < [12, 35, 15][kind]:
 				gw.mil.remove_line_cell(lf, q)
 				caved = true
+	var attacker: Country = gw.country_by_id(c)
+	var facility_wars: Dictionary = attacker.at_war if attacker != null else {}
 	for f: Facility in gw.mil.facilities:
-		if f.parent != null or f.is_line() or not army._hostile(c, f.country_id):
+		if f.parent != null or f.is_line():
+			continue
+		var owner: int = f.country_id
+		if owner == c or not facility_wars.has(owner):
 			continue
 		var ext: float = float(maxi(f.size.x, f.size.y)) * 2.0 + r
 		if f.center_px().distance_squared_to(p) <= ext * ext and gw.mil.alive(f):
