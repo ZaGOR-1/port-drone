@@ -209,6 +209,63 @@ func _empty_and_small() -> void:
 	_free(gw)
 
 
+func _facility_boundaries() -> void:
+	var gw := _world()
+	var p := Vector2(51, 62)
+	# Dictionary membership is hostile even when the stored value is false.
+	gw.countries[0].at_war[2] = false
+	gw.countries[0].at_war[1] = true
+	var self_owned := _facility(gw, 11, Vector2i(12, 15), 100.0)
+	self_owned.country_id = 1
+	var neutral := _facility(gw, 12, Vector2i(12, 15), 100.0)
+	neutral.country_id = 3
+	var child := _facility(gw, 13, Vector2i(12, 15), 100.0)
+	child.parent = self_owned
+	var line := _facility(gw, 14, Vector2i(12, 15), 100.0)
+	line.kind = Facility.Kind.TRENCH_H
+	var restoring := _facility(gw, 15, Vector2i(12, 15), 100.0)
+	restoring.restore_t = 1.0
+	var edge := _facility(gw, 90, Vector2i(15, 15), 100.0)
+	edge.size = Vector2i.ONE
+	var nearer := _facility(gw, 20, Vector2i(12, 15), 100.0)
+	nearer.size = Vector2i.ONE
+	_impact(gw, "facility-inclusive-edge", p, 0, 9.0)
+	check(edge.hp == 84.0 and nearer.hp == 100.0, "inclusive boundary and first registry entry, not nearest or lowest ID")
+	check(self_owned.hp == 100.0 and neutral.hp == 100.0, "self and neutral ignored")
+	check(child.hp == 100.0 and line.hp == 100.0 and restoring.hp == 100.0, "child, line and restoring facility excluded")
+	_impact(gw, "outside-facility-edge", p - Vector2(0.015625, 0), 0, 9.0)
+	check(edge.hp == 84.0 and nearer.hp == 84.0, "just outside boundary selects next candidate")
+	_impact(gw, "missing-attacker-facilities", p, 1, 13.0, 99)
+	check(edge.hp == 84.0 and nearer.hp == 84.0, "invalid attacker damages no facility")
+	gw.countries[0].at_war.clear()
+	_impact(gw, "empty-hostility-facilities", p, 1, 13.0)
+	check(edge.hp == 84.0 and nearer.hp == 84.0, "no hostile memberships")
+	var ids: Array = []
+	for event: Array in (gw.army as TracedArmy).events:
+		if event[0] == "facility":
+			ids.append(event[1])
+	check(ids == [90, 20], "facility damage sequence")
+	_free(gw)
+
+
+func _facility_diplomacy_refresh() -> void:
+	var gw := _world()
+	var first := _facility(gw, 101, Vector2i(15, 15), 100.0)
+	var later := _facility(gw, 102, Vector2i(15, 15), 100.0)
+	later.country_id = 3
+	var p := Vector2(62, 62)
+	_impact(gw, "facility-initial-hostility", p, 1, 13.0)
+	check(first.hp == 84.0 and later.hp == 100.0, "initial hostile owner")
+	gw.countries[0].at_war = {3: true}
+	_impact(gw, "facility-new-diplomacy", p, 1, 13.0)
+	check(first.hp == 84.0 and later.hp == 84.0, "fresh diplomacy after dictionary replacement")
+	first.country_id = 3
+	later.country_id = 2
+	_impact(gw, "facility-new-ownership", p, 1, 13.0)
+	check(first.hp == 68.0 and later.hp == 84.0, "current owner read before selecting first candidate")
+	_free(gw)
+
+
 func _free(gw: GameWorld) -> void:
 	Save._reset_codec()
 	gw._delayed.clear()
@@ -228,6 +285,8 @@ func _run() -> void:
 	_boundaries(2, 11.0, Vector2(65536, -65536))
 	_successive()
 	_empty_and_small()
+	_facility_boundaries()
+	_facility_diplomacy_refresh()
 	var result := {"passed": failures.is_empty(), "checks": checks, "failures": failures, "trace": trace}
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--out="):

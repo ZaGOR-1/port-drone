@@ -10,7 +10,8 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
-| beta 0.36.5 | База 0.36.4 `d8114af`. Кандидат INT-06 з R10 і version bump `a2bcdb0`. Merge commit і CI зафіксовано в [PR #14](https://github.com/ZaGOR-1/port-drone/pull/14). |
+| INT-07 / beta 0.36.6 | R14, кандидат PATCH `8649531`. Точний merge SHA та CI в [PR #15](https://github.com/ZaGOR-1/port-drone/pull/15). [Цільовий review і приймання](r14/INT07_INTEGRATION.md). |
+| beta 0.36.5 / INT-06 | База 0.36.4 `d8114af`. Кандидат INT-06 з R10 і version bump `a2bcdb0`. Merge commit і CI зафіксовано в [PR #14](https://github.com/ZaGOR-1/port-drone/pull/14). |
 | База `beta` перед INT-03 | `11380ee014cae95c1bdc2367b0ee9a1b8cbfed7b`. [INT-02, PR #10](https://github.com/ZaGOR-1/port-drone/pull/10). |
 | Інтеграція `beta` 0.36.2 | Merge commit та перевірки приймання прив’язані до [INT-03, PR #11](https://github.com/ZaGOR-1/port-drone/pull/11). |
 | Windows-стабілізація в `beta` | [PR #5](https://github.com/ZaGOR-1/port-drone/pull/5) об’єднано комітом `739a21bcdb74b31e8a9651f491c9f8271948b294` від бази `94aedbe36fc5d1abd4da100bed83f803fad53b2f`. Production tip `e174cd0ce6d6804a8f0598d29bfa7b7008c1206f`, дерево `game/` `052d3b1047774012be4fbc551cfe36d995845ea8`. |
@@ -111,6 +112,10 @@ Worktree `/home/zagor/projects/port-drone-r10`, гілка `perf/armyfire-impact
 ## R11 · NO-GO
 
 Локальний worktree `/home/zagor/projects/port-drone-r11`, гілка `perf/r11-army-update`, HEAD `a72a67c`. Експеримент окопування не інтегровано. На Late E FPS і tick p95 погіршилися в усіх трьох мінімальних парах, причинність відкрита. Докази збережено в `/home/zagor/projects/droneflames-toolchain/performance/r11.AZ9TDOdC/`.
+
+## R14 · Обхід споруд в ArmyFire._impact
+
+Кандидат `13dd5bffbd2878bf416c0d3bdd7663c43f7d8f73` на `perf/armyfire-impact-buildings` від `8c83d91d06989cc3857c7560c4690188bf88a964`, worktree `/home/zagor/projects/port-drone-r14`, версія 0.36.5. Винесено пошук країни-атакувальника за межі циклу споруд. D2100 facility scan 3,583 → 2,011 мс/кадр, FPS 19,996 → 20,647 і simulation 25,831 → 24,478 мс/тик. Gate GO, локальний повний QA PASS. C1200 frame p95 і щільний tick p99 лишаються ризиками. Manual Windows A/B, LAN і Steam — NOT RUN. Handoff у `/home/zagor/projects/droneflames-toolchain/performance/r14.GEz1Tr3B/`. [Результати R14](r14/R14_RESULTS.md)
 
 ## Known issues
 
