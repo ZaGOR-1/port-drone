@@ -10,6 +10,7 @@ DroneFlames — RTS про державу, економіку, дипломат�
 
 | Контекст | Перевірений стан |
 | --- | --- |
+| INT-08 / beta 0.36.7 | R15 і PATCH `6a41f0d`. Точний SHA, стан інтеграції й CI в [PR #16](https://github.com/ZaGOR-1/port-drone/pull/16). [Review, ризики й контекст R16](r15/INT08_INTEGRATION.md). |
 | INT-07 / beta 0.36.6 | R14, кандидат PATCH `8649531`. Точний merge SHA та CI в [PR #15](https://github.com/ZaGOR-1/port-drone/pull/15). [Цільовий review і приймання](r14/INT07_INTEGRATION.md). |
 | beta 0.36.5 / INT-06 | База 0.36.4 `d8114af`. Кандидат INT-06 з R10 і version bump `a2bcdb0`. Merge commit і CI зафіксовано в [PR #14](https://github.com/ZaGOR-1/port-drone/pull/14). |
 | База `beta` перед INT-03 | `11380ee014cae95c1bdc2367b0ee9a1b8cbfed7b`. [INT-02, PR #10](https://github.com/ZaGOR-1/port-drone/pull/10). |
@@ -120,6 +121,10 @@ Worktree `/home/zagor/projects/port-drone-r10`, гілка `perf/armyfire-impact
 ## R15 · ArmyFire._spot
 
 Гілка `perf/armyfire-spotting`, worktree `/home/zagor/projects/port-drone-r15`, база `50f3f04306ec49ea600296135225282907c9955c`, версія 0.36.6. Код `0dc44603c07cd81c96f023295f6a21d928a77cd5`. R15 скоротив повторні перевірки стану наземних кандидатів зі збереженням порядку й результатів spotting. Gate GO, повний локальний QA PASS. D2100 inclusive `_spot` 356,525 → 99,413 мс за 120 тіків, frame p99 137,948 → 93,125 мс, tick p99 107,404 → 49,925 мс. Фізичне Windows приймання лишається відкритим. Докази й provenance в `/home/zagor/projects/droneflames-toolchain/performance/r15.pCbzhv2E/`. [Профіль, парні заміри й QA](r15/R15_RESULTS.md)
+
+## INT-08 · R15 / beta 0.36.7
+
+Кандидат із `/home/zagor/projects/port-drone-r15`, база `50f3f04306ec49ea600296135225282907c9955c`. Наземний spotting повторно використовує відфільтровані bucket-и тільки в межах скану країни. У R15 D2100 час чотирьох викликів `_spot` зменшився на 72,1%. Причина розбіжності FPS і максимуму кадру в щільних парах відкрита. R11–R13 лишаються NO-GO. Фізичний Windows GUI/FPS відкладено, LAN і Steam — NOT RUN. Докази, стан CI, QA-пакети, incremental bundle і матеріали R16 зберігаються в handoff INT-08. [INT-08](r15/INT08_INTEGRATION.md)
 
 ## Known issues
 
