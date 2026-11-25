@@ -168,6 +168,10 @@ Simulation regression 2476/2476, official Linux і Windows x64 build, PCK parity
 
 У коротких контролях кеш не активувався. D2100 показав −7,66% 1% low, Late E показав +9,77% tick p99 (+3,82 мс). B мав більше стороннє навантаження CPU в обох парах, причинність відкрита. Фізичні Windows FPS, LAN і Steam відкладено за рішенням власника, статус NOT RUN. Дефекти вивільнення ресурсів Godot залишаються відкритими. Фінальні CI, smoke, ENet admission, пакети, SHA256 і відновлення incremental bundle фіксуються в локальному handoff `/home/zagor/projects/droneflames-toolchain/int11.KkAMcCZr/`.
 
+## R21 · Watchdog exit search
+
+Кандидат від beta `3298af5878501d458920b41dc5738f60571ac551` (0.36.10), worktree `/home/zagor/projects/port-drone-r21`, гілка `perf/watchdog-lockstep-latency`. `wd_exit` пропускає групу з чотирьох клітин, якщо всі належать території виходу. D2100: медіанна парна зміна CPU `wd_exit` −41,49%, tick p99 −16,40%. Детермінізм 390/390, геометрія 576/576, Operations/transport 37/37 на плечі. Локальний повний QA — PASS. Командні піки та siege D5000 лишаються окремими джерелами затримок. [Результати, QA й обмеження](r21/R21_RESULTS.md)
+
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
