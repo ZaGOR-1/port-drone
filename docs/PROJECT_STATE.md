@@ -126,6 +126,18 @@ Worktree `/home/zagor/projects/port-drone-r10`, гілка `perf/armyfire-impact
 
 Кандидат із `/home/zagor/projects/port-drone-r15`, база `50f3f04306ec49ea600296135225282907c9955c`. Наземний spotting повторно використовує відфільтровані bucket-и тільки в межах скану країни. У R15 D2100 час чотирьох викликів `_spot` зменшився на 72,1%. Причина розбіжності FPS і максимуму кадру в щільних парах відкрита. R11–R13 лишаються NO-GO. Фізичний Windows GUI/FPS відкладено, LAN і Steam — NOT RUN. Докази, стан CI, QA-пакети, incremental bundle і матеріали R16 зберігаються в handoff INT-08. [INT-08](r15/INT08_INTEGRATION.md)
 
+## R17 · Ordered Unit Membership Lookup
+
+Локальний PoC у `/home/zagor/projects/port-drone-r17`, гілка `perf/operations-membership-lookup` від `d6a38e8db58361430df69ffe0a98e628acac6d8b`, версія 0.36.7. У синхронній фазі `Operations.update` впорядкований підбір за посиланням `Unit.home` перебудовується після зміни home або реєстру. Цільові перевірки 33/33 на A/B, repeated restore PASS, покроковий replay D2100/D5000/Late E 390/390. У 120-тикових вікнах D2100/D5000 консервативне зменшення visits склало 94,95% і 82,30%. На пікових тиках CPU membership зменшився на 94,56% і 96,01%. Медіана парного поліпшення tick p99 21,38% і 50,54%.
+
+GUI Late E дав зміни середнього FPS +3,26%, −18,43% і −14,76% у трьох парах. Обидва повільні B-прогони мали вищу зайнятість CPU хоста. Причинність відкрита. Ранній gate INCONCLUSIVE. Повний QA, тривалий контроль, пакети, commit, push і PR відкладено. Локальний diff, сирі заміри, fixtures, replay traces і SHA256 збережено у `/home/zagor/projects/droneflames-toolchain/performance/r17.xD07pkTL/`. Наступна перевірка цього кандидата — парний Late E на стабільному фоновому навантаженні. У D2100 B підтверджений залишковий hotspot `Operations.wd_exit` має 58–72 мс exclusive на тиках 4816 і 4864.
+
+### Фінальне приймання · 25.11.2026
+
+Late E **GO** за Real-World Gaming (Profile B). Незмінний PoC зафіксовано в `617c58004261cff52a3ad035c9ccf11d87893aa5`. Чотири збалансовані пари по 150 тіків на плече дали медіани парних змін +3,11% FPS, +3,81% 1% low, −2,82% frame p99, −22,86% tick p99 і −0,75% CPU-часу процесу. Усі плечі збіглися за NetHash, RNG і wire payload. VM була активною у всіх плечах. Сторонній CPU між A і B змінювався в обох напрямках, а FPS і tick p99 поліпшились у кожній парі. Абсолютні показники описують виміряну сесію Ubuntu з VM. Історичні D2100/D5000 gates та repeated restore перенесено за SHA256.
+
+Пройшли simulation regression 2476/2476, дисковий Save/Load 22/22, ENet admission і двопроцесні reconnect/resync, 600-тіковий lifecycle control, official Linux та Windows x64 build, PCK parity і Linux native/Wine smoke. Версія 0.36.7, PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с. Докази, збірки й Windows A/B комплект у `/home/zagor/projects/droneflames-toolchain/performance/r17-final-profile-b.9tC9OIb6/`. Наступна перевірка для Draft PR — фізичний Windows A/B, LAN і Steam. У smoke залишаються відомі попередження Godot під час виходу про ресурси.
+
 ## Known issues
 
 - **DummyTexture:** відкритий дефект завершення життєвого циклу ресурсів. При seed фонової карти меню 57081466 HUD fixture відтворив витік чотирьох RID на базі та R08 після 36/36 assertions. Коміт `8066964` фіксує seed лише в тесті. Покриття HUD і фільтрацію логів збережено. [QA R08](r08/R08_RESULTS.md#детермінізм-та-qa)
