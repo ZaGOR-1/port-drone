@@ -33,7 +33,8 @@
 
 ### Робочі гілки
 
-- `main` — стабільна база, `beta` — інтеграція/QA. Для нового завдання працюй у тематичній гілці й окремому worktree від погодженого tip `beta`. Бережи чужі зміни. Для експериментів використовуй окрему гілку або worktree.
+- `main` і `beta` — постійні гілки. `main` — стабільна база, `beta` — інтеграція/QA. Нові тематичні worktrees створюй у `~/projects/droneflames-worktrees/` від погодженого tip `beta`. Бережи чужі зміни.
+- `feature/*`, `fix/*`, `perf/*`, `research/*` і `docs/*` — тимчасові гілки. Після завдання збережи унікальні коміти, локальні дельти й докази в канонічному handoff. Після merge, перевірки відновлення і дозволу власника прибери тимчасові worktree і локальну гілку. Докази NO_GO також зберігай. Дублюй канонічний артефакт лише за потреби, зокрема для незалежної резервної копії.
 - `feature/*` — нові можливості, `fix/*` — виправлення, `perf/*` — оптимізації, `build/*` — інфраструктура збірки, `docs/*` — документація, коли їй потрібна окрема гілка. Один логічний набір змін може містити кілька комітів у тій самій гілці.
 
 ### Публікація гілок і Pull Requests
@@ -75,8 +76,9 @@
 ## 8. Performance + архітектура
 
 - Критична скарга — **2–3 FPS у late-game**. Ранні headless `_sim_step` benchmarks не вимірюють загальний FPS. Windows GUI profiling: однакові build/checkpoint/seed/settings, GPU/CPU frame time, physics, AI/pathfinding, effects, draw calls, nodes, allocations, RAM, p50/p95/p99/max і повтори.
+- Для приймання продуктивності використовуй лише **Real-World Gaming (Profile B)**. Звичайні Discord, Steam, Chrome та системні процеси можуть працювати. Реєструй фоновий CPU і нетипові важкі роботи під час A/B. 60-секундний host readiness preflight, жорсткі пороги фонового CPU та окремі лабораторні чи heavy multitasking suites скасовано. Зберігай усі пари. Якщо зовнішнє навантаження заважає встановити ефект, став INCONCLUSIVE. Історичні verdicts зберігай. [Performance workflow](docs/performance.md)
 - Spatial hashing, `MultiMeshInstance2D`, pooling, visual-only culling, typed GDScript, data-oriented buffers і GDExtension — **гіпотези** до вимірювань. Spatial hash не робить всю фізику O(1); Godot має batching; pooling потребує reset; **камерний culling не зупиняє simulation**; GDExtension додає native ABI/packaging ризики.
-- Для кожного оптимізаційного/архітектурного PR: baseline → доказ вузького місця → малий PoC → determinism/save/network tests → повторний benchmark → review. Не приймай регресію продуктивності заради «чистішого» коду без окремого рішення.
+- Для кожного оптимізаційного/архітектурного PR: baseline → доказ вузького місця → малий PoC → цільові перевірки й парний benchmark → обов’язковий QA після GO → review. Повторно використовуй докази за ідентичності коду, PCK, runtime, fixtures, конфігурації та релевантного сценарію. Не приймай регресію продуктивності заради «чистішого» коду без окремого рішення.
 
 ## 9. MCP та інструменти
 

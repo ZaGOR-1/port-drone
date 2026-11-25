@@ -37,6 +37,12 @@
 
 Пізніший headless benchmark відновлено після Windows restart. Є 20 вимірювань, п’ять на кожен runtime. Зібрано `GetProcessTimes` user+kernel окремо від wall time. MinGW patched проти Official показав −7,68% mean і −7,63% median CPU процесу. Вибірки недостатньо для p95/p99 CPU процесу. Окремо виміряно wall time тиків `net_step()`, що не є FPS чи CPU time. Зіставлення залежить від цього checkpoint і хоста. Один Official прогін після перезапуску має інший прапорець restricted token. MinGW original з тим самим toolchain відсутній, тож окремий внесок патча не встановлено. Сирі зведення збережені в локальному `benchmark-evidence-qa-20261122T170450Z/summary.json`.
 
+## QA-01 · Intermittent Wine startup
+
+У первинному INT-08 smoke official Godot 4.7.2 під Wine зафіксував execute page fault за `0x0` на Wine thread `0x017c` після `WorldGen`. Стек і модуль відсутні. У QA-01 десять пар `0.36.6 → 0.36.7` пройшли з кодом 0. Три native Linux smoke на PCK 0.36.7 також пройшли. Повідомлення про CanvasItem, ObjectDB і ресурси на виході збереглися на обох версіях та Linux. DummyTexture і `mesh is null` у цій серії не відтворилися. Причину первинного збою та зв’язок із R15 або історичною native race не встановлено. Фізичний Windows GUI, LAN і Steam — NOT RUN.
+
+Історичний комплект `QA01-evidence.tar.gz` містить журнали, команди й маніфести. Джерело секції — `ca713a4d3388eff8583924e13517996b35080544`. У разі повторення збою зняти стек і список модулів з точного EXE.
+
 ## Підготовка SFX
 
 `tools/portable_sfx` відсутній у `beta`. Для цього EXE використано локальні інструменти з `~/port-drone-worktrees-archive/droneflames/droneflames-vm-fix-20261122/source/tools/portable_sfx/` від `e1e4355`. Звірити SHA256 файлів tooling у маніфесті. `prepare_custom_package.py` приймає прямий runtime package, перевірений MinGW template і engine manifest. `build_prototype.py` збирає SFX із перевіреного package. Payload витягується у versioned cache, профіль і логи ізольовані. Updater вимкнений, Steam за замовчуванням native з тестовим AppID 480. Для діагностики або ізоляції Steam використовувати sidecar і [tracked launchers](../tools/qa/).
