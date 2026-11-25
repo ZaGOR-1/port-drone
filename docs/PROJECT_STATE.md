@@ -187,6 +187,12 @@ PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с збе�
 - Фізичні LAN, Steam-матч на двох ПК та reconnect/resync мають статус NOT RUN. Кількісного Windows late-game A/B для фінального 0.36.5 ще немає. `Ctrl+1–9` без виділення очищає слот групи. Це чинна поведінка й окреме можливе UX-покращення.
 - Падіння до 2–3 FPS у масштабних боях повідомлялося користувачем. Точний bottleneck ще потребує Windows профілювання. Відкриті shutdown leaks, цілісність updater, стійкість saves при збоях і загальне покриття мережевих схем. [Backlog](codex/verified/BACKLOG.md)
 
+## R23 та консолідація
+
+Контрольна база `f629882296a3419b2e1dc298619f83072c1320f9`, версія 0.36.11. R23 `43c84b2195a02043eeacfe39c6e11659126fb245` має PASS для 65 GUI-прогонів та 64 перевірок еквівалентності Profile B на Ubuntu. Медіанні парні прирости FPS 0.36.4 → 0.36.11 у D2100, D5000, щільному D5000 і restore становлять +16,4%, +30,7%, +24,4% і +11,4%. Фізичний Windows GUI/FPS, LAN і Steam — NOT RUN. [Звіт R23](r23/R23_RESULTS.md)
+
+MAINT-02 підготовлено в `docs/maint-02-consolidation` у `~/projects/droneflames-worktrees/maint-02`. Вибірково перенесено Profile B, R23 та висновки QA-01. Узгоджені п’ять чистих worktrees і локальних гілок вилучено після звірки з перевіреним backup MAINT-01. Рішення, SHA256 і план наступного етапу ведуться в `droneflames-archive/MAINT-02`. [Робочий процес](DEVELOPMENT_WORKFLOW.md) · [QA-01](WINDOWS_QA.md#qa-01--intermittent-wine-startup)
+
 ## Next steps
 
 Дослідження NATIVE-01–02D завершено. Production-інтеграцію Rust відкладено. Відкладена перевірка R19 — фізичний Windows Profile B для 0.36.10, зокрема D2100 і Late E.
@@ -197,7 +203,7 @@ PROTO 7, SIM_REV `v036-integration-1`, Save.FORMAT 1 і 30 тіків/с збе�
 
 ## Important paths
 
-- Основний worktree `~/projects/port-drone` на `beta`. Допоміжні worktrees збережено в `~/port-drone-worktrees-archive/`, а резервні копії, збірки й докази Windows QA — у його підпапці `droneflames/`. Робочі каталоги прогонів `df-*` збережено в `droneflames/qa-runs/`.
+- Основний worktree `~/projects/port-drone` на `beta`. Нові тимчасові checkout — у `~/projects/droneflames-worktrees/`. Чинні інструменти й runtime — у `~/projects/droneflames-toolchain/`. Локальний індекс `~/projects/droneflames-archive/` веде до перевірених резервних копій і канонічних історичних матеріалів.
 
 - Boot і ресурси: [game/override.cfg](../game/override.cfg), [pc/boot.tscn](../game/pc/boot.tscn), [main.tscn.remap](../game/game/main.tscn.remap).
 - Контракти: [pc/version.cfg](../game/pc/version.cfg), [net_config.gd](../game/net/net_config.gd), [save.gd](../game/game/save.gd).
