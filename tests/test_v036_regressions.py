@@ -78,6 +78,9 @@ class V036RegressionTests(unittest.TestCase):
     def test_armyfire_impact(self):
         self.run_case('armyfire-impact', script='test_armyfire_impact.gd')
 
+    def test_armyfire_spot(self):
+        self.run_case('armyfire-spot', script='test_armyfire_spot.gd')
+
     def test_hud_layout_and_camera_input(self):
         profile = self.folder/'df_input_qa'
         env = self.env.copy()
