@@ -1,4 +1,18 @@
-# Performance validation
+# Performance workflow
+
+## Real-World Gaming (Profile B)
+
+Profile B is the performance acceptance workflow. Measure the rendered game under ordinary desktop use. Discord, Steam, Chrome and other typical user applications may stay open. Record background CPU, scheduler wait and memory pressure during the runs. Report any active VM, compilation, packaging or other atypical heavy work and identify the conditions those results describe.
+
+Use the baseline and candidate under matched settings with the same checkpoint, seed, command stream, camera and simulation window. Balance A/B launch order, keep raw data for every arm and check deterministic state. Report paired changes and their spread alongside average FPS, 1% low, frame and tick p95/p99/max, simulation time, process CPU time and peak RSS. Collect main-thread runnable wait where available.
+
+Use no separate 60-second host readiness preflight or fixed background CPU caps for an interval, its range or the A/B difference. Ordinary CPU spikes stay in the data. Interpret performance using paired results, reproducibility and measured background conditions. Mark the gate INCONCLUSIVE when materially different conditions prevent attribution. A regression requires evidence before it can be attributed to background activity. Separate lab and heavy multitasking performance suites are outside the acceptance workflow. Keep historical reports and verdicts as recorded.
+
+Reuse exact code, PCK, runtime and fixture evidence where the configuration and scenario match. Run only the missing performance gate and required QA. Keep workflow changes in a separate documentation commit and retain raw evidence and SHA256 with the handoff. Follow the [Development Workflow](DEVELOPMENT_WORKFLOW.md) for branches, commits and review.
+
+For R17 Late E use four 150-tick pairs in order A/B, B/A, B/A, A/B, with up to two extra pairs when they can resolve uncertainty. Require median paired FPS and 1% low changes of at least −5%, no material systematic frame-time regression, and identical deterministic state. The thresholds are engineering acceptance criteria. Perform the remaining R17 QA after GO.
+
+## Historical headless diagnostics
 
 The reproducible commands below are supported by `tools/check_performance.py`. Project priorities and open full-frame Windows profiling are listed in [Project state](PROJECT_STATE.md). The separate [MinGW comparison](WINDOWS_QA.md#godot-mingw) measures Windows process CPU time and tick durations. The 0.33.2.2 optimization and results below are historical.
 
@@ -11,7 +25,7 @@ The 0.33.2.2 changes target CPU stalls on large maps rather than lowering detail
 
 The PC version was advanced to 0.33.2.2 because the AI scheduling order changed. Multiplayer peers must use the same build.
 
-## Reproduce
+### Reproduce the historical diagnostics
 
 Python 3 and the pinned Godot 4.7.2 editor are required. The runner packs the current source into a temporary PCK; a Windows export template is not needed. It isolates user data, preserves the tracked import cache, checks process status and script/runtime errors, and rejects missing or empty reports.
 
@@ -38,7 +52,7 @@ python3 tools/check_performance.py --mode benchmark \
 
 `--dt 0.2` is an accelerated-simulation stress workload. Use `--dt 0.0166666666666667 --seconds 10` with `--load ... --warmup 0` for a short 1x-style workload. These measurements time `_sim_step`, not the complete rendered frame. Background jobs, rendering, HUD work and OS scheduling can affect a running game separately.
 
-## Historical checks and limits for 0.33.2.2
+### Historical checks and limits for 0.33.2.2
 
 The regressions compare water/bridge and ownership sampling against the original algorithms, including out-of-map coordinates; spatial query membership/order; inventories after ownership/build changes; bounded, fair colony probes and cancellation; reference/cycle preservation for every save entity type; save/load of pending searches; and save/thumbnail isolation while the live state changes.
 

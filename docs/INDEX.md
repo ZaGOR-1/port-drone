@@ -14,11 +14,12 @@
 | Godot runtime | [Windows QA · MinGW](WINDOWS_QA.md#godot-mingw) | Native race, provenance, headless CPU benchmark |
 | Тестування і QA | [Windows QA](WINDOWS_QA.md#перевірки) · [Windows checklist](codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) | Поточні результати за артефактами та ручні сценарії |
 | INT-01 | [Інтеграція PR #7–#9](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md) | QA-кандидат 0.36.1, Windows A/B і порядок приймання |
-| Продуктивність | [Performance validation](performance.md) · [PERF-01 ОТРК](perf01/PERF01_ANALYSIS.md) · [PERF-02 підтвердження](perf02/PERF02_ANALYSIS.md) · [PERF-03 дефіцит ОТРК](perf03/PERF03_RESULTS.md) · [R07 watchdog](r07/R07_RESULTS.md) · [R08 lockstep](r08/R08_RESULTS.md) · [R10 ArmyFire._impact](r10/R10_RESULTS.md) · [INT-06](r10/INT06_INTEGRATION.md) · [R14](r14/R14_RESULTS.md) · [R15](r15/R15_RESULTS.md) | Вимірювання, результати CPU та QA масового вибору |
+| Продуктивність | [Real-World Profile B](performance.md) · [PERF-01 ОТРК](perf01/PERF01_ANALYSIS.md) · [PERF-02 підтвердження](perf02/PERF02_ANALYSIS.md) · [PERF-03 дефіцит ОТРК](perf03/PERF03_RESULTS.md) · [R07 watchdog](r07/R07_RESULTS.md) · [R08 lockstep](r08/R08_RESULTS.md) · [R10 ArmyFire._impact](r10/R10_RESULTS.md) · [INT-06](r10/INT06_INTEGRATION.md) · [R14](r14/R14_RESULTS.md) · [R15](r15/R15_RESULTS.md) | Вимірювання, результати CPU та QA масового вибору |
+| R23 | [Накопичена продуктивність і масштабування](r23/R23_RESULTS.md) | Profile B, 0.36.4 / 0.36.7 / 0.36.11 та межі вимірювань |
 | Roadmap і рішення | [Next steps](PROJECT_STATE.md#next-steps) · [Backlog](codex/verified/BACKLOG.md) · [Decisions](codex/verified/DECISIONS.md) | Windows QA та FPS, Linux-порт, UI після Linux |
 | Історичні технічні звіти | [Інвентар Markdown](DOCUMENTATION_AUDIT.md) | Git/PR історія, Phase-звіти, старі контрольні збірки, source coverage |
 
-Шлях `docs/codex/verified/` збережено для наявних посилань. Дата, commit і тестовий сценарій у кожному звіті визначають його обсяг. Історичний PASS і старі дозволи не переносяться на поточний HEAD.
+Шлях `docs/codex/verified/` збережено для наявних посилань. Дата, commit і тестовий сценарій у кожному звіті визначають його обсяг. R09 `93a626e` і R16 `c7c031fe` залишаються історичними baselines, зокрема для походження fixtures R23. Історичний PASS і старі дозволи не переносяться на поточний HEAD.
 
 ## Правила розробки й локалізації
 
