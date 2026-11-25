@@ -10,7 +10,7 @@ const ScrollInput = preload("res://ui/ui24/tap_guard.gd")
 
 signal request(name: String)
 
-const VERSION: String = "v0.36.6"
+const VERSION: String = "v0.36.7"
 
 const WHATS_NEW: Array = [
 	"УЛУЧШЕНО: Ускорена обработка артиллерийских попаданий в крупных боях",

@@ -46,7 +46,6 @@ var _fired: Dictionary = {}
 var _rid: int = 1
 var _news_t: Dictionary = {}
 var rng_state: int = 0
-var _spot_u: Array = []
 var _spot_f: Array = []
 var _recon_near: Array = []
 var _recon_task: Dictionary = {}
@@ -156,25 +155,7 @@ func _spot() -> void:
 			continue
 		var fm: int = army.hostile_mask(cid)
 		var list: Array = []
-		var done_u: Dictionary = {}
-		var smoke_on: bool = army._has_smoke
-		for e: Array in ey:
-			var ep: Vector2 = e[0]
-			var r2: float = float(e[1])
-			var er: float = sqrt(r2)
-			var is_rec: bool = bool(e[2])
-			army._near_hostile_into(cid, fm, ep, er, _spot_u)
-			for o_var: Variant in _spot_u:
-				var o: Unit = o_var
-				if done_u.has(o):
-					continue
-				if not o.alive() or o.air() or o.country_id == cid or not army._hostile(cid, o.country_id) or (smoke_on and army.in_smoke(o.pos)):
-					done_u[o] = true
-					continue
-				var lim: float = minf(r2, tr2) if o.entrenched and not is_rec else r2
-				if o.pos.distance_squared_to(ep) <= lim:
-					done_u[o] = true
-					list.append([o.pos, o, is_rec])
+		_spot_ground(ey, cid, fm, tr2, list)
 		if gw.naval != null:
 			list.append_array(gw.naval.spotted_for(cid, ey))
 		if list.size() <= 60:
@@ -207,6 +188,58 @@ func _spot() -> void:
 			sd[e3[1]] = true
 		seen[cid] = sd
 
+
+
+func _spot_ground(eyes: Array, cid: int, fm: int, trench_radius_sq: float, spotted_units: Array) -> void:
+	var width: int = army._grid_w
+	if width <= 0 or fm == 0:
+		return
+	var height: int = army._grid_h
+	var grid: Array = army._ugrid
+	var masks: PackedInt64Array = army._umask
+	var smoke_on: bool = army._has_smoke
+	var remaining: Dictionary = {}
+	var resolved: Dictionary = {}
+	for eye: Array in eyes:
+		var p: Vector2 = eye[0]
+		var radius_sq: float = eye[1]
+		var radius: float = sqrt(radius_sq)
+		var is_recon: bool = eye[2]
+		var trench_limit: float = minf(radius_sq, trench_radius_sq) if not is_recon else radius_sq
+		var x0: int = maxi(0, floori((p.x - radius) / Army.GRID_PX))
+		var x1: int = mini(width - 1, floori((p.x + radius) / Army.GRID_PX))
+		var y0: int = maxi(0, floori((p.y - radius) / Army.GRID_PX))
+		var y1: int = mini(height - 1, floori((p.y + radius) / Army.GRID_PX))
+		for cy in range(y0, y1 + 1):
+			var row: int = cy * width
+			for cx in range(x0, x1 + 1):
+				var idx: int = row + cx
+				if (masks[idx] & fm) == 0:
+					continue
+				var cached: Variant = remaining.get(idx)
+				var pending: Array
+				if cached == null:
+					# State and grid membership stay fixed while this faction scans its eyes.
+					pending = []
+					for u: Unit in grid[idx] as Array:
+						if u.alive() and not u.air() and u.country_id != cid and army._hostile(cid, u.country_id) and not (smoke_on and army.in_smoke(u.pos)):
+							pending.append(u)
+					remaining[idx] = pending
+				else:
+					pending = cached
+				# Keep misses in bucket order for later eyes, including recon.
+				var kept: int = 0
+				for u: Unit in pending:
+					var limit: float = trench_limit if u.entrenched else radius_sq
+					if u.pos.distance_squared_to(p) <= limit:
+						if not resolved.has(u):
+							resolved[u] = true
+							spotted_units.append([u.pos, u, is_recon])
+					else:
+						pending[kept] = u
+						kept += 1
+				if kept < pending.size():
+					pending.resize(kept)
 
 
 func sees(country_id: int, o: Object) -> bool:
