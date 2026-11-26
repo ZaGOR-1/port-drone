@@ -32,4 +32,5 @@
 - [R24](r24/R24_RESULTS.md), [R25](r25/R25_RESULTS.md), [R26](r26/R26_RESULTS.md) і [R27–R27C](r27/R27_RESULTS.md) зберігають результати експериментів масштабування. Постійний локальний handoff із Git bundle та покажчиком доказів — `~/projects/droneflames-archive/R24-R27C/INDEX.md`.
 - [R28](r28/R28_RESULTS.md) фіксує ціну копіювання ordered acquisition buckets, callback fixture та feasibility NO-GO.
 - [R29](r29/R29_RESULTS.md) фіксує повторні перевірки клітин у watchdog, ціну кешу та feasibility NO-GO.
+- [R30](r30/R30_RESULTS.md) ранжує CPU hotspots і пропонує три вузькі напрями масштабування та feasibility для R31.
 - [Інвентар Markdown](DOCUMENTATION_AUDIT.md) веде до датованих Phase, INT, FIX, L10N і QA-звітів. [CURRENT_STATE](codex/verified/CURRENT_STATE.md) зберігає ранній handoff, [TEST_MATRIX](codex/verified/TEST_MATRIX.md) — історичні перевірки. Назва каталогу `verified` успадкована. Scope кожного PASS, NO-GO та дозволу визначає відповідний датований доказ.

@@ -1,13 +1,13 @@
 # DroneFlames — пам’ять проєкту
 
-Звірено 2026-11-26 для `origin/beta` `047c474e9058b819a45b0fc8f705d00cfd45c95c`. Перед роботою звір фактичний Git HEAD, refs і worktree. [Маршрут за темами](INDEX.md)
+Звірено 2026-11-26 для `origin/beta` `acd976086e6833306d3b6c3d711b72df425204de`. Перед роботою звір фактичний Git HEAD, refs і worktree. [Маршрут за темами](INDEX.md)
 
 ## Baseline
 
 | Що | Перевірено |
 | --- | --- |
 | Продукт | RTS із генерацією карти, економікою, військом, ШІ, дипломатією, хронікою та Save/Load. LAN/ENet і Steam lockstep реалізовані. [Архітектура](codex/verified/ARCHITECTURE_AND_FLOWS.md) |
-| `origin/beta` | `0.36.11`, INT-12/R21, документація R24–R27C та реєстр ARCHIVE-01. Локальна `beta`, серверний і remote-tracking refs збіглися на `047c474`. [PR #23](https://github.com/ZaGOR-1/port-drone/pull/23), [PR #24](https://github.com/ZaGOR-1/port-drone/pull/24) |
+| `origin/beta` | `0.36.11`, INT-12/R21, документація R24–R29 та реєстр ARCHIVE-01. Локальна `beta`, серверний і remote-tracking refs збіглися на `acd9760`. [PR #23](https://github.com/ZaGOR-1/port-drone/pull/23), [PR #24](https://github.com/ZaGOR-1/port-drone/pull/24), [PR #25](https://github.com/ZaGOR-1/port-drone/pull/25) |
 | `main` | `172df65e3bd004efed9a5444e90a284d9d69db10`. Історична UI-мітка `v0.34.0` і конфіг updater `0.33.2.3` належать цьому checkout. |
 | Контракти `beta` | [Version](../game/pc/version.cfg) `0.36.11`, [NetConfig](../game/net/net_config.gd) PROTO 7, SIM_REV `v036-integration-1`, 30 ticks/s, 3 ticks/turn. [Save](../game/game/save.gd) FORMAT 1. Мережевий identity містить повну версію. QA peers звіряють SHA256 EXE/DLL. |
 | Платформа й toolchain | Ціль Windows x64, фізичний QA на Windows 11. DOCS-02 виконано на нативному Ubuntu 26.04.1. Попередні WSL2 і Wine виміри мають власні scopes. Склад офіційного Godot звірено з [CI-піном](../tools/ci/godot-4.7.2.json). Нативний Linux-порт і cross-play відкладені. |
@@ -23,12 +23,14 @@
 - **R27C NO-GO, кандидат відкладено.** Після R27B розбіжність цілі відтворено також на `visibility_changed` повторно використаного спрайта. Побудова на кожен запит не амортизується за вимірами R27. Runtime `62e20a5` вилучено в `9d3610c`. PR #23 інтегрував документацію R24–R27C, дерево гри відповідає `1e91239`, версія `0.36.11`. [R27–R27C](r27/R27_RESULTS.md#r27c--відновлення-коректності)
 - **R28 NO-GO на feasibility** на `047c474`. У dense D5000 R19 скопіював 833 299 посилань за 60 тіків. Microprobe дав 0,213 мс/тік для всього шляху копіювання при порозі 0,25. Callback fixture підтвердив межу snapshot membership. Runtime PoC і rendered A/B — NOT RUN. [R28 та відтворення](r28/R28_RESULTS.md)
 - **R29 NO-GO на feasibility** на `047c474`. CPU повторів у межах пошуку оцінено у 0,22–0,36 мс на важкий тик. Дві форми міжзапитного кешу програли прямим читанням, а callback fixture відтворив зміну власника між пошуками. Runtime PoC і rendered A/B — NOT RUN. [R29 та відтворення](r29/R29_RESULTS.md)
+- **R30 завершено на `acd9760`.** Офлайн-аналіз трас R29 виявив потенціал пропуску цілих блоків у `wd_exit`. Реальна частка порожніх блоків, CPU maintenance і виграш потребують перевірки. Performance-прогони та runtime PoC — NOT RUN. [Shortlist і докази](r30/R30_RESULTS.md)
 - Відомі teardown/RID попередження. Відтворення DummyTexture і зв’язок із HUD fixture зафіксовано в R08. Очищення слота через `Ctrl+1–9` без виділення залишається чинною поведінкою, UX-зміна потребує окремої задачі. [R08](r08/R08_RESULTS.md#детермінізм-та-qa) · [Керування](codex/verified/WINDOWS_CONTEXT_HOTKEYS_QA.md)
 - Updater integrity, відновлення після збоїв та покриття всіх мережевих схем потребують окремого підтвердження. [Backlog](codex/verified/BACKLOG.md)
 - [Реєстр 97 досліджень ARCHIVE-01](research/INDEX.md) веде до звітів, відтворення й місць збереження доказів. Постійний handoff R24–R27C — `~/projects/droneflames-archive/R24-R27C/`. Handoff R28 і R29 з fixtures та сирими даними — `~/projects/droneflames-archive/R28/` і `~/projects/droneflames-archive/R29/`. Частина старих тестових файлів у `droneflames-toolchain/.cold-storage` потребує відновлення за її README. [Політика збереження доказів](DEVELOPMENT_WORKFLOW.md#постійне-збереження-доказів)
 
 ## Next steps
 
-1. Повертатися до R27 за наявності гарантованої межі інвалідації зі збереженням амортизації. Фізичний Windows QA для R27 — NOT RUN. [R27C](r27/R27_RESULTS.md#r27c--відновлення-коректності)
-2. Рішення щодо R25 відкладено. Для повторного розгляду PoC перевірити джерело зсуву tick p99 на тих самих replay ticks і підтвердити допуск у парному rendered [Profile B](performance.md#real-world-gaming-profile-b). [R25](r25/R25_RESULTS.md)
-3. Провести [двопірний Windows QA](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) з LAN, Steam та reconnect/resync.
+1. Для R31 перевірити блоки `wd_exit` на живому стані, з exact exit parity, свіжістю owners/biome й повною оцінкою maintenance. [План R30](r30/R30_RESULTS.md#1-watchdog--пропуск-блоків-без-природної-легальної-клітини)
+2. Повертатися до R27 за наявності гарантованої межі інвалідації зі збереженням амортизації. Фізичний Windows QA для R27 — NOT RUN. [R27C](r27/R27_RESULTS.md#r27c--відновлення-коректності)
+3. Рішення щодо R25 відкладено. Для повторного розгляду PoC перевірити джерело зсуву tick p99 на тих самих replay ticks і підтвердити допуск у парному rendered [Profile B](performance.md#real-world-gaming-profile-b). [R25](r25/R25_RESULTS.md)
+4. Провести [двопірний Windows QA](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) з LAN, Steam та reconnect/resync.
