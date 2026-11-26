@@ -1,0 +1,13 @@
+# R02 · Детермінізм, LAN і межі перевірки
+
+> Історичний матеріал з `toolchain/performance/R02_DETERMINISM_CHECK.md`. [Реєстр досліджень](../INDEX.md)
+
+**Контрольний lockstep PASS.** Та сама збірка, seed 20261016 / 91234, чотири сценарні фракції й два боти, 600 ticks по 1/30, start hash `acbbe85ac409bd14`, command checksum `1826857750`. GUI uncapped, GUI cap 60 та headless збіглися на 300 (`742e462adeb98058`) і 600 (`86913469d718ce57`). Повтори C і D також збіглися за initial/warm/final hashes, проміжними контрольними хешами та command checksum. Це контроль на профільованому replay; загальна гарантія MP або всіх сценаріїв не встановлена.
+
+**R01.** C1 і C2 мали однаковий seed, 60 warm/240 measured frames, fixed dt, однаковий опублікований start hash і лічильники двох наказів по 96 юнітів, але кінцеві `4d0fc340fa931e35` та `156e3015946dc832`. Це підтверджена відмінність SP hashes, із різними GUI умовами та без повного журналу команд/worker apply і побайтового start snapshot. Кількість кадрів і game time збігаються; вони не повністю характеризують SP async state. Headless вже стартував з іншого warm hash, adaptive мав іншу траєкторію game time. Ці пари непорівнювані для строгого lockstep висновку. Підтвердженого MP desync у R02 немає. Локалізація R01 SP divergence — PARTIAL.
+
+**Реальний ENet loopback — PARTIAL.** Другий запуск дійшов до гри у двох незалежних Wine процесах. Було два мережеві гравці й три боти, обидві сторони підтвердили виконання власної команди. Хеші host/guest збіглися на turns 50 (`882da62c6c947cf9`) і 100 (`9844299807b3e955`). Зовнішній runner завершився помилкою через вимогу `factions == 2`, тоді як у звітах фактично п'ять фракцій. Його загальне повідомлення не є доказом розходження hash. Окремо хост логував дві помилки JSON parse, обидві з `Unknown error getting token`. Причину та вплив цих помилок не встановлено. Повного LAN PASS, stress на двох клієнтах, фізичного LAN і 5–6 мережевих клієнтів немає. Host JSON (`r02-lan/checked/host.json`) · Guest JSON (`r02-lan/checked/guest.json`) · Host log (`r02-lan/checked/host.log`)
+
+**`wineserver` — відкрито.** У першій спробі watchdog не побачив ready-файла. Гілка очищення після kill окремо впала з `FileNotFoundError: [Errno 2] No such file or directory: 'wineserver'`. Це збій cleanup runner у цьому оточенні. Його не виправляли і повтор для перевірки відсутній. Помилки runner (`r02-lan/runner-errors.txt`)
+
+R02 snapshot restore та окрема нова simulation regression — **NOT RUN**. Прогін R01 **2476/2476 PASS** є попереднім доказом з іншої діагностичної збірки. Save Format, PROTO, SIM_REV та production код у R02 збережені.

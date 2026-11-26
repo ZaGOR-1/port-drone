@@ -26,6 +26,7 @@
 
 ## Історичні докази
 
+- [Реєстр 97 досліджень ARCHIVE-01](research/INDEX.md) веде до історичних звітів, інструкцій відтворення й зовнішніх доказів.
 - [R23](r23/R23_RESULTS.md) веде до масштабування 0.36.4/0.36.7/0.36.11, таблиць, довгих прогонів і меж NATIVE-01–02D. R09 `93a626e` і R16 `c7c031fe` — історичні baselines для походження fixtures. За недоступності віддаленого історичного об’єкта перевір локальний Git або індекс архіву.
 - [PERF-01](perf01/PERF01_ANALYSIS.md), [PERF-02](perf02/PERF02_ANALYSIS.md), [PERF-03](perf03/PERF03_RESULTS.md), [R07](r07/R07_RESULTS.md), [R08](r08/R08_RESULTS.md), [R10](r10/R10_RESULTS.md), [R14](r14/R14_RESULTS.md), [R15](r15/R15_RESULTS.md), [R19](r19/R19_RESULTS.md) і [R21](r21/R21_RESULTS.md) зберігають окремі контрольні експерименти.
 - [R24](r24/R24_RESULTS.md), [R25](r25/R25_RESULTS.md), [R26](r26/R26_RESULTS.md) і [R27–R27C](r27/R27_RESULTS.md) зберігають результати експериментів масштабування. Постійний локальний handoff із Git bundle та покажчиком доказів — `~/projects/droneflames-archive/R24-R27C/INDEX.md`.
