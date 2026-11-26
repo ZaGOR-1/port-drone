@@ -129,3 +129,12 @@ MAINT-06 перевірив 4 676 унікальних SHA256 у 68 кореня
 - [Резервна копія та контрприклади R24–R27C](r24-r27c/HANDOFF.md). Виконувані контрприклади R27B/R27C лишаються у зовнішньому handoff з маніфестом.
 - [Попередній стан проєкту](https://github.com/ZaGOR-1/port-drone/blob/7181e88b03a6ad5c2a5c64a6fbf02bfc8854ff33/docs/PROJECT_STATE.md) фіксує історичні ідентифікатори PERF, INT, FIX і L10N.
 - [Прогалини DOCS-02B](../DOCUMENTATION_AUDIT.md#docs-02b--незалежне-review) і первинний перелік `archive/ARCHIVE-01/docs02b-gaps.tsv`.
+
+## Після ARCHIVE-01
+
+| ID | Verdict | Повнота | Baseline | Звіт і відтворення | Докази |
+| --- | --- | --- | --- | --- | --- |
+| R28 | NO-GO на feasibility | COMPLETE у scope feasibility | `047c474` | [Звіт](../r28/R28_RESULTS.md) | `archive/R28/SHA256SUMS` |
+| R29 | NO-GO на feasibility | COMPLETE у scope feasibility | `047c474` | [Звіт](../r29/R29_RESULTS.md) | `archive/R29/SHA256SUMS` |
+
+[Точні діагностичні PCK обох досліджень](../r29/R29_RESULTS.md#точні-діагностичні-pck) збережено в `archive/R28-R29-PCK/`.
