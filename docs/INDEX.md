@@ -33,4 +33,5 @@
 - [R28](r28/R28_RESULTS.md) фіксує ціну копіювання ordered acquisition buckets, callback fixture та feasibility NO-GO.
 - [R29](r29/R29_RESULTS.md) фіксує повторні перевірки клітин у watchdog, ціну кешу та feasibility NO-GO.
 - [R30](r30/R30_RESULTS.md) ранжує CPU hotspots і пропонує три вузькі напрями масштабування та feasibility для R31.
+- [R31](r31/R31_RESULTS.md) зберігає feasibility пропуску блоків, shadow-вимірювання і контрприклад спільних packed-посилань.
 - [Інвентар Markdown](DOCUMENTATION_AUDIT.md) веде до датованих Phase, INT, FIX, L10N і QA-звітів. [CURRENT_STATE](codex/verified/CURRENT_STATE.md) зберігає ранній handoff, [TEST_MATRIX](codex/verified/TEST_MATRIX.md) — історичні перевірки. Назва каталогу `verified` успадкована. Scope кожного PASS, NO-GO та дозволу визначає відповідний датований доказ.
