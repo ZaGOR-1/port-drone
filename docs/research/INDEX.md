@@ -142,5 +142,6 @@ MAINT-06 перевірив 4 676 унікальних SHA256 у 68 кореня
 | R33 | NO-GO на feasibility | COMPLETE у scope feasibility | `acd9760` | [Звіт](../r33/R33_RESULTS.md) | `archive/R33/SHA256SUMS` |
 | STABILITY-01 | 4 підтверджені дефекти, headless Linux | COMPLETE у scope дослідження | `f152242` | [Звіт](../stability-01/STABILITY_01_RESULTS.md) | `archive/STABILITY-01/SHA256SUMS` |
 | FIX-STABILITY-01 | Локальний PASS, MP checkpoint і retry | COMPLETE у scope Linux, фізичний Windows NOT RUN | `f152242` | [Звіт і відтворення](../fix-stability-01/FIX_STABILITY_01_RESULTS.md) | `archive/FIX-STABILITY-01/SHA256SUMS` |
+| FIX-STABILITY-01B | GO для Draft PR і QA, bump очікує Windows | COMPLETE у scope локальної перевірки | `f152242` | [Review і gates](../fix-stability-01/INTEGRATION_READINESS.md) | `archive/FIX-STABILITY-01B/SHA256SUMS` |
 
 [Точні діагностичні PCK обох досліджень](../r29/R29_RESULTS.md#точні-діагностичні-pck) збережено в `archive/R28-R29-PCK/`.
