@@ -109,8 +109,7 @@ static func _continue_candidate(header_only: bool = false) -> Dictionary:
 		var paths := SaveSlots.load_order(n, "", true)
 		var upper_stamp := -1.0
 		# The first valid copy in this slot need not have the newest timestamp.
-		for path: String in paths:
-			var header := SaveSlots.peek(path)
+		for header: Dictionary in paths.values():
 			if not header.is_empty():
 				upper_stamp = maxf(upper_stamp, SaveSlots.stamp(header))
 		if upper_stamp > -1.0:
@@ -301,7 +300,7 @@ static func load_slot(m: Node, n: int, key: String = "") -> bool:
 	return await _restore_slot(m, n, pack)
 
 
-static func _slot_candidate(paths: Array, header_only: bool, report_damage: bool = false) -> Dictionary:
+static func _slot_candidate(paths: Dictionary, header_only: bool, report_damage: bool = false) -> Dictionary:
 	for p: String in paths:
 		var r := _validated_save(p, header_only)
 		if not r.is_empty():

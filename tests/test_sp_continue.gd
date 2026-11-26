@@ -156,6 +156,12 @@ func _matrix(main: MainScript) -> void:
 
 	_place({"tmp": old})
 	_available("tmp only", 42)
+	var tmp_info := Slots.info(1)
+	_check(tmp_info["state"] == "ok" and tmp_info["head"].get("game_time") == 42,
+		"tmp-only slot is visible in Saves")
+	_check(Slots.default_pick() == 2, "new game defaults to an empty slot before a recoverable tmp")
+	_check((tmp_info["rows"] as Array).any(func(row: Dictionary) -> bool: return row["key"] == "tmp"),
+		"Saves offers an explicit tmp recovery row")
 	await _continue(main, "tmp only", 42)
 	# Exercise the actual Main menu request on a second load of identical bytes.
 	main.world.game_time += 8.0
@@ -184,6 +190,10 @@ func _matrix(main: MainScript) -> void:
 	_place({"bak": old, "tmp": recent})
 	_available("backup precedes temp", 42)
 	await _continue(main, "backup precedes temp", 42)
+	Save.want = [1, "tmp"]
+	_check(await Save.load_game(main), "explicit tmp still loads before backup")
+	main.world.set_process(false)
+	_check(_state(main) == expected[77], "explicit tmp restores the exact snapshot")
 	_place({"main": old, "a0": recent, "bak": old, "tmp": old})
 	_available("newer autosave precedes primary", 77)
 	await _continue(main, "autosave order", 77)
@@ -207,6 +217,10 @@ func _matrix(main: MainScript) -> void:
 	_available("valid fallback after bad flag", 77)
 	Slots.set_flag(1, "end", Slots.END_WIN)
 	_available("ended slot stays hidden despite valid fallback", -1)
+	_place({"main": old, "tmp": recent})
+	Slots.set_flag(1, "end", Slots.END_WIN)
+	_check(DirAccess.remove_absolute(Slots.path(1, "main")) == OK, "ended primary is removed, leaving a temp")
+	_available("end marker survives loss of the last regular copy", -1)
 
 	_place({"main": recent})
 	_place({"bak": old}, 2)
@@ -225,6 +239,17 @@ func _matrix(main: MainScript) -> void:
 	_check(_write(Slots.path(1, "main"), recent), "replaced selected file before Continue")
 	await _continue(main, "fresh read after file replacement", 77)
 
+	_place({"main": recent, "a0": old})
+	Slots._write_meta(1, {"files": {"main": Slots.peek(Slots.path(1, "main")), "a0": Slots.peek(Slots.path(1, "a0"))}})
+	_available("primary wins before autosave is replaced", 77)
+	# Replace the primary with an older valid snapshot while leaving its metadata entry unchanged.
+	# Rewriting the sidecar last forces its stale headers to remain eligible for the UI cache.
+	var stale_meta := FileAccess.get_file_as_bytes(Slots.path(1, "meta"))
+	_check(_write(Slots.path(1, "main"), old) and _write(Slots.path(1, "a0"), recent)
+		and _write(Slots.path(1, "meta"), stale_meta), "swapped two snapshots behind a stale sidecar")
+	_available("current copy headers determine order with stale metadata", 77)
+	await _continue(main, "load uses new autosave order", 77)
+
 	_place({"main": recent, "bak": old})
 	_available("prime validation with readable primary", 77)
 	var corrupted := recent.duplicate()
@@ -238,6 +263,9 @@ func _matrix(main: MainScript) -> void:
 	_place({}, 2)
 	_available("all absent", -1)
 	await _continue(main, "all absent", -1)
+	_place({"tmp": broken})
+	_check(Slots.info(1)["state"] == "bad", "invalid temp is reported as damaged")
+	_available("corrupt temp alone", -1)
 	Slots._migrated = false
 	_place({"tmp": recent})
 	_check(_write(LEGACY, old), "placed both a recoverable temp and legacy save")
