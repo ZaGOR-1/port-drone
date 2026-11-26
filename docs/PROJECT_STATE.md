@@ -1,13 +1,13 @@
 # DroneFlames — пам’ять проєкту
 
-Звірено 2026-11-26 для `origin/beta` `acd976086e6833306d3b6c3d711b72df425204de`. Перед роботою звір фактичний Git HEAD, refs і worktree. [Маршрут за темами](INDEX.md)
+Звірено 2026-11-26 для `origin/beta` `f15224268ae6f4be06b5372ff5b7c99d5635793b`. Перед роботою звір фактичний Git HEAD, refs і worktree. [Маршрут за темами](INDEX.md)
 
 ## Baseline
 
 | Що | Перевірено |
 | --- | --- |
 | Продукт | RTS із генерацією карти, економікою, військом, ШІ, дипломатією, хронікою та Save/Load. LAN/ENet і Steam lockstep реалізовані. [Архітектура](codex/verified/ARCHITECTURE_AND_FLOWS.md) |
-| `origin/beta` | `0.36.11`, INT-12/R21, документація R24–R29 та реєстр ARCHIVE-01. Локальна `beta`, серверний і remote-tracking refs збіглися на `acd9760`. [PR #23](https://github.com/ZaGOR-1/port-drone/pull/23), [PR #24](https://github.com/ZaGOR-1/port-drone/pull/24), [PR #25](https://github.com/ZaGOR-1/port-drone/pull/25) |
+| `origin/beta` | `0.36.11`, INT-12/R21, документація R24–R33 та реєстр ARCHIVE-01. Локальний, серверний і remote-tracking refs збіглися на `f152242`. [Інтеграція R30–R33](https://github.com/ZaGOR-1/port-drone/pull/26) |
 | `main` | `172df65e3bd004efed9a5444e90a284d9d69db10`. Історична UI-мітка `v0.34.0` і конфіг updater `0.33.2.3` належать цьому checkout. |
 | Контракти `beta` | [Version](../game/pc/version.cfg) `0.36.11`, [NetConfig](../game/net/net_config.gd) PROTO 7, SIM_REV `v036-integration-1`, 30 ticks/s, 3 ticks/turn. [Save](../game/game/save.gd) FORMAT 1. Мережевий identity містить повну версію. QA peers звіряють SHA256 EXE/DLL. |
 | Платформа й toolchain | Ціль Windows x64, фізичний QA на Windows 11. DOCS-02 виконано на нативному Ubuntu 26.04.1. Попередні WSL2 і Wine виміри мають власні scopes. Склад офіційного Godot звірено з [CI-піном](../tools/ci/godot-4.7.2.json). Нативний Linux-порт і cross-play відкладені. |
@@ -29,6 +29,7 @@
 - **R33 NO-GO на feasibility** на `acd9760`. Fortified D2100 дав 2 562 nearest scans на трьох фронтах. Усунення всього циклу дає до 0,032 мс/тік і 0,703% inclusive `_advance`. Baseline fixture 10/10, runtime PoC й A/B — NOT RUN. [R33 і докази](r33/R33_RESULTS.md)
 - Відомі teardown/RID попередження. Відтворення DummyTexture і зв’язок із HUD fixture зафіксовано в R08. Очищення слота через `Ctrl+1–9` без виділення залишається чинною поведінкою, UX-зміна потребує окремої задачі. [R08](r08/R08_RESULTS.md#детермінізм-та-qa) · [Керування](codex/verified/WINDOWS_CONTEXT_HOTKEYS_QA.md)
 - Updater integrity, відновлення після збоїв та покриття всіх мережевих схем потребують окремого підтвердження. [Backlog](codex/verified/BACKLOG.md)
+- **FIX-STABILITY-02 на `ffff868` локальний PASS.** SP Continue знаходить придатний `.tmp` або `.bak` штатним loader. Baseline FAIL, кандидат 115/115. Disk restore, autosave, NetHash/RNG PASS. Фізичний Windows NOT RUN. Незалежна гілка від `f152242`, суміжний MP fix і звіт STABILITY-01 веде окремий PR #27. [Звіт і докази](fix-stability-02/FIX_STABILITY_02_RESULTS.md)
 - [Реєстр 97 досліджень ARCHIVE-01](research/INDEX.md) веде до звітів, відтворення й місць збереження доказів. Постійний handoff R24–R27C — `~/projects/droneflames-archive/R24-R27C/`. Handoff R28 і R29 з fixtures та сирими даними — `~/projects/droneflames-archive/R28/` і `~/projects/droneflames-archive/R29/`. Частина старих тестових файлів у `droneflames-toolchain/.cold-storage` потребує відновлення за її README. [Політика збереження доказів](DEVELOPMENT_WORKFLOW.md#постійне-збереження-доказів)
 
 ## Next steps

@@ -142,3 +142,7 @@ MAINT-06 перевірив 4 676 унікальних SHA256 у 68 кореня
 | R33 | NO-GO на feasibility | COMPLETE у scope feasibility | `acd9760` | [Звіт](../r33/R33_RESULTS.md) | `archive/R33/SHA256SUMS` |
 
 [Точні діагностичні PCK обох досліджень](../r29/R29_RESULTS.md#точні-діагностичні-pck) збережено в `archive/R28-R29-PCK/`.
+
+## SP Continue recovery
+
+FIX-STABILITY-02 · локальний PASS на baseline `f152242` · [Звіт і відтворення](../fix-stability-02/FIX_STABILITY_02_RESULTS.md) · `archive/FIX-STABILITY-02/SHA256SUMS`.
