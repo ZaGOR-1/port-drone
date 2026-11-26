@@ -23,6 +23,74 @@ const KIND_MORTAR: int = 0
 const KIND_ARTY: int = 1
 const KIND_ROCKET: int = 2
 
+# A shell batch owns this broad phase. Buckets contain original registry offsets.
+class ImpactFacilities:
+	const CELL: float = 64.0
+	const LIMIT: float = 1048576.0
+
+	var _scanned: bool = false
+	var _unsupported: bool = false
+	var _registry: Array[Facility] = []
+	var _size: int = -1
+	var _max_extent: float = 0.0
+	var _buckets: Dictionary[Vector2i, Array] = {}
+
+	func invalidate() -> void:
+		_scanned = false
+		_registry = []
+		_size = -1
+		_max_extent = 0.0
+		_buckets.clear()
+
+	func _build(facs: Array[Facility]) -> bool:
+		_buckets.clear()
+		_max_extent = 0.0
+		for rank: int in facs.size():
+			var f: Facility = facs[rank]
+			if f.get_script() != Facility:
+				return false
+			if f.parent != null or f.is_line():
+				continue
+			var pos: Vector2 = f.center_px()
+			var extent: float = float(maxi(f.size.x, f.size.y)) * 2.0
+			if not pos.is_finite() or absf(pos.x) > LIMIT or absf(pos.y) > LIMIT or extent < 0.0 or extent > 1024.0:
+				return false
+			_max_extent = maxf(_max_extent, extent)
+			var key := Vector2i(floori(pos.x / CELL), floori(pos.y / CELL))
+			if not _buckets.has(key):
+				_buckets[key] = []
+			_buckets[key].append(rank)
+		_registry = facs
+		_size = facs.size()
+		return true
+
+	func candidates(facs: Array[Facility], p: Vector2, radius: float) -> Variant:
+		if _unsupported or not p.is_finite() or not is_finite(radius) or radius < 0.0 or radius > 256.0:
+			return null
+		if not _scanned:
+			_scanned = true
+			return null
+		if (_size != facs.size() or not is_same(_registry, facs)) and not _build(facs):
+			_unsupported = true
+			invalidate()
+			return null
+		# A full cell of padding covers float rounding at the bounded coordinates.
+		var reach: float = radius + _max_extent + CELL
+		if absf(p.x) + reach > LIMIT or absf(p.y) + reach > LIMIT:
+			return null
+		var ranks: Array[int] = []
+		for y in range(floori((p.y - reach) / CELL), floori((p.y + reach) / CELL) + 1):
+			for x in range(floori((p.x - reach) / CELL), floori((p.x + reach) / CELL) + 1):
+				var key := Vector2i(x, y)
+				if _buckets.has(key):
+					ranks.append_array(_buckets[key])
+		ranks.sort()
+		var out: Array[Facility] = []
+		for rank: int in ranks:
+			out.append(facs[rank])
+		return out
+
+
 # Values in the buckets are offsets in Army.units, including duplicate entries.
 class ImpactUnits:
 	const CELL: float = 64.0
@@ -34,6 +102,12 @@ class ImpactUnits:
 	var registry: Array[Unit] = []
 	var size: int = -1
 	var buckets: Dictionary[Vector2i, Array] = {}
+	var facilities: ImpactFacilities
+
+	func invalidate_all() -> void:
+		invalidate()
+		if facilities != null:
+			facilities.invalidate()
 
 	func invalidate() -> void:
 		buckets.clear()
@@ -559,7 +633,7 @@ func _update_shells(dt: float) -> void:
 	if _impact_units != null:
 		# A nested update can run effects before the enclosing query resumes.
 		_impact_units.disabled = true
-		_impact_units.invalidate()
+		_impact_units.invalidate_all()
 	var can_index: bool = _impact_units == null and shells.size() > 1 and _can_index_impact()
 	for k in range(shells.size() - 1, -1, -1):
 		var s: Dictionary = shells[k]
@@ -583,6 +657,8 @@ func _update_shells(dt: float) -> void:
 		shells.remove_at(k)
 		if can_index and lookup == null:
 			lookup = ImpactUnits.new()
+			if _can_index_impact_facilities():
+				lookup.facilities = ImpactFacilities.new()
 			_impact_units = lookup
 		_impact(s, lookup)
 	if lookup != null:
@@ -606,10 +682,30 @@ func _can_index_impact() -> bool:
 			return false
 	return true
 
+func _can_index_impact_facilities() -> bool:
+	# The stock impact chain outside the invalidation sites only changes units,
+	# terrain decoration, and presentation. Custom effect scripts use the scan.
+	if (Sfx._inst != null and Sfx._inst.get_script() != Sfx) or (gw.camera != null and gw.camera.get_script() != MapCamera):
+		return false
+	if gw.vision != null and gw.vision.get_script() != Vision:
+		return false
+	if army.tac.get_script() != Army.ArmyTac:
+		return false
+	if gw.vfx != null:
+		if gw.vfx.air != null and gw.vfx.air.get_script() != VfxAir:
+			return false
+		if gw.vfx.blast != null:
+			if gw.vfx.blast.get_script() != VfxBlast:
+				return false
+			if gw.vfx.blast.tur != null and gw.vfx.blast.tur.get_script() != VfxTurret:
+				return false
+	return true
+
+
 func _impact(s: Dictionary, lookup: ImpactUnits = null) -> void:
 	if lookup == null and _impact_units != null:
 		_impact_units.disabled = true
-		_impact_units.invalidate()
+		_impact_units.invalidate_all()
 	var p: Vector2 = s["to"]
 	var kind: int = int(s["k"])
 	var c: int = int(s["c"])
@@ -637,7 +733,7 @@ func _impact(s: Dictionary, lookup: ImpactUnits = null) -> void:
 	if gw.naval != null:
 		# A sunk transport can synchronously publish a world message.
 		if lookup != null and (not gw.naval.landings.is_empty() or not gw.naval.expeditions.is_empty()):
-			lookup.invalidate()
+			lookup.invalidate_all()
 		gw.naval.on_shell(p, r, dmg, c)
 
 	var cell: = Vector2i(floori(p.x / GameWorld.CELL), floori(p.y / GameWorld.CELL))
@@ -649,7 +745,7 @@ func _impact(s: Dictionary, lookup: ImpactUnits = null) -> void:
 			var tq: = cell + Vector2i(tx, ty)
 			if tx * tx + ty * ty <= rt * rt and gw.mil.fort_cells.has(tq) and Military.is_teeth((gw.mil.fort_cells[tq] as Facility).kind):
 				if lookup != null:
-					lookup.invalidate()
+					lookup.invalidate_all()
 				gw.mil.remove_line_cell(gw.mil.fort_cells[tq], tq)
 	for dy in range(-rc, rc + 1):
 		for dx in range(-rc, rc + 1):
@@ -663,12 +759,17 @@ func _impact(s: Dictionary, lookup: ImpactUnits = null) -> void:
 				continue
 			if ri(100) < [12, 35, 15][kind]:
 				if lookup != null:
-					lookup.invalidate()
+					lookup.invalidate_all()
 				gw.mil.remove_line_cell(lf, q)
 				caved = true
 	var attacker: Country = gw.country_by_id(c)
 	var facility_wars: Dictionary = attacker.at_war if attacker != null else {}
-	for f: Facility in gw.mil.facilities:
+	var targets: Array[Facility] = gw.mil.facilities
+	if lookup != null and not lookup.disabled and lookup.facilities != null:
+		var nearby: Variant = lookup.facilities.candidates(targets, p, r)
+		if nearby != null:
+			targets = nearby
+	for f: Facility in targets:
 		if f.parent != null or f.is_line():
 			continue
 		var owner: int = f.country_id
@@ -676,6 +777,8 @@ func _impact(s: Dictionary, lookup: ImpactUnits = null) -> void:
 			continue
 		var ext: float = float(maxi(f.size.x, f.size.y)) * 2.0 + r
 		if f.center_px().distance_squared_to(p) <= ext * ext and gw.mil.alive(f):
+			if lookup != null and lookup.facilities != null:
+				lookup.facilities.invalidate()
 			army._damage(f, dmg * 0.4, c, p)
 			break
 
@@ -689,7 +792,7 @@ func _impact(s: Dictionary, lookup: ImpactUnits = null) -> void:
 		if ri([14, 5, 9][kind]) == 0:
 			# A train hit can unload units synchronously into Army.units.
 			if lookup != null:
-				lookup.invalidate()
+				lookup.invalidate_all()
 			gw._apply_strike(cell, 1, "crater_s", 6.0, c)
 		break
 
