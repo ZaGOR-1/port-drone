@@ -217,12 +217,17 @@ func _run() -> void:
 	check(not n.in_match and n.main.successes == 0,"timeout: late completion cannot report success")
 	dispose(n)
 	n = fixture()
-	NetConfig.save_match({"snap":PackedByteArray([1]),"marker":"R02-synthetic"})
+	var checkpoint := FileAccess.open(NetConfig.MATCH_FILE, FileAccess.WRITE)
+	check(checkpoint != null and checkpoint.store_var({"marker":"R02-synthetic"}),
+		"failure preservation fixture written")
+	if checkpoint != null:
+		checkpoint.close()
 	NetConfig.save_rejoin({"tok":"R02-synthetic","mode":"lan"})
 	var saved: PackedByteArray = FileAccess.get_file_as_bytes(NetConfig.MATCH_FILE)
 	n.result = false
 	await n._restore_from(PackedByteArray([0]),40)
-	check(FileAccess.get_file_as_bytes(NetConfig.MATCH_FILE) == saved,"failure preserves saved host checkpoint")
+	check(not saved.is_empty() and FileAccess.get_file_as_bytes(NetConfig.MATCH_FILE) == saved,
+		"failure preserves saved host checkpoint")
 	check(NetConfig.load_rejoin().get("tok","") == "R02-synthetic","failure preserves saved seat for explicit retry")
 	dispose(n)
 	n = fixture()

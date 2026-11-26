@@ -915,6 +915,7 @@ func _reset_lockstep() -> void:
 	turns.clear()
 	last_turn = -1
 	exec_turn = 0
+	_saved_turn = -1
 	exec_tick = 0
 	host_active = true
 	stall_t = 0.0
@@ -1688,14 +1689,15 @@ var _saved_turn: int = -1
 
 ## Host: the match into user://net_match.save (snapshot of the end of turn `n`, seats, tokens, rules,
 ## the room). Every MATCH_SAVE_TURNS turns, when the app goes to the background, when it is closed.
-func save_match(n: int = -1) -> void:
+func save_match(n: int = -1) -> bool:
 	if not is_host or not in_match or not go or _restoring or resume_wait:
-		return
+		return false
 	if n < 0:
 		n = exec_turn - 1
-	if n == _saved_turn:
-		return  # NET 35 (critic): FOCUS_OUT + PAUSED come together
-	_saved_turn = n
+	if n < 0:
+		return false
+	if n == _saved_turn and _has_checkpoint_at(n):
+		return true  # NET 35 (critic): FOCUS_OUT + PAUSED come together
 	var cfg: Dictionary = {}
 	for k: String in CFG_KEYS:
 		cfg[k] = (GameConfig as GDScript).get(k)
@@ -1707,10 +1709,20 @@ func save_match(n: int = -1) -> void:
 	for s: int in _tokens:
 		tk[str(s)] = String(_tokens[s])
 	var t0: int = Time.get_ticks_msec()
-	NetConfig.save_match({"v": NetConfig.version(), "turn": n, "mode": "online" if mode == Mode.ONLINE else ("steam" if steam else "lan"),
+	var saved := NetConfig.save_match({"v": NetConfig.version(), "turn": n, "mode": "online" if mode == Mode.ONLINE else ("steam" if steam else "lan"),
 		"code": room_code, "pub": room_pub, "port": NetConfig.LAN_PORT, "host": my_name(), "slots": sl, "tokens": tk, "match": match_id,
 		"cfg": cfg, "gt": gw.game_time, "played": _played_s, "snap": Save.net_snapshot(main)})
+	if not saved:
+		push_warning("[Net] cannot save match at turn %d" % n)
+		return false
+	_saved_turn = n
 	print("[Net] match saved at turn %d (%d ms)" % [n, Time.get_ticks_msec() - t0])
+	return true
+
+
+func _has_checkpoint_at(n: int) -> bool:
+	var checkpoint := NetConfig.load_match()
+	return checkpoint.get("turn") == n and checkpoint.get("v") == NetConfig.version()
 
 
 ## Host closes the app (window ✕): save, tell the guests «the host left, the match is saved» (they
@@ -1724,9 +1736,10 @@ func host_exit_saved() -> void:
 	if can_hand_over():
 		leave(false)  # ROTATION: the guests go on with a new host; this device may come back as a guest
 		return
-	if go:
-		save_match()
-	if multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
+	var saved := go and save_match()
+	if not saved and _saved_turn >= 0:
+		saved = _has_checkpoint_at(_saved_turn)
+	if saved and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
 		_host_gone.rpc()
 		for i in 8:  # the app is closing: give the message ~0.3 s to leave before the link goes (else they only see «lost»)
 			if multiplayer.multiplayer_peer is ENetMultiplayerPeer:

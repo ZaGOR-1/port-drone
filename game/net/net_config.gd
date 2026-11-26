@@ -13,6 +13,8 @@ const RECONNECT_EVERY: float = 4.0
 const REJOIN_KEEP_S: int = 1200
 const MATCH_KEEP_S: int = 3 * 24 * 3600
 const MATCH_FILE: String = "user://net_match.save"
+const MATCH_BACKUP: String = MATCH_FILE + ".bak"
+const MATCH_TEMP: String = MATCH_FILE + ".tmp"
 const MATCH_SAVE_TURNS: int = 600
 const RESUME_WAIT_S: float = 180.0
 const REJOIN_GONE_TRY_S: float = 15.0
@@ -139,40 +141,87 @@ static func load_rejoin() -> Dictionary:
 
 
 
-static func save_match(d: Dictionary) -> void:
-	d["t"] = int(Time.get_unix_time_from_system())
-	var tmp: String = MATCH_FILE + ".tmp"
-	var f: = FileAccess.open(tmp, FileAccess.WRITE)
-	if f == null:
-		return
-	f.store_var(d, false)
-	f.close()
-	var da: = DirAccess.open("user://")
+static func save_match(d: Dictionary) -> bool:
+	if not _valid_checkpoint(d):
+		return false
+	var da := DirAccess.open("user://")
 	if da == null:
-		return
-	if da.file_exists(MATCH_FILE.get_file()):
-		da.remove(MATCH_FILE.get_file())
-	da.rename(tmp.get_file(), MATCH_FILE.get_file())
+		return false
+	d["t"] = int(Time.get_unix_time_from_system())
+	var f := FileAccess.open(MATCH_TEMP, FileAccess.WRITE)
+	if f == null:
+		return false
+	# Same length-prefixed Variant as store_var(). Reopen after close because
+	# flush() and close() cannot report all failures.
+	var payload := var_to_bytes(d)
+	var written := f.store_32(payload.size()) and f.store_buffer(payload)
+	f.flush()
+	var err := f.get_error()
+	f.close()
+	var tmp := MATCH_TEMP.get_file()
+	if not written or err != OK or not _staged_matches(payload):
+		da.remove(tmp)
+		return false
+
+	var dst := MATCH_FILE.get_file()
+	var bak := MATCH_BACKUP.get_file()
+	if da.file_exists(dst):
+		# Windows rename may remove its destination before moving the source.
+		# Keep a readable backup if the current primary is already broken.
+		if da.file_exists(bak) and _read_match(MATCH_FILE).is_empty():
+			err = da.remove(dst)
+		else:
+			err = da.rename(dst, bak)
+		if err != OK:
+			da.remove(tmp)
+			return false
+	if da.rename(tmp, dst) != OK:
+		da.remove(tmp)
+		return false
+	return true
+
+
+static func _staged_matches(payload: PackedByteArray) -> bool:
+	var f := FileAccess.open(MATCH_TEMP, FileAccess.READ)
+	return f != null and f.get_length() == payload.size() + 4 and f.get_32() == payload.size() \
+		and f.get_buffer(payload.size()) == payload
 
 
 static func load_match() -> Dictionary:
-	if not FileAccess.file_exists(MATCH_FILE):
+	var primary := _read_match(MATCH_FILE)
+	return _read_match(MATCH_BACKUP) if primary.is_empty() else primary
+
+
+static func _read_match(path: String) -> Dictionary:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null or f.get_length() < 4 or f.get_32() != f.get_length() - 4:
 		return {}
-	var f: = FileAccess.open(MATCH_FILE, FileAccess.READ)
-	if f == null:
-		return {}
+	f.seek(0)
 	var v: Variant = f.get_var(false)
 	f.close()
-	if not (v is Dictionary) or not (v as Dictionary).has("snap"):
+	if not (v is Dictionary) or not v.get("snap") is PackedByteArray or v["snap"].is_empty():
 		return {}
-	if int(Time.get_unix_time_from_system()) - int((v as Dictionary).get("t", 0)) > MATCH_KEEP_S:
+	var saved_at: Variant = v.get("t")
+	if not saved_at is int or int(Time.get_unix_time_from_system()) - saved_at > MATCH_KEEP_S:
+		return {}
+	# Keep incompatible images visible so resume can report the version mismatch.
+	if v.get("v") == version() and not _valid_checkpoint(v):
 		return {}
 	return v
 
 
+static func _valid_checkpoint(d: Dictionary) -> bool:
+	var turn: Variant = d.get("turn")
+	var snap: Variant = d.get("snap")
+	return turn is int and turn >= -1 and turn <= NetSession.MAX_SNAPSHOT_TURN \
+		and snap is PackedByteArray and not Save._net_body(snap).is_empty()
+
+
 static func clear_match() -> void:
-	if FileAccess.file_exists(MATCH_FILE):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(MATCH_FILE))
+	for path: String in [MATCH_BACKUP, MATCH_FILE, MATCH_TEMP]:
+		if FileAccess.file_exists(path) and DirAccess.remove_absolute(path) != OK:
+			push_warning("[Net] cannot clear " + path)
+			return
 
 
 

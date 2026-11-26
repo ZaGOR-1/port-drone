@@ -38,7 +38,11 @@ func _run() -> void:
 	n.slots = [{"peer":1,"name":"fixture"}]
 	var before: Array = state(n)
 	for old: String in ["", "v0.34.0/7/pr10-phase5b2-1", Menus.VERSION+"/7/pr10-phase5b2-1", Menus.VERSION+"/7", Menus.VERSION+"/7/pr10-critical-1", Menus.VERSION+"/6/v036-integration-1", Menus.VERSION+"/7/future-incompatible"]:
-		NetConfig.save_match({"v":old,"snap":PackedByteArray([0,1]),"turn":999,"cfg":{"bots":11}})
+		var f := FileAccess.open(NetConfig.MATCH_FILE, FileAccess.WRITE)
+		check(f != null and f.store_var({"v":old,"snap":PackedByteArray([0,1]),"turn":999,"cfg":{"bots":11},
+			"t":int(Time.get_unix_time_from_system())}, false), "fixture written without current snapshot validation")
+		if f != null:
+			f.close()
 		check(NetConfig.load_match().get("v") == old,"fixture is real serialized match: "+old)
 		for attempt in 2:
 			check(n.resume_host() == "Партия сохранена в другой версии игры","incompatible resume refused before snapshot parse: "+old)
