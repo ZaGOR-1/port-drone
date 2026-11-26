@@ -1,17 +1,17 @@
 # DroneFlames — пам’ять проєкту
 
-Звірено 2026-11-26 для `beta` `1e912390394e6eafab004eb4d3ff82794dd2baeb`. Перед роботою звір фактичний Git HEAD, refs і worktree. [Маршрут за темами](INDEX.md)
+Звірено 2026-11-26 для `origin/beta` `06b0ff2cb54709487d39b391c5c2ffaaa3a70d50`. Перед роботою звір фактичний Git HEAD, refs і worktree. [Маршрут за темами](INDEX.md)
 
 ## Baseline
 
 | Що | Перевірено |
 | --- | --- |
 | Продукт | RTS із генерацією карти, економікою, військом, ШІ, дипломатією, хронікою та Save/Load. LAN/ENet і Steam lockstep реалізовані. [Архітектура](codex/verified/ARCHITECTURE_AND_FLOWS.md) |
-| `beta` | `0.36.11`, INT-12/R21 і документація MAINT-02/R23 та DOCS-02B. Локальна гілка, remote-tracking ref і серверний ref збіглися. [PR #20](https://github.com/ZaGOR-1/port-drone/pull/20), [PR #21](https://github.com/ZaGOR-1/port-drone/pull/21), [PR #22](https://github.com/ZaGOR-1/port-drone/pull/22) |
+| `origin/beta` | `0.36.11`, INT-12/R21 і документація MAINT-02/R23, DOCS-02B та R24–R27C. Серверний і remote-tracking refs збіглися на `06b0ff2`. Локальна `beta` лишалася на `1e91239`. [PR #20](https://github.com/ZaGOR-1/port-drone/pull/20), [PR #21](https://github.com/ZaGOR-1/port-drone/pull/21), [PR #22](https://github.com/ZaGOR-1/port-drone/pull/22), [PR #23](https://github.com/ZaGOR-1/port-drone/pull/23) |
 | `main` | `172df65e3bd004efed9a5444e90a284d9d69db10`. Історична UI-мітка `v0.34.0` і конфіг updater `0.33.2.3` належать цьому checkout. |
 | Контракти `beta` | [Version](../game/pc/version.cfg) `0.36.11`, [NetConfig](../game/net/net_config.gd) PROTO 7, SIM_REV `v036-integration-1`, 30 ticks/s, 3 ticks/turn. [Save](../game/game/save.gd) FORMAT 1. Мережевий identity містить повну версію. QA peers звіряють SHA256 EXE/DLL. |
 | Платформа й toolchain | Ціль Windows x64, фізичний QA на Windows 11. DOCS-02 виконано на нативному Ubuntu 26.04.1. Попередні WSL2 і Wine виміри мають власні scopes. Склад офіційного Godot звірено з [CI-піном](../tools/ci/godot-4.7.2.json). Нативний Linux-порт і cross-play відкладені. |
-| CI на baseline | Python/CI policy і Godot regressions/Windows x64 build SUCCESS. Release SKIPPED. [Run 45729343211](https://github.com/ZaGOR-1/port-drone/actions/runs/45729343211) |
+| CI на `1e91239` | Python/CI policy і Godot regressions/Windows x64 build SUCCESS. Release SKIPPED. [Run 45729343211](https://github.com/ZaGOR-1/port-drone/actions/runs/45729343211) |
 
 ## Межі QA та відкриті ризики
 
@@ -20,10 +20,10 @@
 - R24 завершив аналіз на `1e91239`. Звірено історичні raw R23 і локалізовано повторну роботу в fallback-маршрутах для масових наказів за поточним кодом та лічильниками R08/R21. Нові runtime та performance прогони — NOT RUN. Shortlist, gates і локальні докази в [R24](r24/R24_RESULTS.md). Початкова гілка `research/r24-scalability` збережена в Git bundle R24–R27C. Історичні NO-GO R11/R12/R13/R22 і межі NATIVE-01–02D лишаються чинними у власних scopes.
 - **R25 INCONCLUSIVE** на `1e91239`. У шести rendered парах Late E медіанна парна економія CPU пакета становила 24,5%. Еквівалентність і regression gates пройшли. Tick p99 зріс на 9,2% при допуску +5%, джерело зсуву не встановлено. PoC `2e80fe1` збережено локально, ігрову дельту вилучено в `0adae21`. [R25 та handoff](r25/R25_RESULTS.md)
 - **R26 NO-GO** на `1e91239`. Triangle array для підкладок дав точний RGBA у 15/15 сценах і пройшов replay та regression gates. У dense D5000 парний outline CPU зріс на 1,45%, сумарний CPU UnitsLayer — на 1,91%, FPS знизився на 1,41%. PoC `d9cf846` є локальним, ігрову дельту вилучено в `cc8cc3d`. [R26 та handoff](r26/R26_RESULTS.md)
-- **R27C NO-GO, кандидат відкладено.** Після R27B розбіжність цілі відтворено також на `visibility_changed` повторно використаного спрайта. Побудова на кожен запит не амортизується за вимірами R27. Runtime `62e20a5` вилучено в `9d3610c`, дерево гри відповідає `beta` `1e91239`, версія `0.36.11`. Гілка `perf/r27-impact-spatial-index` містить тільки дельту документації до `beta`. [R27–R27C](r27/R27_RESULTS.md#r27c--відновлення-коректності)
+- **R27C NO-GO, кандидат відкладено.** Після R27B розбіжність цілі відтворено також на `visibility_changed` повторно використаного спрайта. Побудова на кожен запит не амортизується за вимірами R27. Runtime `62e20a5` вилучено в `9d3610c`. PR #23 інтегрував документацію R24–R27C, дерево гри відповідає `1e91239`, версія `0.36.11`. [R27–R27C](r27/R27_RESULTS.md#r27c--відновлення-коректності)
 - Відомі teardown/RID попередження. Відтворення DummyTexture і зв’язок із HUD fixture зафіксовано в R08. Очищення слота через `Ctrl+1–9` без виділення залишається чинною поведінкою, UX-зміна потребує окремої задачі. [R08](r08/R08_RESULTS.md#детермінізм-та-qa) · [Керування](codex/verified/WINDOWS_CONTEXT_HOTKEYS_QA.md)
 - Updater integrity, відновлення після збоїв та покриття всіх мережевих схем потребують окремого підтвердження. [Backlog](codex/verified/BACKLOG.md)
-- Основний checkout `~/projects/port-drone`. Локальні історичні докази шукай за індексом `~/projects/droneflames-archive/INDEX.md` і handoff відповідної задачі. Постійний handoff R24–R27C — `~/projects/droneflames-archive/R24-R27C/`. Частина старих тестових файлів у `droneflames-toolchain/.cold-storage` потребує відновлення за її README. Попередній стан з ідентифікаторами PERF, INT, FIX, L10N та історичними шляхами збережено в [Git snapshot](https://github.com/ZaGOR-1/port-drone/blob/7181e88b03a6ad5c2a5c64a6fbf02bfc8854ff33/docs/PROJECT_STATE.md).
+- [Реєстр 97 досліджень ARCHIVE-01](research/INDEX.md) веде до звітів, відтворення й місць збереження доказів. Постійний handoff R24–R27C — `~/projects/droneflames-archive/R24-R27C/`. Частина старих тестових файлів у `droneflames-toolchain/.cold-storage` потребує відновлення за її README. [Політика збереження доказів](DEVELOPMENT_WORKFLOW.md#постійне-збереження-доказів)
 
 ## Next steps
 

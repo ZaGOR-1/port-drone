@@ -1,0 +1,11 @@
+# Відтворення R25
+
+> Історичний матеріал з `toolchain/performance/r25/REPRODUCE.md`. [Реєстр досліджень](../INDEX.md)
+
+A — `1e912390394e6eafab004eb4d3ff82794dd2baeb`. B — те саме дерево `game/` з `candidate.patch`. Початкові файли для PCK збираються у фізичних копіях. Відновіть B застосуванням патча в окремому чистому checkout або фізичній копії A, наприклад через `git archive`. Для стандартизованих regression gates потрібні також `tests/` і `tools/` з A.
+
+- Для офлайн-звірки метрик виконайте `python3 analyze-r25.py`. `paired-rows.txt` містить поіменні пари, `paired-summary.json` — також системну телеметрію в межах вікна. Початкову пару й перерване плече збережено у `raw/late*` та `pairs.log`. Вони передують повному послідовному блоку.
+- Для звірки еквівалентності виконайте `python3 verify-proof.py`. `raw/*/routes.bin` містить точні байти `store_var` для `[tick, country, city, result, [[unit_id, target_city, state, pi, packed_path], …]]`. Покадровий JSON містить застосовані команди, хеші стану і лічильники. `gates-*/` містять результати прямих тестів із PCK без хуків.
+- Для нових запусків використайте свіжий робочий каталог, копіями scripts/fixtures/clock/packproj, шляхи локального A і B, і Godot за `inputs.sha256` та `builds.sha256`. Укажіть точний runtime у `env.sh`. Підготуйте `python3 prepare.py bench-A /path/to/A` та `python3 prepare.py bench-B /path/to/B` з підключеним `env.sh`. Запустіть `bash run-pairs-r25.sh` і `bash run-extra.sh` послідовно на звичайному робочому столі. Аргументи кожного плеча також записано в `raw/*/config.json`.
+- Proof PCK включає додаткове трасування. Для нової перевірки адаптуйте шляхи у `run-proof.sh` і `run-gates.sh` до A/B. Після `run-proof.sh` виконайте `bash run-resume.sh`. ENet replay підключається лише до 127.0.0.1, відтворює `NetSession._turn` та `_run` поверх однакового checkpoint. Окремий `test_network_identity` покриває admission. Фізичну мережу й профіль Windows це середовище не вимірює.
+- `builds.sha256` каталогізує точні локальні PCK, спільний Linux release runtime та редактор. `SHA256SUMS` звіряє компактний handoff. XDG-профілі та ігрові native binaries залишено поза архівом. Підставте повні шляхи з `builds.sha256` за потреби відновлення конкретного локального артефакту.
