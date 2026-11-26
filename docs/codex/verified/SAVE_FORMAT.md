@@ -7,6 +7,7 @@
 - Autosave кодує graph на main і відокремлює header/body/thumbnail через `duplicate(true)` до запуску worker. Navy відновлює потрібний стан без незбережених TTL caches. Repeated restore має очистити stale state.
 - `Save._net_body` перевіряє variant wrapper, довжини, межі, формат і форми обов’язкових полів та посилань до staged load. `Save.net_restore` готує заморожений world. `NetSession` комітить час, turn і запуск після перевіреної підготовки. [Мережевий контракт](MULTIPLAYER_PROTOCOL.md#поточний-контракт)
 - Використовуй [save/restore fixtures](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope). Відмова у fixture підтверджує лише відповідний шлях. Дискова стійкість за crash/power-loss потребує окремих доказів. Фізичне приймання прив’язуй до [точного Windows комплекту](../../WINDOWS_QA.md#перевірки).
+- На `f152242` підтверджено втрату host checkpoint після помилки запису, хибний успіх legacy migration та пропуск придатних SP fallback у Continue. Звіт містить точні умови і відтворення. [STABILITY-01](../../stability-01/STABILITY_01_RESULTS.md)
 
 ## Історичні checkpoints
 

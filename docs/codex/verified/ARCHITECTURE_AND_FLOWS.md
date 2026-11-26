@@ -3,6 +3,7 @@
 - Boot і autoload визначає [override.cfg](../../../game/override.cfg). [Boot](../../../game/pc/boot.tscn) запускає updater, далі [remap](../../../game/game/main.tscn.remap) веде до binary Main scene. Звір поточні ланцюги [Main](../../../game/game/main.gd), [GameWorld](../../../game/game/game_world.gd) і [Hud](../../../game/ui/hud.gd).
 - Для HUD і вводу простеж сигнал від [Hud](../../../game/ui/hud.gd) до [Main](../../../game/game/main.gd) та [main_input](../../../game/game/main/main_input.gd). Для дії, що змінює світ, простеж виклик до відповідної підсистеми. У MP перевір маршрут через NetSession і порядок `_sim_step`. [Мережевий контракт](MULTIPLAYER_PROTOCOL.md#поточний-контракт)
 - Контракт сумісності на baseline ведемо в [PROJECT_STATE](../../PROJECT_STATE.md). За runtime QA та відомими ризиками звертайся відповідно до [Windows QA](../../WINDOWS_QA.md) і [backlog](BACKLOG.md). [Перевірки за scope](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope)
+- На `f152242` підтверджено, що backlinks `ArmyTac`, `ArmyFire` і `ArmyReinf` утримують старий `Army` після заміни світу. Внесок інших ресурсів у teardown лишається відкритим. [STABILITY-01](../../stability-01/STABILITY_01_RESULTS.md)
 
 ## Історична карта потоків
 
