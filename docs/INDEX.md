@@ -19,7 +19,8 @@
 | Офіційна Windows збірка та CI | [Build and Release](codex/verified/BUILD_RELEASE.md) |
 | QA, SFX, MinGW і native diagnostics | [Windows QA](WINDOWS_QA.md) · [Фізичний two-peer сценарій](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) |
 | Локалізація | [Loc, PO і fallback](LOCALIZATION_AUDIT.md) · [Глосарій](LOCALIZATION_GLOSSARY.md) · [Тести й ручний QA](LOCALIZATION_TESTS.md) |
-| Приймання продуктивності | [Real-World Gaming Profile B](performance.md) |
+| Приймання продуктивності | [Real-World Gaming Profile B](performance.md#real-world-gaming-profile-b) |
+| Native hotspot, Rust/GDExtension | [Межі NATIVE-01–02D](r23/R23_RESULTS.md#межі-попередніх-підходів) · [Build and Release](codex/verified/BUILD_RELEASE.md) · [Windows QA](WINDOWS_QA.md) |
 | Ризики й рішення | [Backlog](codex/verified/BACKLOG.md) · [Журнал рішень](codex/verified/DECISIONS.md) |
 
 ## Історичні докази

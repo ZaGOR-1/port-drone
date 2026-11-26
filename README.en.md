@@ -35,13 +35,7 @@ Keep the tracked `game/.godot/` assets and the binary project configuration. Kee
 
 ## Development and contributions
 
-1. Update your local `beta` and create a task branch: `feature/*`, `fix/*` or `docs/*` as appropriate.
-2. Make a focused change and preserve attribution for earlier work.
-3. Run the relevant [checks](docs/DEVELOPMENT_WORKFLOW.md#перевірки-за-scope); for documentation, check links and the Markdown diff. Mark tests you have not run as `NOT RUN`, and unrelated checks as `N/A` with a reason.
-4. After authorization to publish, open a Pull Request targeting **`beta`**. CI runs tests/builds for PRs into beta and pushes to beta/main without publishing Releases. There is no PR template; check required reviews and checks on GitHub.
-5. Complete review. Promoting changes to `main` or making a stable release requires a separate decision by the repository owner.
-
-Read [AGENTS.md](AGENTS.md) before working on the project. The [architecture](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md) and [collaboration workflow](docs/DEVELOPMENT_WORKFLOW.md) provide further context. Protocol, save and deterministic simulation changes need a separate compatibility assessment.
+Start with [AGENTS.md](AGENTS.md) and the [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) for branch, test and PR rules. [Documentation index](docs/INDEX.md)
 
 ## Credits and origins
 

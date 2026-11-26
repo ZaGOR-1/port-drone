@@ -7,6 +7,10 @@ DF_GODOT=/path/to/pinned/godot python3 -m unittest discover -s tests -p 'test_l1
 
 Обидва режими CI вже запускають unittest discovery. Перевірка PO виявляє повторний ключ у тому самому контексті, неправильні locale headers, singular/plural структуру, порожні або fuzzy активні записи та неправильні placeholders. Позиційні аргументи мають зберігати порядок і специфікатор, іменовані можуть міняти порядок і граматичний відмінок. Кандидати за евристикою прямих Label/Button/tooltip literals і відмінності структури каталогів доступні у JSON. Динамічні ключі й правильність перекладу перевіряються функціональним та ручним QA.
 
+## Історичні результати L10N-01
+
+Наведені PASS і кількості належать цьому кандидату. Ручні сценарії можна застосувати до чинного комплекту після звірки scope.
+
 - **L10N PASS у заявленому scope**. Три unittest, серед них 77 Godot checks на реальних контролах. ru/uk/en, меню, Settings із підекранами, New Game, список saves, офлайн Multiplayer, підстановки, fallback, змінення підказок HUD, збереження вибору й вибір локалі updater. Фактичний UI font має і/ї/є/ґ та ё/ы/э/ъ. У Godot editor fixture штатні Steam/WebRTC .so не включені. Окремий native пакет використовує exact Linux GDExtension.
 - **Регресії PASS**. 31 Python/Godot test із suites build identity, release mock, CI policy, snapshot restore, v0.36 regressions і network identity. Simulation regression 2476/2476. Release suites використовували mocks, публікації не було.
 - **Короткий replay PASS**. На одному Linux engine і тому самому instrumented PCK R06-A зі змінами цієї гілки в ru, uk і en виконано по 150 fixed ticks з seed 20261016, 216 початковими юнітами і тими самими командами. Покрокові NetHash, події черги, command CRC, NetHash.parts і movement digest збіглися. Final NetHash 410d967a76cc617b.

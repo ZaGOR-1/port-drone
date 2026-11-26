@@ -1,3 +1,5 @@
+> Історичний checkpoint. INT-01 і тодішній порядок інтеграції PR #7–#9. PR #7–#9 пізніше інтегровано в `beta`. [Чинний стан](PROJECT_STATE.md)
+
 # INT-01 · Кандидат DroneFlames 0.36.1
 
 Worktree `/home/zagor/projects/port-drone-integration-qa`, гілка `integration/qa-v0.36.1`. Base `c91e0e6a7eef831687e6e63550560bba739a6b87`.

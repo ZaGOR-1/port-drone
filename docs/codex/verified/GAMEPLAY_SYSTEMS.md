@@ -1,4 +1,10 @@
-> Основну карту механік звіряй з [потоками v0.36](ARCHITECTURE_AND_FLOWS.md), `GameWorld.new_world()` і `GameWorld._sim_step()`. Нижче збережено деталізацію та історичні Phase 5B.2 overlays.
+## Навігація за чинним кодом
+
+Почни з [`_sim_step` у GameWorld](../../../game/game/game_world.gd) та простеж виклик до підсистеми, яка володіє станом. Для військової логіки початкові точки — [Army](../../../game/game/army.gd), [Military](../../../game/game/military.gd), [Air](../../../game/game/air.gd) і [Navy](../../../game/game/navy.gd). Узгоджені зміни механік перевіряй за scope симуляції, MP, Save/Load і UI. [Архітектура](ARCHITECTURE_AND_FLOWS.md) · [Fixtures](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope)
+
+## Історичні checkpoints
+
+Формули, порядок, line references і статус fixtures нижче належать своїм ревізіям. Перед зміною звір реалізацію на чинному HEAD.
 
 # Phase 5B.2 — інтеграційні fixes наявних механік
 

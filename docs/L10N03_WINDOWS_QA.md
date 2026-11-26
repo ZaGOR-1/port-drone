@@ -1,5 +1,7 @@
 # L10N-03 · Windows QA
 
+> Історичний QA кандидата PR #7. Додаткову серію локального HTTP disconnect для того самого ZIP зафіксовано в [підсумку L10N-03](L10N03_QA_SUMMARY.md).
+
 Native Windows 11 — **NOT RUN**. Доступне Ubuntu з Wine. У libvirt system/session зареєстрованих VM немає. Перевірено чинний QA ZIP без повторної збірки.
 
 | Артефакт | SHA256 |

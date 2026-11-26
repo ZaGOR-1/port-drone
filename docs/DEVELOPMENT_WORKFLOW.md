@@ -1,12 +1,10 @@
 # Development Workflow
 
-`main` — постійна стабільна гілка. `beta` — постійна база інтеграції й QA. Звір фактичні refs перед початком. CI збирає Windows x64 і запускає Python/Godot fixtures.
+[AGENTS.md](../AGENTS.md) визначає повноваження, обов’язкові перевірки перед комітом і джерело бази. Для нового worktree обери тематичну гілку `feature/*`, `fix/*`, `perf/*`, `research/*`, `build/*` або `docs/*`. Пов’язані етапи можуть мати кілька комітів у тій самій гілці.
 
-1. Звір актуальну базу, статус і релевантні worktrees. Для нового завдання створи тимчасову тематичну гілку й worktree в `~/projects/droneflames-worktrees/` від погодженої `beta`. Продовжуй логічний набір змін у чинній гілці. Префікси `feature/*`, `fix/*`, `perf/*`, `research/*`, `build/*`, `docs/*` позначають scope роботи.
-2. Сформуй невелику зміну й запусти релевантні тести. Godot запускай з фізичної копії або готового PCK в ізольованому профілі.
-3. Звір status, staged diff і секрети. Додавай файли явно. Після перевірок зроби локальний Conventional Commit, наприклад `fix(l10n): resolve mixed-language UI strings`.
-4. Зафіксуй у `PROJECT_STATE.md` перевірені SHA, незавершений QA, версію та гілку. Для погодженого push перевір `origin`, worktree, історію, секрети, бінарні артефакти й віддалений ref. Публікуй лише погоджену робочу гілку. Для наявного remote ref перевір, що оновлення fast-forward.
-5. Перевір наявний PR за його head і base. Для інтеграції в `beta` створи Draft PR, якщо потрібен додатковий QA. Опиши мету, зміни, коміти, фактичні результати, невиконаний ручний QA та ризики. Тримай Draft до завершення критичних перевірок. Звір віддалений HEAD і статус PR, дотримуйся review, CI і branch protection. Дозвіл на merge, переписування опублікованої історії чи реліз узгоджуй окремо за правилами `AGENTS.md`.
+1. Для погодженого push звір fetch і push URL `origin`, гілку, worktree, commit history, відсутність секретів і випадкових бінарних артефактів. Якщо remote ref уже існує, перевір fast-forward.
+2. Перед створенням або review PR звір точні head/base і повний diff. Звичайний target — `beta`. Draft потрібен, поки відкритий критичний QA. В описі вкажи мету, зміни, коміти, фактичні перевірки, невиконаний ручний QA й ризики.
+3. Після дозволеної публікації звір локальний і віддалений HEAD, base та стан PR. Результати CI бери для того самого source SHA. Дотримуйся review, CI й branch protection. Для review чужого PR оцінюй зміни за їхнім scope та фіксуй висновки локально до дозволеного зовнішнього запису.
 
 ## Завершення тимчасового завдання
 
@@ -20,12 +18,23 @@
 
 - Для документації перевір повний diff, Markdown-посилання з anchors та case-sensitive шляхами, команди й межі тверджень. Відокремлюй успадковані проблеми історичних посилань від нових.
 - Build identity — `python3 tools/build.py --print-version`. Release tooling — `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_release.py' -v`. Для Python discovery використовуй `-p 'test_*.py'`. SKIP є окремим результатом. `DF_GODOT` дає доступ до engine fixtures, якщо наявний точний editor.
-- Godot regression — `python3 tools/check_performance.py --godot <editor> --mode regression --out <fresh-output>`. Runner працює з тимчасовим PCK. Перед UI/network/save/native змінами вибери відповідні fixtures і фізичні сценарії. Старі результати й команди зберігає [історична матриця](codex/verified/TEST_MATRIX.md). [Windows QA](WINDOWS_QA.md) фіксує артефакти й межі ручного приймання.
-- Для продуктивності фіксуй build, seed/checkpoint, settings і кількість samples. Вимірюй CPU/GPU frame time, simulation/physics, AI/pathfinding, render/effects, draw calls, nodes, allocations, RAM і хвіст розподілу за [Profile B](performance.md). Порівняй однакові сценарії та зафіксуй різницю toolchain.
+- Godot regression — `python3 tools/check_performance.py --godot <editor> --mode regression --out <fresh-output>`. Runner працює з тимчасовим PCK. Перед UI/network/save/native змінами вибери відповідні fixtures і фізичні сценарії. Старі результати зберігає [історична матриця](codex/verified/TEST_MATRIX.md). [Windows QA](WINDOWS_QA.md) фіксує артефакти й межі ручного приймання.
+- Для продуктивності фіксуй build, seed/checkpoint, settings і кількість samples. Вимірюй CPU/GPU frame time, simulation/physics, AI/pathfinding, render/effects, draw calls, nodes, allocations, RAM і p50/p95/p99/max за [Profile B](performance.md). Порівняй однакові сценарії та зафіксуй різницю toolchain.
+
+Чинні точки входу для цільових перевірок. Перед запуском звір wrapper, вимоги `DF_GODOT` та потрібний build. Для standalone GDScript переглянь аргументи самого fixture і виконуй через тимчасовий PCK та ізольований профіль.
+
+| Scope | Fixtures і приймання |
+| --- | --- |
+| HUD, camera, hotkeys та масштаб | [test_v036_regressions.py](../tests/test_v036_regressions.py) запускає HUD/camera fixture. Для відповідних змін перевір [keyboard](../tests/test_keyboard_controls.gd) і [UI scale](../tests/test_ui_scale.gd). Ручні Windows focus, діалоги, tooltips і DPI за [Windows QA](WINDOWS_QA.md). |
+| Loc, каталоги та UI-текст | `python3 tools/check_l10n.py`, [test_l10n.py](../tests/test_l10n.py) і [ручний checklist](LOCALIZATION_TESTS.md). |
+| MP identity, wire, hash та restore | [test_network_identity.py](../tests/test_network_identity.py) перевіряє ENet admission loopback. [test_sim_revision.py](../tests/test_sim_revision.py) перевіряє saved-match gate. [test_snapshot_restore.py](../tests/test_snapshot_restore.py), [test_v036_regressions.py](../tests/test_v036_regressions.py), негативні сценарії змінених schemas, replay і [Windows two-peer QA](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md). |
+| Save/Load та autosave | [test_snapshot_restore.py](../tests/test_snapshot_restore.py) для failure matrix, [test_v036_regressions.py](../tests/test_v036_regressions.py) для autosave, Navy та hold. Для зміни формату або lifecycle перевір legacy disk Save/Continue, repeated restore й уражені failure paths. |
+| Army та gameplay | [test_r19_acquisition.gd](../tests/test_r19_acquisition.gd) для target acquisition, [test_v036_regressions.py](../tests/test_v036_regressions.py) для impact/spot, [test_phase5b2.py](../tests/test_phase5b2.py) і [test_pr10_critical.py](../tests/test_pr10_critical.py) для відповідних gameplay transitions. Симуляційні зміни потребують детермінованого replay і релевантної регресії. |
+| Build, packaging, updater | [Build and Release](codex/verified/BUILD_RELEASE.md), [build identity](../tests/test_build_identity.py), [CI policy](../tests/test_ci_policy.py), [CI artifacts](../tests/test_ci_artifacts.py) і release tooling. Для updater cleanup є [test_updater_cleanup.py](../tests/test_updater_cleanup.py). Артефакт і фізичний Windows smoke мають окремий scope. |
 
 ## Вибір MCP
 
-Викликай інструмент, якщо він поліпшує перевірку. Почни з `codex mcp list` для локальної конфігурації або з каталогу інструментів цієї сесії. Список конфігурації та фактично доступні сервери можуть різнитися. Результати smoke мають дату й scope. [DOCS-02](DOCUMENTATION_AUDIT.md#mcp-аудит)
+Викликай інструмент, якщо він поліпшує перевірку. Почни з `codex mcp list` для локальної конфігурації або з каталогу інструментів цієї сесії. Список конфігурації та фактично доступні сервери можуть різнитися. Результати smoke мають дату й scope. [Діагностика DOCS-02B](DOCUMENTATION_AUDIT.md#діагностика-mcp)
 
 | Задача | MCP | Резерв і межі |
 | --- | --- | --- |

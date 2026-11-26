@@ -1,6 +1,16 @@
-> На baseline DOCS-02 звірено константу FORMAT та гілки optional `land_cooldowns` і `far_fail` за кодом. Результати runtime нижче мають історичний scope.
+# Формат збережень DroneFlames
 
-> Поточний контракт — `Save.FORMAT=1` ([save.gd](../../../game/game/save.gd)). У `beta` зберігаються optional `land_cooldowns` і `far_fail` з порожнім default при відсутності. R02 додає release failure propagation без зміни формату. Перевірки restore й обсяг сумісності — у [Windows QA](../../WINDOWS_QA.md#перевірки). Старі Phase overlays лишаються історичними.
+## Поточний контракт
+
+[Save](../../../game/game/save.gd) веде `FORMAT=1`, snapshot graph і restore, [SaveSlots](../../../game/game/save_slots.gd) — дискові слоти. Optional `sys.diplo.land_cooldowns` та `sys.hold.far_fail` за відсутності дають порожні значення. Legacy save перевіряй на копії. Сумісність downgrade не гарантовано.
+
+- Autosave кодує graph на main і відокремлює header/body/thumbnail через `duplicate(true)` до запуску worker. Navy відновлює потрібний стан без незбережених TTL caches. Repeated restore має очистити stale state.
+- `Save._net_body` перевіряє variant wrapper, довжини, межі, формат і форми обов’язкових полів та посилань до staged load. `Save.net_restore` готує заморожений world. `NetSession` комітить час, turn і запуск після перевіреної підготовки. [Мережевий контракт](MULTIPLAYER_PROTOCOL.md#поточний-контракт)
+- Використовуй [save/restore fixtures](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope). Відмова у fixture підтверджує лише відповідний шлях. Дискова стійкість за crash/power-loss потребує окремих доказів. Фізичне приймання прив’язуй до [точного Windows комплекту](../../WINDOWS_QA.md#перевірки).
+
+## Історичні checkpoints
+
+Опис і результати далі належать указаним Phase та PR. Для поточного коду користуйся контрактом вище.
 
 > **Підтвердження PR #4 і попередні звіти.** FORMAT1, optional land_cooldowns + UrbanHold far_fail, legacy missing defaults і repeated restore перевірені PR #4. Autosave freeze повного encoded graph перед worker; Navy current-threat routes/scratch reset. New→old downgrade unsupported; OS durability не закрита. [Current flows](ARCHITECTURE_AND_FLOWS.md), [tests](V036_FIX_RESULTS.md).
 

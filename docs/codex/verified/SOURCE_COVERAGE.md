@@ -1,3 +1,5 @@
+> Архів інвентаризації snapshot 2026-11-21 і checkpoint v0.36.0. Для нової задачі звір файли на чинному HEAD. [Актуальна навігація](../../INDEX.md)
+
 # Source coverage — актуальність після v0.36
 
 2026-11-21, code checkpoint `0f26040994043827a7c14913d945a3df02e00fdd` + документаційний PR #1. Поточний облік: **988 tracked paths, 286 GDScript, 56 Markdown** (це file inventory, не semantic coverage). Жоден source не видалений проти початкових970paths. Зміни цієї документаційної гілки поза Markdown/AGENTS/редагованою схемою не допускаються; фактичний production tree звіряється з origin/beta.

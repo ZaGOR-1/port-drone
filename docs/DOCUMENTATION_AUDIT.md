@@ -1,5 +1,122 @@
 # Аудит документації DroneFlames
 
+## DOCS-02B — незалежне review
+
+**DOCUMENTATION READINESS: GO** для локального review та погодженого PR у `beta`. **MCP READINESS: DEGRADED.** Git/gh і `rg` покривають GitHub та навігацію за кодом. Підтвердження дійсне для наведеного baseline і документаційного diff.
+
+### Git і незалежна оцінка
+
+- Звірено 2026-11-26. Робоча гілка `docs/docs02-comprehensive-audit` у `~/projects/droneflames-worktrees/docs02` стартувала чистою на `e64c5634136fcd35bd09633fa5e63271f927217b`. Її база, локальна `beta`, `origin/beta` і GitHub ref збіглися на `7181e88b03a6ad5c2a5c64a6fbf02bfc8854ff33`. Локальна й віддалена `main` на `172df65e3bd004efed9a5444e90a284d9d69db10`. Fetch і push URL вказують на `ZaGOR-1/port-drone`. У паралельному `performance/source` виявлено ті самі 15 локальних змін. У worktree аудиту паралельних змін не виявлено.
+- Повний diff DOCS-02 містив 19 змінених Markdown і один новий CSV. Консолідація identity, правил джерел і handoff корисна. Архівна хронологія збережена в попередньому Git tree, historical anchors і у вихідних QA-звітах. Заявлені вихідні 103 Markdown, 73 `ARCHIVE`, 1 695 локальних посилань, 28 цільових тестів і розмір AGENTS підтверджено відповідними артефактами й повторною звіркою. Попередній INCONCLUSIVE був обґрунтований.
+- Економія контексту приховала частину тригерів. Канонічні маршрути показували старі wire/restore твердження поруч із чинним контрактом. BACKLOG призначав Linux і UI наступними етапами, а старий collaboration workflow вимагав прямого дозволу на локальний commit. Для DOCS-02B відновлено обов’язкове читання за scope, короткі активні вступи й чіткі межі історії. Поточні fixtures зібрано у [Development Workflow](DEVELOPMENT_WORKFLOW.md#перевірки-за-scope). Власник зберігає рішення про дозволи та пріоритети.
+- Повернуто довгострокові покажчики до R08 DummyTexture, поведінки очищення груп, відкритої Windows перевірки R19 і архівного індексу. Поточна `beta` має чисту продуктову identity 0.36.11, PROTO 7, SIM_REV `v036-integration-1`, FORMAT 1 і точне дерево `game/` `2db4d091f989c8bc7f81f243d5a17f738b8ea3e6`. QA старого SFX і CI цієї `beta` мають різний scope. [Стан](PROJECT_STATE.md) · [Windows QA](WINDOWS_QA.md)
+
+### Семантичне покриття
+
+Машинний розбір DOCS-02B — **103/103**. Семантичний перегляд — **103/103 FULLY REVIEWED**. Після незалежних read-only перевірок і власного читання кожен рядок [наявного інвентарю](DOCUMENTATION_INVENTORY.csv) містить окремі статуси перегляду та доказів, джерела, суперечності, невирішені твердження й рішення. Колонки DOCS-02 відтворюють тодішнє покриття та baseline. Для великих ledger прочитано всю прозу, унікальні твердження, класи й відмінності рядків. Повторювані path/size/hash/range поля звірено машинно. Повнота читання Markdown не підтверджує всі історичні тести, code coverage або поведінку гри.
+
+- FILE_COVERAGE описує 881 blob на `af1b4c9`. Усі 881 шлях і розмір збігаються з історичним publisher tree. 769 SHA256 додатково збігаються з незалежним локальним snapshot `172df65`. Решта хешів залишаються твердженнями архівного ledger. SOURCE_COVERAGE описує 970 blob на `172df65`, усі шляхи й розміри збігаються з Git. Статуси читання цього старого ledger належать його сесії.
+- Статуси доказів охоплюють 18 VERIFIED CURRENT, 65 VERIFIED HISTORICAL і 20 HISTORICAL EVIDENCE UNAVAILABLE. В останній групі бракує частини історичних першоджерел. Надалі використовуй додаткові поля CSV. Частина архівних шляхів, зокрема тодішні Phase 4–7 tarballs і Windows Downloads, відсутня в цій сесії. У локальному catalog знайдено 19 непрацездатних symlinks. Індекс, cold storage та розпаковані handoffs мають різну доступність. Точний QA-01 архів і L10N-03 ZIP звірено за SHA256. Для L10N-03 підтверджено додаткові 9 updater і 15 ENet loopback перевірок. Старі цифри залишено як scope першого звіту. [L10N-03](L10N03_QA_SUMMARY.md)
+- Нуль побайтових дублікатів і пар із ≥25% спільних 5-слівних послідовностей меншого документа при мінімумі 40 спільних. Чотири групи точних абзаців ≥120 символів належать історичним матеріалам. Семантичні перетини й рішення наведено нижче.
+
+| Кандидат | Унікальні докази, залежності й рішення |
+| --- | --- |
+| AGENTS / Development Workflow / обидва README | **MERGE** для дубльованих процедур. Права й gates у AGENTS, кроки й тестові точки входу у Development Workflow. README зберігають обидві мови, огляд, credits і права. Identity і статус QA веде PROJECT_STATE. |
+| CURRENT_STATE, COLLABORATION_WORKFLOW, DECISIONS, BACKLOG | **ARCHIVE** для тодішніх baseline, ролей, scopes дозволів і triage. **MERGE** чинних процедур у Development Workflow і AGENTS, черги робіт у PROJECT_STATE. Поточні примітки замінено посиланнями, датовані рішення лишено за попередніми шляхами. |
+| NEXT_SESSION | **REDIRECT**. Самостійних правил немає. Залишено сумісний шлях через вхідні посилання з CURRENT_STATE, SOURCE_COVERAGE, V036_FIX_RESULTS, V036_REVIEW й аудиту. Поточний маршрут обходить цей файл. |
+| ARCHITECTURE / ARCHITECTURE_AND_FLOWS / GAMEPLAY_SYSTEMS / MODULE_INDEX / FEATURE_CATALOG | **KEEP** активний вхід у потоки й gameplay source, **ARCHIVE** датованих карт, назв механік, точних шляхів і результатів. Переміщення змінило б посилання з ledger та PR review і прибрало б provenance. |
+| TEST_MATRIX / Phase results / Windows checklist / two-peer QA | **MERGE** нових тестових точок входу в одну таблицю Development Workflow. **KEEP** історичні PASS і точні матриці кандидатів. Шаблон TC-WIN та план двох ПК мають окремі сценарії й точні обмеження. |
+| FILE_COVERAGE / SOURCE_COVERAGE / PR_AUDIT_OVERVIEW / PR_01_TO_10_REVIEW | **ARCHIVE**. Ledger стосуються різних дерев. Стислий PR overview містить агреговані ризики й оцінку інтеграції, розгорнуте review фіксує scope та авторство. Посилання між ними збережено. |
+| MIGRATION_041 / VERSION_041_ANALYSIS / VERSION_041_DIFF | **ARCHIVE** зі спільним відкладеним scope. Унікальні migration gate, release metadata й порівняння ZIP залишаються на місці. Повторений історичний абзац зберігає обсяг кожного звіту. |
+
+### Покриття правил AGENTS.md
+
+Посилання потрібно відкривати явно. Для Codex CLI 0.171.0 перевірено project root, tracked інструкції, доступні global/override та значення fallback/size у локальній конфігурації. Ланцюжок збирається від global до ближчих до cwd project-рівнів, спочатку override, і має типовий ліміт 32 KiB. У цьому worktree є лише кореневий AGENTS, global/override і налаштованих fallback не виявлено. Markdown-посилання слугують навігацією. [Офіційний порядок](https://learn.chatgpt.com/docs/agent-configuration/agents-md) · [CLI 0.171.0](https://github.com/openai/codex/releases/tag/rust-v0.171.0)
+
+| Оригінал на 7181e88 | Нова локація | Тригер | Вимога | Статус |
+| --- | --- | --- | --- | --- |
+| Рядок 3, §1–2, scope, мова, джерела, права, ролі | AGENTS · Початок/Пріоритети, README credits | Кожна сесія, особливо погодження розширення scope | Обов’язково | Збережено; факт/гіпотезу/NOT RUN і пріоритет джерел уточнено |
+| §3, preflight і вибір довідників | AGENTS · Початок і таблиця, PROJECT_STATE, INDEX | Перед плануванням | Обов’язково | Явний стартовий маршрут, точне джерело перевірки |
+| §4, локальний commit, WIP, чужі зміни, приватні дані | AGENTS · Git; Development Workflow | Перед commit/handoff | Обов’язково, PoC/WIP за доречності | Відновлено позначення PoC/WIP та явний контроль перед комітом |
+| §4, thematic branch/worktree і cleanup | AGENTS · Git; Development Workflow · Завершення | Створення, handoff, очищення | Обов’язково | Погоджена beta, незалежне відновлення та дозвіл на видалення збережено |
+| §4, push, Draft, після публікації, main/beta/release | AGENTS · Git; Development Workflow; Versioning | Push/PR/review/merge/release | Обов’язково | Актуальний конкретний дозвіл; окремий дозвіл на production-дії; CI і фізичний QA мають власний scope |
+| §5, Godot, binary/imports, boot, paths, API/ordinals | AGENTS · Godot; Architecture and Flows; Build and Release; Resources and UI | Godot/збірка/зміна контракту | Обов’язково | Фізична ізоляція й tracked imports збережені. Точний source/pin у довідниках |
+| §6, SP/MP, ticks, RNG, ordering/threading, hash та peer | AGENTS · Godot; Multiplayer Protocol; fixtures | Simulation, wire, desync | Обов’язково | Відновлено SP adaptive delta, MP 30 тіків/с і 3 тіки/turn, `_sim_step`, thread/order і змінюваний стан |
+| §6, authorization і save/restore | AGENTS · Godot; Multiplayer Protocol; Save Format | Wire/UI command, Save/Load або snapshot | Обов’язково | Negative tests, legacy missing defaults, freeze, clean restore, fail closed і migration scope збережено |
+| §7, Windows native, SFX, три DLL, R02 та точний комплект | AGENTS · Godot; Windows QA; Build and Release | Native, build, фізичний QA | Обов’язково | SHA256, updater-off, ізоляція, provenance, права й test AppID збережено |
+| §8, Profile B, bottleneck, A/B, verdict/QA | AGENTS · Пріоритети; performance.md; Development Workflow | Performance/architecture/native | Обов’язково | Profile B, control evidence і QA після GO збережено. Скасовані suite/preflight/caps підтверджені `086f97c` |
+| §9, MCP, Serena/Godot limits, альтернативи | AGENTS · Тести; Development Workflow · Вибір MCP | Підбір або застосування MCP | Контроль scope обов’язковий, вибір MCP за потреби | Active root, shadow, версія та fallback явно доступні |
+| §10, scope тестів, reuse, фінальний handoff | AGENTS · Тести; Development Workflow; PROJECT_STATE | До змін, перед інтеграцією, після етапу | Обов’язково | PASS/SKIP/NOT RUN, commands і стан відкритих перевірок доступні |
+| §11, product bump і PROTO/SIM_REV/FORMAT | AGENTS · Godot; Versioning Policy; source files | Version/compatibility, інтеграція | Обов’язково | Один bump, provenance, явний дозвіл на contract change. Старий 0.36.0 лишився датованим |
+| §12, Loc/PO, fallback, semantic invariants | AGENTS · Тести; Localization Audit/Tests | User-facing text або locale changes | Обов’язково | Відновлено uk fallback check і перевірку прихованих екранів після перемикання |
+
+### Перевірка onboarding
+
+Незалежний read-only субагент пройшов усі вісім маршрутів на DOCS-02. Два незалежні поглиблені проходи перевірили Save/MP/HUD і gameplay/performance/native provenance. Після правок незалежний повторний прохід усіх восьми маршрутів підтвердив достатність для безпечного старту. Продуктові сценарії тут не виконувалися.
+
+| Сценарій | Маршрут після виправлень і джерело | Scoped перевірки й інструменти |
+| --- | --- | --- |
+| HUD | Architecture → Resources/UI, Loc за наявності тексту. `hud.gd`/extends, Main input, PcPort | Godot API/refs або Git/rg. HUD/camera, hotkeys, масштаби, ru/uk/en та відповідний Windows GUI |
+| Army.update | Profile B → Architecture → `_sim_step`, Army/Unit, MP/Save. R23/R19 за дотичності | Профайлер, CLI, replay/target order, `test_r19_acquisition.gd`, restore, порівняння Profile B |
+| MP desync | Multiplayer Protocol → NetSession/NetConfig/NetCodec/NetHash і Save для snapshot | Git/rg або свіжий Serena. Admission, authorization negatives, same-seed hash, host/peer та Windows two-peer |
+| Save system | Save Format → Save/SaveSlots та NetSession для network restore | Git/rg, PCK fixtures. Legacy Continue, autosave freeze, repeated restore, failure matrix |
+| Windows build | Build and Release → CI pin, build.py, Windows QA, version.cfg та Menus.VERSION | Git/gh, build identity, package manifest та SHA256, три DLL і Windows smoke на точному комплекті |
+| Нова механіка | Прямий запит → Architecture/Gameplay → owning system і MP/Save/Loc за впливом | Godot/Context7 за потреби, characterization fixture, sim regression/replay, кінцеві Windows сценарії, versioning за gate |
+| Rust/GDExtension | Profile B → R23 · Межі NATIVE → Build/Windows QA, код hot path і залежності ABI | Профайлер і frozen fixture. Boundary + marshalling + allocations, differential, matched frames/ticks, перевірка Windows packaging. Чинне рішення — deferred |
+| PR іншого агента | Development Workflow → точні head/base та diff, тести за scope, Versioning при інтеграції | Git/gh, CI за точним HEAD, ручний QA в межах diff. Зовнішні дії за чинним дозволом |
+
+Для старту достатні актуальні секції. Датований звіт потрібен, коли задача застосовує його конкретний доказ або досліджує той самий механізм.
+
+### Історичні SHA
+
+Усі 14 об’єктів відсутні в локальному Git і не резолвляться через API `ZaGOR-1/port-drone`. Ті самі 14 SHA підтверджено через endpoint `/repos/frd21313123123/port-drone/commits/<sha>` у publisher-репозиторії. Це узгоджується зі snapshot-рішенням власника. Старі URL лишилися на місці. Git-історію не відновлювали. Ідентифікатори дають provenance, а старі журнали й QA-артефакти мають окремий статус.
+
+| Ідентифікатор | Подія та документи |
+| --- | --- |
+| [`af1b4c975564bac916db079d8470c2394d4920e5`](https://github.com/frd21313123123/port-drone/commit/af1b4c975564bac916db079d8470c2394d4920e5) | База Phase 1–4, FILE_COVERAGE, MODULE_INDEX, RUNTIME_BASELINE, PROJECT_FACTS та PR review. Publisher tree і 881 path/size підтверджені. Release-тег на цій базі не доводить відповідності executable 0.41. |
+| [`d6383064276c13863b3d540ccf4e461408db3d69`](https://github.com/frd21313123123/port-drone/commit/d6383064276c13863b3d540ccf4e461408db3d69) | Старий PR #1 tooling, PR_01_TO_10_REVIEW, PR_DEPENDENCY_GRAPH, PHASE7_BETA_INTEGRATION. |
+| [`50efdbac3c860f0a5e8ed63e5c465f2e3f2ddfef`](https://github.com/frd21313123123/port-drone/commit/50efdbac3c860f0a5e8ed63e5c465f2e3f2ddfef) | Старий PR #2 render optimization, ті самі три джерела. |
+| [`0a6225c9f6c6c4d7770ce127846b3f65e30cae2c`](https://github.com/frd21313123123/port-drone/commit/0a6225c9f6c6c4d7770ce127846b3f65e30cae2c) | Старий PR #3 simulation performance, ті самі три джерела. |
+| [`bb77603d9734ed1b729c3932a9a0ed0267a4a7ad`](https://github.com/frd21313123123/port-drone/commit/bb77603d9734ed1b729c3932a9a0ed0267a4a7ad) | Старий PR #4 Steam/LAN/UI, ті самі три джерела. |
+| [`43477a5b3b24e9e81c864e425580c4f4f8cc94ba`](https://github.com/frd21313123123/port-drone/commit/43477a5b3b24e9e81c864e425580c4f4f8cc94ba) | Старий об’єднаний commit #1–4, PR_01_TO_10_REVIEW. |
+| [`1806831cd2bcf934e45af7fd89cbf1c64bc262ef`](https://github.com/frd21313123123/port-drone/commit/1806831cd2bcf934e45af7fd89cbf1c64bc262ef) | Старий PR #5 QoL/systems, review, graph і Phase 7. |
+| [`f8e42970fe336fcd308fd92ee9e2671293265a7e`](https://github.com/frd21313123123/port-drone/commit/f8e42970fe336fcd308fd92ee9e2671293265a7e) | Старий PR #6 nuclear/Zaslon, review, graph і Phase 7. |
+| [`877355144ad6322ac7b00ae4a1de185fe4440b63`](https://github.com/frd21313123123/port-drone/commit/877355144ad6322ac7b00ae4a1de185fe4440b63) | Старий PR #7 carriers/airborne, review, graph і Phase 7. |
+| [`299800d9fd2294fa022e84d373969fb6b17160a9`](https://github.com/frd21313123123/port-drone/commit/299800d9fd2294fa022e84d373969fb6b17160a9) | Старий PR #8 seasons/ideology/flags, review, graph і Phase 7. |
+| [`4484a53c0a571a1dd56a184c467fde1ced11342e`](https://github.com/frd21313123123/port-drone/commit/4484a53c0a571a1dd56a184c467fde1ced11342e) | Авторський commit chronicle, land deeds, ultimatum, PR_01_TO_10_REVIEW. |
+| [`84f95c9c76db802f2774a8201850f3817bfae9e2`](https://github.com/frd21313123123/port-drone/commit/84f95c9c76db802f2774a8201850f3817bfae9e2) | Старий PR #9 chronicle/territory, review, graph і Phase 7. |
+| [`508ea94e0402ced83916681ffbf5855f0b580f40`](https://github.com/frd21313123123/port-drone/commit/508ea94e0402ced83916681ffbf5855f0b580f40) | Авторський commit nuclear/VFX/UI/performance, PR_01_TO_10_REVIEW. |
+| [`96053d66eb984cc24e3acce647a55a195136abd2`](https://github.com/frd21313123123/port-drone/commit/96053d66eb984cc24e3acce647a55a195136abd2) | Старий PR #10 cumulative і база Phase 5 patches. PR_01_TO_10_REVIEW, PR_RISKS, PR_TEST_RESULTS, FEATURE_CATALOG, CURRENT_STATE та Phase notes. |
+
+Для 13 PR-related SHA альтернативні джерела — exact commit API, датовані numstat/ancestry tables, PR cohort і test summaries. Вказані Phase tarballs, working-tree patches та повні первинні logs цієї серії не були доступні в перевірених місцях. Хеш commit не охоплює тодішні незакомічені patch overlays. Жоден з 14 SHA не є підставою поточного QA PASS або дозволом інтеграції. [PR review](codex/verified/PR_01_TO_10_REVIEW.md) · [Граф](codex/verified/PR_DEPENDENCY_GRAPH.md) · [Phase 7](codex/verified/PHASE7_BETA_INTEGRATION.md)
+
+### Діагностика MCP
+
+У локальній конфігурації дев’ять MCP. У каталозі цієї сесії доступні вісім, GitHub відсутній. Старі smoke стосуються окремих перевірок.
+
+| MCP | Поточний статус, причина та фактичний обсяг | Рішення та дія власника |
+| --- | --- | --- |
+| Serena | **READY WITH LIMITATIONS** для ізольованої копії, **FALLBACK AVAILABLE** для поточної сесії. Встановлено 2.1.0, backend LSP / gdscript. Сесія активувала `~/projects/port-drone`, тоді як project.godot був у shadow. Editor/LSP на 127.0.0.1:6008 був відсутній, журнал давав connection refused після 30 s. | На окремому свіжому shadow підтверджено symbols для NetConfig і NetSession, тіло `NetConfig.version`, references у NetSession/SteamNet/RTC/UI/LAN discovery. Довгі відповіді скорочено лімітом Serena. Перед навігацією звір root/port/HEAD. Для поточного сеансу Git/rg лишається fallback. |
+| Godot | **READY WITH LIMITATIONS**. Спільний shadow має manifest `c91e0e6a7eef831687e6e63550560bba739a6b87` і зайнятий shared lock чинного godot-mcp. Версія engine `4.7.2.stable.official.ed1daf0bf`, addon/server із локально задокументованого OREBRON `20ca9bd083ad`. Окремий shadow зібрано на `7181e88`. Метадані boot/2 autoload, API Node/NetConfig і текстові dependencies пройшли. | Використовуй `project_info`, scoped `project_find` та `class_info` на підтвердженому фізичному shadow. `class_info` може викликати import. Binary scenes мають окремі межі індексації. Shared refresh потребує завершення сесій, що тримають lock. |
+| Godot script_check / editor | **READY WITH LIMITATIONS**. Три цільові скрипти дали `checked=3, failed=0, ok=false`, native diagnostics для Linux Device, Steam і WebRTC. Старий parser control з навмисно синтаксичною помилкою повертав файл і рядок. Спільний editor bridge недоступний. На свіжому shadow editor bridge слухав 127.0.0.1:6510, але два smoke дали WebSocket deadline, включно зі спробою після готовності layout. Причину timeout далі не встановлено. Editor API у DOCS-02B не підтверджено. | Повний script PASS потребує придатного runtime. Використовуй pinned CLI/PCK, джерело й Windows QA для відповідного scope. Editor/import та UID/cache лише у фізичній копії. |
+| GitHub | **FALLBACK AVAILABLE**, власник потрібен лише для відновлення MCP. Запис увімкнений, transport HTTPS до `api.githubcopilot.com`, `bearer_token_env_var=GITHUB_PAT_TOKEN`. Змінна в перевіреному процесі відсутня, GitHub tools у каталозі сесії відсутні. PAT validity та remote MCP handshake — NOT RUN. | `git ls-remote`, `gh api`, `gh pr view` і `gh run view` працюють. За потреби перед новою локальною сесією завантаж погоджений токен із власного сховища в `GITHUB_PAT_TOKEN`. Переконайся в наявності через `test -n "${GITHUB_PAT_TOKEN:-}"`, запусти `codex -C ~/projects/port-drone` і перевір read-only PR lookup. |
+| Context7, Semgrep | **READY WITH LIMITATIONS**. Доступні в каталозі, scoped smoke DOCS-02 повторно використано. | Context7 для pinned API, patch API звіряй із engine. Semgrep для підтримуваних мов, GDScript поза scope. |
+| Playwright, Chrome DevTools, draw.io, Figma | **READY** для підтвердженого smoke DOCS-02. Браузерні/дизайнерські робочі сценарії тут **NOT APPLICABLE**. | Playwright/DevTools для browser QA, draw.io для схем, Figma для погодженої UI/UX роботи. Для Godot GUI застосовується Windows QA. |
+
+Локальний `godot-mcp-support/sync-shadow` бере чистий committed baseline `beta`, переносить tracked imports і remaps, перетворює 26 ECFG entries з `override.cfg` у текстовий проєкт лише у фізичній копії. Попередню копію може архівувати повністю. DOCS-02B перевірив механізм на копії підтримувального tooling у `/tmp/droneflames-docs02b/`. Коли спільний lock вільний, штатна команда — `~/projects/droneflames-toolchain/godot-mcp-support/sync-shadow`. Якщо скрипт повідомляє про локальні дельти, переглянь їх. Після підтвердження `--archive-local` збереже попередню копію цілком. Процес і артефакти описані в локальному `godot-mcp-support/README.md`.
+
+Для повторення Serena probe використовуй окремий `SERENA_HOME`, `.serena/project.yml` із `languages: [gdscript]` і `read_only: true` у фізичному shadow. У `$SERENA_HOME/serena_config.yml` задай `ls_specific_settings.gdscript.port: 16008`. Probe із налаштуванням порту лише в project.yml повернувся до 6008. Запуск editor із тим самим портом — `godot --path <shadow> --editor --headless --lsp-port 16008` через pinned editor і приватний XDG. Перевір `ss -lnt` і стартуй `serena start-mcp-server --project <shadow> --context codex --language-backend LSP` у тому самому ізольованому оточенні. Global конфіг, credentials і production не змінювалися. [Serena 2.1.0 backend](https://github.com/oraios/serena/blob/v2.1.0/src/solidlsp/language_servers/godot_language_server.py) · [Godot MCP](https://github.com/orebron/godot-mcp/tree/20ca9bd083ad) · [GitHub MCP](https://github.com/github/github-mcp-server)
+
+### Валідація і передача
+
+- Нові — `git diff --check`, DOCS-02B diff review, машинний inventory 103/103, 1 784 локальних посилань і anchors, окрема перевірка sources та правил. Змінені файли відносяться до Markdown і наявного CSV. `game/`, `libs/`, tools, tests і workflows побайтово ідентичні baseline. Нових секретів у patch не виявлено.
+- Нові — build identity 0.36.11, SHA256 pinned Godot editor/template, каталоги з 0 structural/active-literal errors, Python build identity 3/3, CI policy 4/4, artifacts 6/6, release mock 15/15, локалізація 2 PASS + 1 SKIP без engine fixture. Усього 30 PASS, 1 SKIP.
+- Повторно використано точний baseline CI `45714307932`: Python і Windows build/regression SUCCESS, release SKIPPED. R23 і Native evidence використано в їхньому первісному scope. Нові Windows GUI/LAN/Steam, R23 replay і повна Godot regression — NOT RUN для docs-only diff. [Baseline CI](https://github.com/ZaGOR-1/port-drone/actions/runs/45714307932)
+- Стартовий контекст у байтах **AGENTS сам** 24 587 → 11 491 → 15 550. **AGENTS + PROJECT_STATE** 66 878 → 15 788 → 20 525. **Практичний маршрут з INDEX** 71 271 → 19 225 → 24 210. Колонки відповідають baseline, DOCS-02, DOCS-02B. Тригери додають тематичні секції під задачу. Ці числа вимірюють байти, окремої оцінки токенів немає.
+- Власнику — review локального документаційного коміту, звірка нового tip `beta` перед публікацією, окремі рішення про push/PR та merge. Відновлення спільного shadow або GitHub MCP потрібне тільки за фактичного використання. [Правила](../AGENTS.md#git-і-повноваження)
+
+---
+
 ## DOCS-02 · 2026-11-26
 
 **INCONCLUSIVE для повного приймання.** Документаційні зміни та локальні перевірки готові до review. Повний Markdown corpus прочитано машинно, розібрано за секціями й класифіковано пофайлово. Зміст і докази переглянуто цільово. Построкова семантична верифікація всіх історичних тверджень і незалежне відтворення всіх старих прогонів залишаються поза підтвердженим покриттям.

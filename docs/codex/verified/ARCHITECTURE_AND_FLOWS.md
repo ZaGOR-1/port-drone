@@ -1,6 +1,10 @@
-> DOCS-02 звірив boot, remap, autoload та chains Main, GameWorld і Hud на `7181e88`. Метрики й runtime-висновки нижче належать своїм датованим збіркам.
+## Маршрут для поточного HEAD
 
-> Поточний boot на `beta` звірено за [override.cfg](../../../game/override.cfg) і [main.tscn.remap](../../../game/game/main.tscn.remap). PcPort і SteamNet — autoloads, `pc/boot.tscn` запускає updater і remapped main scene. Зміни R02 та HUD описано в [Windows QA](../../WINDOWS_QA.md).
+- Boot і autoload визначає [override.cfg](../../../game/override.cfg). [Boot](../../../game/pc/boot.tscn) запускає updater, далі [remap](../../../game/game/main.tscn.remap) веде до binary Main scene. Звір поточні ланцюги [Main](../../../game/game/main.gd), [GameWorld](../../../game/game/game_world.gd) і [Hud](../../../game/ui/hud.gd).
+- Для HUD і вводу простеж сигнал від [Hud](../../../game/ui/hud.gd) до [Main](../../../game/game/main.gd) та [main_input](../../../game/game/main/main_input.gd). Для дії, що змінює світ, простеж виклик до відповідної підсистеми. У MP перевір маршрут через NetSession і порядок `_sim_step`. [Мережевий контракт](MULTIPLAYER_PROTOCOL.md#поточний-контракт)
+- Контракт сумісності на baseline ведемо в [PROJECT_STATE](../../PROJECT_STATE.md). За runtime QA та відомими ризиками звертайся відповідно до [Windows QA](../../WINDOWS_QA.md) і [backlog](BACKLOG.md). [Перевірки за scope](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope)
+
+## Історична карта потоків
 
 # DroneFlames — архітектура та потоки beta v0.36
 
@@ -65,7 +69,7 @@ Targeted checks для build/land/air/power є; більшість ALLOWED metho
 
 ## Multiplayer
 
-| Шар | Поточний контракт | Межа перевірки |
+| Шар | Контракт на checkpoint PR #4 | Межа перевірки |
 |---|---|---|
 | LAN | ENet host24600, до4 players; UDP discovery24601/24602, /24 sweep | Код host/join/discovery прочитаний; actual LAN NOT RUN |
 | Steam | SteamNet lobby metadata df_game/name/v/host, invites/+connect_lobby; SteamPeer star, host peer1, channel3 | AppID480; реальні accounts/Steam API NOT RUN |
@@ -93,7 +97,7 @@ Restore: settings/cfg → new_world(regenerate height) → load core arrays/enti
 
 Шляхи: `user://saves/slot_1..5.save`, a0/a1/a2, bak/tmp/meta/png; legacy match.save мігрується на копіях; MP окремий `user://net_match.save`; prefs settings.cfg, pc_port.cfg, net.cfg; accounts/private state у account.bin/attest.bin/ranked_pending.bin не читати для QA. Continue: найсвіжіший slot зі state=ok, fallback preferred/seq/date/bak/tmp. Bad candidate не видаляється; bad slot flag після всіх непридатних копій.
 
-Manual save synchronous; autosave60 real seconds (+до20 touch-idle), синхронний snapshot builder на main → _queue_write duplicate(true) всього encoded body/header/thumbnail → worker serialize/compress/write; жодної копії на кожному simulation tick. Fresh before_write видаляє старі copies до final rename; rotation/meta/migration мають unchecked operations. NetConfig.save_match remove-before-rename без backup. Це актуальні durability gaps; power-loss/ENOSPC не тестували.
+Manual save synchronous; autosave60 real seconds (+до20 touch-idle), синхронний snapshot builder на main → _queue_write duplicate(true) всього encoded body/header/thumbnail → worker serialize/compress/write; жодної копії на кожному simulation tick. Fresh before_write видаляє старі copies до final rename; rotation/meta/migration мають unchecked operations. NetConfig.save_match remove-before-rename без backup. На цьому checkpoint це були відкриті питання durability. Power-loss/ENOSPC тоді не тестували.
 
 Optional `sys.diplo.land_cooldowns` явно копіюється й prevalidated; missing→empty. Key canonical positive1..255 from:to, різні IDs, finite timestamp0..saved game_time; hash sorted. Старий reader може втратити поле, тому **semantic downgrade UNSUPPORTED** без зміни FORMAT number.
 

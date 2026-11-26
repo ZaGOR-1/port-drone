@@ -16,12 +16,13 @@
 ## Межі QA та відкриті ризики
 
 - GUI, хоткеї, Save/Continue і запуск Steam підтверджені власником на історичному суміщеному SFX. Фізичні Windows LAN, Steam-матч, reconnect/resync і кількісний late-game Profile B для поточної `beta` — NOT RUN. [Точні збірки й докази](WINDOWS_QA.md)
-- R23 зафіксував локальний ефект 0.36.4 → 0.36.11 на Ubuntu з контрольними сценами. Відтворення 2–3 FPS у кампанії власника лишається відкритим. R11/R12/R13/R22 зберігають історичні NO-GO. NATIVE-01–02D дослідили GDExtension й межі інтеграції, production Rust відкладено. [R23](r23/R23_RESULTS.md)
-- Відомі teardown/RID попередження. Updater integrity, відновлення після збоїв та покриття всіх мережевих схем потребують окремого підтвердження. [Backlog](codex/verified/BACKLOG.md)
-- Локальні історичні докази шукай за індексом `droneflames-archive` і handoff відповідної задачі. Частина старих тестових файлів у `droneflames-toolchain/.cold-storage` потребує відновлення за її README. Попередній стан з ідентифікаторами PERF, INT, FIX, L10N та історичними шляхами збережено в [Git snapshot](https://github.com/ZaGOR-1/port-drone/blob/7181e88b03a6ad5c2a5c64a6fbf02bfc8854ff33/docs/PROJECT_STATE.md).
+- R23 зафіксував локальний ефект 0.36.4 → 0.36.11 на Ubuntu з контрольними сценами. Відтворення 2–3 FPS у кампанії власника лишається відкритим. R11/R12/R13/R22 зберігають історичні NO-GO. NATIVE-01–02D дослідили GDExtension й межі інтеграції, production Rust відкладено. Окремий фізичний Windows A/B для R19 D2100 і Late E має власний історичний scope. [R23](r23/R23_RESULTS.md) · [R19](r19/R19_RESULTS.md)
+- Відомі teardown/RID попередження. Відтворення DummyTexture і зв’язок із HUD fixture зафіксовано в R08. Очищення слота через `Ctrl+1–9` без виділення залишається чинною поведінкою, UX-зміна потребує окремої задачі. [R08](r08/R08_RESULTS.md#детермінізм-та-qa) · [Керування](codex/verified/WINDOWS_CONTEXT_HOTKEYS_QA.md)
+- Updater integrity, відновлення після збоїв та покриття всіх мережевих схем потребують окремого підтвердження. [Backlog](codex/verified/BACKLOG.md)
+- Основний checkout `~/projects/port-drone`. Локальні історичні докази шукай за індексом `~/projects/droneflames-archive/INDEX.md` і handoff відповідної задачі. Частина старих тестових файлів у `droneflames-toolchain/.cold-storage` потребує відновлення за її README. Попередній стан з ідентифікаторами PERF, INT, FIX, L10N та історичними шляхами збережено в [Git snapshot](https://github.com/ZaGOR-1/port-drone/blob/7181e88b03a6ad5c2a5c64a6fbf02bfc8854ff33/docs/PROJECT_STATE.md).
 
 ## Next steps
 
 1. Відтворити late-game скаргу на фізичній Windows із save власника та точним SHA256 комплекту. Профілювати за [Profile B](performance.md).
 2. Провести [двопірний Windows QA](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) з LAN, Steam та reconnect/resync.
-3. DOCS-02 підготовлено для локального review у `~/projects/droneflames-worktrees/docs02`, гілка `docs/docs02-comprehensive-audit`. [Інвентар і перевірки](DOCUMENTATION_AUDIT.md)
+3. DOCS-02B проходить локальне review у `~/projects/droneflames-worktrees/docs02`, гілка `docs/docs02-comprehensive-audit`. [Інвентар, перевірки й verdict](DOCUMENTATION_AUDIT.md#docs-02b--незалежне-review)
