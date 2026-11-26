@@ -1,6 +1,6 @@
 # Windows QA — кандидати, runtime і докази
 
-Звірено 2026-11-22. Статуси прив’язані до конкретного EXE/PCK і сценарію. Гілки та пріоритети наведено в [PROJECT_STATE.md](PROJECT_STATE.md). Звичайну збірку з `beta` описано в [інструкції збірки](codex/verified/BUILD_RELEASE.md).
+Перший комплект звірено 2026-11-22. На baseline DOCS-02 editor і Windows template збіглися з [CI-піном](../tools/ci/godot-4.7.2.json). Історичні QA-артефакти перевіряй за маніфестом. Windows Downloads і старий `~/port-drone-worktrees-archive` нижче фіксують первісне розташування. Ці шляхи недоступні в середовищі DOCS-02B. Для відновлення шукай точний SHA256 в `~/projects/droneflames-archive/INDEX.md` і cold storage. Частина розпакованих файлів потребує відновлення з локального `droneflames-toolchain/.cold-storage`. Статуси прив’язані до конкретного EXE/PCK і сценарію. Гілки та пріоритети наведено в [PROJECT_STATE.md](PROJECT_STATE.md). Звичайну збірку з `beta` описано в [інструкції збірки](codex/verified/BUILD_RELEASE.md).
 
 **Позначення.** IMPLEMENTED означає наявність коду у вказаному дереві. VERIFIED означає успішну перевірку в зазначеному обсязі. PARTIALLY VERIFIED означає, що частину заявленого обсягу перевірено. NOT TESTED або NOT RUN — перевірка не виконана. PLANNED — запланована робота. BLOCKED — конкретна перешкода. PASS і FAIL належать окремим сценаріям.
 
@@ -16,12 +16,12 @@
 
 | Збірка | Результат | Доказ |
 | --- | --- | --- |
-| Поточний суміщений MinGW PCK | Keyboard 130/130; scale 26/26; UI 20/20; R02 standard 49/49; simulation 2476/2476 PASS. На попередньому PCK BUG-01 відтворено. | Локальні `evidence/windows-summary.json` і `evidence/pck-source.json` в каталозі кандидата. |
-| Поточний суміщений MinGW SFX | Cold/warm self-test, версія дочірнього рушія і headless startup PASS. Шість файлів payload звірено у self-test, три DLL ідентичні sidecar. | Локальний `evidence/sfx-smoke.json`. |
+| Суміщений MinGW PCK від 2026-11-22 | Keyboard 130/130; scale 26/26; UI 20/20; R02 standard 49/49; simulation 2476/2476 PASS. На попередньому PCK BUG-01 відтворено. | Локальні `evidence/windows-summary.json` і `evidence/pck-source.json` в каталозі кандидата. |
+| Суміщений MinGW SFX від 2026-11-22 | Cold/warm self-test, версія дочірнього рушія і headless startup PASS. Шість файлів payload звірено у self-test, три DLL ідентичні sidecar. | Локальний `evidence/sfx-smoke.json`. |
 | Окремий кандидат R02 MinGW | Windows matrix 24/24, R02 standard 49/49, shared checkpoint 44/44, explicit failure 49/49, negative snapshots 111/111, Godot 439/439, Save/Load/Continue 6/6 процесів PASS. | `~/port-drone-worktrees-archive/droneflames/droneflames-r02-evidence-20261122/`, файли `summary.json`, `target/`, `compat/`, `matrix/`. |
 | Попередній INPUT SFX, SHA256 `5fcd17934a11170d53b1c4958e6f633680338415abb703f513ef1163413e4f22` | Користувач повідомив PASS для F1–F7, відсутності тестового удару, штатного TEL, кільця столиці, базової гри, Save/Continue і Steam. FAIL для контекстних цифр і wrap масштабу. | Ручний INPUT QA follow-up власника. Попередня папка Windows Downloads на момент цього аудиту недоступна. |
 | Суміщений SFX, ручна перевірка власника | **USER-REPORTED PASS** для F1–F7, контекстних цифр F2, збереження й виклику груп після вибору армії, видалення тестового удару, TEL, масштабу, кільця столиці, попередніх UI fixes, Save/Continue й запуску Steam. | Звіт власника для SHA256 вище. |
-| Повне приймання | Фізичний LAN, Steam між двома ПК і late-game FPS — **NOT RUN**. Окремих підтверджень fullscreen/DPI, зміни EN/UA, non-admin, SmartScreen та інших сценаріїв повної матриці немає. | [Двопірний план](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md). LAN і FPS не блокують інтеграцію в `beta` за рішенням власника. |
+| Повне приймання | Фізичний LAN, Steam між двома ПК і late-game FPS — **NOT RUN**. Окремих підтверджень fullscreen/DPI, зміни EN/UA, non-admin, SmartScreen та інших сценаріїв повної матриці немає. | [Двопірний план](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md). Для цього кандидата власник окремо дозволив інтеграцію в `beta` з відкритими LAN і FPS. |
 
 На початковому PCK без патча R02 release-runtime мав 4 зриви assertions і на Official, і на MinGW/MSVC patched. Окремий R02 виправляє помилковий успіх часткового restore. Кандидат очікує явної успішності застосування стану та фіксує turn перед callback. При невдачі очищає черги й виходить із частково відновленого матчу. Відновлення описано у [звіті R02](codex/verified/R02_RELEASE_RECOVERY.md). [Код Save](../game/game/save.gd)
 

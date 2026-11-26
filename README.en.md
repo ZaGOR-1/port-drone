@@ -4,7 +4,7 @@
 
 **DroneFlames** is a real-time strategy game about running a country, building an economy, negotiating agreements and fighting wars on a generated map. Develop cities and production, supply your armed forces, and expand your influence through diplomacy and military action.
 
-This repository develops an independent PC port using **Godot 4.7.2**. The target platform is **Windows 11 x64**; development uses **Ubuntu under WSL2**; earlier build results are historical.
+This repository develops an independent PC port using **Godot 4.7.2**. The target platform is **Windows x64**. Physical acceptance testing targets Windows 11. The project state records the development host.
 
 > The current beta is for development and testing. The original code and artwork remain the property of their authors; see the usage terms below.
 
@@ -25,7 +25,7 @@ The current beta implements the following systems. Their presence in the code do
 
 ## Development status
 
-`main` is the stable baseline and `beta` is the development and QA branch. The current source identity is `v0.36.0 / PROTO 7 / v036-integration-1 / Save.FORMAT 1`. R02, UI and input fixes were tested together in the Windows QA package. SFX and MinGW remain a separate packaging and test path. [Project state](docs/PROJECT_STATE.md)
+`main` is the stable baseline and `beta` is the development and QA branch. See the [project state](docs/PROJECT_STATE.md) for the source version, compatibility contracts, CI and manual QA status.
 
 ## Running and building on Windows
 
@@ -35,13 +35,7 @@ Keep the tracked `game/.godot/` assets and the binary project configuration. Kee
 
 ## Development and contributions
 
-1. Update your local `beta` and create a task branch: `feature/*`, `fix/*` or `docs/*` as appropriate.
-2. Make a focused change and preserve attribution for earlier work.
-3. Run the relevant [checks](docs/codex/verified/TEST_MATRIX.md); for documentation, check links and the Markdown diff. Mark tests you have not run as `NOT RUN`, and unrelated checks as `N/A` with a reason.
-4. After authorization to publish, open a Pull Request targeting **`beta`**. CI runs tests/builds for PRs into beta and pushes to beta/main without publishing Releases. There is no PR template; check required reviews and checks on GitHub.
-5. Complete review. Promoting changes to `main` or making a stable release requires a separate decision by the repository owner.
-
-Read [AGENTS.md](AGENTS.md) before working on the project. The [architecture](docs/codex/verified/ARCHITECTURE_AND_FLOWS.md) and [collaboration workflow](docs/codex/verified/COLLABORATION_WORKFLOW.md) provide further context. Protocol, save and deterministic simulation changes need a separate compatibility assessment.
+Start with [AGENTS.md](AGENTS.md) and the [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) for branch, test and PR rules. [Documentation index](docs/INDEX.md)
 
 ## Credits and origins
 

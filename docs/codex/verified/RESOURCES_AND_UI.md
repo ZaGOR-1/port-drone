@@ -1,4 +1,10 @@
-> Поточні межі desktop scale — 70/80/90/100/115/130% ([PcPort](../../../game/pc/pc_port.gd)). Контекстні цифрові команди й обмежені стрілки масштабу реалізовано в Windows QA-дереві. [Керування й результати](../../WINDOWS_QA.md). Нижче збережено карту ресурсів Phase 2.
+## Поточний маршрут HUD та ресурсів
+
+[Hud](../../../game/ui/hud.gd) і його `extends` визначають ownership контролів. [main_input.gd](../../../game/game/main/main_input.gd) визначає world input, [PcPort](../../../game/pc/pc_port.gd) — масштаб і desktop preferences. Перед зміною перевір сигнали, ownership wheel/gesture, видимість і focus, а також локалізацію та фізичний Windows GUI у сценаріях за scope. [Потоки](ARCHITECTURE_AND_FLOWS.md) · [Fixtures](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope) · [Windows QA](../../WINDOWS_QA.md)
+
+Для ресурсів звір tracked remaps і imports. У checkout є binary сцени та імпортовані ресурси в `game/.godot/`. Інструменти, що оновлюють imports/UID, запускай у фізичній копії. [Правила](../../../AGENTS.md)
+
+## Історична карта ресурсів Phase 2
 
 # Ресурси, presentation і desktop UX
 

@@ -1,27 +1,30 @@
 # Документація DroneFlames
 
-Почни з [PROJECT_STATE.md](PROJECT_STATE.md). Посилання нижче ведуть до основного документа для кожної теми. Для технічних контрактів остаточним джерелом є відповідний код на перевіреному Git HEAD. Історичні звіти фіксують стан на момент написання.
+Почни з [AGENTS.md](../AGENTS.md) і [PROJECT_STATE.md](PROJECT_STATE.md). Знайди потрібну тему в таблиці. Технічні контракти звіряй із кодом на своєму Git HEAD.
 
-| Тема | Основне джерело | Що знайдеш |
-| --- | --- | --- |
-| Початок роботи | [README](../README.md) · [AGENTS](../AGENTS.md) | Опис гри, запуск, правила для сесій |
-| Стан проєкту | [PROJECT_STATE](PROJECT_STATE.md) | Git, кандидати, відкриті питання, handoff |
-| Архітектура | [Architecture and flows](codex/verified/ARCHITECTURE_AND_FLOWS.md) | Boot, Main, HUD, World, симуляція й межі модулів |
-| Ігрові підсистеми | [Gameplay systems](codex/verified/GAMEPLAY_SYSTEMS.md) · [Resources and UI](codex/verified/RESOURCES_AND_UI.md) · [Hotkeys](codex/verified/WINDOWS_CONTEXT_HOTKEYS_QA.md) | Генерація, економіка, військо, ШІ, ресурси й desktop UI |
-| Мультиплеєр | [Multiplayer protocol](codex/verified/MULTIPLAYER_PROTOCOL.md) · [Two-peer QA](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) | PROTO, Steam/LAN, host turns, hashes, план двох ПК |
-| Save/Load | [Save format](codex/verified/SAVE_FORMAT.md) · [R02 recovery](codex/verified/R02_RELEASE_RECOVERY.md) | FORMAT1, optional fields, межі restore і downgrade |
-| Windows build/export | [Build and release](codex/verified/BUILD_RELEASE.md) | PCK, DLL, CI, офіційний template та межі SFX |
-| Godot runtime | [Windows QA · MinGW](WINDOWS_QA.md#godot-mingw) | Native race, provenance, headless CPU benchmark |
-| Тестування і QA | [Windows QA](WINDOWS_QA.md#перевірки) · [Windows checklist](codex/verified/WINDOWS_BETA_QA_CHECKLIST.md) | Поточні результати за артефактами та ручні сценарії |
-| INT-01 | [Інтеграція PR #7–#9](INT01_INTEGRATION.md) · [Windows checklist](INT01_WINDOWS_QA.md) | QA-кандидат 0.36.1, Windows A/B і порядок приймання |
-| Продуктивність | [Real-World Profile B](performance.md) · [PERF-01 ОТРК](perf01/PERF01_ANALYSIS.md) · [PERF-02 підтвердження](perf02/PERF02_ANALYSIS.md) · [PERF-03 дефіцит ОТРК](perf03/PERF03_RESULTS.md) · [R07 watchdog](r07/R07_RESULTS.md) · [R08 lockstep](r08/R08_RESULTS.md) · [R10 ArmyFire._impact](r10/R10_RESULTS.md) · [INT-06](r10/INT06_INTEGRATION.md) · [R14](r14/R14_RESULTS.md) · [R15](r15/R15_RESULTS.md) | Вимірювання, результати CPU та QA масового вибору |
-| R23 | [Накопичена продуктивність і масштабування](r23/R23_RESULTS.md) | Profile B, 0.36.4 / 0.36.7 / 0.36.11 та межі вимірювань |
-| Roadmap і рішення | [Next steps](PROJECT_STATE.md#next-steps) · [Backlog](codex/verified/BACKLOG.md) · [Decisions](codex/verified/DECISIONS.md) | Windows QA та FPS, Linux-порт, UI після Linux |
-| Історичні технічні звіти | [Інвентар Markdown](DOCUMENTATION_AUDIT.md) | Git/PR історія, Phase-звіти, старі контрольні збірки, source coverage |
+## Чинні правила та довідники
 
-Шлях `docs/codex/verified/` збережено для наявних посилань. Дата, commit і тестовий сценарій у кожному звіті визначають його обсяг. R09 `93a626e` і R16 `c7c031fe` залишаються історичними baselines, зокрема для походження fixtures R23. Історичний PASS і старі дозволи не переносяться на поточний HEAD.
+| Тема | Канонічний маршрут |
+| --- | --- |
+| Огляд, авторство й права | [README](../README.md) · [English](../README.en.md) |
+| Повноваження й початок сесії | [AGENTS](../AGENTS.md) |
+| Поточний baseline і наступні задачі | [PROJECT_STATE](PROJECT_STATE.md) |
+| Git, тести, MCP і підтримання документації | [Development Workflow](DEVELOPMENT_WORKFLOW.md) |
+| Продуктова версія і bump | [Versioning Policy](VERSIONING_POLICY.md) |
+| Boot, Main, HUD, World і ownership | [Architecture and Flows](codex/verified/ARCHITECTURE_AND_FLOWS.md) |
+| Генерація, економіка, AI та військо | [Gameplay Systems](codex/verified/GAMEPLAY_SYSTEMS.md) |
+| Ресурси, HUD і масштаб | [Resources and UI](codex/verified/RESOURCES_AND_UI.md) |
+| Lockstep, identity, transports | [Multiplayer Protocol](codex/verified/MULTIPLAYER_PROTOCOL.md) |
+| Формат save й restore | [Save Format](codex/verified/SAVE_FORMAT.md) |
+| Офіційна Windows збірка та CI | [Build and Release](codex/verified/BUILD_RELEASE.md) |
+| QA, SFX, MinGW і native diagnostics | [Windows QA](WINDOWS_QA.md) · [Фізичний two-peer сценарій](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) |
+| Локалізація | [Loc, PO і fallback](LOCALIZATION_AUDIT.md) · [Глосарій](LOCALIZATION_GLOSSARY.md) · [Тести й ручний QA](LOCALIZATION_TESTS.md) |
+| Приймання продуктивності | [Real-World Gaming Profile B](performance.md#real-world-gaming-profile-b) |
+| Native hotspot, Rust/GDExtension | [Межі NATIVE-01–02D](r23/R23_RESULTS.md#межі-попередніх-підходів) · [Build and Release](codex/verified/BUILD_RELEASE.md) · [Windows QA](WINDOWS_QA.md) |
+| Ризики й рішення | [Backlog](codex/verified/BACKLOG.md) · [Журнал рішень](codex/verified/DECISIONS.md) |
 
-## Правила розробки й локалізації
+## Історичні докази
 
-- [Git workflow](DEVELOPMENT_WORKFLOW.md) · [Versioning](VERSIONING_POLICY.md)
-- [Аудит локалізації](LOCALIZATION_AUDIT.md) · [Зміни](LOCALIZATION_FIXES.md) · [Глосарій](LOCALIZATION_GLOSSARY.md) · [Тести й ручний QA](LOCALIZATION_TESTS.md)
+- [R23](r23/R23_RESULTS.md) веде до масштабування 0.36.4/0.36.7/0.36.11, таблиць, довгих прогонів і меж NATIVE-01–02D. R09 `93a626e` і R16 `c7c031fe` — історичні baselines для походження fixtures. За недоступності віддаленого історичного об’єкта перевір локальний Git або індекс архіву.
+- [PERF-01](perf01/PERF01_ANALYSIS.md), [PERF-02](perf02/PERF02_ANALYSIS.md), [PERF-03](perf03/PERF03_RESULTS.md), [R07](r07/R07_RESULTS.md), [R08](r08/R08_RESULTS.md), [R10](r10/R10_RESULTS.md), [R14](r14/R14_RESULTS.md), [R15](r15/R15_RESULTS.md), [R19](r19/R19_RESULTS.md) і [R21](r21/R21_RESULTS.md) зберігають окремі контрольні експерименти.
+- [Інвентар Markdown](DOCUMENTATION_AUDIT.md) веде до датованих Phase, INT, FIX, L10N і QA-звітів. [CURRENT_STATE](codex/verified/CURRENT_STATE.md) зберігає ранній handoff, [TEST_MATRIX](codex/verified/TEST_MATRIX.md) — історичні перевірки. Назва каталогу `verified` успадкована. Scope кожного PASS, NO-GO та дозволу визначає відповідний датований доказ.

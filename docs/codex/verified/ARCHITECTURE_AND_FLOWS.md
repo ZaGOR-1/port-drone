@@ -1,4 +1,10 @@
-> Поточний boot на `beta` звірено за [override.cfg](../../../game/override.cfg) і [main.tscn.remap](../../../game/game/main.tscn.remap). PcPort і SteamNet — autoloads, `pc/boot.tscn` запускає updater і remapped main scene. Зміни R02 та HUD описано в [Windows QA](../../WINDOWS_QA.md).
+## Маршрут для поточного HEAD
+
+- Boot і autoload визначає [override.cfg](../../../game/override.cfg). [Boot](../../../game/pc/boot.tscn) запускає updater, далі [remap](../../../game/game/main.tscn.remap) веде до binary Main scene. Звір поточні ланцюги [Main](../../../game/game/main.gd), [GameWorld](../../../game/game/game_world.gd) і [Hud](../../../game/ui/hud.gd).
+- Для HUD і вводу простеж сигнал від [Hud](../../../game/ui/hud.gd) до [Main](../../../game/game/main.gd) та [main_input](../../../game/game/main/main_input.gd). Для дії, що змінює світ, простеж виклик до відповідної підсистеми. У MP перевір маршрут через NetSession і порядок `_sim_step`. [Мережевий контракт](MULTIPLAYER_PROTOCOL.md#поточний-контракт)
+- Контракт сумісності на baseline ведемо в [PROJECT_STATE](../../PROJECT_STATE.md). За runtime QA та відомими ризиками звертайся відповідно до [Windows QA](../../WINDOWS_QA.md) і [backlog](BACKLOG.md). [Перевірки за scope](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope)
+
+## Історична карта потоків
 
 # DroneFlames — архітектура та потоки beta v0.36
 
@@ -8,7 +14,7 @@
 
 1. `game/project.binary`: ECFG, 1632 bytes, 26 entries; application DroneFlames, baseline main `res://game/main.tscn`, viewport360×640, canvas_items/expand, renderer mobile, Windows driver d3d12. Це прочитані binary metadata; активний renderer потребує runtime log. У project немає текстового project.godot і немає application/config/version entry.
 2. [override.cfg](../../../game/override.cfg) задає main `res://pc/boot.tscn`, window override1600×900 та autoload **PcPort**, **SteamNet**. Autoload ініціалізуються до boot; порядок фіксується конфігом, startup підтверджено попереднім native headless; GUI тут NOT RUN.
-3. [PcPort](../../../game/pc/pc_port.gd) створює desktop window policy, minimum960×540, scale/fullscreen/window preferences у `user://pc_port.cfg`; [SteamNet](../../../game/pc/steam_net.gd) ініціалізує GodotSteam або mock. Updater bypass сам по собі не обходить Steam: QA launcher окремо задає `DF_STEAM_MOCK=0`.
+3. [PcPort](../../../game/pc/pc_port.gd) створює desktop window policy, minimum960×540, scale/fullscreen/window preferences у `user://pc_port.cfg`; [SteamNet](../../../game/pc/steam_net.gd) ініціалізує GodotSteam або mock. Updater bypass сам по собі не обходить Steam: QA launcher окремо задає `DF_STEAM_MOCK=0` для mock. `Run-MultiplayerQA.ps1 -Transport Steam` прибирає цю змінну для native Steam.
 4. [boot.tscn](../../../game/pc/boot.tscn) створює PcBoot з [updater.gd](../../../game/pc/updater.gd). `_ready` → `_enabled` → `_load_cfg`; headless/editor/DF_NO_UPDATE або empty repo пропускають update. Далі `_start_game` → `change_scene_to_file("res://game/main.tscn")`.
 5. [main.tscn.remap](../../../game/game/main.tscn.remap) веде до 672-byte binary [PackedScene](../../../game/.godot/exported/133200997/export-178df499c26bcd3357cc4c21fb1eaa2e-main.scn). RSRC і рядки Main/Node/script/main.gd підтверджені статично; scene startup пройшов попередній native headless; binary metadata не замінюють GUI QA. Це не missing scene.
 6. [Main._ready](../../../game/game/main.gd) створює World, Camera, Hud, PendingGhost, RouteOverlay, **Net**, Menus, Tutorial, Loading; під'єднує input/action/request/news/war/capture/end/offer signals. `Net` має однаковий RPC path на peers. `Menus.setup` → `Save.load_prefs` → `Loc.boot`.
@@ -63,7 +69,7 @@ Targeted checks для build/land/air/power є; більшість ALLOWED metho
 
 ## Multiplayer
 
-| Шар | Поточний контракт | Межа перевірки |
+| Шар | Контракт на checkpoint PR #4 | Межа перевірки |
 |---|---|---|
 | LAN | ENet host24600, до4 players; UDP discovery24601/24602, /24 sweep | Код host/join/discovery прочитаний; actual LAN NOT RUN |
 | Steam | SteamNet lobby metadata df_game/name/v/host, invites/+connect_lobby; SteamPeer star, host peer1, channel3 | AppID480; реальні accounts/Steam API NOT RUN |
@@ -91,7 +97,7 @@ Restore: settings/cfg → new_world(regenerate height) → load core arrays/enti
 
 Шляхи: `user://saves/slot_1..5.save`, a0/a1/a2, bak/tmp/meta/png; legacy match.save мігрується на копіях; MP окремий `user://net_match.save`; prefs settings.cfg, pc_port.cfg, net.cfg; accounts/private state у account.bin/attest.bin/ranked_pending.bin не читати для QA. Continue: найсвіжіший slot зі state=ok, fallback preferred/seq/date/bak/tmp. Bad candidate не видаляється; bad slot flag після всіх непридатних копій.
 
-Manual save synchronous; autosave60 real seconds (+до20 touch-idle), синхронний snapshot builder на main → _queue_write duplicate(true) всього encoded body/header/thumbnail → worker serialize/compress/write; жодної копії на кожному simulation tick. Fresh before_write видаляє старі copies до final rename; rotation/meta/migration мають unchecked operations. NetConfig.save_match remove-before-rename без backup. Це актуальні durability gaps; power-loss/ENOSPC не тестували.
+Manual save synchronous; autosave60 real seconds (+до20 touch-idle), синхронний snapshot builder на main → _queue_write duplicate(true) всього encoded body/header/thumbnail → worker serialize/compress/write; жодної копії на кожному simulation tick. Fresh before_write видаляє старі copies до final rename; rotation/meta/migration мають unchecked operations. NetConfig.save_match remove-before-rename без backup. На цьому checkpoint це були відкриті питання durability. Power-loss/ENOSPC тоді не тестували.
 
 Optional `sys.diplo.land_cooldowns` явно копіюється й prevalidated; missing→empty. Key canonical positive1..255 from:to, різні IDs, finite timestamp0..saved game_time; hash sorted. Старий reader може втратити поле, тому **semantic downgrade UNSUPPORTED** без зміни FORMAT number.
 

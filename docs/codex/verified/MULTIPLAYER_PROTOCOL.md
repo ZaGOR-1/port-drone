@@ -1,4 +1,16 @@
-> Поточний wire contract `beta`: `PROTO=7`, `SIM_REV=v036-integration-1`, `SIM_DT=1/30`, 3 ticks/turn ([NetConfig](../../../game/net/net_config.gd)). Старі Phase overlays нижче належать указаним кандидатам. Release-oriented R02 та межі peer QA наведено в [Windows QA](../../WINDOWS_QA.md).
+# Мережевий протокол DroneFlames
+
+## Поточний контракт
+
+Звір [NetConfig](../../../game/net/net_config.gd) і версію з [PROJECT_STATE](../../PROJECT_STATE.md). `NetConfig.version()` містить повну `Menus.VERSION`, PROTO та SIM_REV. MP виконує три фіксовані тіки `SIM_DT = 1/30` на turn. Host задає канонічний список команд. Для desync порівнюй той самий seed, точні комплекти й перший divergent turn. [NetSession](../../../game/net/net_session.gd) · [NetHash](../../../game/net/net_hash.gd)
+
+- Для нової команди перевір wire shape, allowlist, issuer/ownership і дійсність аргументів на шляху NetSession → NetCodec → simulation. Покриття окремих schema fixtures має межі. Для LAN/Steam перевір saved host resume і rejoin. Перенесення simulation host для цих transport не реалізовано.
+- `_snap_begin`, `_snap_part` і `_apply_snapshot` перевіряють частини та розмір зібраного буфера. `_restore_from` очікує успішний restore, перевіряє epoch, player і підготовку Main до оновлення turn і лічильників. `net_after_restore` викликається після commit.
+- Обирай чинні [fixtures за scope](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope). ENet admission loopback має власний scope. Фізичне приймання використовує [план двох ПК](WINDOWS_TWO_PEER_QA_PLAN.md) і [точні артефакти](../../WINDOWS_QA.md).
+
+## Історичні checkpoints
+
+Опис і результати далі належать указаним Phase та PR. Для поточного коду користуйся контрактом вище.
 
 > **Підтвердження PR #4 і попередні звіти.** v0.36.0/PROTO7/SIM_REV `v036-integration-1`. Exact hello/resume gate, power wire/schema/owner guard і canonical hash нових fields перевірені targeted fixtures у PR #4; full physical LAN/Steam NOT RUN. [Current flows](ARCHITECTURE_AND_FLOWS.md), [fixes](V036_FIX_RESULTS.md). Старі revisions/SHA/permissions/results нижче датовані, не поточні.
 

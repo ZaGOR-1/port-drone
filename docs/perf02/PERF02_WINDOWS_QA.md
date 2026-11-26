@@ -1,3 +1,5 @@
+> Історичний checkpoint. PERF-02, план ручного приймання та статус Draft на момент звіту. PR #7–#9 пізніше інтегровано в `beta`. [Чинний стан](../PROJECT_STATE.md)
+
 # PERF-02. Windows 11 QA
 
 Фізична Windows 11 GUI, LAN та Steam — **NOT RUN**. Windows FPS — **INCONCLUSIVE** до вимірювання на фізичному ПК. Кандидат залишається в [Draft PR #9](https://github.com/ZaGOR-1/port-drone/pull/9).

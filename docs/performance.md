@@ -10,7 +10,11 @@ Use no separate 60-second host readiness preflight or fixed background CPU caps 
 
 Reuse exact code, PCK, runtime and fixture evidence where the configuration and scenario match. Run only the missing performance gate and required QA. Keep workflow changes in a separate documentation commit and retain raw evidence and SHA256 with the handoff. Follow the [Development Workflow](DEVELOPMENT_WORKFLOW.md) for branches, commits and review.
 
-For R17 Late E use four 150-tick pairs in order A/B, B/A, B/A, A/B, with up to two extra pairs when they can resolve uncertainty. Require median paired FPS and 1% low changes of at least −5%, no material systematic frame-time regression, and identical deterministic state. The thresholds are engineering acceptance criteria. Perform the remaining R17 QA after GO.
+A GO requires matched deterministic state and evidence that the scoped acceptance criteria passed. Record NO-GO when a measured candidate fails a gate. Keep raw results for GO, NO-GO and INCONCLUSIVE.
+
+### Historical R17 Late E acceptance
+
+For the R17 Late E candidate, the task used four 150-tick pairs in order A/B, B/A, B/A, A/B, with up to two extra pairs when they can resolve uncertainty. The task required median paired FPS and 1% low changes of at least −5%, no material systematic frame-time regression, and identical deterministic state. The task required the remaining QA after a GO.
 
 ## Historical headless diagnostics
 
