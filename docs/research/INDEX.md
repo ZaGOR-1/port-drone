@@ -139,5 +139,6 @@ MAINT-06 перевірив 4 676 унікальних SHA256 у 68 кореня
 | R30 | Дослідження завершено, R31 feasibility рекомендовано | COMPLETE у scope аналізу | `acd9760` | [Звіт](../r30/R30_RESULTS.md) | `archive/R30/SHA256SUMS` |
 | R31 | NO-GO на feasibility | COMPLETE у scope feasibility | `acd9760` | [Звіт](../r31/R31_RESULTS.md) | `archive/R31/SHA256SUMS` |
 | R32 | NO-GO на feasibility | COMPLETE у scope feasibility | `acd9760` | [Звіт](../r32/R32_RESULTS.md) | `archive/R32/SHA256SUMS` |
+| R33 | NO-GO на feasibility | COMPLETE у scope feasibility | `acd9760` | [Звіт](../r33/R33_RESULTS.md) | `archive/R33/SHA256SUMS` |
 
 [Точні діагностичні PCK обох досліджень](../r29/R29_RESULTS.md#точні-діагностичні-pck) збережено в `archive/R28-R29-PCK/`.

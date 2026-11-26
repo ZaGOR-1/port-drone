@@ -35,4 +35,5 @@
 - [R30](r30/R30_RESULTS.md) ранжує CPU hotspots і пропонує три вузькі напрями масштабування та feasibility для R31.
 - [R31](r31/R31_RESULTS.md) зберігає feasibility пропуску блоків, shadow-вимірювання і контрприклад спільних packed-посилань.
 - [R32](r32/R32_RESULTS.md) зберігає live-частки стабільних draw-груп, ціну підтримки ключів і рішення NO-GO.
+- [R33](r33/R33_RESULTS.md) зберігає fortified replay, ціну nearest scan і callback fixture.
 - [Інвентар Markdown](DOCUMENTATION_AUDIT.md) веде до датованих Phase, INT, FIX, L10N і QA-звітів. [CURRENT_STATE](codex/verified/CURRENT_STATE.md) зберігає ранній handoff, [TEST_MATRIX](codex/verified/TEST_MATRIX.md) — історичні перевірки. Назва каталогу `verified` успадкована. Scope кожного PASS, NO-GO та дозволу визначає відповідний датований доказ.
