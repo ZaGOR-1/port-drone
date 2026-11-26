@@ -136,3 +136,5 @@ MAINT-06 перевірив 4 676 унікальних SHA256 у 68 кореня
 | --- | --- | --- | --- | --- | --- |
 | R28 | NO-GO на feasibility | COMPLETE у scope feasibility | `047c474` | [Звіт](../r28/R28_RESULTS.md) | `archive/R28/SHA256SUMS` |
 | R29 | NO-GO на feasibility | COMPLETE у scope feasibility | `047c474` | [Звіт](../r29/R29_RESULTS.md) | `archive/R29/SHA256SUMS` |
+
+[Точні діагностичні PCK обох досліджень](../r29/R29_RESULTS.md#точні-діагностичні-pck) збережено в `archive/R28-R29-PCK/`.

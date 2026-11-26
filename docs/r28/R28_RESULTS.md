@@ -1,6 +1,6 @@
 # R28 · Прямий обхід ordered acquisition buckets
 
-**NO-GO на feasibility gate.** База `047c474e9058b819a45b0fc8f705d00cfd45c95c`, DroneFlames 0.36.11. Кандидат мав прибрати копіювання посилань у `_tmp_near` зі збереженням R19. Оціночна економія всього scratch copy path — **0,213 мс/тік** у dense D5000. Поріг переходу до PoC становив **0,25 мс/тік і 3% acquire CPU**. Runtime PoC не створювався.
+**NO-GO на feasibility gate.** База `047c474e9058b819a45b0fc8f705d00cfd45c95c`, DroneFlames 0.36.11. Кандидат мав прибрати копіювання посилань у `_tmp_near` зі збереженням R19. Оціночна економія всього scratch copy path — **0,213 мс/тік** у dense D5000. [Поріг переходу до PoC](FEASIBILITY_GATE.md), зафіксований до вимірювань у `archive/R28/feasibility.md`, становив **0,25 мс/тік і 3% acquire CPU**. Runtime PoC не створювався.
 
 ## Семантика baseline
 
@@ -24,7 +24,7 @@
 
 - **PASS на baseline.** R19 fixture 24/24, включно з порядком, нічиїми, дублікатами, alive, власністю, зміною war set, grid revision, guard/grey zone і серіалізацією ревізій. Окремий callback fixture PASS. Два baseline NetHash вище ідентифікують workload. Differential RNG, NetHash, restore, host/peer і post-GO regression suites — **NOT RUN**, бо runtime-кандидата немає. Логи editor fixture містять відсутні Linux debug-модулі та відому teardown діагностику. Fixture не використовує Steam або WebRTC.
 - **PASS build identity і scope.** Версія 0.36.11. Ігрове дерево і контракти PROTO, SIM_REV та Save.FORMAT збігаються з `047c474`.
-- Постійний handoff — `~/projects/droneflames-archive/R28/`. У ньому є критерій до замірів, сирі JSON/логи, harness, fixture, SHA256 і скрипти відтворення. Маніфест `SHA256SUMS` має SHA256 `467bb4830f268dd0f30884e70fdb3d841e672fe5a9ee56baeb9a93d1eb687787`. Існуючий Linux QA пакет INT-12 і Godot 4.7.2 прив’язано до SHA256. **PASS незалежного відновлення.** З базового checkout і запакованого runtime у свіжому каталозі відтворено точні SHA256 PCK і executable, R19 24/24 та callback ID 9 → ID 3.
+- Постійний handoff — `~/projects/droneflames-archive/R28/`. У ньому є критерій до замірів, сирі JSON/логи, harness, fixture, SHA256 і скрипти відтворення. Маніфест `SHA256SUMS` має SHA256 `467bb4830f268dd0f30884e70fdb3d841e672fe5a9ee56baeb9a93d1eb687787`. Існуючий Linux QA пакет INT-12 і Godot 4.7.2 прив’язано до SHA256. **PASS незалежного відновлення.** З базового checkout і запакованого runtime у свіжому каталозі відтворено точні SHA256 PCK і executable, R19 24/24 та callback ID 9 → ID 3. Для точного PCK є [спільний handoff R28–R29](../r29/R29_RESULTS.md#точні-діагностичні-pck).
 
 ```bash
 archive="$HOME/projects/droneflames-archive/R28"

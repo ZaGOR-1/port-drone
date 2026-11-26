@@ -60,4 +60,15 @@ python3 "$archive/summarize.py" "$archive/repeat"
 bash "$archive/reproduce.sh" /path/to/047c474-checkout
 ```
 
+### Точні діагностичні PCK
+
+У незалежному клоні з `047c474` відновлено однакові шляхи й байти ресурсів у чотирьох діагностичних PCK. SHA256 повторно запакованих PCK відрізняються через порядок записів `DirAccess` у пакувальнику. Для відновлення з історичним SHA256 використовуй збережені пакети в `~/projects/droneflames-archive/R28-R29-PCK/`. SHA256 маніфесту — `f57e48c817630b9bbf7959e71e68c819b000a86e566ea8045d8b64f1adcffc08`.
+
+```bash
+pck_archive="$HOME/projects/droneflames-archive/R28-R29-PCK"
+(cd "$pck_archive" && sha256sum -c SHA256SUMS)
+```
+
+Маніфест звірено з R28 `raw/builds.sha256` і R29 `repeat/build-*.sha256`. Linux QA runtime INT-12 і Godot 4.7.2 беруться з постійного toolchain за шляхами в `reproduce.sh`. Обидва handoff містять `runtime-digests.txt` для перевірки цих файлів.
+
 **Рішення.** Залишити поточні прямі читання і чинні кеші. Повертатися до кешування клітин лише за свіжого доказу, що повторюється дорога перевірка і існує вузька межа з підтвердженою інвалідацією.
