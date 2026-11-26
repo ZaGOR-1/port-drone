@@ -89,18 +89,33 @@ static var _last_gt: float = -1.0
 
 
 static func has_save() -> bool:
-	return SaveSlots.continue_slot() > 0
+	return not _continue_candidate().is_empty()
 
 
 
 
 static func save_info() -> Dictionary:
-	var cs: int = SaveSlots.continue_slot()
-	if cs <= 0:
+	var pack := _continue_candidate()
+	if pack.is_empty():
 		return {}
-	var hh: Dictionary = (SaveSlots.info(cs)["head"] as Dictionary).duplicate()
-	hh["slot"] = cs
+	var hh: Dictionary = (pack["header"] as Dictionary).duplicate()
+	hh["slot"] = pack["slot"]
 	return hh
+
+
+static func _continue_candidate() -> Dictionary:
+	var best: Dictionary = {}
+	var newest := -1.0
+	for n: int in range(1, SaveSlots.N + 1):
+		var pack := _slot_candidate(n, "", true)
+		if pack.is_empty():
+			continue
+		var stamp: float = SaveSlots.stamp(pack["header"])
+		if stamp > newest:
+			newest = stamp
+			best = pack
+			best["slot"] = n
+	return best
 
 
 
@@ -242,10 +257,15 @@ static func load_game(m: Node) -> bool:
 	_wait()
 	var w: Array = want
 	want = []
-	var n: int = int(w[0]) if w.size() >= 2 else SaveSlots.continue_slot()
-	if n <= 0:
+	if w.size() >= 2:
+		return int(w[0]) > 0 and await load_slot(m, int(w[0]), String(w[1]))
+	if _loading:
 		return false
-	return await load_slot(m, n, String(w[1]) if w.size() >= 2 else "")
+	SaveSlots.migrate()
+	var pack := _continue_candidate()
+	if pack.is_empty():
+		return false
+	return await _restore_slot(m, pack["slot"], pack)
 
 
 
@@ -254,17 +274,25 @@ static func load_slot(m: Node, n: int, key: String = "") -> bool:
 	if _loading:
 		return false
 	_wait()
-	var pack: Dictionary = {}
-	for p: String in SaveSlots.load_order(n, key):
-		var r: Dictionary = _read(p)
-		if not r.is_empty() and _sound(r["body"]):
-			pack = r
-			break
-		if FileAccess.file_exists(p):
-			push_warning("[Save] %s is damaged, trying the next copy" % p)
+	SaveSlots.migrate()
+	var pack := _slot_candidate(n, key)
 	if pack.is_empty():
 		SaveSlots.set_flag(n, "bad", true)
 		return false
+	return await _restore_slot(m, n, pack)
+
+
+static func _slot_candidate(n: int, key: String, continuing: bool = false) -> Dictionary:
+	for p: String in SaveSlots.load_order(n, key, continuing):
+		var r: Dictionary = _read(p)
+		if not r.is_empty() and _sound(r["body"]):
+			return r
+		if not continuing and FileAccess.file_exists(p):
+			push_warning("[Save] %s is damaged, trying the next copy" % p)
+	return {}
+
+
+static func _restore_slot(m: Node, n: int, pack: Dictionary) -> bool:
 	use_slot(n)
 	pick = 0
 	_fresh = false

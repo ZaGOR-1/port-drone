@@ -75,6 +75,10 @@ static func _sig(n: int) -> String:
 
 static func meta(n: int) -> Dictionary:
 	migrate()
+	return _read_meta(n)
+
+
+static func _read_meta(n: int) -> Dictionary:
 	var sig: String = _sig(n)
 	var c: Variant = _meta_c.get(n)
 	if c is Array and String((c as Array)[0]) == sig:
@@ -172,21 +176,6 @@ static func all() -> Array:
 
 
 
-static func continue_slot() -> int:
-	var best: int = -1
-	var bd: float = -1.0
-	for n in range(1, N + 1):
-		var i: Dictionary = info(n)
-		if i["state"] != "ok":
-			continue
-		var d: float = stamp(i["head"])
-		if d > bd:
-			bd = d
-			best = n
-	return best
-
-
-
 static func default_pick() -> int:
 	var old: int = 1
 	var od: float = INF
@@ -214,8 +203,11 @@ static func next_seq(n: int) -> int:
 
 
 
-static func load_order(n: int, first: String = "") -> Array:
-	var files: Dictionary = meta(n)["files"]
+static func load_order(n: int, first: String = "", continuing: bool = false) -> Array:
+	var m := _read_meta(n)
+	if continuing and int(m.get("end", END_NONE)) != END_NONE:
+		return []
+	var files: Dictionary = m["files"]
 	var ks: Array = files.keys()
 	ks.sort_custom(func(a: String, b: String) -> bool:
 		if a == "bak" or b == "bak":

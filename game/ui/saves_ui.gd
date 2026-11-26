@@ -279,7 +279,7 @@ static func _main_node(mn: Menus) -> Node:
 
 
 
-static func main_strip(mn: Menus, col: VBoxContainer, has_save: bool) -> void:
+static func main_strip(mn: Menus, col: VBoxContainer, si: Dictionary) -> void:
 	sel = -1
 	open_n = -1
 	del_n = -1
@@ -289,7 +289,6 @@ static func main_strip(mn: Menus, col: VBoxContainer, has_save: bool) -> void:
 			used += 1
 	if used == 0:
 		return
-	var si: Dictionary = Save.save_info() if has_save else {}
 	var b: = Button.new()
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(0, 44)
@@ -325,10 +324,11 @@ static func main_strip(mn: Menus, col: VBoxContainer, has_save: bool) -> void:
 static func build(mn: Menus, vb: VBoxContainer, from_pause: bool) -> void:
 	vb.add_theme_constant_override("separation", 6)
 	var live: int = Save.slot if from_pause and not GameConfig.no_save else -1
-	var cont: int = SS.continue_slot()
+	var slots: Array = SS.all()
+	var cont: int = -1 if from_pause else int(Save.save_info().get("slot", -1))
 	var hint: String = Loc.t("Текущая партия сохранится перед загрузкой другой.") if from_pause else Loc.t("Сохраняется само: каждую минуту и при выходе.")
 	mn._label(vb, hint, 10, UiKit.MUTED)
-	for i: Dictionary in SS.all():
+	for i: Dictionary in slots:
 		var n: int = int(i["n"])
 		if i["state"] == "empty":
 			_empty_card(mn, vb, n, from_pause)
