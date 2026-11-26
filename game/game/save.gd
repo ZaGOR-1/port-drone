@@ -73,7 +73,7 @@ static var dropped: Dictionary = {}
 static var last: Dictionary = {}
 static var _task: int = -1
 static var _write_ok: bool = true
-static var _info_c: Dictionary = {}
+static var _continue_checks: Dictionary = {}  # slot path -> validated compressed body and raw length identity
 static var _auto_t: float = 0.0
 
 static var slot: int = 1
@@ -89,13 +89,13 @@ static var _last_gt: float = -1.0
 
 
 static func has_save() -> bool:
-	return not _continue_candidate().is_empty()
+	return not _continue_candidate(true).is_empty()
 
 
 
 
 static func save_info() -> Dictionary:
-	var pack := _continue_candidate()
+	var pack := _continue_candidate(true)
 	if pack.is_empty():
 		return {}
 	var hh: Dictionary = (pack["header"] as Dictionary).duplicate()
@@ -103,11 +103,11 @@ static func save_info() -> Dictionary:
 	return hh
 
 
-static func _continue_candidate() -> Dictionary:
+static func _continue_candidate(header_only: bool = false) -> Dictionary:
 	var best: Dictionary = {}
 	var newest := -1.0
 	for n: int in range(1, SaveSlots.N + 1):
-		var pack := _slot_candidate(n, "", true)
+		var pack := _slot_candidate(n, "", true, header_only)
 		if pack.is_empty():
 			continue
 		var stamp: float = SaveSlots.stamp(pack["header"])
@@ -123,7 +123,7 @@ static func _continue_candidate() -> Dictionary:
 static func delete_save() -> void:
 	_wait()
 	SaveSlots.delete(slot)
-	_info_c.clear()
+	_continue_checks.clear()
 
 
 
@@ -261,8 +261,10 @@ static func load_game(m: Node) -> bool:
 		return int(w[0]) > 0 and await load_slot(m, int(w[0]), String(w[1]))
 	if _loading:
 		return false
-	SaveSlots.migrate()
 	var pack := _continue_candidate()
+	if pack.is_empty() and not SaveSlots._migrated:
+		SaveSlots.migrate()
+		pack = _continue_candidate()
 	if pack.is_empty():
 		return false
 	return await _restore_slot(m, pack["slot"], pack)
@@ -274,18 +276,20 @@ static func load_slot(m: Node, n: int, key: String = "") -> bool:
 	if _loading:
 		return false
 	_wait()
-	SaveSlots.migrate()
 	var pack := _slot_candidate(n, key)
+	if pack.is_empty() and not SaveSlots._migrated:
+		SaveSlots.migrate()
+		pack = _slot_candidate(n, key)
 	if pack.is_empty():
 		SaveSlots.set_flag(n, "bad", true)
 		return false
 	return await _restore_slot(m, n, pack)
 
 
-static func _slot_candidate(n: int, key: String, continuing: bool = false) -> Dictionary:
+static func _slot_candidate(n: int, key: String, continuing: bool = false, header_only: bool = false) -> Dictionary:
 	for p: String in SaveSlots.load_order(n, key, continuing):
-		var r: Dictionary = _read(p)
-		if not r.is_empty() and _sound(r["body"]):
+		var r := _validated_save(p, header_only)
+		if not r.is_empty():
 			return r
 		if not continuing and FileAccess.file_exists(p):
 			push_warning("[Save] %s is damaged, trying the next copy" % p)
@@ -1117,7 +1121,31 @@ static func _sound(body: Dictionary) -> bool:
 
 
 static func _read(path: String) -> Dictionary:
-	var r: Dictionary = _open(path)
+	return _decode_save(path, _open(path))
+
+
+static func _validated_save(path: String, header_only: bool) -> Dictionary:
+	var opened := _open(path)
+	if opened.is_empty():
+		return {}
+	var signature: Array = []
+	if header_only:
+		var hash := HashingContext.new()
+		hash.start(HashingContext.HASH_SHA256)
+		hash.update(opened["comp"])
+		signature = [opened["raw_n"], hash.finish()]
+		if _continue_checks.get(path) == signature:
+			return {"header": opened["header"]}
+	var pack := _decode_save(path, opened)
+	if pack.is_empty() or not _sound(pack["body"]):
+		return {}
+	if header_only:
+		_continue_checks[path] = signature
+		return {"header": opened["header"]}
+	return pack
+
+
+static func _decode_save(path: String, r: Dictionary) -> Dictionary:
 	if r.is_empty():
 		return {}
 	var raw_n: int = r["raw_n"]

@@ -219,10 +219,29 @@ func _matrix(main: MainScript) -> void:
 	_check(_write(Slots.path(1, "main"), recent), "replaced selected file before Continue")
 	await _continue(main, "fresh read after file replacement", 77)
 
+	_place({"main": recent, "bak": old})
+	_available("prime validation with readable primary", 77)
+	var corrupted := recent.duplicate()
+	corrupted[-1] ^= 1
+	_check(_write(Slots.path(1, "main"), corrupted)
+		and FileAccess.get_size(Slots.path(1, "main")) == recent.size(), "same-length corruption after validation")
+	_available("same-length corruption invalidates availability", 42)
+	await _continue(main, "same-length corruption falls back at load", 42)
+
 	_place({})
 	_place({}, 2)
 	_available("all absent", -1)
 	await _continue(main, "all absent", -1)
+	Slots._migrated = false
+	_place({"tmp": recent})
+	_check(_write(LEGACY, old), "placed both a recoverable temp and legacy save")
+	var coexist := _files()
+	main.menus.show_main()
+	_check(_files() == coexist, "menu preserves recoverable temp when legacy exists")
+	await _continue(main, "Continue prefers the current slot before legacy preparation", 77)
+	_check(FileAccess.get_sha256(Slots.path(1, "tmp")) == coexist.get(Slots.path(1, "tmp"))
+		and FileAccess.get_sha256(LEGACY) == coexist.get(LEGACY), "loading preserves temp and legacy file contents")
+	_place({})
 	# The legacy mechanism is separate from the read-only probe and still runs at menu entry.
 	Slots._migrated = false
 	_check(_write(LEGACY, old), "placed a legacy save before showing the menu")

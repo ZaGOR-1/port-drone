@@ -74,11 +74,6 @@ static func _sig(n: int) -> String:
 
 
 static func meta(n: int) -> Dictionary:
-	migrate()
-	return _read_meta(n)
-
-
-static func _read_meta(n: int) -> Dictionary:
 	var sig: String = _sig(n)
 	var c: Variant = _meta_c.get(n)
 	if c is Array and String((c as Array)[0]) == sig:
@@ -204,7 +199,7 @@ static func next_seq(n: int) -> int:
 
 
 static func load_order(n: int, first: String = "", continuing: bool = false) -> Array:
-	var m := _read_meta(n)
+	var m := meta(n)
 	if continuing and int(m.get("end", END_NONE)) != END_NONE:
 		return []
 	var files: Dictionary = m["files"]

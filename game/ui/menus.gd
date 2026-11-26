@@ -966,8 +966,10 @@ func show_main() -> void:
 
 	var items: Array = [["ИГРАТЬ", "green", "setup", 58.0, "mi_play"], ["МУЛЬТИПЛЕЕР", "gold", "mp", 48.0, "mi_mp"],
 		[["ОБУЧЕНИЕ", "stone", "tutorial", 48.0, "mi_tutorial"], ["ХРОНИКИ", "stone", "chronicles", 48.0, "icon_chronicle"], ["НАСТРОЙКИ", "stone", "settings_main", 48.0, "mi_settings"]]]
-	Save.SaveSlots.migrate()
 	var save_info := Save.save_info()
+	if save_info.is_empty() and not Save.SaveSlots._migrated:
+		Save.SaveSlots.migrate()
+		save_info = Save.save_info()
 	if not save_info.is_empty():
 
 
