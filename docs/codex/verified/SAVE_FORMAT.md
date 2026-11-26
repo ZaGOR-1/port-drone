@@ -5,6 +5,7 @@
 [Save](../../../game/game/save.gd) веде `FORMAT=1`, snapshot graph і restore, [SaveSlots](../../../game/game/save_slots.gd) — дискові слоти. Optional `sys.diplo.land_cooldowns` та `sys.hold.far_fail` за відсутності дають порожні значення. Legacy save перевіряй на копії. Сумісність downgrade не гарантовано.
 
 - Autosave кодує graph на main і відокремлює header/body/thumbnail через `duplicate(true)` до запуску worker. Navy відновлює потрібний стан без незбережених TTL caches. Repeated restore має очистити stale state.
+- SP Continue і штатний loader використовують спільний preflight та порядок за актуальними заголовками. У незавершеному слоті перевіряються звичайні копії за seq/date, потім `.bak` і `.tmp`. У браузері слот з одним придатним `.tmp` зайнятий і доступний для ручного завантаження. Перевірка доступності лише читає файли, після кліку вибір виконується заново. [FIX-STABILITY-02B](../../fix-stability-02/INTEGRATION_READINESS.md)
 - `Save._net_body` перевіряє variant wrapper, довжини, межі, формат і форми обов’язкових полів та посилань до staged load. `Save.net_restore` готує заморожений world. `NetSession` комітить час, turn і запуск після перевіреної підготовки. [Мережевий контракт](MULTIPLAYER_PROTOCOL.md#поточний-контракт)
 - Використовуй [save/restore fixtures](../../DEVELOPMENT_WORKFLOW.md#перевірки-за-scope). Відмова у fixture підтверджує лише відповідний шлях. Дискова стійкість за crash/power-loss потребує окремих доказів. Фізичне приймання прив’язуй до [точного Windows комплекту](../../WINDOWS_QA.md#перевірки).
 

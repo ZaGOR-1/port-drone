@@ -73,7 +73,7 @@ static var dropped: Dictionary = {}
 static var last: Dictionary = {}
 static var _task: int = -1
 static var _write_ok: bool = true
-static var _info_c: Dictionary = {}
+static var _continue_checks: Dictionary = {}  # slot path -> validated compressed body and raw length identity
 static var _auto_t: float = 0.0
 
 static var slot: int = 1
@@ -89,18 +89,47 @@ static var _last_gt: float = -1.0
 
 
 static func has_save() -> bool:
-	return SaveSlots.continue_slot() > 0
+	return not _continue_candidate(true).is_empty()
 
 
 
 
 static func save_info() -> Dictionary:
-	var cs: int = SaveSlots.continue_slot()
-	if cs <= 0:
+	var pack := _continue_candidate(true)
+	if pack.is_empty():
 		return {}
-	var hh: Dictionary = (SaveSlots.info(cs)["head"] as Dictionary).duplicate()
-	hh["slot"] = cs
+	var hh: Dictionary = (pack["header"] as Dictionary).duplicate()
+	hh["slot"] = pack["slot"]
 	return hh
+
+
+static func _continue_candidate(header_only: bool = false) -> Dictionary:
+	var slots: Array[Dictionary] = []
+	for n: int in range(1, SaveSlots.N + 1):
+		var paths := SaveSlots.load_order(n, "", true)
+		var upper_stamp := -1.0
+		# The first valid copy in this slot need not have the newest timestamp.
+		for header: Dictionary in paths.values():
+			if not header.is_empty():
+				upper_stamp = maxf(upper_stamp, SaveSlots.stamp(header))
+		if upper_stamp > -1.0:
+			slots.append({"slot": n, "paths": paths, "upper_stamp": upper_stamp})
+	slots.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["upper_stamp"] > b["upper_stamp"])
+	var best: Dictionary = {}
+	var newest := -1.0
+	for entry: Dictionary in slots:
+		if entry["upper_stamp"] < newest:
+			break
+		var pack := _slot_candidate(entry["paths"], header_only)
+		if pack.is_empty():
+			continue
+		var stamp: float = SaveSlots.stamp(pack["header"])
+		var n: int = entry["slot"]
+		if stamp > newest or (stamp == newest and n < int(best.get("slot", 0))):
+			newest = stamp
+			best = pack
+			best["slot"] = n
+	return best
 
 
 
@@ -108,7 +137,7 @@ static func save_info() -> Dictionary:
 static func delete_save() -> void:
 	_wait()
 	SaveSlots.delete(slot)
-	_info_c.clear()
+	_continue_checks.clear()
 
 
 
@@ -242,10 +271,17 @@ static func load_game(m: Node) -> bool:
 	_wait()
 	var w: Array = want
 	want = []
-	var n: int = int(w[0]) if w.size() >= 2 else SaveSlots.continue_slot()
-	if n <= 0:
+	if w.size() >= 2:
+		return int(w[0]) > 0 and await load_slot(m, int(w[0]), String(w[1]))
+	if _loading:
 		return false
-	return await load_slot(m, n, String(w[1]) if w.size() >= 2 else "")
+	var pack := _continue_candidate()
+	if pack.is_empty() and not SaveSlots._migrated:
+		SaveSlots.migrate()
+		pack = _continue_candidate()
+	if pack.is_empty():
+		return false
+	return await _restore_slot(m, pack["slot"], pack)
 
 
 
@@ -254,17 +290,27 @@ static func load_slot(m: Node, n: int, key: String = "") -> bool:
 	if _loading:
 		return false
 	_wait()
-	var pack: Dictionary = {}
-	for p: String in SaveSlots.load_order(n, key):
-		var r: Dictionary = _read(p)
-		if not r.is_empty() and _sound(r["body"]):
-			pack = r
-			break
-		if FileAccess.file_exists(p):
-			push_warning("[Save] %s is damaged, trying the next copy" % p)
+	var pack := _slot_candidate(SaveSlots.load_order(n, key), false, true)
+	if pack.is_empty() and not SaveSlots._migrated:
+		SaveSlots.migrate()
+		pack = _slot_candidate(SaveSlots.load_order(n, key), false, true)
 	if pack.is_empty():
 		SaveSlots.set_flag(n, "bad", true)
 		return false
+	return await _restore_slot(m, n, pack)
+
+
+static func _slot_candidate(paths: Dictionary, header_only: bool, report_damage: bool = false) -> Dictionary:
+	for p: String in paths:
+		var r := _validated_save(p, header_only)
+		if not r.is_empty():
+			return r
+		if report_damage and FileAccess.file_exists(p):
+			push_warning("[Save] %s is damaged, trying the next copy" % p)
+	return {}
+
+
+static func _restore_slot(m: Node, n: int, pack: Dictionary) -> bool:
 	use_slot(n)
 	pick = 0
 	_fresh = false
@@ -1089,7 +1135,31 @@ static func _sound(body: Dictionary) -> bool:
 
 
 static func _read(path: String) -> Dictionary:
-	var r: Dictionary = _open(path)
+	return _decode_save(path, _open(path))
+
+
+static func _validated_save(path: String, header_only: bool) -> Dictionary:
+	var opened := _open(path)
+	if opened.is_empty():
+		return {}
+	var signature: Array = []
+	if header_only:
+		var hash := HashingContext.new()
+		hash.start(HashingContext.HASH_SHA256)
+		hash.update(opened["comp"])
+		signature = [opened["raw_n"], hash.finish()]
+		if _continue_checks.get(path) == signature:
+			return {"header": opened["header"]}
+	var pack := _decode_save(path, opened)
+	if pack.is_empty() or not _sound(pack["body"]):
+		return {}
+	if header_only:
+		_continue_checks[path] = signature
+		return {"header": opened["header"]}
+	return pack
+
+
+static func _decode_save(path: String, r: Dictionary) -> Dictionary:
 	if r.is_empty():
 		return {}
 	var raw_n: int = r["raw_n"]

@@ -17,6 +17,7 @@
 | Ресурси, HUD і масштаб | [Resources and UI](codex/verified/RESOURCES_AND_UI.md) |
 | Lockstep, identity, transports | [Multiplayer Protocol](codex/verified/MULTIPLAYER_PROTOCOL.md) |
 | Формат save й restore | [Save Format](codex/verified/SAVE_FORMAT.md) |
+| Відновлення SP Continue з резервних копій | [FIX-STABILITY-02](fix-stability-02/FIX_STABILITY_02_RESULTS.md) · [Integration readiness](fix-stability-02/INTEGRATION_READINESS.md) · [Windows QA](fix-stability-02/WINDOWS_QA_HANDOFF.md) |
 | Офіційна Windows збірка та CI | [Build and Release](codex/verified/BUILD_RELEASE.md) |
 | QA, SFX, MinGW і native diagnostics | [Windows QA](WINDOWS_QA.md) · [Фізичний two-peer сценарій](codex/verified/WINDOWS_TWO_PEER_QA_PLAN.md) |
 | Локалізація | [Loc, PO і fallback](LOCALIZATION_AUDIT.md) · [Глосарій](LOCALIZATION_GLOSSARY.md) · [Тести й ручний QA](LOCALIZATION_TESTS.md) |

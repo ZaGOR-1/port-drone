@@ -66,7 +66,7 @@ static func peek(p: String) -> Dictionary:
 
 static func _sig(n: int) -> String:
 	var s: String = ""
-	for k: String in FILES + ["meta"]:
+	for k: String in FILES + ["tmp", "meta"]:
 		var p: String = path(n, k)
 		s += "%d," % (FileAccess.get_modified_time(p) if FileAccess.file_exists(p) else 0)
 	return s + str(_gen)
@@ -74,7 +74,6 @@ static func _sig(n: int) -> String:
 
 
 static func meta(n: int) -> Dictionary:
-	migrate()
 	var sig: String = _sig(n)
 	var c: Variant = _meta_c.get(n)
 	if c is Array and String((c as Array)[0]) == sig:
@@ -109,7 +108,7 @@ static func meta(n: int) -> Dictionary:
 		else:
 			files[k] = h
 		fixed = true
-	if fixed and files.is_empty():
+	if fixed and files.is_empty() and not FileAccess.file_exists(path(n, "tmp")):
 		m["end"] = END_NONE
 		m["bad"] = false
 	_meta_c[n] = [sig, m]
@@ -157,11 +156,20 @@ static func _order(h: Dictionary) -> float:
 static func info(n: int) -> Dictionary:
 	var m: Dictionary = meta(n)
 	var r: Array = rows(n)
+	var end: int = int(m.get("end", END_NONE))
 	var st: String = "empty"
 	var files: Dictionary = m["files"]
 	if not files.is_empty():
-		st = "bad" if r.is_empty() or bool(m.get("bad", false)) else ("ended" if int(m.get("end", 0)) != END_NONE else "ok")
-	return {"n": n, "state": st, "head": (r[0] as Dictionary)["h"] if not r.is_empty() else {}, "rows": r, "end": int(m.get("end", 0))}
+		st = "bad" if r.is_empty() or bool(m.get("bad", false)) else ("ended" if end != END_NONE else "ok")
+	else:
+		var tmp := path(n, "tmp")
+		if FileAccess.file_exists(tmp):
+			var pack := Save._validated_save(tmp, true)
+			st = "bad"
+			if not pack.is_empty():
+				r.append({"key": "tmp", "h": pack["header"]})
+				st = "ended" if end != END_NONE else "ok"
+	return {"n": n, "state": st, "head": (r[0] as Dictionary)["h"] if not r.is_empty() else {}, "rows": r, "end": end}
 
 
 static func all() -> Array:
@@ -169,21 +177,6 @@ static func all() -> Array:
 	for n in range(1, N + 1):
 		out.append(info(n))
 	return out
-
-
-
-static func continue_slot() -> int:
-	var best: int = -1
-	var bd: float = -1.0
-	for n in range(1, N + 1):
-		var i: Dictionary = info(n)
-		if i["state"] != "ok":
-			continue
-		var d: float = stamp(i["head"])
-		if d > bd:
-			bd = d
-			best = n
-	return best
 
 
 
@@ -214,20 +207,30 @@ static func next_seq(n: int) -> int:
 
 
 
-static func load_order(n: int, first: String = "") -> Array:
-	var files: Dictionary = meta(n)["files"]
+static func load_order(n: int, first: String = "", continuing: bool = false) -> Dictionary:
+	if continuing and int(meta(n).get("end", END_NONE)) != END_NONE:
+		return {}
+	# The slot index can retain old headers after external replacement within one mtime tick.
+	var files: Dictionary = {}
+	for k: String in FILES:
+		var p := path(n, k)
+		if FileAccess.file_exists(p):
+			files[k] = peek(p)
 	var ks: Array = files.keys()
 	ks.sort_custom(func(a: String, b: String) -> bool:
 		if a == "bak" or b == "bak":
 			return b == "bak" and a != "bak"
 		return _order(files[a]) > _order(files[b]))
-	if first != "" and ks.has(first):
+	var tmp := path(n, "tmp")
+	if FileAccess.file_exists(tmp):
+		files["tmp"] = peek(tmp)
+		ks.append("tmp")
+	if ks.has(first):
 		ks.erase(first)
 		ks.push_front(first)
-	var out: Array = []
+	var out: Dictionary = {}
 	for k: String in ks:
-		out.append(path(n, k))
-	out.append(path(n, "tmp"))
+		out[path(n, k)] = files[k]
 	return out
 
 

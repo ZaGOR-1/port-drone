@@ -966,8 +966,11 @@ func show_main() -> void:
 
 	var items: Array = [["ИГРАТЬ", "green", "setup", 58.0, "mi_play"], ["МУЛЬТИПЛЕЕР", "gold", "mp", 48.0, "mi_mp"],
 		[["ОБУЧЕНИЕ", "stone", "tutorial", 48.0, "mi_tutorial"], ["ХРОНИКИ", "stone", "chronicles", 48.0, "icon_chronicle"], ["НАСТРОЙКИ", "stone", "settings_main", 48.0, "mi_settings"]]]
-	var has_save: bool = Save.has_save()
-	if has_save:
+	var save_info := Save.save_info()
+	if save_info.is_empty() and not Save.SaveSlots._migrated:
+		Save.SaveSlots.migrate()
+		save_info = Save.save_info()
+	if not save_info.is_empty():
 
 
 		items = [["ПРОДОЛЖИТЬ", "green", "load_save", 58.0, "mi_continue"],
@@ -1016,7 +1019,7 @@ func show_main() -> void:
 				bb.add_theme_font_size_override("font_size", 20)
 			b = bb
 		if i2 == 0:
-			SavesUI.main_strip(self, col, has_save)
+			SavesUI.main_strip(self, col, save_info)
 		b.modulate.a = 0.0
 		var tw: Tween = b.create_tween()
 		tw.tween_interval(0.08 * float(i2) + 0.1)
