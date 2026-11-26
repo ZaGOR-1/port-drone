@@ -104,14 +104,29 @@ static func save_info() -> Dictionary:
 
 
 static func _continue_candidate(header_only: bool = false) -> Dictionary:
+	var slots: Array[Dictionary] = []
+	for n: int in range(1, SaveSlots.N + 1):
+		var paths := SaveSlots.load_order(n, "", true)
+		var upper_stamp := -1.0
+		# The first valid copy in this slot need not have the newest timestamp.
+		for path: String in paths:
+			var header := SaveSlots.peek(path)
+			if not header.is_empty():
+				upper_stamp = maxf(upper_stamp, SaveSlots.stamp(header))
+		if upper_stamp > -1.0:
+			slots.append({"slot": n, "paths": paths, "upper_stamp": upper_stamp})
+	slots.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["upper_stamp"] > b["upper_stamp"])
 	var best: Dictionary = {}
 	var newest := -1.0
-	for n: int in range(1, SaveSlots.N + 1):
-		var pack := _slot_candidate(n, "", true, header_only)
+	for entry: Dictionary in slots:
+		if entry["upper_stamp"] < newest:
+			break
+		var pack := _slot_candidate(entry["paths"], header_only)
 		if pack.is_empty():
 			continue
 		var stamp: float = SaveSlots.stamp(pack["header"])
-		if stamp > newest:
+		var n: int = entry["slot"]
+		if stamp > newest or (stamp == newest and n < int(best.get("slot", 0))):
 			newest = stamp
 			best = pack
 			best["slot"] = n
@@ -276,22 +291,22 @@ static func load_slot(m: Node, n: int, key: String = "") -> bool:
 	if _loading:
 		return false
 	_wait()
-	var pack := _slot_candidate(n, key)
+	var pack := _slot_candidate(SaveSlots.load_order(n, key), false, true)
 	if pack.is_empty() and not SaveSlots._migrated:
 		SaveSlots.migrate()
-		pack = _slot_candidate(n, key)
+		pack = _slot_candidate(SaveSlots.load_order(n, key), false, true)
 	if pack.is_empty():
 		SaveSlots.set_flag(n, "bad", true)
 		return false
 	return await _restore_slot(m, n, pack)
 
 
-static func _slot_candidate(n: int, key: String, continuing: bool = false, header_only: bool = false) -> Dictionary:
-	for p: String in SaveSlots.load_order(n, key, continuing):
+static func _slot_candidate(paths: Array, header_only: bool, report_damage: bool = false) -> Dictionary:
+	for p: String in paths:
 		var r := _validated_save(p, header_only)
 		if not r.is_empty():
 			return r
-		if not continuing and FileAccess.file_exists(p):
+		if report_damage and FileAccess.file_exists(p):
 			push_warning("[Save] %s is damaged, trying the next copy" % p)
 	return {}
 
