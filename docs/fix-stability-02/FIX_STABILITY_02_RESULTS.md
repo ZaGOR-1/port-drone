@@ -2,6 +2,8 @@
 
 2026-11-26. **Локальний PASS.** Baseline `beta f15224268ae6f4be06b5372ff5b7c99d5635793b`, версія `0.36.11`. Код і постійний fixture у `ffff868beb044b766189523a835f53340d048bca`, дерево `game/` `9f152d73985419d84799e993d0ca6d71d12610c3`. Джерело ST01-02 — `research/stability-01` `1f438977dcf04e28cea5dbbdb6a48134395010cd`. Канонічний звіт STABILITY-01 переносить PR #27. [PR #27](https://github.com/ZaGOR-1/port-drone/pull/27) · [Постійне збереження доказів](../DEVELOPMENT_WORKFLOW.md#постійне-збереження-доказів)
 
+Актуальний кандидат, цільовий review, час меню і суміщені gates описано в [FIX-STABILITY-02B](INTEGRATION_READINESS.md).
+
 ## Першопричина і виправлення
 
 Індекс слота не враховував `.tmp` і міг приховати `.bak` за наявності запису про пошкоджений primary. Той самий індекс дозволяв показати Continue для заголовка несумісного або обрізаного файла. Збережені fixtures STABILITY-01 відтворили обидва первинні дефекти. Continue повернув false, а прямий `Save.load_slot` прочитав той самий snapshot з `game_time=42`.

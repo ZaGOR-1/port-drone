@@ -146,3 +146,5 @@ MAINT-06 перевірив 4 676 унікальних SHA256 у 68 кореня
 ## SP Continue recovery
 
 FIX-STABILITY-02 · локальний PASS на baseline `f152242` · [Звіт і відтворення](../fix-stability-02/FIX_STABILITY_02_RESULTS.md) · `archive/FIX-STABILITY-02/SHA256SUMS`.
+
+FIX-STABILITY-02B · GO для Draft PR і фізичного QA на runtime `6ebedf4` · [Review, меню, суміщені gates і відтворення](../fix-stability-02/INTEGRATION_READINESS.md) · `archive/FIX-STABILITY-02B/SHA256SUMS`.
