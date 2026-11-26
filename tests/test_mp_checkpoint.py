@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -50,11 +51,11 @@ class MPCheckpointTests(unittest.TestCase):
                 logs.mkdir(parents=True, exist_ok=True)
                 (logs / "mp-checkpoint-pack.log").write_text(result.stdout + result.stderr)
                 shutil.copyfile(pack, logs / "mp-checkpoint.pck")
-            for case in ("seed", "short-write", "short-tail", "retry", "publish"):
+            for case in ("seed", "short-write", "short-tail", "retry", "review", "publish", "resume"):
                 with self.subTest(case=case):
                     if case in ("short-write", "short-tail") and sys.platform != "linux":
                         self.skipTest("RLIMIT_FSIZE short-write injection is Linux-only")
-                    profile = work / ("retry" if case == "retry" else "transaction")
+                    profile = work / (case if case in ("retry", "resume") else "transaction")
                     for key in ("XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "APPDATA", "LOCALAPPDATA"):
                         directory = profile / key.lower()
                         directory.mkdir(parents=True, exist_ok=True)
@@ -70,6 +71,10 @@ class MPCheckpointTests(unittest.TestCase):
                         checkpoint = next(profile.rglob("net_match.save"), None)
                         self.assertIsNotNone(checkpoint, "legacy checkpoint was not written")
                         command = _limit_write(command, checkpoint.stat().st_size - 1)
+                    if case == "resume":
+                        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                            sock.bind(("127.0.0.1", 0))
+                            command.append(str(sock.getsockname()[1]))
                     result = subprocess.run(
                         command,
                         cwd=work, env=env, capture_output=True, text=True, timeout=120,

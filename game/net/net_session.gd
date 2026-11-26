@@ -1696,7 +1696,7 @@ func save_match(n: int = -1) -> bool:
 		n = exec_turn - 1
 	if n < 0:
 		return false
-	if n == _saved_turn:
+	if n == _saved_turn and _has_checkpoint_at(n):
 		return true  # NET 35 (critic): FOCUS_OUT + PAUSED come together
 	var cfg: Dictionary = {}
 	for k: String in CFG_KEYS:
@@ -1720,6 +1720,11 @@ func save_match(n: int = -1) -> bool:
 	return true
 
 
+func _has_checkpoint_at(n: int) -> bool:
+	var checkpoint := NetConfig.load_match()
+	return checkpoint.get("turn") == n and checkpoint.get("v") == NetConfig.version()
+
+
 ## Host closes the app (window ✕): save, tell the guests «the host left, the match is saved» (they
 ## keep their places: «ВЕРНУТЬСЯ В ПАРТИЮ»), close the room without ending the match.
 func host_exit_saved() -> void:
@@ -1733,7 +1738,7 @@ func host_exit_saved() -> void:
 		return
 	var saved := go and save_match()
 	if not saved and _saved_turn >= 0:
-		saved = NetConfig.load_match().get("turn") == _saved_turn
+		saved = _has_checkpoint_at(_saved_turn)
 	if saved and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
 		_host_gone.rpc()
 		for i in 8:  # the app is closing: give the message ~0.3 s to leave before the link goes (else they only see «lost»)

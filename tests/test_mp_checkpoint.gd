@@ -1,5 +1,5 @@
 extends SceneTree
-## Isolated synthetic profiles. No live account or transport is used.
+## Isolated synthetic profiles. The host loader uses an ephemeral ENet room.
 
 const MainScript = preload("res://game/main.gd")
 const PRIMARY := NetConfig.MATCH_FILE
@@ -20,12 +20,14 @@ func _run() -> void:
 		quit(2)
 		return
 	match mode:
-		"seed", "retry":
+		"seed", "retry", "resume":
 			await _live(mode)
 		"short-write", "short-tail":
 			_short_write()
 		"publish":
 			_publish()
+		"review":
+			_review()
 		_:
 			quit(2)
 			return
@@ -72,8 +74,10 @@ func _live(mode: String) -> void:
 				f.close()
 			_check(NetConfig.load_match() == image and not Save._net_body(snap).is_empty(),
 				"committed legacy checkpoint and snapshot are readable")
-		else:
+		elif mode == "retry":
 			_retry(main)
+		else:
+			await _resume(main, int(OS.get_cmdline_user_args()[1]))
 	main.queue_free()
 	await process_frame
 
@@ -105,6 +109,13 @@ func _retry(main: Node) -> void:
 	net.save_match()
 	_check(not saved_hash.is_empty() and FileAccess.get_sha256(PRIMARY) == saved_hash,
 		"successful saves still deduplicate the same turn")
+	_check(DirAccess.remove_absolute(PRIMARY) == OK and DirAccess.make_dir_absolute(STAGING) == OK,
+		"disk checkpoint removed and retry storage temporarily blocked")
+	for attempt: int in 2:
+		_check(not net.save_match() and NetConfig.load_match().is_empty(),
+			"stale marker cannot hide a failed same-turn repair (attempt %d)" % attempt)
+	_check(DirAccess.remove_absolute(STAGING) == OK and net.save_match() and NetConfig.load_match().get("turn") == 10,
+		"same-turn repair commits after transient failure")
 	net._reset_lockstep()
 	_check(net._saved_turn == -1, "a fresh lockstep session has no saved turn")
 	net.in_match = false
@@ -152,9 +163,10 @@ func _publish() -> void:
 	_check(DirAccess.make_dir_absolute(PRIMARY) == OK and _write_text(PRIMARY + "/blocked"),
 		"primary destination is blocked by a nonempty directory")
 	next["turn"] = 12
-	NetConfig.save_match(next)
-	_check(FileAccess.get_sha256(BACKUP) == digest and NetConfig.load_match() == prior,
-		"failed promotion preserves the readable backup")
+	for attempt: int in 2:
+		_check(not NetConfig.save_match(next), "blocked publication returns failure (attempt %d)" % attempt)
+		_check(FileAccess.get_sha256(BACKUP) == digest and NetConfig.load_match() == prior,
+			"failed promotion preserves the only readable backup (attempt %d)" % attempt)
 	_check(DirAccess.remove_absolute(PRIMARY + "/blocked") == OK and DirAccess.remove_absolute(PRIMARY) == OK
 		and _write_text(PRIMARY), "a truncated primary simulates an older failed save")
 	_check(NetConfig.load_match() == prior, "truncated primary falls back to the backup")
@@ -171,3 +183,82 @@ func _publish() -> void:
 func _write_text(path: String) -> bool:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	return f != null and f.store_string("partial")
+
+
+func _write_image(path: String, image: Dictionary) -> bool:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	return f != null and f.store_var(image, false)
+
+
+func _review() -> void:
+	var original := NetConfig.load_match()
+	_check(original.get("turn") == 10, "start with a valid primary")
+	if original.is_empty():
+		return
+	var next := original.duplicate()
+	next["turn"] = 11
+	_check(_write_text(STAGING) and NetConfig.load_match() == original, "interrupted write ignores partial tmp")
+	_check(_write_image(STAGING, next) and NetConfig.load_match() == original, "complete tmp is still unpublished")
+	_check(DirAccess.rename_absolute(PRIMARY, BACKUP) == OK and NetConfig.load_match() == original,
+		"interruption after rotation loads backup")
+	_check(DirAccess.rename_absolute(STAGING, PRIMARY) == OK and NetConfig.load_match() == next,
+		"interruption after publication loads the new primary")
+
+	var bad := next.duplicate(true)
+	var broken: PackedByteArray = bad["snap"]
+	broken.encode_u32(4, 1)  # Shorten the encoded two-item snapshot wrapper, keeping all bytes on disk.
+	bad["snap"] = broken
+	var original_size := FileAccess.get_size(PRIMARY)
+	var backup_hash := FileAccess.get_sha256(BACKUP)
+	_check(_write_image(PRIMARY, bad) and FileAccess.get_size(PRIMARY) == original_size,
+		"corrupt primary has the same size and a decodable outer Variant")
+	var payload := var_to_bytes(next)
+	_check(_write_image(STAGING, next) and NetConfig._staged_matches(payload),
+		"readback accepts exact serialized bytes")
+	_check(_write_image(STAGING, bad) and FileAccess.get_size(STAGING) == original_size
+		and not NetConfig._staged_matches(payload), "readback rejects same-length staging corruption")
+	_check(NetConfig.load_match() == original, "same-size corrupted snapshot falls back to backup")
+	for attempt: int in 2:
+		_check(not NetConfig.save_match(bad), "invalid snapshot cannot commit (attempt %d)" % attempt)
+		_check(FileAccess.get_sha256(BACKUP) == backup_hash and NetConfig.load_match() == original,
+			"invalid snapshot cannot replace readable backup (attempt %d)" % attempt)
+	_check(NetConfig.save_match(next) and FileAccess.get_sha256(BACKUP) == backup_hash,
+		"valid retry never rotates corrupt primary onto valid backup")
+	NetConfig.clear_match()
+	_check(_write_image(STAGING, next) and NetConfig.load_match().is_empty(),
+		"staging alone is never an eligible checkpoint")
+	NetConfig.clear_match()
+	_check(_write_image(PRIMARY, original), "restore seed for publication tests")
+
+
+func _resume(main: Node, port: int) -> void:
+	var net: NetSession = main.net
+	NetConfig.LAN_PORT = port
+	net.is_host = true
+	net.in_match = true
+	net.go = true
+	net.mode = NetSession.Mode.LAN
+	net.slots = [{"peer": 1, "name": "CheckpointFixture", "arch": 0}]
+	net.exec_turn = 11
+	var saved_rng: int = main.world.rng.state
+	_check(net.save_match(), "session publishes a real checkpoint with a local host seat")
+	var primary_hash := ""
+	for use_backup: bool in [false, true]:
+		if use_backup:
+			_check(DirAccess.rename_absolute(PRIMARY, BACKUP) == OK, "only the backup exists after interruption")
+		main.in_menu = true
+		net.in_match = false
+		_check(net.resume_host().is_empty(), "public LAN host-resume accepts checkpoint (backup=%s)" % use_backup)
+		var deadline := Time.get_ticks_msec() + 30000
+		while net.in_match and net._restored_turn != 10 and Time.get_ticks_msec() < deadline:
+			await process_frame
+		_check(net._restored_turn == 10 and net.exec_turn == 11 and net._saved_turn == 10,
+			"public restore commits saved marker and turn (backup=%s)" % use_backup)
+		_check(main.world.rng.state == saved_rng and main.world.game_time == 42.0,
+			"public restore recovers snapshot state (backup=%s)" % use_backup)
+		if use_backup:
+			_check(NetHash.of(main.world) == primary_hash, "primary and backup resume to the same NetHash")
+		else:
+			primary_hash = NetHash.of(main.world)
+	net.in_match = false
+	net.leave(false, false, true, true)
